@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "./build",
+    "declaration": false
+  },
+  "include": [
+    "build.ts",
+    "src/index.ts",
+    "src/app/**/*",
+    "src/interfaces/api/**/*",
+    "src/infrastructure/**/*",
+    "src/domain/**/*",
+    "src/features/**/*",
+    "src/shared/**/*",
+    "src/types/**/*.d.ts",
+    "tools/mkQFaceChannel.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "tests",
+    "**/*.test.ts",
+    "**/__tests__/**"
+  ]
+}

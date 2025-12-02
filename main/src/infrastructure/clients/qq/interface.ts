@@ -1,0 +1,156 @@
+import { EventEmitter } from 'events';
+import type {
+    UnifiedMessage,
+    MessageReceipt,
+    RecallEvent,
+    Chat,
+    Sender,
+} from '../../../domain/message/types';
+import type { ForwardMessage } from './types';
+
+/**
+ * QQ 客户端统一接口
+ * Phase 1: 所有 QQ 客户端实现都必须遵循这个接口
+ */
+export interface IQQClient extends EventEmitter {
+    // ============ 基础信息 ============
+
+    /** QQ 号 */
+    readonly uin: number;
+
+    /** 昵称 */
+    readonly nickname: string;
+
+    /** 客户端类型 */
+    readonly clientType: 'napcat' | 'oicq';
+
+    /** 是否在线 */
+    isOnline(): Promise<boolean>;
+
+    // ============ 消息操作 ============
+
+    /**
+     * 发送消息
+     * @param chatId 聊天 ID（群号或 QQ 号）
+     * @param message 统一消息格式
+     * @returns 消息回执
+     */
+    sendMessage(chatId: string, message: UnifiedMessage): Promise<MessageReceipt>;
+
+    /**
+     * 发送群合并转发消息
+     * @param groupId 群号
+     * @param messages 转发节点列表
+     */
+    sendGroupForwardMsg(groupId: string, messages: any[]): Promise<MessageReceipt>;
+
+    /**
+     * 撤回消息
+     * @param messageId 消息 ID
+     */
+    recallMessage(messageId: string): Promise<void>;
+
+    /**
+     * 获取消息
+     * @param messageId 消息 ID
+     */
+    getMessage(messageId: string): Promise<UnifiedMessage | null>;
+
+    /**
+     * 获取合并转发消息
+     * @param messageId 合并转发的 resid
+     */
+    getForwardMsg(messageId: string, fileName?: string): Promise<ForwardMessage[]>;
+
+    // ============ 联系人操作 ============
+
+    /**
+     * 获取好友列表
+     */
+    getFriendList(): Promise<Sender[]>;
+
+    /**
+     * 获取群列表
+     */
+    getGroupList(): Promise<Chat[]>;
+
+    /**
+     * 获取群成员列表
+     * @param groupId 群号
+     */
+    getGroupMemberList(groupId: string): Promise<Sender[]>;
+
+    /**
+     * 获取好友信息
+     * @param uin QQ 号
+     */
+    getFriendInfo(uin: string): Promise<Sender | null>;
+
+    /**
+     * 获取群信息
+     * @param groupId 群号
+     */
+    getGroupInfo(groupId: string): Promise<Chat | null>;
+
+    /**
+     * 获取群成员详细信息
+     * @param groupId 群号
+     * @param userId 成员 QQ 号
+     */
+    getGroupMemberInfo(groupId: string, userId: string): Promise<any>;
+
+    /**
+     * 获取用户信息 (get_stranger_info)
+     * @param userId QQ 号
+     */
+    getUserInfo(userId: string): Promise<any>;
+
+    // ============ 事件监听 ============
+
+    on(event: 'message', listener: (message: UnifiedMessage) => void): this;
+    on(event: 'recall', listener: (event: RecallEvent) => void): this;
+    on(event: 'friend.increase', listener: (friend: Sender) => void): this;
+    on(event: 'friend.decrease', listener: (uin: string) => void): this;
+    on(event: 'group.increase', listener: (groupId: string, member: Sender) => void): this;
+    on(event: 'group.decrease', listener: (groupId: string, uin: string) => void): this;
+    on(event: 'poke', listener: (chatId: string, operatorId: string, targetId: string) => void): this;
+    on(event: 'error', listener: (error: Error) => void): this;
+    on(event: 'offline', listener: () => void): this;
+    on(event: 'online', listener: () => void): this;
+
+    // ============ 生命周期 ============
+
+    login(): Promise<void>;
+    logout(): Promise<void>;
+    destroy(): Promise<void>;
+}
+
+/**
+ * QQ 客户端创建参数
+ */
+export type QQClientCreateParams = NapCatCreateParams | OicqCreateParams;
+
+export interface NapCatCreateParams {
+    type: 'napcat';
+    wsUrl: string;
+    reconnect?: boolean;
+    reconnectInterval?: number;
+}
+
+export interface OicqCreateParams {
+    type: 'oicq';
+    uin: number;
+    password?: string;
+    platform?: number;
+    signApi?: string;
+    signVer?: string;
+    onVerifyDevice?: (phone: string) => Promise<string>;
+    onVerifySlider?: (url: string) => Promise<string>;
+}
+
+/**
+ * QQ 客户端工厂接口
+ */
+export interface IQQClientFactory {
+    create(params: QQClientCreateParams): Promise<IQQClient>;
+}

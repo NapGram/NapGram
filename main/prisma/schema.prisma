@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Session {
+  id            Int      @id @default(autoincrement())
+  dcId          Int?
+  port          Int?
+  serverAddress String?
+  authKey       Bytes?
+  entities      Entity[]
+}
+
+model Entity {
+  id        Int     @id @default(autoincrement())
+  /// 源代码里面大概支持 string 和 BigInteger，不如先全都存 String
+  entityId  String
+  sessionId Int
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hash      String?
+  username  String?
+  phone     String?
+  name      String?
+
+  @@unique([entityId, sessionId])
+}
+
+model Instance {
+  id            Int           @id @default(autoincrement())
+  owner         BigInt        @default(0)
+  workMode      String        @default("")
+  isSetup       Boolean       @default(false)
+  Message       Message[]
+  ForwardPair   ForwardPair[]
+  botSessionId  Int?
+  userSessionId Int?
+  qqBotId       Int?
+  qqBot         QqBot?        @relation(fields: [qqBotId], references: [id], onDelete: Cascade)
+  flags         Int           @default(0)
+}
+
+enum QqBotType {
+  oicq
+  napcat
+}
+
+model QqBot {
+  id           Int        @id @default(autoincrement())
+  uin          BigInt?    @default(0)
+  password     String?    @default("")
+  platform     Int?       @default(0)
+  Instance     Instance[]
+  signApi      String?
+  signVer      String?
+  signDockerId String?
+  type         QqBotType  @default(oicq)
+  wsUrl        String?
+}
+
+model Message {
+  id             Int      @id @default(autoincrement())
+  qqRoomId       BigInt   @db.BigInt
+  qqSenderId     BigInt   @db.BigInt
+  time           Int
+  brief          String?
+  seq            Int
+  rand           BigInt   @db.BigInt
+  pktnum         Int
+  tgChatId       BigInt   @db.BigInt
+  tgMsgId        Int
+  instanceId     Int      @default(0)
+  instance       Instance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  tgFileId       BigInt?  @db.BigInt
+  tgMessageText  String?
+  nick           String? /// /抱 的时候会用到
+  tgSenderId     BigInt?  @db.BigInt
+  richHeaderUsed Boolean  @default(false)
+  ignoreDelete   Boolean  @default(false) /// rmq rmt
+
+  @@index([qqRoomId, qqSenderId, seq, rand, pktnum, time, instanceId])
+  @@index([tgChatId, tgMsgId, instanceId])
+}
+
+model ForwardPair {
+  id              Int               @id @default(autoincrement())
+  qqRoomId        BigInt            @db.BigInt
+  qqFromGroupId   BigInt?           @db.BigInt /// 用于群临时
+  tgChatId        BigInt            @db.BigInt
+  tgThreadId      Int?              /// Telegram 话题 ID (Forum Topic ID)
+  avatarCache     AvatarCache[]
+  instanceId      Int               @default(0)
+  instance        Instance          @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  flags           Int               @default(0)
+  apiKey          String            @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ForwardMultiple ForwardMultiple[]
+
+  @@unique([qqRoomId, instanceId])
+  @@unique([tgChatId, tgThreadId, instanceId])
+}
+
+model File {
+  id     Int     @id @default(autoincrement())
+  roomId BigInt  @db.BigInt
+  fileId String
+  info   String
+  name   String?
+}
+
+model FlashPhoto {
+  id       Int              @id @default(autoincrement())
+  photoMd5 String
+  views    FlashPhotoView[]
+}
+
+model FlashPhotoView {
+  id           Int        @id @default(autoincrement())
+  flashPhotoId Int
+  flashPhoto   FlashPhoto @relation(fields: [flashPhotoId], references: [id])
+  viewerId     BigInt     @db.BigInt
+
+  @@unique([flashPhotoId, viewerId])
+}
+
+model AvatarCache {
+  id            Int         @id @default(autoincrement())
+  forwardPair   ForwardPair @relation(fields: [forwardPairId], references: [id], onDelete: Cascade)
+  forwardPairId Int         @unique
+  hash          Bytes
+}
+
+model ForwardMultiple {
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  resId      String
+  fileName   String
+  fromPairId Int
+  fromPair   ForwardPair @relation(fields: [fromPairId], references: [id], onDelete: Cascade)
+}
