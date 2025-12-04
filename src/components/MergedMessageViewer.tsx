@@ -47,52 +47,49 @@ export function MergedMessageViewer({ uuid }: MergedMessageViewerProps) {
     if (error) return <div className="p-4 text-center text-red-500">Error: {error}</div>;
 
     return (
-        <div className="container mx-auto p-4 max-w-2xl">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Chat History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ScrollArea className="h-[80vh] pr-4">
-                        <div className="space-y-4">
-                            {messages.map((msg, idx) => (
-                                <div key={idx} className="flex gap-3">
-                                    {buildSenderInfo(msg, idx)}
-                                </div>
-                            ))}
-                        </div>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center py-6 px-3">
+            <div className="max-w-3xl w-full">
+                <Card className="shadow-md border-slate-200">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-lg font-semibold text-slate-800">Chat History</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                        <ScrollArea className="h-[80vh] pr-2">
+                            <div className="space-y-4">
+                                {messages.map((msg, idx) => (
+                                    <MessageBubble key={idx} msg={msg} idx={idx} />
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
 
-function buildSenderInfo(msg: Message, idx: number) {
+function MessageBubble({ msg, idx }: { msg: Message; idx: number }) {
     const senderId = msg.user_id ?? msg.sender_id ?? msg.sender?.id ?? `#${idx}`;
     const name = msg.nickname || msg.card || msg.sender?.name || `Unknown`;
     const avatar = msg.avatar || (senderId ? `/api/avatar/qq/${senderId}` : undefined);
+    const timeStr = msg.time ? new Date(msg.time * 1000).toLocaleString() : '';
 
     return (
-        <>
-            <Avatar>
+        <div className="flex items-start gap-3">
+            <Avatar className="h-10 w-10 shadow-sm">
                 <AvatarImage src={avatar} />
                 <AvatarFallback>{name[0] || '?'}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-                <div className="flex items-baseline justify-between">
-                    <span className="font-semibold text-sm">
-                        {name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                        {msg.time ? new Date(msg.time * 1000).toLocaleString() : ''}
-                    </span>
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm text-slate-800">{name}</span>
+                    <span className="text-xs text-slate-400">{timeStr}</span>
                 </div>
-                <div className="mt-1 text-sm bg-muted/50 p-2 rounded-md">
+                <div className="bg-white border border-slate-200 shadow-sm rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap break-words">
                     {renderMessageContent(msg.message || [])}
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
@@ -103,12 +100,12 @@ function renderMessageContent(segments: any[]) {
         const data = seg?.data || seg || {};
         if (type === 'text') {
             const text = data.text ?? seg?.text ?? '';
-            return <span key={i}>{text}</span>;
+            return <p key={i} className="mb-1 last:mb-0">{text}</p>;
         }
         if (type === 'image' || type === 'flash' || type === 'bface') {
             const url = data.url || data.file || seg?.url || seg?.file;
             if (url) {
-                return <img key={i} src={url} alt="Image" className="max-w-full rounded-md my-2" />;
+                return <img key={i} src={url} alt="Image" className="max-w-full rounded-md my-2 shadow" />;
             }
             return <span key={i}>[image]</span>;
         }
