@@ -93,7 +93,7 @@ export class UnifiedConverter extends BaseConverter {
                 case 'reply':
                     segments.push({
                         type: 'reply',
-                        data: { id: content.data.messageId },
+                        data: content.data,  // Pass through all fields (id, seq, time, senderUin, peer, etc.)
                     });
                     break;
 

@@ -241,21 +241,48 @@ export class ForwardFeature {
             await this.prepareMediaForQQ(unified);
 
             // 如果是回复，尝试找到对应的 QQ 消息 ID，构造 QQ 的 reply 段
+            logger.info('[Reply Debug] Checking for TG reply', {
+                msgId: tgMsg.id,
+                hasReplyToMessage: !!tgMsg.replyToMessage,
+                replyToMsgId: tgMsg.replyToMessage?.id
+            });
+
             const qqReply = await this.replyResolver.resolveTGReply(
                 tgMsg as any,
                 pair.instanceId,
                 Number(pair.tgChatId)
             );
-            const qqReplyId = qqReply?.seq ? String(qqReply.seq) : undefined;
 
-            const replySegment = qqReplyId ? [{
+            logger.info('[Reply Debug] Reply resolution result', {
+                found: !!qqReply,
+                qqSeq: qqReply?.seq,
+                qqRoomId: qqReply?.qqRoomId?.toString(),
+                senderUin: qqReply?.senderUin,
+                time: qqReply?.time,
+            });
+
+            const replySegment = qqReply ? [{
                 type: 'reply' as const,
-                data: { id: qqReplyId }
+                data: {
+                    id: String(qqReply.seq),
+                    seq: qqReply.seq,
+                    time: qqReply.time,
+                    senderUin: qqReply.senderUin,
+                    peer: {
+                        chatType: 2,  // Group chat
+                        peerUid: String(qqReply.qqRoomId),
+                    }
+                }
             }] : [];
 
-            // Remove reply content as per user request (TG -> QQ reply not needed)
-            // Also remove 'at' segments to avoid redundant mentions
-            unified.content = unified.content.filter(c => c.type !== 'at');
+            logger.info('[Reply Debug] Reply segment constructed', {
+                hasReply: replySegment.length > 0,
+                replySegment: replySegment.length > 0 ? replySegment[0] : null
+            });
+
+            // CRITICAL: Remove TG reply segments (contain TG message IDs like 637)
+            // We'll add our own QQ reply segment with QQ message ID instead
+            unified.content = unified.content.filter(c => c.type !== 'at' && c.type !== 'reply');
 
             // Strip explicit @mention from the beginning of the text if present
             const firstTextIndex = unified.content.findIndex(c => c.type === 'text');
@@ -281,12 +308,12 @@ export class ForwardFeature {
                 // 使用合并转发 (Video, File)
                 const segments = await messageConverter.toNapCat(unified);
 
-                unified.content = [
-                    ...replySegment,
-                    ...unified.content
-                ];
+                // Reply will be added to NapCat segments directly, not to unified.content
 
-                const mediaSegments = await messageConverter.toNapCat(unified);
+                const mediaSegments = [
+                    ...replySegment.map(r => ({ type: r.type, data: r.data })),
+                    ...(await messageConverter.toNapCat(unified))
+                ];
 
                 const node = {
                     type: 'node',
@@ -310,16 +337,26 @@ export class ForwardFeature {
                 const hasContentToSend = headerText || textSegments.length > 0 || replySegment.length > 0;
 
                 if (hasContentToSend) {
-                    const content: any[] = [...replySegment];
-                    if (headerText) {
-                        content.push({ type: 'text', data: { text: headerText } });
-                    }
-                    content.push(...textSegments);
+                    // Convert text segments to NapCat format first
+                    const textNapCatSegments = await messageConverter.toNapCat({
+                        ...unified,
+                        content: textSegments
+                    });
+
+                    // Build final segments with reply
+                    const headerSegments = [
+                        ...replySegment.map(r => ({ type: r.type, data: r.data })),
+                        { type: 'text', data: { text: headerText } },
+                        ...textNapCatSegments
+                    ];
 
                     const headerMsg: UnifiedMessage = {
                         ...unified,
-                        content
+                        content: headerSegments as any
                     };
+                    // Mark as pre-converted to skip toNapCat in sendMessage
+                    (headerMsg as any).__napCatSegments = true;
+
                     // 发送 Header
                     await this.qqClient.sendMessage(String(pair.qqRoomId), headerMsg);
                 }
@@ -336,11 +373,21 @@ export class ForwardFeature {
             } else {
                 // 普通文本消息，保持原样
                 const headerText = showTGToQQNickname ? `${unified.sender.name}:\n` : '';
-                unified.content = [
-                    ...replySegment,
+                // Convert to NapCat segments first, then add reply
+                const baseSegments = await messageConverter.toNapCat(unified);
+
+                logger.debug('[Debug] replySegment before map:', JSON.stringify(replySegment, null, 2));
+
+                const segments = [
+                    ...replySegment.map(r => ({ type: r.type, data: r.data })),
                     { type: 'text', data: { text: headerText } },
-                    ...unified.content,
+                    ...baseSegments
                 ];
+
+                // Create message with NapCat segments 
+                unified.content = segments as any;
+                // Mark as pre-converted to skip toNapCat conversion in sendMessage
+                (unified as any).__napCatSegments = true;
 
                 unified.chat.id = String(pair.qqRoomId);
                 unified.chat.type = 'group';
