@@ -106,7 +106,7 @@ export class TelegramSender {
                         await chat.sendMessage(text, params);
                         textParts = [];
                     }
-                    lastSent = await this.sendMediaToTG(chat, header, content, replyToMsgId, pair, richHeaderUsed, richHeaderUrl) || lastSent;
+                    lastSent = await this.sendMediaToTG(chat, header, content, replyToMsgId, pair, richHeaderUsed, richHeaderUrl, msg.id) || lastSent;
                     richHeaderUsed = false;
                     header = '';
                     break;
@@ -131,7 +131,7 @@ export class TelegramSender {
         return lastSent;
     }
 
-    private async sendMediaToTG(chat: any, header: string, content: MessageContent, replyToMsgId?: number, pair?: any, richHeaderUsed?: boolean, richHeaderUrl?: string) {
+    private async sendMediaToTG(chat: any, header: string, content: MessageContent, replyToMsgId?: number, pair?: any, richHeaderUsed?: boolean, richHeaderUrl?: string, qqMsgId?: string) {
         let fileSrc: any;
 
         try {
@@ -218,8 +218,9 @@ export class TelegramSender {
                 if (!params.messageThreadId) delete params.messageThreadId;
 
                 // mtcute handles string (path) and Buffer automatically
-                await chat.client.sendMedia(chat.id, mediaInput, params);
-                this.logger.info(`[Forward] QQ message ${content.data.id || ''} -> TG ${chat.id} (Media)`);
+                const sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params);
+                this.logger.info(`[Forward] QQ message ${qqMsgId || ''} -> TG ${chat.id} (id: ${sentMsg.id})`);
+                return sentMsg;  // Return the sent message
             }
         } catch (e) {
             this.logger.error(e, 'Failed to send media to TG:');

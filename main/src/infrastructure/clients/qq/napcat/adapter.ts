@@ -215,7 +215,13 @@ export class NapCatAdapter extends EventEmitter implements IQQClient {
     }
 
     async sendMessage(chatId: string, message: UnifiedMessage): Promise<MessageReceipt> {
-        const segments = await messageConverter.toNapCat(message);
+        // Check if segments are already in NapCat format (bypass conversion)
+        const segments = (message as any).__napCatSegments
+            ? message.content
+            : await messageConverter.toNapCat(message);
+
+        // Debug: Log actual segments sent to NapCat
+        logger.debug('[NapCat API] Sending segments:', JSON.stringify(segments, null, 2));
 
         try {
             const result = await this.callApi('send_msg', {

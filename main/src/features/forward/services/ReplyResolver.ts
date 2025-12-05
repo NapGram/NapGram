@@ -41,8 +41,9 @@ export class ReplyResolver {
         tgMsg: any,
         instanceId: number,
         tgChatId: number,
-    ): Promise<{ seq?: number; qqRoomId?: bigint } | undefined> {
-        const replyToMsgId = tgMsg.replyTo?.replyToMsgId;
+    ): Promise<{ seq?: number; qqRoomId?: bigint; senderUin?: string; time?: number } | undefined> {
+        // mtcute uses replyToMessage, not replyTo
+        const replyToMsgId = tgMsg.replyToMessage?.id;
         if (!replyToMsgId) {
             return undefined;
         }
@@ -53,6 +54,8 @@ export class ReplyResolver {
             return {
                 seq: qqSource.seq,
                 qqRoomId: qqSource.qqRoomId,
+                senderUin: qqSource.qqSenderId?.toString(),
+                time: qqSource.time,
             };
         }
 
