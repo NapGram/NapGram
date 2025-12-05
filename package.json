@@ -1,0 +1,17 @@
+{
+    "name": "napgram-root",
+    "private": true,
+    "pnpm": {
+        "onlyBuiltDependencies": [
+            "@prisma/engines",
+            "better-sqlite3",
+            "cpu-features",
+            "esbuild",
+            "prisma",
+            "protobufjs",
+            "sharp",
+            "silk-sdk",
+            "ssh2"
+        ]
+    }
+}

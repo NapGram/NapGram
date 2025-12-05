@@ -130,7 +130,7 @@ export class ForwardFeature {
 
             if (sentMsg) {
                 await this.saveMessage(msg, sentMsg, pair.instanceId, pair.qqRoomId, BigInt(tgChatId));
-                logger.info(`QQ message ${msg.id} forwarded to TG ${tgChatId} (TG ID: ${sentMsg.id})`);
+                logger.info(`[Forward] QQ message ${msg.id} -> TG ${tgChatId} (id: ${sentMsg.id})`);
             }
         } catch (error) {
             logger.error('Failed to forward QQ message:', error);
@@ -353,8 +353,8 @@ export class ForwardFeature {
             }
 
             if (receipt.success) {
-                logger.info(`TG message ${tgMsg.id} forwarded to QQ ${pair.qqRoomId} (receipt:\n${JSON.stringify(receipt, null, 2)})`);
                 const msgId = receipt.messageId || (receipt as any).data?.message_id || (receipt as any).id;
+                logger.info(`[Forward] TG message ${tgMsg.id} -> QQ ${pair.qqRoomId} (seq: ${msgId})`);
                 if (msgId) {
                     // Save mapping for reply lookup (QQ -> TG reply)
                     try {

@@ -5,23 +5,16 @@
 
 version: 2
 updates:
-  # 根目录 (如果有 package.json)
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "daily"
-    target-branch: "refactor" # 如果你想更新 refactor 分支
-
   # main 服务
   - package-ecosystem: "npm"
     directory: "/main"
     schedule:
       interval: "daily"
-    target-branch: "refactor"
+    target-branch: "main"
 
-  # ui 服务
+  # web 服务
   - package-ecosystem: "npm"
-    directory: "/ui"
+    directory: "/web"
     schedule:
       interval: "daily"
-    target-branch: "refactor"
+    target-branch: "main"

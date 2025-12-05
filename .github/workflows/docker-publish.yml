@@ -68,6 +68,6 @@ jobs:
             REPO=${{ github.repository }}
             REF=${{ github.ref }}
             COMMIT=${{ github.sha }}
-            APT_MIRROR=deb.debian.org
+            USE_MIRROR=false
           secrets: |
             npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GPR_TOKEN }}

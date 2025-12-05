@@ -219,7 +219,7 @@ export class TelegramSender {
 
                 // mtcute handles string (path) and Buffer automatically
                 await chat.client.sendMedia(chat.id, mediaInput, params);
-                this.logger.info(`QQ message ${content.data.id || ''} forwarded to TG ${chat.id} (Media)`);
+                this.logger.info(`[Forward] QQ message ${content.data.id || ''} -> TG ${chat.id} (Media)`);
             }
         } catch (e) {
             this.logger.error(e, 'Failed to send media to TG:');
