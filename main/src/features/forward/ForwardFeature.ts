@@ -21,6 +21,8 @@ import { fileTypeFromBuffer } from 'file-type';
 
 import { TelegramSender } from './senders/TelegramSender';
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor';
+import { ForwardMapper } from './services/MessageMapper';
+import { ReplyResolver } from './services/ReplyResolver';
 
 const logger = getLogger('ForwardFeature');
 const execFileAsync = promisify(execFile);
@@ -31,6 +33,8 @@ const execFileAsync = promisify(execFile);
 export class ForwardFeature {
     private forwardMap: ForwardMap;
     private telegramSender: TelegramSender;
+    private mapper: ForwardMapper;
+    private replyResolver: ReplyResolver;
 
     constructor(
         private readonly instance: Instance,
@@ -46,6 +50,8 @@ export class ForwardFeature {
         }
         this.forwardMap = pairs as ForwardMap;
         this.telegramSender = new TelegramSender(instance, media);
+        this.mapper = new ForwardMapper();
+        this.replyResolver = new ReplyResolver(this.mapper);
         this.setupListeners();
         logger.info('ForwardFeature initialized');
 
@@ -118,18 +124,13 @@ export class ForwardFeature {
             const tgChatId = Number(pair.tgChatId);
             const chat = await this.instance.tgBot.getChat(tgChatId);
 
-            // 处理回复
-            let replyToMsgId: number | undefined;
-            const replyContent = msg.content.find(c => c.type === 'reply');
-            if (replyContent && replyContent.type === 'reply') { // Type guard
-                const qqMsgId = replyContent.data.messageId;
-                replyToMsgId = await this.findTgMsgId(pair.instanceId, pair.qqRoomId, qqMsgId);
-            }
+            // 处理回复 - 使用 ReplyResolver
+            const replyToMsgId = await this.replyResolver.resolveQQReply(msg, pair.instanceId, pair.qqRoomId);
 
             const sentMsg = await this.telegramSender.sendToTelegram(chat, msg, pair, replyToMsgId, this.nicknameMode);
 
             if (sentMsg) {
-                await this.saveMessage(msg, sentMsg, pair.instanceId, pair.qqRoomId, BigInt(tgChatId));
+                await this.mapper.saveMessage(msg, sentMsg, pair.instanceId, pair.qqRoomId, BigInt(tgChatId));
                 logger.info(`[Forward] QQ message ${msg.id} -> TG ${tgChatId} (id: ${sentMsg.id})`);
             }
         } catch (error) {
@@ -240,21 +241,16 @@ export class ForwardFeature {
             await this.prepareMediaForQQ(unified);
 
             // 如果是回复，尝试找到对应的 QQ 消息 ID，构造 QQ 的 reply 段
-            const tgReplyToId = (tgMsg as any).replyTo?.replyToMsgId;
-            let qqReplyId: string | undefined;
-            if (tgReplyToId) {
-                const source = await this.findQqSource(pair.instanceId, Number(pair.tgChatId), tgReplyToId);
-                if (source?.seq) {
-                    qqReplyId = String(source.seq);
-                    logger.debug(`Mapped TG reply ${tgReplyToId} -> QQ seq ${qqReplyId}`);
-                } else {
-                    logger.debug(`No QQ mapping found for TG reply ${tgReplyToId}`);
-                }
-            }
+            const qqReply = await this.replyResolver.resolveTGReply(
+                tgMsg as any,
+                pair.instanceId,
+                Number(pair.tgChatId)
+            );
+            const qqReplyId = qqReply?.seq ? String(qqReply.seq) : undefined;
 
             const replySegment = qqReplyId ? [{
                 type: 'reply' as const,
-                data: { messageId: qqReplyId }
+                data: { id: qqReplyId }
             }] : [];
 
             // Remove reply content as per user request (TG -> QQ reply not needed)
@@ -568,90 +564,6 @@ export class ForwardFeature {
         }
     }
 
-    private async saveMessage(qqMsg: UnifiedMessage, tgMsg: any, instanceId: number, qqRoomId: bigint, tgChatId: bigint) {
-        try {
-            // We need to extract seq/rand/time from qqMsg if available
-            // UnifiedMessage metadata might have it
-            const raw = qqMsg.metadata?.raw || {};
-            const seq = raw.message_id || raw.seq || 0;
-            const rand = raw.rand || 0;
-            const time = Math.floor(qqMsg.timestamp / 1000);
-            const qqSenderId = BigInt(qqMsg.sender.id);
-
-            await db.message.create({
-                data: {
-                    qqRoomId: qqRoomId,
-                    qqSenderId: qqSenderId,
-                    time: time,
-                    seq: seq,
-                    rand: BigInt(rand),
-                    pktnum: 0, // Not available in UnifiedMessage?
-                    tgChatId: tgChatId,
-                    tgMsgId: tgMsg.id,
-                    tgSenderId: BigInt(tgMsg.sender.id || 0),
-                    instanceId: instanceId,
-                    brief: qqMsg.content.map(c => this.renderContent(c)).join(' ').slice(0, 50),
-                }
-            });
-        } catch (e) {
-            logger.warn('Failed to save message mapping:', e);
-        }
-    }
-
-    private async findTgMsgId(instanceId: number, qqRoomId: bigint, qqMsgId: string): Promise<number | undefined> {
-        const numericId = Number(qqMsgId);
-        // 1) 先按消息 seq/id 查
-        if (!isNaN(numericId)) {
-            logger.debug(`Finding TG Msg ID by seq: instanceId=${instanceId}, qqRoomId=${qqRoomId}, seq=${numericId}`);
-            const bySeq = await db.message.findFirst({
-                where: {
-                    instanceId,
-                    qqRoomId,
-                    seq: numericId,
-                }
-            });
-            if (bySeq) {
-                logger.debug(`Found TG Msg ID by seq: ${bySeq.tgMsgId}`);
-                return bySeq.tgMsgId;
-            }
-        }
-
-        // 2) 有些 NapCat 回复的 id 可能是被回复人的 QQ 号，尝试按发送者匹配最近一条
-        if (!isNaN(numericId)) {
-            const senderId = BigInt(numericId);
-            logger.debug(`Finding TG Msg ID by sender: instanceId=${instanceId}, qqRoomId=${qqRoomId}, sender=${senderId}`);
-            const bySender = await db.message.findFirst({
-                where: {
-                    instanceId,
-                    qqRoomId,
-                    qqSenderId: senderId,
-                },
-                orderBy: {
-                    time: 'desc',
-                },
-            });
-            if (bySender) {
-                logger.debug(`Found TG Msg ID by sender: ${bySender.tgMsgId}`);
-                return bySender.tgMsgId;
-            }
-        }
-
-        logger.debug('TG Msg ID not found for reply');
-        return undefined;
-    }
-
-    private async findQqSource(instanceId: number, tgChatId: number, tgMsgId: number) {
-        logger.debug(`Finding QQ source: instanceId=${instanceId}, tgChatId=${tgChatId}, tgMsgId=${tgMsgId}`);
-        const msg = await db.message.findFirst({
-            where: {
-                tgChatId: BigInt(tgChatId),
-                tgMsgId: tgMsgId,
-                instanceId: instanceId,
-            },
-        });
-        logger.debug(`Found QQ source: ${msg ? 'yes' : 'no'} (seq=${msg?.seq})`);
-        return msg;
-    }
 
 
 }
