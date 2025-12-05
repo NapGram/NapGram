@@ -1,4 +1,4 @@
-import { getLogger } from '../../../shared/utils/logger';
+import { getLogger } from '../../../shared/logger';
 import type { MessageContent, UnifiedMessage } from '../../../domain/message';
 import type { Message } from '@mtcute/core';
 import db from '../../../domain/models/db';

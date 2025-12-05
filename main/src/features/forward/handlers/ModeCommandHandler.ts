@@ -1,4 +1,4 @@
-import { getLogger } from '../../../shared/utils/logger';
+import { getLogger } from '../../../shared/logger';
 import type { UnifiedMessage } from '../../../domain/message';
 import type { ForwardModeService } from '../services/ForwardModeService';
 

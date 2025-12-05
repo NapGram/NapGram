@@ -1,4 +1,4 @@
-import { getLogger } from '../shared/utils/logger';
+import { getLogger } from '../shared/logger';
 import Instance from '../domain/models/Instance';
 import db from '../domain/models/db';
 import api from '../interfaces/api';

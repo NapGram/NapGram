@@ -1,4 +1,4 @@
-import { getLogger } from '../../shared/utils/logger';
+import { getLogger } from '../../shared/logger';
 
 const logger = getLogger('PerformanceMonitor');
 

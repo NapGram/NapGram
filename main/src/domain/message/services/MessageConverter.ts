@@ -1,5 +1,5 @@
 import type { UnifiedMessage, MessageContent } from '../types';
-import { getLogger } from '../../../shared/utils/logger';
+import { getLogger } from '../../../shared/logger';
 import type { Receive } from 'node-napcat-ts';
 import env from '../../models/env';
 import fs from 'fs/promises';
