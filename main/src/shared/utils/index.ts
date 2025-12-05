@@ -1,5 +1,5 @@
 export * from './convert';
-export * from './logger';
+export * from '../logger';
 export * from './arrays';
 export * from './flagControl';
 export * from './hashing';

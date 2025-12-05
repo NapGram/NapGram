@@ -8,7 +8,7 @@ import env from '../../../domain/models/env';
 import type Instance from '../../../domain/models/Instance';
 import type { MediaFeature } from '../../media/MediaFeature';
 import type { AudioContent, FileContent, ImageContent, UnifiedMessage, VideoContent, MessageContent } from '../../../domain/message';
-import { getLogger } from '../../../shared/utils/logger';
+import { getLogger } from '../../../shared/logger';
 import { renderContent } from '../utils/render';
 
 const execFileAsync = promisify(execFile);
