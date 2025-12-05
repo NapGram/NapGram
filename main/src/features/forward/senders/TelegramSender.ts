@@ -11,6 +11,8 @@ import type { MediaFeature } from '../../media/MediaFeature';
 import { getLogger } from '../../../shared/utils/logger';
 import { renderContent } from '../utils/render';
 import db from '../../../domain/models/db';
+import { InputText } from '@mtcute/core';
+import { html } from '@mtcute/node';
 
 export class TelegramSender {
     private readonly logger = getLogger('ForwardFeature');
@@ -31,7 +33,6 @@ export class TelegramSender {
 
         const disableFlag = pair ? ((pair.flags | this.instance.flags) & flags.DISABLE_RICH_HEADER) : 0;
         const useRichHeader = pair && env.WEB_ENDPOINT && !disableFlag && showQQToTGNickname;
-        this.logger.debug(`[RichHeader Debug] pair=${!!pair}, env.WEB=${env.WEB_ENDPOINT}, disable=${disableFlag}, showNick=${showQQToTGNickname} -> use=${useRichHeader}`);
 
         let richHeaderUrl: string | undefined = undefined;
         if (useRichHeader) {
@@ -39,7 +40,6 @@ export class TelegramSender {
             richHeaderUsed = true;
             // Rich Header已包含用户信息，文本消息不再重复显示 Header
             header = '';
-            this.logger.debug(`[RichHeader Debug] Generated URL: ${richHeaderUrl}`);
         }
 
         const effectiveReplyTo = replyToMsgId || pair?.tgThreadId;
@@ -149,7 +149,10 @@ export class TelegramSender {
                 params.replyTo = commonParams.replyTo;
                 if (commonParams.messageThreadId) params.messageThreadId = commonParams.messageThreadId;
 
-                if (text.trim().length === 0) {
+                // mtcute InputText check: if string and empty, or TextWithEntities and text empty
+                const isEmpty = typeof text === 'string' ? !text.trim() : !text.text.trim();
+
+                if (isEmpty) {
                     this.logger.warn('Skip sending media header because text is empty after normalization');
                 } else {
                     await chat.sendMessage(text, params);
@@ -341,14 +344,14 @@ export class TelegramSender {
                 return await chat.sendMessage(messageText, {
                     replyMarkup: { type: 'inline', buttons },
                     replyTo: this.buildReplyTo(pair, replyToMsgId || pair?.tgThreadId),
-                    linkPreview: { disable: true },
+                    disableWebPreview: true,
                 });
             } else {
                 this.logger.warn('WEB_ENDPOINT is not set, sending forward link as plain text.');
                 messageText += '\n(未配置 WEB_ENDPOINT，无法生成查看按钮)';
                 return await chat.sendMessage(messageText, {
                     replyTo: this.buildReplyTo(pair, replyToMsgId || pair?.tgThreadId),
-                    linkPreview: { disable: true },
+                    disableWebPreview: true,
                 });
             }
         } catch (e) {
@@ -384,28 +387,28 @@ export class TelegramSender {
         return url.toString();
     }
 
-    private applyRichHeader(text: string, richHeaderUrl?: string) {
+    private applyRichHeader(text: string, richHeaderUrl?: string): { text: string | InputText, params: any } {
         const params: any = {};
 
         if (richHeaderUrl) {
             // HTML Mode with Rich Header
+            // Use mtcute html tag to avoid manual character escaping and ensure TextWithEntities is returned
+            // text arg originates from this.contentRenderer() which returns raw text
+
             // \u200b is zero-width space
-            const escapedText = this.escapeHtml(text.replace(/\\n/g, '\n'));
-            const messageText = `<a href="${richHeaderUrl}">\u200b</a>${escapedText}`;
-            params.parseMode = 'html';
-            params.linkPreview = { disable: false };
-            // Enable link preview for the header to show
-            // mtcute uses linkPreview: { ... } or just boolean? 
-            // In modern mtcute, linkPreview object is used.
-            // When preview is enabled, we don't need to specify disable: true.
-            // However, we want the preview to be *on*.
-            // params.linkPreview = { disable: false }; // Optional depending on version, default is usually enabled if not specified.
+            // NOTE: html tag automatic escaping handles & in url and text content
+
+            // We use the `html` tag from @mtcute/core
+            const messageText = html`<a href="${richHeaderUrl}">\u200b</a>${text.replace(/\\n/g, '\n')}`;
+
+            params.invertMedia = true;
+            params.disableWebPreview = false;
+
             return { text: messageText, params };
         } else {
             // Plain text mode
             let messageText = text.replace(/\\n/g, '\n');
-            // 始终禁用 linkPreview，避免正文插入隐式链接
-            params.linkPreview = { disable: true };
+            params.disableWebPreview = true;
             return { text: messageText, params };
         }
     }

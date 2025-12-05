@@ -1,5 +1,5 @@
 import { TelegramClient } from '@mtcute/node';
-import { Chat, InputPeerLike, Message } from '@mtcute/core';
+import { Chat, InputPeerLike, Message, InputText } from '@mtcute/core';
 import Telegram from './client';
 import WaitForMessageHelper from '../../../shared/helpers/WaitForMessageHelper';
 // import createPaginatedInlineSelector from '../../../shared/utils/paginatedInlineSelector';
@@ -18,7 +18,7 @@ export default class TelegramChat {
     this.id = chat.id;
   }
 
-  public async sendMessage(text: string, params?: Parameters<TelegramClient['sendText']>[2]) {
+  public async sendMessage(text: InputText, params?: Parameters<TelegramClient['sendText']>[2]) {
     return await this.client.sendText(this.id, text, params);
   }
 
