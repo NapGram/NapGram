@@ -8,7 +8,7 @@ import { md5Hex } from '../../../shared/utils/hashing';
 import type Instance from '../../../domain/models/Instance';
 import type { MessageContent, UnifiedMessage } from '../../../domain/message';
 import type { MediaFeature } from '../../media/MediaFeature';
-import { getLogger } from '../../../shared/utils/logger';
+import { getLogger } from '../../../shared/logger';
 import { renderContent } from '../utils/render';
 import db from '../../../domain/models/db';
 import { InputText } from '@mtcute/core';
