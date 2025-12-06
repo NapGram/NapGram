@@ -231,7 +231,21 @@ export class CommandsFeature {
      */
     private handleRecall = async (msg: UnifiedMessage, _args: string[]) => {
         const raw = (msg.metadata as any)?.raw as any;
-        const replyToId = raw?.replyTo?.replyToMsgId;
+
+        // Debug: 打印 raw 结构
+        logger.debug(`[handleRecall] raw.replyTo structure:`, {
+            hasReplyTo: !!raw?.replyTo,
+            replyToKeys: raw?.replyTo ? Object.keys(raw.replyTo) : [],
+            replyToMsgId: raw?.replyTo?.replyToMsgId,
+            replyTo_id: raw?.replyTo?.id,
+            replyTo_replyToTopId: raw?.replyTo?.replyToTopId,
+        });
+
+        // 尝试多种可能的字段名
+        const replyToId = raw?.replyTo?.replyToMsgId
+            || raw?.replyTo?.id
+            || raw?.replyTo?.replyToTopId
+            || raw?.replyToMessage?.id;
         const chatId = msg.chat.id;
         const senderId = msg.sender.id;
         const cmdMsgId = raw?.id || msg.id;
