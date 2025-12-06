@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -62,23 +61,14 @@ export function MergedMessageViewer({ uuid }: MergedMessageViewerProps) {
     if (error) return <div className="p-4 text-center text-red-500">错误: {error}</div>;
 
     return (
-        <div className="w-full min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/30 to-slate-50 flex justify-center py-6 px-3">
-            <div className="w-full max-w-4xl">
-                <Card className="shadow-xl border-slate-200/60 bg-white/95 backdrop-blur-sm">
-                    <CardHeader className="pb-3 border-b border-slate-100">
-                        <CardTitle className="text-xl font-bold text-slate-800">聊天记录</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                        <ScrollArea className="h-[82vh] pr-3">
-                            <div className="space-y-3">
-                                {messages.map((msg, idx) => (
-                                    <MessageBubble key={idx} msg={msg} idx={idx} />
-                                ))}
-                            </div>
-                        </ScrollArea>
-                    </CardContent>
-                </Card>
-            </div>
+        <div className="w-full min-h-screen bg-white">
+            <ScrollArea className="h-screen px-4 py-4">
+                <div className="w-full max-w-4xl mx-auto">
+                    {messages.map((msg, idx) => (
+                        <MessageBubble key={idx} msg={msg} idx={idx} />
+                    ))}
+                </div>
+            </ScrollArea>
         </div>
     );
 }
