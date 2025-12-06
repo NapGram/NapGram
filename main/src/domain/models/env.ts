@@ -64,6 +64,7 @@ const configParsed = z.object({
   POSTHOG_OPTOUT: z.string().transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())).default('false'),
   SHOW_NICKNAME_MODE: z.string().regex(/^[01]{2}$/).default('11'),
   FORWARD_MODE: z.string().regex(/^[01]{2}$/).default('11'),
+  ENABLE_AUTO_RECALL: z.string().transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())).default('true'),
 
   REPO: z.string().default('Local Build'),
   REF: z.string().default('Local Build'),
