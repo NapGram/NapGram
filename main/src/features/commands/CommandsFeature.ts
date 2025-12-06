@@ -290,15 +290,6 @@ export class CommandsFeature {
     private handleRecall = async (msg: UnifiedMessage, _args: string[]) => {
         const raw = (msg.metadata as any)?.raw as any;
 
-        // Debug: 打印 raw 结构
-        logger.debug(`[handleRecall] raw.replyTo structure:`, {
-            hasReplyTo: !!raw?.replyTo,
-            replyToKeys: raw?.replyTo ? Object.keys(raw.replyTo) : [],
-            replyToMsgId: raw?.replyTo?.replyToMsgId,
-            replyTo_id: raw?.replyTo?.id,
-            replyTo_replyToTopId: raw?.replyTo?.replyToTopId,
-        });
-
         // 提取 replyToId：
         // 1. TG 消息：从 raw.replyTo 中提取
         // 2. QQ 消息：从 content 中的 reply 段提取
@@ -316,7 +307,6 @@ export class CommandsFeature {
             if (replyContent) {
                 const replyData = replyContent.data as any;
                 replyToId = Number(replyData.messageId || replyData.id || replyData.seq);
-                logger.debug(`[handleRecall] Extracted replyToId from QQ content: ${replyToId}`);
             }
         }
 
@@ -324,10 +314,7 @@ export class CommandsFeature {
         const senderId = msg.sender.id;
         const cmdMsgId = raw?.id || msg.id;
 
-        logger.debug(`[handleRecall] Start: chatId=${chatId}, replyToId=${replyToId}, senderId=${senderId}, platform=${msg.platform}`);
-
         if (!replyToId || !chatId) {
-            logger.debug(`[handleRecall] Missing replyToId or chatId, sending error`);
             await this.replyTG(chatId, '请回复要撤回的消息再使用 /rm');
             return;
         }
@@ -336,7 +323,6 @@ export class CommandsFeature {
         let record;
         if (msg.platform === 'qq') {
             // QQ 消息：replyToId 是 QQ 的 seq
-            logger.debug(`[handleRecall] Querying database for QQ seq=${replyToId}`);
             record = await db.message.findFirst({
                 where: {
                     qqRoomId: chatId,
@@ -346,7 +332,6 @@ export class CommandsFeature {
             });
         } else {
             // TG 消息：replyToId 是 TG 的 msgId
-            logger.debug(`[handleRecall] Querying database for TG tgMsgId=${replyToId}`);
             record = await db.message.findFirst({
                 where: {
                     tgChatId: BigInt(chatId),
@@ -356,20 +341,10 @@ export class CommandsFeature {
             });
         }
 
-        logger.debug(`[handleRecall] Database record:`, record ? {
-            id: record.id,
-            seq: record.seq,
-            tgMsgId: record.tgMsgId,
-            tgSenderId: record.tgSenderId
-        } : null);
-
         const isAdmin = this.isAdmin(String(senderId));
         const isSelf = record?.tgSenderId ? String(record.tgSenderId) === String(senderId) : false;
 
-        logger.debug(`[handleRecall] Permission check: isAdmin=${isAdmin}, isSelf=${isSelf}`);
-
         if (!isAdmin && !isSelf) {
-            logger.warn(`[handleRecall] Permission denied for user ${senderId}`);
             await this.replyTG(chatId, '无权限撤回他人消息');
             return;
         }
@@ -377,7 +352,6 @@ export class CommandsFeature {
         // 根据平台处理撤回逻辑
         if (msg.platform === 'qq') {
             // QQ 端 /rm：撤回 QQ 的原消息(replyToId) + 删除 TG 对应消息(record.tgMsgId)
-            logger.info(`[handleRecall] QQ platform: recall QQ=${replyToId}, delete TG=${record?.tgMsgId}`);
 
             // 撤回 QQ 原消息
             try {
@@ -400,7 +374,6 @@ export class CommandsFeature {
 
         } else {
             // TG 端 /rm：删除 TG 原消息(replyToId) + 撤回 QQ 对应消息(record.seq)
-            logger.info(`[handleRecall] TG platform: delete TG=${replyToId}, recall QQ=${record?.seq}`);
 
             // 删除 TG 原消息
             try {
@@ -412,37 +385,25 @@ export class CommandsFeature {
             }
 
             // 撤回对应的 QQ 消息
-            if (record?.seq) {
-                logger.debug(`[handleRecall] Found QQ seq=${record.seq}, checking ENABLE_AUTO_RECALL`);
-                if (!env.ENABLE_AUTO_RECALL) {
-                    logger.debug('Auto recall disabled, skipping QQ message recall');
-                } else {
-                    logger.info(`[handleRecall] Attempting to recall QQ message seq=${record.seq}`);
-                    try {
-                        await this.qqClient.recallMessage(String(record.seq));
-                        logger.info(`QQ message ${record.seq} recalled by /rm command`);
-                    } catch (e) {
-                        logger.warn(e, '撤回 QQ 消息失败');
-                    }
+            if (record?.seq && env.ENABLE_AUTO_RECALL) {
+                try {
+                    await this.qqClient.recallMessage(String(record.seq));
+                    logger.info(`QQ message ${record.seq} recalled by /rm command`);
+                } catch (e) {
+                    logger.warn(e, '撤回 QQ 消息失败');
                 }
-            } else {
-                logger.debug('No QQ message seq found for TG message', { tgMsgId: replyToId });
             }
         }
 
         // 尝试删除命令消息自身
         if (cmdMsgId) {
-            logger.debug(`[handleRecall] Attempting to delete command message ${cmdMsgId}`);
             try {
                 const chat = await this.tgBot.getChat(Number(chatId));
                 await chat.deleteMessages([Number(cmdMsgId)]);
-                logger.debug(`[handleRecall] Command message ${cmdMsgId} deleted`);
             } catch (e) {
                 logger.warn(e, '删除命令消息失败');
             }
         }
-
-        logger.debug(`[handleRecall] Complete`);
     };
 
     /**
