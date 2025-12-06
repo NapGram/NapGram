@@ -13,7 +13,6 @@
     "prisma": "prisma",
     "import": "ts-node tools/import"
   },
-  "bin": "build/index.js",
   "files": [
     "build",
     "assets"
