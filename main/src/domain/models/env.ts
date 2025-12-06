@@ -65,6 +65,8 @@ const configParsed = z.object({
   SHOW_NICKNAME_MODE: z.string().regex(/^[01]{2}$/).default('11'),
   FORWARD_MODE: z.string().regex(/^[01]{2}$/).default('11'),
   ENABLE_AUTO_RECALL: z.string().transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())).default('true'),
+  ENABLE_OFFLINE_NOTIFICATION: z.string().transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())).default('true'),
+  OFFLINE_NOTIFICATION_COOLDOWN: z.string().regex(/^\d+$/).transform(Number).default('3600000'), // 默认1小时
 
   REPO: z.string().default('Local Build'),
   REF: z.string().default('Local Build'),

@@ -134,6 +134,7 @@ export default class Telegram {
 
     this.dispatcher.onNewMessage(this.onMessage);
     this.dispatcher.onEditMessage(this.onEditedMessage);
+    this.dispatcher.onDeleteMessage(this.onDeleteMessage);
   }
 
   private onMessage = async (msg: Message) => {
@@ -149,8 +150,16 @@ export default class Telegram {
     }
   };
 
+  private onDeleteMessage = async (update: any) => {
+    this.logger.info(`[TG] message deleted in ${update.channelId}: ${update.messages.join(', ')}`);
+    for (const handler of this.onDeletedMessageHandlers) {
+      await handler(update);
+    }
+  };
+
   private readonly onMessageHandlers: Array<MessageHandler> = [];
   private readonly onEditedMessageHandlers: Array<MessageHandler> = [];
+  private readonly onDeletedMessageHandlers: Array<(update: any) => Promise<void>> = [];
 
   public addNewMessageEventHandler(handler: MessageHandler) {
     this.onMessageHandlers.push(handler);
@@ -171,6 +180,17 @@ export default class Telegram {
     const index = this.onEditedMessageHandlers.indexOf(handler);
     if (index > -1) {
       this.onEditedMessageHandlers.splice(index, 1);
+    }
+  }
+
+  public addDeletedMessageEventHandler(handler: (update: any) => Promise<void>) {
+    this.onDeletedMessageHandlers.push(handler);
+  }
+
+  public removeDeletedMessageEventHandler(handler: (update: any) => Promise<void>) {
+    const index = this.onDeletedMessageHandlers.indexOf(handler);
+    if (index > -1) {
+      this.onDeletedMessageHandlers.splice(index, 1);
     }
   }
 

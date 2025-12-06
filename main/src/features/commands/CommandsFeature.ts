@@ -409,7 +409,7 @@ export class CommandsFeature {
 
     private async replyTG(chatId: string | number, text: string, threadId?: number) {
         try {
-            const chat = await this.tgBot.getChat(chatId as any);
+            const chat = await this.tgBot.getChat(Number(chatId));
             const params: any = { linkPreview: { disable: true } };
             if (threadId) params.replyTo = threadId;
             await chat.sendMessage(text, params);
