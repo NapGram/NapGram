@@ -173,8 +173,14 @@ function renderMessageContent(segments: any[]) {
             const url = data.url || data.file || seg?.url || seg?.file;
             if (url) {
                 return (
-                    <div key={i} className="my-2">
-                        <img src={url} alt="Image" className="max-w-full rounded-md shadow border border-slate-200" />
+                    <div key={i} className="my-1">
+                        <img
+                            src={url}
+                            alt="Image"
+                            className="rounded-md max-w-[200px] cursor-pointer hover:opacity-90 transition-opacity"
+                            referrerPolicy="no-referrer"
+                            onClick={() => window.open(url, '_blank')}
+                        />
                     </div>
                 );
             }
@@ -182,19 +188,37 @@ function renderMessageContent(segments: any[]) {
         }
         if (type === 'video' || type === 'video-loop') {
             const url = data.url || data.file || seg?.url || seg?.file;
-            return (
-                <div key={i} className="my-1 text-sky-700 underline break-all">
-                    [video] {url && <a href={url} target="_blank" rel="noreferrer">{url}</a>}
-                </div>
-            );
+            if (url) {
+                return (
+                    <div key={i} className="my-1">
+                        <video
+                            src={url}
+                            controls={type === 'video'}
+                            autoPlay={type === 'video-loop'}
+                            muted={type === 'video-loop'}
+                            loop={type === 'video-loop'}
+                            className="rounded-md max-w-[200px]"
+                            style={{ width: 200 }}
+                        />
+                    </div>
+                );
+            }
+            return <span key={i}>[video]</span>;
         }
         if (type === 'record') {
             const url = data.url || data.file || seg?.url || seg?.file;
-            return (
-                <div key={i} className="my-1 text-sky-700 underline break-all">
-                    [语音] {url && <a href={url} target="_blank" rel="noreferrer">{url}</a>}
-                </div>
-            );
+            if (url) {
+                return (
+                    <div key={i} className="my-1">
+                        <audio
+                            src={url}
+                            controls
+                            className="max-w-full"
+                        />
+                    </div>
+                );
+            }
+            return <span key={i}>[语音]</span>;
         }
         if (type === 'face' || type === 'sface' || type === 'at') {
             const id = data.id || data.text || '';
