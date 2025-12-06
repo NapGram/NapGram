@@ -185,44 +185,49 @@ function MessageBubble({ msg, idx }: { msg: Message; idx: number }) {
     const userColors = getUserColor(senderId);
 
     return (
-        <div className="flex items-start gap-2.5 group">
-            {/* 头像 - 增大尺寸，彩色边框 */}
-            <div className="relative flex-shrink-0">
-                <Avatar className="h-12 w-12 shadow-lg border-[3px] border-white ring-[3px] transition-all hover:scale-110 hover:shadow-xl" style={{ '--tw-ring-color': userColors.ringColor } as React.CSSProperties}>
-                    <AvatarImage
-                        src={avatar}
-                        alt={name}
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                        }}
-                    />
-                    <AvatarFallback className="text-white font-bold text-base" style={{ background: userColors.avatarGradient }}>
-                        {name[0] || '?'}
-                    </AvatarFallback>
-                </Avatar>
-                {/* 彩色光环效果 */}
-                <div className="absolute inset-0 rounded-full opacity-30 blur-sm -z-10" style={{ background: userColors.avatarGradient }}></div>
-            </div>
+        // QQ风格：消息之间大间距
+        <div className="flex items-start gap-4 mb-8">
+            {/* 头像 - QQ风格：更大(60px)，简洁 */}
+            <Avatar className="h-[60px] w-[60px] flex-shrink-0 shadow-md">
+                <AvatarImage
+                    src={avatar}
+                    alt={name}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                    }}
+                />
+                <AvatarFallback className="text-white font-bold text-xl" style={{ background: userColors.avatarGradient }}>
+                    {name[0] || '?'}
+                </AvatarFallback>
+            </Avatar>
 
-            {/* 消息内容区域 */}
-            <div className="flex-1 min-w-0">
-                {/* 用户信息栏 - 彩色昵称徽章 + 时间戳 */}
-                <div className="flex items-center gap-2.5 mb-1.5 flex-wrap">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold text-white shadow-md" style={{ background: userColors.badgeGradient }}>
+            {/* 消息内容区域 - QQ风格：宽松布局 */}
+            <div className="flex-1 min-w-0 space-y-2">
+                {/* 昵称行 - QQ风格：昵称 + 时间在一行 */}
+                <div className="flex items-baseline gap-3">
+                    <span className="text-sm font-medium text-gray-700">
                         {name}
                     </span>
                     {timeStr && (
-                        <span className="text-[11px] text-slate-400 font-medium bg-slate-50 px-2 py-0.5 rounded-full">
+                        <span className="text-xs text-gray-400">
                             {timeStr}
                         </span>
                     )}
                 </div>
 
-                {/* 消息气泡 - 明显的渐变背景 */}
-                <div className="relative max-w-[90%]">
-                    <div className="border-2 shadow-md rounded-[16px] rounded-tl-[4px] px-4 py-3 text-[14px] leading-relaxed whitespace-pre-wrap break-words transition-all duration-200 hover:shadow-lg hover:scale-[1.01]" style={{ background: userColors.bubbleGradient, borderColor: userColors.borderColor }}>
-                        {renderMessageContent(msg.message || [])}
+                {/* 消息气泡 - QQ风格：更大圆角，充足内边距，适中宽度 */}
+                <div className="relative max-w-[75%]">
+                    <div
+                        className="rounded-2xl px-5 py-4 text-[15px] leading-relaxed shadow-sm border border-gray-100"
+                        style={{
+                            background: userColors.bubbleGradient,
+                            borderColor: userColors.borderColor
+                        }}
+                    >
+                        <div className="break-words whitespace-pre-wrap">
+                            {renderMessageContent(msg.message || [])}
+                        </div>
                     </div>
                 </div>
             </div>
