@@ -22,24 +22,24 @@ interface MergedMessageViewerProps {
     uuid: string;
 }
 
-// 根据用户ID生成一致的颜色
-function getUserColor(userId: string | number): string {
-    const colors = [
-        'bg-blue-500',
-        'bg-purple-500',
-        'bg-pink-500',
-        'bg-rose-500',
-        'bg-orange-500',
-        'bg-amber-500',
-        'bg-lime-500',
-        'bg-emerald-500',
-        'bg-teal-500',
-        'bg-cyan-500',
-        'bg-indigo-500',
-        'bg-violet-500',
+// 根据用户ID生成一致的渐变颜色（用于头像背景）
+function getUserColor(userId: string | number): { gradient: string; badge: string; badgeText: string } {
+    const colorSchemes = [
+        { gradient: 'bg-gradient-to-br from-blue-400 to-blue-600', badge: 'bg-gradient-to-r from-blue-500 to-blue-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-purple-400 to-purple-600', badge: 'bg-gradient-to-r from-purple-500 to-purple-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-pink-400 to-pink-600', badge: 'bg-gradient-to-r from-pink-500 to-pink-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-rose-400 to-rose-600', badge: 'bg-gradient-to-r from-rose-500 to-rose-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-orange-400 to-orange-600', badge: 'bg-gradient-to-r from-orange-500 to-orange-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-amber-400 to-amber-600', badge: 'bg-gradient-to-r from-amber-500 to-amber-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-lime-400 to-lime-600', badge: 'bg-gradient-to-r from-lime-500 to-lime-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-emerald-400 to-emerald-600', badge: 'bg-gradient-to-r from-emerald-500 to-emerald-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-teal-400 to-teal-600', badge: 'bg-gradient-to-r from-teal-500 to-teal-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-cyan-400 to-cyan-600', badge: 'bg-gradient-to-r from-cyan-500 to-cyan-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-indigo-400 to-indigo-600', badge: 'bg-gradient-to-r from-indigo-500 to-indigo-600', badgeText: 'text-white' },
+        { gradient: 'bg-gradient-to-br from-violet-400 to-violet-600', badge: 'bg-gradient-to-r from-violet-500 to-violet-600', badgeText: 'text-white' },
     ];
     const hash = String(userId).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return colors[hash % colors.length];
+    return colorSchemes[hash % colorSchemes.length];
 }
 
 export function MergedMessageViewer({ uuid }: MergedMessageViewerProps) {
@@ -67,15 +67,15 @@ export function MergedMessageViewer({ uuid }: MergedMessageViewerProps) {
     if (error) return <div className="p-4 text-center text-red-500">错误: {error}</div>;
 
     return (
-        <div className="w-full min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex justify-center py-6 px-3">
+        <div className="w-full min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/30 to-slate-50 flex justify-center py-6 px-3">
             <div className="w-full max-w-4xl">
-                <Card className="shadow-lg border-slate-200/60 bg-white/90 backdrop-blur-sm">
+                <Card className="shadow-xl border-slate-200/60 bg-white/95 backdrop-blur-sm">
                     <CardHeader className="pb-3 border-b border-slate-100">
                         <CardTitle className="text-xl font-bold text-slate-800">聊天记录</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4">
                         <ScrollArea className="h-[82vh] pr-3">
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {messages.map((msg, idx) => (
                                     <MessageBubble key={idx} msg={msg} idx={idx} />
                                 ))}
@@ -92,6 +92,8 @@ function MessageBubble({ msg, idx }: { msg: Message; idx: number }) {
     const senderId = msg.user_id ?? msg.sender_id ?? msg.sender?.id ?? `user${idx}`;
     const name = msg.nickname || msg.card || msg.sender?.name || `未知用户`;
     const avatar = msg.avatar || (senderId && senderId !== `user${idx}` ? `/api/avatar/qq/${senderId}` : undefined);
+
+    // 完整日期时间格式：YYYY/MM/DD HH:mm:ss
     const timeStr = msg.time ? new Date(msg.time * 1000).toLocaleString('zh-CN', {
         year: 'numeric',
         month: '2-digit',
@@ -100,13 +102,14 @@ function MessageBubble({ msg, idx }: { msg: Message; idx: number }) {
         minute: '2-digit',
         second: '2-digit',
         hour12: false
-    }) : '';
-    const userColor = getUserColor(senderId);
+    }).replace(/\//g, '/') : '';
+
+    const userColors = getUserColor(senderId);
 
     return (
-        <div className="flex items-start gap-3 group">
-            {/* 头像 */}
-            <Avatar className="h-11 w-11 shadow-md border-2 border-white ring-1 ring-slate-200 flex-shrink-0">
+        <div className="flex items-start gap-2.5 group">
+            {/* 头像 - 增大尺寸，添加渐变背景 */}
+            <Avatar className="h-12 w-12 shadow-md border-2 border-white ring-2 ring-slate-200/60 flex-shrink-0 transition-transform hover:scale-105">
                 <AvatarImage
                     src={avatar}
                     alt={name}
@@ -116,28 +119,28 @@ function MessageBubble({ msg, idx }: { msg: Message; idx: number }) {
                         e.currentTarget.style.display = 'none';
                     }}
                 />
-                <AvatarFallback className={`${userColor} text-white font-semibold text-sm`}>
+                <AvatarFallback className={`${userColors.gradient} text-white font-bold text-base shadow-inner`}>
                     {name[0] || '?'}
                 </AvatarFallback>
             </Avatar>
 
             {/* 消息内容区域 */}
             <div className="flex-1 min-w-0">
-                {/* 用户信息栏 */}
-                <div className="flex items-baseline gap-2 mb-1.5 flex-wrap">
-                    <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold text-white ${userColor} shadow-sm`}>
+                {/* 用户信息栏 - 昵称 + 时间戳 */}
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`inline-block px-2.5 py-0.5 rounded-md text-xs font-bold ${userColors.badge} ${userColors.badgeText} shadow-sm`}>
                         {name}
                     </span>
                     {timeStr && (
-                        <span className="text-xs text-slate-400 font-medium">
+                        <span className="text-xs text-slate-500 font-medium">
                             {timeStr}
                         </span>
                     )}
                 </div>
 
-                {/* 消息气泡 */}
-                <div className="relative">
-                    <div className="bg-white border border-slate-200/80 shadow-sm rounded-2xl rounded-tl-sm px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words transition-all duration-200 hover:shadow-md hover:border-slate-300/80">
+                {/* 消息气泡 - QQ/TG风格圆角，渐变背景，阴影 */}
+                <div className="relative max-w-[85%]">
+                    <div className="bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/60 border border-slate-200/80 shadow-sm rounded-[18px] rounded-tl-[6px] px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap break-words transition-all duration-200 hover:shadow-md hover:border-slate-300/90 backdrop-blur-sm">
                         {renderMessageContent(msg.message || [])}
                     </div>
                 </div>
