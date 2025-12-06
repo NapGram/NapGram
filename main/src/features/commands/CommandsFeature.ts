@@ -259,7 +259,7 @@ export class CommandsFeature {
 
         // 撤回 TG 消息
         try {
-            const chat = await this.tgBot.getChat(chatId as any);
+            const chat = await this.tgBot.getChat(Number(chatId));
             await chat.deleteMessages([replyToId]);
             logger.info(`TG message ${replyToId} deleted by /rm command`);
         } catch (e) {
@@ -285,7 +285,7 @@ export class CommandsFeature {
         // 尝试删除命令消息自身
         if (cmdMsgId) {
             try {
-                const chat = await this.tgBot.getChat(chatId as any);
+                const chat = await this.tgBot.getChat(Number(chatId));
                 await chat.deleteMessages([Number(cmdMsgId)]);
             } catch (e) {
                 logger.warn(e, '删除命令消息失败');
