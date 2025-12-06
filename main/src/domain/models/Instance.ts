@@ -95,10 +95,48 @@ export default class Instance {
 
       // 初始化新架构的功能管理器
       if (this.qqClient) {
-        this.log.debug('正在初始化 FeatureManager');
+        this.log.debug(' 正在初始化 FeatureManager');
         this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient);
         await this.featureManager.initialize();
         this.log.info('FeatureManager 初始化完成');
+
+        // 初始化掉线通知服务
+        if (env.ENABLE_OFFLINE_NOTIFICATION) {
+          const { NotificationService } = await import('../../shared/services/NotificationService');
+          const notificationService = new NotificationService(env.OFFLINE_NOTIFICATION_COOLDOWN);
+
+          // 监听掉线事件
+          this.qqClient.on('connection:lost', async (event: any) => {
+            this.log.warn('NapCat connection lost:', event);
+            try {
+              await notificationService.notifyDisconnection(
+                this.qqClient,
+                this.tgBot,
+                env.ADMIN_QQ,
+                env.ADMIN_TG
+              );
+            } catch (error) {
+              this.log.error(error, 'Failed to send disconnection notification:');
+            }
+          });
+
+          // 监听重连成功事件
+          this.qqClient.on('connection:restored', async (event: any) => {
+            this.log.info('NapCat connection restored:', event);
+            try {
+              await notificationService.notifyReconnection(
+                this.qqClient,
+                this.tgBot,
+                env.ADMIN_QQ,
+                env.ADMIN_TG
+              );
+            } catch (error) {
+              this.log.error(error, 'Failed to send reconnection notification:');
+            }
+          });
+
+          this.log.info('Offline notification service initialized');
+        }
       }
 
       this.isInit = true;

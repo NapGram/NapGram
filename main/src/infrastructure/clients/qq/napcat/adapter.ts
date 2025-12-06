@@ -44,6 +44,11 @@ export class NapCatAdapter extends EventEmitter implements IQQClient {
             // logger.info('NapCat WebSocket connected'); // ReconnectingWebSocket already logs this
             this.emit('online');
             this.refreshSelfInfo();
+
+            // 触发重连成功事件
+            this.emit('connection:restored', {
+                timestamp: Date.now()
+            });
         });
 
         this.ws.on('message', (event: any) => {
@@ -58,6 +63,12 @@ export class NapCatAdapter extends EventEmitter implements IQQClient {
         this.ws.on('close', () => {
             // logger.warn('NapCat WebSocket disconnected'); // ReconnectingWebSocket already logs this
             this.emit('offline');
+
+            // 触发掉线通知事件
+            this.emit('connection:lost', {
+                timestamp: Date.now(),
+                reason: 'WebSocket closed'
+            });
         });
 
         this.ws.on('error', (error) => {

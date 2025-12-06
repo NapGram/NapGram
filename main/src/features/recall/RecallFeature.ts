@@ -28,8 +28,8 @@ export class RecallFeature {
         // 监听 QQ 消息撤回
         this.qqClient.on('recall', this.handleQQRecall);
 
-        // 监听 Telegram 消息编辑（用于撤回）
-        // TODO: 添加 Telegram 撤回监听
+        // 监听 Telegram 消息删除
+        this.tgBot.addDeletedMessageEventHandler(this.handleTGDelete);
     }
 
     /**
@@ -81,6 +81,61 @@ export class RecallFeature {
     };
 
     /**
+     * 处理 Telegram 消息删除（直接删除，非 /rm 命令）
+     */
+    private handleTGDelete = async (update: any) => {
+        try {
+            const chatId = update.channelId; // mtcute 使用 channelId
+            const messageIds = update.messages; // 删除的消息 ID 数组
+
+            logger.info(`TG messages deleted in ${chatId}: ${messageIds.join(', ')}`);
+
+            // 检查是否启用自动撤回
+            const { default: env } = await import('../../domain/models/env');
+            if (!env.ENABLE_AUTO_RECALL) {
+                logger.debug('Auto recall disabled, skipping QQ message recall');
+                return;
+            }
+
+            // 遍历所有被删除的消息
+            for (const tgMsgId of messageIds) {
+                try {
+                    // 查找对应的 QQ 消息
+                    const dbEntry = await db.message.findFirst({
+                        where: {
+                            instanceId: this.instance.id,
+                            tgChatId: BigInt(chatId),
+                            tgMsgId: Number(tgMsgId),
+                        },
+                    });
+
+                    if (!dbEntry) {
+                        logger.debug(`No corresponding QQ message found for TG message: ${tgMsgId}`);
+                        continue;
+                    }
+
+                    if (!dbEntry.seq) {
+                        logger.debug(`No seq found for TG message: ${tgMsgId}`);
+                        continue;
+                    }
+
+                    // 撤回 QQ 消息
+                    try {
+                        await this.qqClient.recallMessage(String(dbEntry.seq));
+                        logger.info(`QQ message ${dbEntry.seq} recalled after TG message ${tgMsgId} deleted`);
+                    } catch (error) {
+                        logger.warn(error, `Failed to recall QQ message ${dbEntry.seq}:`);
+                    }
+                } catch (error) {
+                    logger.error(error, `Failed to process deleted TG message ${tgMsgId}:`);
+                }
+            }
+        } catch (error) {
+            logger.error(error, 'Failed to handle TG delete:');
+        }
+    };
+
+    /**
      * 处理 Telegram 消息撤回
      */
     async handleTGRecall(tgChatId: number, tgMsgId: number) {
@@ -124,7 +179,8 @@ export class RecallFeature {
      * 清理资源
      */
     destroy() {
-        this.qqClient.removeListener('recall', this.handleQQRecall);
+        this.qqClient.off('recall', this.handleQQRecall);
+        this.tgBot.removeDeletedMessageEventHandler(this.handleTGDelete);
         logger.info('RecallFeature destroyed');
     }
 }

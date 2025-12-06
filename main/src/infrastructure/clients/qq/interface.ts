@@ -117,6 +117,9 @@ export interface IQQClient extends EventEmitter {
     on(event: 'error', listener: (error: Error) => void): this;
     on(event: 'offline', listener: () => void): this;
     on(event: 'online', listener: () => void): this;
+    on(event: 'connection:lost', listener: (data: { timestamp: number; reason: string }) => void): this;
+    on(event: 'connection:restored', listener: (data: { timestamp: number }) => void): this;
+
 
     // ============ 生命周期 ============
 
