@@ -38,6 +38,8 @@ export class TelegramSender {
         this.logger.debug(`Forwarding message to TG (sendToTelegram):\n${JSON.stringify(msg, null, 2)}`);
         const showQQToTGNickname = nicknameMode[0] === '1';
         let header = showQQToTGNickname ? `${msg.sender.name}:\n` : '';
+        // 保存原始header供媒体消息使用（媒体需要caption，即使启用了富头）
+        const originalHeader = header;
         let textParts: string[] = [];
 
         let richHeaderUsed = false;
@@ -50,6 +52,7 @@ export class TelegramSender {
             richHeaderUrl = this.generateRichHeaderUrl(pair.apiKey, msg.sender.id, showQQToTGNickname ? (msg.sender.name || '') : ' ');
             richHeaderUsed = true;
             // Rich Header已包含用户信息，文本消息不再重复显示 Header
+            // 但保留 originalHeader 给媒体消息使用
             header = '';
         }
 
@@ -105,7 +108,39 @@ export class TelegramSender {
 
                         await chat.sendMessage(text, params);
                         textParts = [];
+                        // richHeaderUsed consumed by the text message
+                        richHeaderUsed = false;
+                        header = '';
                     }
+
+                    // If Rich Header is active but hasn't been used yet (no text parts),
+                    // send it as a separate 'Head' message to show the Avatar/Nickname.
+                    // Telegram does NOT support Link Previews (Rich Header) on Media captions.
+                    if (richHeaderUsed) {
+                        let actionText = '';
+                        switch (content.type) {
+                            case 'image': actionText = '发来一张图片'; break;
+                            case 'video': actionText = '发来一段视频'; break;
+                            case 'audio': actionText = '发来一条语音'; break;
+                            case 'file': actionText = '发来一个文件'; break;
+                            default: actionText = '发来一条消息'; break;
+                        }
+                        // User requested to remove text nickname since rich header avatar is present
+                        const headerText = actionText;
+
+                        const { text, params } = this.applyRichHeader(headerText, richHeaderUrl);
+                        params.replyTo = replyTo;
+                        if (messageThreadId) params.messageThreadId = messageThreadId;
+
+                        try {
+                            const sent = await chat.sendMessage(text, params);
+                        } catch (e) {
+                            this.logger.warn(e, 'Failed to send separate Rich Header message:');
+                        }
+                        richHeaderUsed = false;
+                    }
+
+                    // Send media (header is empty here, avoiding duplicate caption)
                     lastSent = await this.sendMediaToTG(chat, header, content, replyToMsgId, pair, richHeaderUsed, richHeaderUrl, msg.id) || lastSent;
                     richHeaderUsed = false;
                     header = '';
@@ -147,6 +182,7 @@ export class TelegramSender {
             (content as any).data.fileName = fileName;
         }
 
+
         const commonParams: any = {
             replyTo: this.buildReplyTo(pair, replyToMsgId),
         };
@@ -154,22 +190,20 @@ export class TelegramSender {
             commonParams.messageThreadId = Number(pair.tgThreadId);
         }
 
+        // 准备 caption - 将 header（昵称/头像）作为媒体说明
+        let captionText: any = undefined;
+        let formattingParams: any = {};
+
         if (header) {
-            try {
-                const { text, params } = this.applyRichHeader(header, richHeaderUsed ? richHeaderUrl : undefined);
-                params.replyTo = commonParams.replyTo;
-                if (commonParams.messageThreadId) params.messageThreadId = commonParams.messageThreadId;
-
-                // mtcute InputText check: if string and empty, or TextWithEntities and text empty
-                const isEmpty = typeof text === 'string' ? !text.trim() : !text.text.trim();
-
-                if (isEmpty) {
-                    this.logger.warn('Skip sending media header because text is empty after normalization');
-                } else {
-                    await chat.sendMessage(text, params);
-                }
-            } catch (err) {
-                this.logger.warn(err, 'Failed to send media header:');
+            const { text, params } = this.applyRichHeader(header, richHeaderUsed ? richHeaderUrl : undefined);
+            // mtcute InputText check: if string and empty, or TextWithEntities and text empty
+            const isEmpty = typeof text === 'string' ? !text.trim() : !text.text.trim();
+            if (!isEmpty) {
+                captionText = text;
+                formattingParams = params;
+                this.logger.debug(`Using header as media caption: ${typeof text === 'string' ? text : text.text}`);
+            } else {
+                this.logger.debug('Header is empty, skipping caption');
             }
         }
 
@@ -213,13 +247,17 @@ export class TelegramSender {
             }
 
             if (mediaInput) {
-                const params: any = { ...commonParams, caption: undefined };
+                const params: any = {
+                    ...commonParams,
+                    ...formattingParams,
+                    caption: captionText  // 使用 caption 传递 header
+                };
                 if (!params.replyTo) delete params.replyTo;
                 if (!params.messageThreadId) delete params.messageThreadId;
 
                 // mtcute handles string (path) and Buffer automatically
                 const sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params);
-                this.logger.info(`[Forward] QQ message ${qqMsgId || ''} -> TG ${chat.id} (id: ${sentMsg.id})`);
+                this.logger.info(`[Forward] QQ message ${qqMsgId || ''} -> TG ${chat.id} (id: ${sentMsg.id})${captionText ? ' with caption' : ''}`);
                 return sentMsg;  // Return the sent message
             }
         } catch (e) {
