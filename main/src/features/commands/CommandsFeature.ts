@@ -126,9 +126,13 @@ export class CommandsFeature {
      * 设置事件监听器
      */
     private setupListeners() {
-        // 仅监听 TG 侧消息
+        // 监听 TG 侧消息
         logger.info('CommandsFeature listening Telegram messages for commands');
         this.tgBot.addNewMessageEventHandler(this.handleTgMessage);
+
+        // 监听 QQ 侧消息
+        logger.info('CommandsFeature listening QQ messages for commands');
+        this.qqClient.on('message', this.handleQqMessage);
     }
 
     /**
@@ -194,6 +198,60 @@ export class CommandsFeature {
         } catch (error) {
             logger.error('Failed to handle command:', error);
             return false;
+        }
+    };
+
+    private handleQqMessage = async (qqMsg: UnifiedMessage): Promise<void> => {
+        try {
+            // 只处理文本消息
+            const textContent = qqMsg.content.find(c => c.type === 'text');
+            if (!textContent) return;
+
+            const text = textContent.data.text || '';
+            if (!text.startsWith(this.commandPrefix)) return;
+
+            const chatId = qqMsg.chat.id;
+            const senderId = qqMsg.sender.id;
+
+            logger.info('[Commands] QQ message', {
+                id: qqMsg.id,
+                chatId,
+                senderId,
+                text: text.slice(0, 200),
+            });
+
+            const senderName = qqMsg.sender.name || `${senderId}`;
+
+            // 解析命令
+            const parts = text.slice(this.commandPrefix.length).split(/\s+/);
+            const commandName = parts[0].toLowerCase();
+            const args = parts.slice(1);
+
+            const command = this.commands.get(commandName);
+            if (!command) {
+                logger.debug(`Unknown QQ command: ${commandName}`);
+                return;
+            }
+
+            // QQ 侧不检查管理员权限（由 handleRecall 内部的 isSelf 检查控制）
+
+            logger.info(`Executing QQ command: ${commandName} by ${senderName}`);
+
+            // 执行命令
+            await command.handler(qqMsg, args);
+
+            // 命令执行成功后，尝试撤回命令消息本身
+            if (command.name === 'rm') {
+                try {
+                    await this.qqClient.recallMessage(qqMsg.id);
+                    logger.info(`QQ command message ${qqMsg.id} recalled`);
+                } catch (e) {
+                    logger.warn(e, 'Failed to recall QQ command message');
+                }
+            }
+
+        } catch (error) {
+            logger.error('Failed to handle QQ command:', error);
         }
     };
 
@@ -457,6 +515,7 @@ export class CommandsFeature {
      */
     destroy() {
         this.tgBot.removeNewMessageEventHandler(this.handleTgMessage);
+        this.qqClient.off('message', this.handleQqMessage);
         this.commands.clear();
         logger.info('CommandsFeature destroyed');
     }
