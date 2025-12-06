@@ -174,6 +174,12 @@ export class ForwardFeature {
                 text: rawText.slice(0, 100),
             });
 
+            // 跳过命令消息，避免转发到 QQ
+            if (rawText.startsWith('/')) {
+                logger.debug(`[Forward] Skipping command message: ${rawText.slice(0, 20)}`);
+                return;
+            }
+
             // Use ThreadIdExtractor to get threadId from raw message or wrapper
             const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg);
 
