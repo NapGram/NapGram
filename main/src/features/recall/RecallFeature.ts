@@ -39,6 +39,13 @@ export class RecallFeature {
         try {
             logger.info(`QQ message recalled: ${event.messageId}`);
 
+            // 检查是否启用自动撤回
+            const { default: env } = await import('../../domain/models/env');
+            if (!env.ENABLE_AUTO_RECALL) {
+                logger.debug('Auto recall is disabled, skipping TG message deletion');
+                return;
+            }
+
             // 查找对应的 Telegram 消息
             const dbEntry = await db.message.findFirst({
                 where: {
@@ -55,14 +62,11 @@ export class RecallFeature {
 
             // 删除 Telegram 消息
             try {
-                await (this.tgBot as any).deleteMessages?.(
-                    dbEntry.tgChatId,
-                    [dbEntry.tgMsgId],
-                    { revoke: true }
-                );
-                logger.info(`TG message ${dbEntry.tgMsgId} deleted`);
+                const chat = await this.tgBot.getChat(Number(dbEntry.tgChatId));
+                await chat.deleteMessages([dbEntry.tgMsgId]);
+                logger.info(`TG message ${dbEntry.tgMsgId} deleted successfully`);
             } catch (error) {
-                logger.error('Failed to delete TG message:', error);
+                logger.error(error, 'Failed to delete TG message:');
             }
 
             // 更新数据库
@@ -72,7 +76,7 @@ export class RecallFeature {
             });
 
         } catch (error) {
-            logger.error('Failed to handle QQ recall:', error);
+            logger.error(error, 'Failed to handle QQ recall:');
         }
     };
 
