@@ -128,6 +128,7 @@ featureManager.register(new MyFeature(...));
 
 - 本项目采用先进的 Feature 架构设计，欢迎提交 PR 扩展功能
 - 核心协议库感谢 [NapCat](https://github.com/NapNeko/NapCatQQ) 和 [mtcute](https://github.com/mtcute/mtcute) 的开源贡献
+- 特别感谢 [原始 q2tg 项目](https://github.com/Clansty/Q2TG) 为本项目提供了重要的参考和灵感
 
 
 ## ⚠️ 免责声明
