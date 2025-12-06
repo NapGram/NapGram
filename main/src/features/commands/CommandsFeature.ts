@@ -236,11 +236,15 @@ export class CommandsFeature {
         const senderId = msg.sender.id;
         const cmdMsgId = raw?.id || msg.id;
 
+        logger.debug(`[handleRecall] Start: chatId=${chatId}, replyToId=${replyToId}, senderId=${senderId}`);
+
         if (!replyToId || !chatId) {
+            logger.debug(`[handleRecall] Missing replyToId or chatId, sending error`);
             await this.replyTG(chatId, '请回复要撤回的消息再使用 /rm');
             return;
         }
 
+        logger.debug(`[handleRecall] Querying database for tgMsgId=${replyToId}`);
         const record = await db.message.findFirst({
             where: {
                 tgChatId: BigInt(chatId),
@@ -249,15 +253,25 @@ export class CommandsFeature {
             },
         });
 
+        logger.debug(`[handleRecall] Database record:`, record ? {
+            id: record.id,
+            seq: record.seq,
+            tgSenderId: record.tgSenderId
+        } : null);
+
         const isAdmin = this.isAdmin(String(senderId));
         const isSelf = record?.tgSenderId ? String(record.tgSenderId) === String(senderId) : false;
 
+        logger.debug(`[handleRecall] Permission check: isAdmin=${isAdmin}, isSelf=${isSelf}`);
+
         if (!isAdmin && !isSelf) {
+            logger.warn(`[handleRecall] Permission denied for user ${senderId}`);
             await this.replyTG(chatId, '无权限撤回他人消息');
             return;
         }
 
         // 撤回 TG 消息
+        logger.info(`[handleRecall] Attempting to delete TG message ${replyToId}`);
         try {
             const chat = await this.tgBot.getChat(Number(chatId));
             await chat.deleteMessages([replyToId]);
@@ -268,9 +282,11 @@ export class CommandsFeature {
 
         // 撤回对应的 QQ 消息（如果启用自动撤回）
         if (record?.seq) {
+            logger.debug(`[handleRecall] Found QQ seq=${record.seq}, checking ENABLE_AUTO_RECALL`);
             if (!env.ENABLE_AUTO_RECALL) {
                 logger.debug('Auto recall disabled, skipping QQ message recall');
             } else {
+                logger.info(`[handleRecall] Attempting to recall QQ message seq=${record.seq}`);
                 try {
                     await this.qqClient.recallMessage(String(record.seq));
                     logger.info(`QQ message ${record.seq} recalled by /rm command`);
@@ -284,13 +300,17 @@ export class CommandsFeature {
 
         // 尝试删除命令消息自身
         if (cmdMsgId) {
+            logger.debug(`[handleRecall] Attempting to delete command message ${cmdMsgId}`);
             try {
                 const chat = await this.tgBot.getChat(Number(chatId));
                 await chat.deleteMessages([Number(cmdMsgId)]);
+                logger.debug(`[handleRecall] Command message ${cmdMsgId} deleted`);
             } catch (e) {
                 logger.warn(e, '删除命令消息失败');
             }
         }
+
+        logger.debug(`[handleRecall] Complete`);
     };
 
     /**
