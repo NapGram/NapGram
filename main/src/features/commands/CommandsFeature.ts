@@ -257,19 +257,29 @@ export class CommandsFeature {
             return;
         }
 
+        // 撤回 TG 消息
         try {
             const chat = await this.tgBot.getChat(chatId as any);
             await chat.deleteMessages([replyToId]);
+            logger.info(`TG message ${replyToId} deleted by /rm command`);
         } catch (e) {
-            logger.warn('撤回 TG 消息失败', e);
+            logger.warn(e, '撤回 TG 消息失败');
         }
 
+        // 撤回对应的 QQ 消息（如果启用自动撤回）
         if (record?.seq) {
-            try {
-                await this.qqClient.recallMessage(String(record.seq));
-            } catch (e) {
-                logger.warn('撤回 QQ 消息失败', e);
+            if (!env.ENABLE_AUTO_RECALL) {
+                logger.debug('Auto recall disabled, skipping QQ message recall');
+            } else {
+                try {
+                    await this.qqClient.recallMessage(String(record.seq));
+                    logger.info(`QQ message ${record.seq} recalled by /rm command`);
+                } catch (e) {
+                    logger.warn(e, '撤回 QQ 消息失败');
+                }
             }
+        } else {
+            logger.debug('No QQ message seq found for TG message', { tgMsgId: replyToId });
         }
 
         // 尝试删除命令消息自身
@@ -278,7 +288,7 @@ export class CommandsFeature {
                 const chat = await this.tgBot.getChat(chatId as any);
                 await chat.deleteMessages([Number(cmdMsgId)]);
             } catch (e) {
-                logger.warn('删除命令消息失败', e);
+                logger.warn(e, '删除命令消息失败');
             }
         }
     };
