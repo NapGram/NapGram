@@ -1,5 +1,6 @@
 import { BaseConverter } from './BaseConverter';
 import type { UnifiedMessage, MessageContent } from '../types';
+import qface from '../../constants/qface';
 
 export class NapCatConverter extends BaseConverter {
     /**
@@ -15,7 +16,10 @@ export class NapCatConverter extends BaseConverter {
         if (napCatMsg.message) {
             for (const segment of napCatMsg.message) {
                 const converted = this.convertNapCatSegment(segment, napCatMsg);
-                if (converted) {
+                if (!converted) continue;
+                if (Array.isArray(converted)) {
+                    content.push(...converted);
+                } else {
                     content.push(converted);
                 }
             }
@@ -49,7 +53,7 @@ export class NapCatConverter extends BaseConverter {
         };
     }
 
-    private convertNapCatSegment(segment: any, rawMsg?: any): MessageContent | null {
+    private convertNapCatSegment(segment: any, rawMsg?: any): MessageContent | MessageContent[] | null {
         this.logger.debug(`Converting segment:\n${JSON.stringify(segment, null, 2)}`);
         const data: any = segment?.data || {};
         const type = (segment?.type || '') as string;
@@ -166,12 +170,41 @@ export class NapCatConverter extends BaseConverter {
                 };
 
             case 'face':
-                return {
-                    type: 'face',
-                    data: {
-                        id: Number(data.id),
-                    },
-                };
+                {
+                    const faceTextRaw = (data.raw?.faceText || '').toString();
+                    const isDiceFace = /骰/.test(faceTextRaw);
+                    const isRpsFace = /猜拳|石头|剪刀|布|✊|✌|✋/.test(faceTextRaw);
+
+                    if (isDiceFace) {
+                        return {
+                            type: 'dice',
+                            data: {
+                                emoji: '🎲',
+                            },
+                        };
+                    }
+                    if (isRpsFace) {
+                        return {
+                            type: 'dice',
+                            data: {
+                                emoji: '✊✋✌️',
+                            },
+                        };
+                    }
+
+                    const faceId = Number(data.id);
+                    const faceKey = faceId.toString() as keyof typeof qface;
+                    const faceText = typeof data.raw?.faceText === 'string'
+                        ? data.raw.faceText
+                        : qface[faceKey];
+                    return {
+                        type: 'face',
+                        data: {
+                            id: faceId,
+                            text: faceText,
+                        },
+                    };
+                }
 
             case 'forward':
                 // 转发消息需要特殊处理
@@ -196,14 +229,26 @@ export class NapCatConverter extends BaseConverter {
                 };
 
             case 'markdown':
-            case 'json':
-                // 特殊消息类型，保留原始数据
                 return {
                     type: 'text',
                     data: {
-                        text: JSON.stringify(segment.data),
+                        text: data.text || data.content || JSON.stringify(segment.data),
                     },
                 };
+
+            case 'json': {
+                const converted = this.convertJsonCard(data);
+                if (converted) {
+                    return converted;
+                }
+                const fallback = typeof data.data === 'string' ? data.data : JSON.stringify(segment.data);
+                return {
+                    type: 'text',
+                    data: {
+                        text: this.truncateText(fallback),
+                    },
+                };
+            }
 
             case 'mface':
                 // 商城表情，转换为图片
@@ -216,13 +261,21 @@ export class NapCatConverter extends BaseConverter {
                 };
 
             case 'dice':
-            case 'rps':
-                // 骰子和猜拳，转换为 face
                 return {
-                    type: 'face',
+                    type: 'dice',
                     data: {
-                        id: Number(segment.data.result),
-                        text: type === 'dice' ? '🎲' : '✊✋✌️',
+                        emoji: '🎲',
+                        value: Number(segment.data.result),
+                    },
+                };
+
+            case 'rps':
+                // 猜拳：仍走骰子通道，使用手势表情
+                return {
+                    type: 'dice',
+                    data: {
+                        emoji: '✊✋✌️',
+                        value: Number(segment.data.result),
                     },
                 };
 
@@ -230,5 +283,145 @@ export class NapCatConverter extends BaseConverter {
                 this.logger.warn({ type }, 'Unknown NapCat segment type:');
                 return null;
         }
+    }
+
+    /**
+     * 将 NapCat 的 JSON 卡片转换为简短的可读内容，避免在 TG 刷屏
+     */
+    private convertJsonCard(data: any): MessageContent[] | null {
+        const parsed = this.parseJsonData(data?.data);
+        if (!parsed || typeof parsed !== 'object') {
+            return null;
+        }
+
+        const locationMeta =
+            parsed.meta?.['Location.Search'] ||
+            parsed.meta?.Location?.Search ||
+            parsed.meta?.location?.search ||
+            parsed.meta?.location;
+
+        const miniapp = parsed.meta?.miniapp || parsed.meta?.mini_app;
+        const detail =
+            parsed.meta?.detail_1 ||
+            parsed.meta?.news ||
+            parsed.meta?.detail ||
+            parsed.meta?.card ||
+            parsed.meta?.music ||
+            parsed.meta?.video ||
+            parsed.meta?.image;
+
+        const prompt = (parsed.prompt || '').trim();
+        const appName = (miniapp?.title || detail?.title || parsed.app || '').trim();
+        const source = (miniapp?.source || detail?.source || '').trim();
+        const desc = (detail?.desc || prompt || '').trim();
+        const url = this.normalizeUrl(
+            miniapp?.jumpUrl ||
+            miniapp?.pcJumpUrl ||
+            detail?.qqdocurl ||
+            detail?.jumpUrl ||
+            detail?.url
+        );
+        const preview = this.normalizeUrl(
+            miniapp?.preview ||
+            miniapp?.sourcelogo ||
+            detail?.preview ||
+            detail?.image ||
+            detail?.picurl ||
+            detail?.icon
+        );
+
+        const lines: string[] = [];
+        lines.push(appName ? `[QQ小程序] ${appName}` : '[QQ小程序]');
+        if (source) {
+            lines.push(`来源：${source}`);
+        }
+        if (desc) {
+            lines.push(desc);
+        }
+        if (url) {
+            lines.push(url);
+        }
+
+        const text = lines.filter(Boolean).join('\n').trim();
+        if (!text) {
+            return null;
+        }
+
+        const contents: MessageContent[] = [];
+
+        // 如果是位置卡片，优先输出 location 类型
+        if (locationMeta) {
+            const lat = Number(locationMeta.lat ?? locationMeta.latitude);
+            const lng = Number(locationMeta.lng ?? locationMeta.longitude ?? locationMeta.lon);
+            const name = (locationMeta.name || locationMeta.title || appName || '').trim();
+            const address = (locationMeta.address || desc || '').trim();
+            if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+                contents.push({
+                    type: 'location',
+                    data: {
+                        latitude: lat,
+                        longitude: lng,
+                        title: name || undefined,
+                        address: address || undefined,
+                    },
+                });
+            }
+        }
+
+        // 对于位置卡片，避免重复输出小程序占位文本
+        if (!locationMeta) {
+            contents.push({
+                type: 'text',
+                data: { text: this.truncateText(text) },
+            });
+        }
+
+        if (preview) {
+            contents.push({
+                type: 'image',
+                data: {
+                    url: preview,
+                },
+            });
+        }
+
+        return contents;
+    }
+
+    private parseJsonData(data: any): any | null {
+        if (!data) return null;
+        if (typeof data === 'object') return data;
+        if (typeof data !== 'string') return null;
+
+        try {
+            return JSON.parse(data);
+        } catch (error) {
+            this.logger.warn('Failed to parse NapCat json segment', error);
+            return null;
+        }
+    }
+
+    private normalizeUrl(url?: string): string | undefined {
+        if (!url || typeof url !== 'string') return undefined;
+        let normalized = url.trim();
+        if (!normalized) return undefined;
+
+        if (normalized.startsWith('//')) {
+            normalized = `https:${normalized}`;
+        } else if (!/^https?:\/\//.test(normalized)) {
+            if (normalized.startsWith('m.q.qq.com') || normalized.startsWith('qq.ugcimg.cn') || normalized.startsWith('b23.tv')) {
+                normalized = `https://${normalized}`;
+            } else {
+                return undefined;
+            }
+        }
+
+        return normalized;
+    }
+
+    private truncateText(text: string, maxLength = 500): string {
+        if (!text) return '';
+        if (text.length <= maxLength) return text;
+        return `${text.slice(0, maxLength - 3)}...`;
     }
 }

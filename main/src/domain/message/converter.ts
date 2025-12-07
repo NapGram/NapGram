@@ -1,11 +1,13 @@
 import type { UnifiedMessage, MessageContent } from './types';
 import { getLogger } from '../../shared/logger';
-import type { Receive } from 'node-napcat-ts';
 import env from '../models/env';
 import fs from 'fs/promises';
 import path from 'path';
 import fsSync from 'fs';
 import { Message } from '@mtcute/core';
+import { NapCatConverter } from './converters';
+import sharp from 'sharp';
+import { fileTypeFromBuffer } from 'file-type';
 
 const logger = getLogger('MessageConverter');
 
@@ -14,51 +16,13 @@ const logger = getLogger('MessageConverter');
  * Phase 2: 完整支持所有消息类型
  */
 export class MessageConverter {
+    private napCatConverter = new NapCatConverter();
+
     /**
      * 从 NapCat 消息转换为统一格式
      */
     fromNapCat(napCatMsg: any): UnifiedMessage {
-        logger.info(`Converting from NapCat: ${napCatMsg.message_id}`);
-        logger.debug(`Converting NapCat message segments:\n${JSON.stringify(napCatMsg.message, null, 2)}`);
-
-        const content: MessageContent[] = [];
-
-        // 解析消息内容
-        if (napCatMsg.message) {
-            for (const segment of napCatMsg.message) {
-                const converted = this.convertNapCatSegment(segment, napCatMsg);
-                if (converted) {
-                    content.push(converted);
-                }
-            }
-        }
-
-        // 提取发送者名称：优先使用群名片，如果为空则使用昵称
-        const senderCard = napCatMsg.sender?.card?.trim();
-        const senderNickname = napCatMsg.sender?.nickname?.trim();
-        const senderName = (senderCard && senderCard.length > 0) ? senderCard : (senderNickname || 'Unknown');
-
-        return {
-            id: String(napCatMsg.message_id),
-            platform: 'qq',
-            sender: {
-                id: String(napCatMsg.sender?.user_id || napCatMsg.user_id),
-                name: senderName,
-                avatar: napCatMsg.sender?.avatar,
-            },
-            chat: {
-                id: String(napCatMsg.group_id || napCatMsg.user_id),
-                type: napCatMsg.message_type === 'group' ? 'group' : 'private',
-                name: napCatMsg.group_name,
-            },
-            content,
-            timestamp: napCatMsg.time * 1000,
-            metadata: {
-                raw: napCatMsg,
-                messageType: napCatMsg.message_type,
-                subType: napCatMsg.sub_type,
-            },
-        };
+        return this.napCatConverter.fromNapCat(napCatMsg);
     }
 
     /**
@@ -139,14 +103,47 @@ export class MessageConverter {
                 }
             } else if (media.type === 'sticker') {
                 // Treat sticker as image (or file if animated?)
-                // For now, let's treat as image/file
                 content.push({
                     type: 'image',
                     data: {
                         file: media,
+                        mimeType: (media as any).mimeType,
+                        isSticker: true,
                     }
                 });
+            } else if (media.type === 'dice') {
+                content.push({
+                    type: 'dice',
+                    data: {
+                        emoji: (media as any).emoji || '🎲',
+                        value: (media as any).value,
+                    },
+                });
+            } else if (media.type === 'location' || media.type === 'live_location' || media.type === 'venue') {
+                const geo: any = (media as any).geo || (media as any).location || media;
+                content.push({
+                    type: 'location',
+                    data: {
+                        latitude: Number(geo.lat ?? geo.latitude),
+                        longitude: Number(geo.lng ?? geo.longitude ?? geo.lon),
+                        title: (geo.title || geo.name) as any,
+                        address: (geo.address || geo.desc) as any,
+                    },
+                });
             }
+        }
+
+        const geoMsg: any = (tgMsg as any).location;
+        if (geoMsg && !media) {
+            content.push({
+                type: 'location',
+                data: {
+                    latitude: Number(geoMsg.latitude ?? geoMsg.lat),
+                    longitude: Number(geoMsg.longitude ?? geoMsg.lng ?? geoMsg.lon),
+                    title: geoMsg.title,
+                    address: geoMsg.address,
+                },
+            });
         }
 
         if (tgMsg.replyToMessage) {
@@ -211,189 +208,6 @@ export class MessageConverter {
 
     // ============ NapCat 转换辅助方法 ============
 
-    private convertNapCatSegment(segment: any, rawMsg?: any): MessageContent | null {
-        logger.debug(`Converting segment:\n${JSON.stringify(segment, null, 2)}`);
-        const data: any = segment?.data || {};
-        const type = (segment?.type || '') as string;
-        const rawMessage: string | undefined = rawMsg?.raw_message;
-
-        switch (type) {
-            case 'text':
-                return {
-                    type: 'text',
-                    data: { text: data.text },
-                };
-
-            case 'image':
-                {
-                    const httpUrl = (data.url && /^https?:/.test(data.url)) ? data.url : undefined;
-                    const httpFile = (data.file && /^https?:/.test(data.file)) ? data.file : undefined;
-                    const url = httpUrl || httpFile || data.url || data.file;
-                    return {
-                        type: 'image',
-                        data: {
-                            url,
-                            file: httpUrl || data.file,
-                            isSpoiler: data.sub_type && parseInt(data.sub_type) > 0,
-                        },
-                    };
-                }
-
-            case 'video':
-                {
-                    let url = data.url || data.file;
-                    // 优先从 raw_message 提取真实视频 URL（data.url/file 可能是缩略图）
-                    if (rawMessage) {
-                        const m = rawMessage.match(/url=([^,\]]+)/);
-                        if (m && m[1]) {
-                            url = m[1].replace(/&amp;/g, '&'); // 解码 HTML 实体
-                        }
-                    }
-                    // 如果仍然不是 HTTP URL，使用原始值
-                    if (!/^https?:/.test(url || '')) {
-                        url = data.url || data.file;
-                    }
-                    return {
-                        type: 'video',
-                        data: {
-                            url,
-                            file: url,
-                        },
-                    };
-                }
-
-            case 'record':
-                return {
-                    type: 'audio',
-                    data: {
-                        url: data.url || data.file,
-                        file: data.file,
-                    },
-                };
-
-            case 'location':
-                return {
-                    type: 'location',
-                    data: {
-                        latitude: Number(data.lat ?? data.latitude ?? 0),
-                        longitude: Number(data.lng ?? data.longitude ?? 0),
-                        title: data.title,
-                        address: data.address,
-                    },
-                };
-
-            case 'share':
-                return {
-                    type: 'text',
-                    data: {
-                        text: data.url || data.file || rawMessage || '[分享]',
-                    },
-                };
-
-            case 'poke':
-                return {
-                    type: 'text',
-                    data: {
-                        text: `[戳一戳] ${data.name || ''}`.trim(),
-                    },
-                };
-
-            case 'flash':
-                return {
-                    type: 'image',
-                    data: {
-                        url: data.url || data.file,
-                        file: data.file,
-                        isSpoiler: true,
-                    },
-                };
-
-            case 'file':
-                return {
-                    type: 'file',
-                    data: {
-                        url: data.url,
-                        filename: data.file || data.name,
-                        size: data.file_size ? Number(data.file_size) : undefined,
-                    },
-                };
-
-            case 'at':
-                return {
-                    type: 'at',
-                    data: {
-                        userId: String(data.qq),
-                        userName: data.name || '',
-                    },
-                };
-
-            case 'face':
-                return {
-                    type: 'face',
-                    data: {
-                        id: Number(data.id),
-                    },
-                };
-
-            case 'forward':
-                // 转发消息需要特殊处理
-                return {
-                    type: 'forward',
-                    data: {
-                        id: data.id, // Preserve ResID
-                        messages: data.content
-                            ? data.content.map((msg: any) => this.fromNapCat(msg))
-                            : [],
-                    },
-                };
-
-            case 'reply':
-                return {
-                    type: 'reply',
-                    data: {
-                        messageId: String(data.id),
-                        senderId: '',
-                        senderName: '',
-                    },
-                };
-
-            case 'markdown':
-            case 'json':
-                // 特殊消息类型，保留原始数据
-                return {
-                    type: 'text',
-                    data: {
-                        text: JSON.stringify(segment.data),
-                    },
-                };
-
-            case 'mface':
-                // 商城表情，转换为图片
-                return {
-                    type: 'sticker',
-                    data: {
-                        url: data.url,
-                        isAnimated: true,
-                    },
-                };
-
-            case 'dice':
-            case 'rps':
-                // 骰子和猜拳，转换为 face
-                return {
-                    type: 'face',
-                    data: {
-                        id: Number(segment.data.result),
-                        text: type === 'dice' ? '🎲' : '✊✋✌️',
-                    },
-                };
-
-            default:
-                logger.warn('Unknown NapCat segment type:', type);
-                return null;
-        }
-    }
-
     private async saveBufferToTemp(buffer: Buffer, type: 'image' | 'video' | 'audio' | 'file', ext: string, filename?: string): Promise<string> {
         // 尝试使用 NapCat 共享目录 (假设 NapCat 容器内路径也是 /app/.config/QQ)
         const sharedRoot = '/app/.config/QQ';
@@ -446,7 +260,46 @@ export class MessageConverter {
                     {
                         let file = content.data.url || content.data.file;
                         if (Buffer.isBuffer(file)) {
-                            file = await this.saveBufferToTemp(file, 'image', '.jpg');
+                            let targetBuffer = file;
+                            let targetExt = '.jpg';
+                            let detected;
+                            try {
+                                detected = await fileTypeFromBuffer(file);
+                            } catch (e) {
+                                logger.debug('fileTypeFromBuffer failed for image buffer', e);
+                            }
+                            if (content.data.isSticker) {
+                                try {
+                                    logger.debug('Converting sticker buffer for QQ', {
+                                        mimeType: content.data.mimeType,
+                                        detectedExt: detected?.ext,
+                                    });
+                                    // 转成 png，避免 TGS/WEBP 直接当 jpg 触发 QQ 富媒体失败
+                                    targetBuffer = await sharp(file).png().toBuffer();
+                                    targetExt = '.png';
+                                } catch (e) {
+                                    logger.warn('Failed to convert sticker buffer, fallback to text', e);
+                                    segments.push({
+                                        type: 'text',
+                                        data: { text: '[贴纸]' },
+                                    });
+                                    break;
+                                }
+                            }
+                            else if (content.data.mimeType) {
+                                if (content.data.mimeType.includes('webp')) targetExt = '.webp';
+                                else if (content.data.mimeType.includes('png')) targetExt = '.png';
+                            }
+                            else {
+                                if (detected?.ext) targetExt = `.${detected.ext}`;
+                            }
+                            logger.debug('Saving image buffer for QQ', {
+                                isSticker: content.data.isSticker,
+                                mimeType: content.data.mimeType,
+                                detectedExt: detected?.ext,
+                                targetExt,
+                            });
+                            file = await this.saveBufferToTemp(targetBuffer, 'image', targetExt);
                         }
                         segments.push({
                             type: 'image',
@@ -526,9 +379,106 @@ export class MessageConverter {
                         },
                     });
                     break;
+
+                case 'dice':
+                    segments.push({
+                        type: 'dice',
+                        data: {
+                            result: content.data.value ?? Math.floor(Math.random() * 6) + 1,
+                            emoji: content.data.emoji || '🎲',
+                        },
+                    });
+                    break;
+
+                case 'location':
+                    {
+                        const loc = content.data;
+                        const jsonData = this.buildLocationJson(loc, message);
+                        if (jsonData) {
+                            segments.push({
+                                type: 'json',
+                                data: {
+                                    data: jsonData,
+                                },
+                            });
+                        } else {
+                            segments.push({
+                                type: 'location',
+                                data: {
+                                    lat: loc.latitude,
+                                    lng: loc.longitude,
+                                    title: loc.title,
+                                    address: loc.address,
+                                },
+                            });
+                        }
+                        // 文本兜底，方便 QQ 端至少看到坐标/链接
+                        const link = (loc.latitude && loc.longitude)
+                            ? `https://maps.google.com/?q=${loc.latitude},${loc.longitude}`
+                            : '';
+                        const textLines = [
+                            loc.title ? `[位置]${loc.title}` : '[位置]',
+                            loc.address || '',
+                            link,
+                        ].filter(Boolean).join('\n');
+                        if (textLines) {
+                            segments.push({
+                                type: 'text',
+                                data: {
+                                    text: textLines,
+                                },
+                            });
+                        }
+                    }
+                    break;
             }
         }
         return segments;
+    }
+
+    private buildLocationJson(loc: any, message: UnifiedMessage): string | null {
+        if (loc.latitude == null || loc.longitude == null) {
+            return null;
+        }
+        const ctime = Math.floor(Date.now() / 1000);
+        const token = Math.random().toString(16).slice(2, 18);
+        const app = 'com.tencent.map';
+        const prompt = `[位置]${loc.title || loc.address || ''}`;
+
+        const data = {
+            app,
+            config: {
+                autosize: false,
+                ctime,
+                forward: true,
+                token,
+                type: 'normal',
+            },
+            desc: '',
+            from: 1,
+            meta: {
+                'Location.Search': {
+                    address: loc.address || loc.title || '',
+                    enum_relation_type: 1,
+                    from: 'api',
+                    from_account: Number(message?.sender?.id ?? 0),
+                    id: '',
+                    lat: String(loc.latitude),
+                    lng: String(loc.longitude),
+                    name: loc.title || loc.address || '位置',
+                    uint64_peer_account: Number(message?.chat?.id ?? 0),
+                },
+            },
+            prompt,
+            ver: '1.1.2.21',
+            view: 'LocationShare',
+        };
+
+        try {
+            return JSON.stringify(data);
+        } catch {
+            return null;
+        }
     }
 }
 

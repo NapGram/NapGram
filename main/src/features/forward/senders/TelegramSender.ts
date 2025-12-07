@@ -23,6 +23,8 @@ type NormalizedFile = {
     fileMime?: string;
 };
 
+const ALLOWED_TELEGRAM_DICE = new Set(['🎲', '🎯', '🏀', '⚽️', '🎳', '🎰']);
+
 const execFileAsync = promisify(execFile);
 
 export class TelegramSender {
@@ -96,6 +98,38 @@ export class TelegramSender {
                         header = '';
                     }
                     lastSent = await this.sendForwardToTG(chat, content, pair, replyToMsgId, header, richHeaderUsed) || lastSent;
+                    break;
+                case 'location':
+                    if (textParts.length > 0) {
+                        const { text, params } = this.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined);
+                        params.replyTo = replyTo;
+                        if (messageThreadId) params.messageThreadId = messageThreadId;
+
+                        await chat.sendMessage(text, params);
+                        textParts = [];
+                        richHeaderUsed = false;
+                        header = '';
+                    }
+
+                    lastSent = await this.sendLocationToTG(chat, content, replyTo, messageThreadId, header, richHeaderUsed, richHeaderUrl) || lastSent;
+                    richHeaderUsed = false;
+                    header = '';
+                    break;
+                case 'dice':
+                    if (textParts.length > 0) {
+                        const { text, params } = this.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined);
+                        params.replyTo = replyTo;
+                        if (messageThreadId) params.messageThreadId = messageThreadId;
+
+                        await chat.sendMessage(text, params);
+                        textParts = [];
+                        richHeaderUsed = false;
+                        header = '';
+                    }
+
+                    lastSent = await this.sendDiceToTG(chat, content, replyTo, messageThreadId, header, richHeaderUsed, richHeaderUrl, pair) || lastSent;
+                    richHeaderUsed = false;
+                    header = '';
                     break;
                 case 'image':
                 case 'video':
@@ -244,6 +278,42 @@ export class TelegramSender {
                     file: normalized.data,
                     fileName: normalized.fileName,
                 };
+            } else if (content.type === 'location') {
+                const loc = (content as any).data;
+                const isVenue = Boolean((loc.title && loc.title.trim()) || (loc.address && loc.address.trim()));
+                mediaInput = isVenue
+                    ? {
+                        type: 'venue',
+                        latitude: loc.latitude,
+                        longitude: loc.longitude,
+                        title: loc.title || '位置',
+                        address: loc.address || '',
+                        source: { provider: 'qq', id: '', type: '' },
+                    }
+                    : {
+                        type: 'geo',
+                        latitude: loc.latitude,
+                        longitude: loc.longitude,
+                    };
+            } else if (content.type === 'dice') {
+                const emoji = (content as any).data.emoji || '🎲';
+                const value = (content as any).data.value;
+                if (!ALLOWED_TELEGRAM_DICE.has(emoji)) {
+                    // 不支持的 emoji，退回文本
+                    const { text, params } = this.applyRichHeader(header + `${emoji}${value ? ' ' + value : ''}`, richHeaderUsed ? richHeaderUrl : undefined);
+                    params.replyTo = this.buildReplyTo(pair, replyToMsgId);
+                    if (pair?.tgThreadId) params.messageThreadId = Number(pair.tgThreadId);
+                    try {
+                        return await chat.sendMessage(text, params);
+                    } catch (e) {
+                        this.logger.error(e, 'Failed to send fallback text for dice:');
+                        throw e;
+                    }
+                }
+                mediaInput = {
+                    type: 'dice',
+                    emoji,
+                };
             }
 
             if (mediaInput) {
@@ -264,6 +334,70 @@ export class TelegramSender {
             this.logger.error(e, 'Failed to send media to TG:');
         }
         return null;
+    }
+
+    private async sendLocationToTG(chat: any, content: MessageContent, replyTo?: number, messageThreadId?: number, header?: string, richHeaderUsed?: boolean, richHeaderUrl?: string) {
+        const loc = (content as any).data || {};
+        if (loc.latitude == null || loc.longitude == null) {
+            return null;
+        }
+
+        const isVenue = Boolean((loc.title && loc.title.trim()) || (loc.address && loc.address.trim()));
+        const mediaInput = isVenue
+            ? {
+                type: 'venue',
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+                title: loc.title || '位置',
+                address: loc.address || '',
+                source: { provider: 'qq', id: '', type: '' },
+            }
+            : {
+                type: 'geo',
+                latitude: loc.latitude,
+                longitude: loc.longitude,
+            };
+
+        const captionText = header && header.trim() ? header : undefined;
+        const sendParams: any = {
+            replyTo,
+            caption: captionText,
+        };
+        if (messageThreadId) sendParams.messageThreadId = messageThreadId;
+        if (!sendParams.replyTo) delete sendParams.replyTo;
+        if (!captionText) delete sendParams.caption;
+
+        return await chat.client.sendMedia(chat.id, mediaInput, sendParams);
+    }
+
+    private async sendDiceToTG(chat: any, content: MessageContent, replyTo?: number, messageThreadId?: number, header?: string, richHeaderUsed?: boolean, richHeaderUrl?: string, pair?: any) {
+        const dice = (content as any).data || {};
+        const emoji = dice.emoji || '🎲';
+        const value = dice.value;
+
+        // Telegram 仅支持固定骰子 emoji，猜拳类（✊✋✌️）走文本兜底
+        if (!ALLOWED_TELEGRAM_DICE.has(emoji)) {
+            // 以实际观察为准：1=布，2=剪刀，3=石头
+            const rpsMap: Record<number, string> = {
+                1: '✋ 布',
+                2: '✌️ 剪刀',
+                3: '✊ 石头',
+            };
+            const choice = value && rpsMap[value] ? rpsMap[value] : `${emoji}`;
+            const text = `发来一个石头剪刀布：${choice}`;
+            const { text: msgText, params } = this.applyRichHeader(header ? `${header}${text}` : text, richHeaderUsed ? richHeaderUrl : undefined);
+            params.replyTo = replyTo;
+            if (messageThreadId) params.messageThreadId = messageThreadId;
+            return await chat.sendMessage(msgText, params);
+        }
+
+        const params: any = {
+            replyTo,
+        };
+        if (messageThreadId) params.messageThreadId = messageThreadId;
+        if (!params.replyTo) delete params.replyTo;
+
+        return await chat.client.sendMedia(chat.id, { type: 'dice', emoji }, params);
     }
 
     private async resolveMediaInput(content: MessageContent): Promise<any> {
