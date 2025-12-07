@@ -8,6 +8,7 @@ import ForwardMap from '../../domain/models/ForwardMap';
 import { MediaFeature } from '../media/MediaFeature';
 import { CommandsFeature } from '../commands/CommandsFeature';
 import env from '../../domain/models/env';
+import sharp from 'sharp';
 import db from '../../domain/models/db';
 import flags from '../../domain/constants/flags';
 import { Message } from '@mtcute/core';
@@ -18,6 +19,7 @@ import silk from '../../shared/encoding/silk';
 import { promisify } from 'util';
 import { execFile } from 'child_process';
 import { fileTypeFromBuffer } from 'file-type';
+import convert from '../../shared/helpers/convert';
 
 import { TelegramSender } from './senders/TelegramSender';
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor';
@@ -71,7 +73,7 @@ export class ForwardFeature {
     private setupListeners() {
         this.qqClient.on('message', this.handleQQMessage);
         this.tgBot.addNewMessageEventHandler(this.handleTGMessage);
-        logger.debug('ForwardFeature listeners attached');
+        logger.debug('[ForwardFeature] listeners attached');
     }
 
     public nicknameMode: string = env.SHOW_NICKNAME_MODE;
@@ -89,6 +91,11 @@ export class ForwardFeature {
                 logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`);
                 return;
             }
+            logger.info('[Forward][QQ->TG] incoming', {
+                qqMsgId: msg.id,
+                qqRoomId: msg.chat.id,
+                tgChatId: pair.tgChatId,
+            });
 
             // Sender Blocklist Filter
             if (pair.ignoreSenders) {
@@ -134,7 +141,7 @@ export class ForwardFeature {
 
             if (sentMsg) {
                 await this.mapper.saveMessage(msg, sentMsg, pair.instanceId, pair.qqRoomId, BigInt(tgChatId));
-                logger.info(`[Forward] QQ message ${msg.id} -> TG ${tgChatId} (id: ${sentMsg.id})`);
+                logger.info(`[Forward][QQ->TG] message ${msg.id} -> TG ${tgChatId} (id: ${sentMsg.id})`);
             }
         } catch (error) {
             logger.error('Failed to forward QQ message:', error);
@@ -216,7 +223,7 @@ export class ForwardFeature {
     private handleTGMessage = async (tgMsg: Message) => {
         try {
             const rawText = tgMsg.text || '';
-            logger.info('[Forward] TG incoming', {
+            logger.info('[Forward][TG->QQ] incoming', {
                 id: tgMsg.id,
                 chatId: tgMsg.chat.id,
                 text: rawText.slice(0, 100),
@@ -246,6 +253,12 @@ export class ForwardFeature {
                 logger.debug(`No QQ mapping for TG chat ${tgMsg.chat.id} thread ${threadId || 'none'}`);
                 return;
             }
+            logger.info('[Forward][TG->QQ] resolved', {
+                tgMsgId: tgMsg.id,
+                tgChatId: tgMsg.chat.id,
+                threadId,
+                qqRoomId: pair.qqRoomId,
+            });
 
             const unified = messageConverter.fromTelegram(tgMsg as any);
             await this.prepareMediaForQQ(unified);
@@ -437,7 +450,69 @@ export class ForwardFeature {
         await Promise.all(msg.content.map(async (content) => {
             try {
                 if (content.type === 'image') {
-                    content.data.file = await this.ensureFilePath(await this.ensureBufferOrPath(content as ImageContent), '.jpg');
+                    const img = content as ImageContent;
+                    const bufferOrPath = await this.ensureBufferOrPath(img);
+                    let targetFile: Buffer | string | undefined = bufferOrPath;
+                    let targetExt = '.jpg';
+
+                    if (Buffer.isBuffer(bufferOrPath)) {
+                        let detected;
+                        try {
+                            detected = await fileTypeFromBuffer(bufferOrPath);
+                        } catch (e) {
+                            logger.debug('fileTypeFromBuffer failed in prepareMediaForQQ', e);
+                        }
+
+                        if (img.data.isSticker) {
+                            if (img.data.mimeType?.includes('tgsticker') || detected?.ext === 'gz') {
+                                logger.debug('Preparing TG animated sticker for QQ (tgs->gif)');
+                                try {
+                                    const key = `tgsticker-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+                                    const gifPath = await convert.tgs2gif(key, () => Promise.resolve(bufferOrPath));
+                                    const gifBuffer = await fs.promises.readFile(gifPath);
+                                    targetFile = gifBuffer;
+                                    targetExt = '.gif';
+                                    logger.debug('TGS converted to gif for QQ', { gifPath, size: gifBuffer.length });
+                                } catch (e) {
+                                    logger.warn('TGS convert failed, fallback to text', e);
+                                    content.type = 'text';
+                                    (content as any).data = { text: '[贴纸]' };
+                                    return;
+                                }
+                            }
+                            else {
+                                logger.debug('Preparing QQ sticker image', {
+                                    mimeType: img.data.mimeType,
+                                    detectedExt: detected?.ext,
+                                });
+                                try {
+                                    targetFile = await sharp(bufferOrPath).png().toBuffer();
+                                    targetExt = '.png';
+                                } catch (e) {
+                                    logger.warn('Sticker convert to png failed, fallback raw buffer', e);
+                                    targetFile = bufferOrPath;
+                                    targetExt = detected?.ext ? `.${detected.ext}` : '.jpg';
+                                }
+                            }
+
+                        } else {
+                            if (img.data.mimeType) {
+                                if (img.data.mimeType.includes('webp')) targetExt = '.webp';
+                                else if (img.data.mimeType.includes('png')) targetExt = '.png';
+                            } else if (detected?.ext) {
+                                targetExt = `.${detected.ext}`;
+                            }
+                        }
+
+                        logger.debug('Saving media for QQ', {
+                            isSticker: img.data.isSticker,
+                            mimeType: img.data.mimeType,
+                            detectedExt: detected?.ext,
+                            targetExt,
+                        });
+                    }
+
+                    content.data.file = await this.ensureFilePath(targetFile, targetExt);
                 } else if (content.type === 'video') {
                     // 使用可外网访问的 URL，NapCat 发送视频需要 URL 而非本地路径
                     content.data.file = await this.ensureFilePath(await this.ensureBufferOrPath(content as VideoContent), '.mp4', false);

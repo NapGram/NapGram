@@ -92,7 +92,10 @@ function MessageBubble({ msg, idx }: { msg: Message; idx: number }) {
             {/* 头像容器：50px固定宽度 */}
             <div className="w-[50px] min-w-[50px] max-w-[50px] flex justify-center items-end">
                 {/* 36px头像，底部sticky定位 */}
-                <Avatar className="h-9 w-9 sticky bottom-2.5 z-[2]">
+                <Avatar
+                    className="h-9 w-9 sticky bottom-2.5 z-[2]"
+                    style={{ width: '36px', height: '36px', minWidth: '36px' }}
+                >
                     <AvatarImage
                         src={avatar}
                         alt={name}

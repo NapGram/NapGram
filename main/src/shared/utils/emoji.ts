@@ -1,4 +1,4 @@
-import random from '../../shared/utils/random';
+import random from './random';
 
 export default {
   picture: () => random.pick('🎆', '🌃', '🌇', '🎇', '🌌', '🌠', '🌅', '🌉', '🏞', '🌆', '🌄', '🖼', '🗾', '🎑', '🏙', '🌁'),

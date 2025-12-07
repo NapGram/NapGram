@@ -18,13 +18,17 @@ export function renderContent(content: MessageContent): string {
             return `@${name}`;
         }
         case 'face':
-            return content.data.text || '[表情]';
+            if (content.data.text) return content.data.text;
+            if (content.data.id != null) return `[QQ表情${content.data.id}]`;
+            return '[表情]';
         case 'reply':
             return `(回复 ${content.data.messageId}${content.data.text ? ':' + content.data.text : ''})`;
         case 'forward':
             return `[转发消息x${content.data.messages?.length ?? 0}]`;
         case 'location':
-            return `[位置:${content.data.title ?? ''} ${content.data.latitude},${content.data.longitude}]`;
+            return `[位置:${content.data.title ?? ''} ${content.data.latitude},${content.data.longitude}${content.data.address ? ' ' + content.data.address : ''}]`;
+        case 'dice':
+            return `${content.data.emoji || '🎲'}${content.data.value ? ' ' + content.data.value : ''}`;
         default:
             return `[${content.type}]`;
     }
