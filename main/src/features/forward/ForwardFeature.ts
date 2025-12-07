@@ -38,6 +38,13 @@ export class ForwardFeature {
     private mapper: ForwardMapper;
     private replyResolver: ReplyResolver;
 
+    // Media Group buffer for TG->QQ batching
+    private mediaGroupBuffer = new Map<string, {
+        messages: Message[];
+        timer: NodeJS.Timeout;
+        pair: any;
+    }>();
+
     constructor(
         private readonly instance: Instance,
         private readonly tgBot: Telegram,
@@ -124,7 +131,7 @@ export class ForwardFeature {
                         return;
                     }
                 } catch (e) {
-                        logger.warn(`Invalid ignoreRegex for pair ${pair.id}: ${pair.ignoreRegex}`, e);
+                    logger.warn(`Invalid ignoreRegex for pair ${pair.id}: ${pair.ignoreRegex}`, e);
                 }
             }
 
@@ -259,6 +266,13 @@ export class ForwardFeature {
                 threadId,
                 qqRoomId: pair.qqRoomId,
             });
+
+            // Check if this is a Media Group message
+            const isMediaGroup = await this.handleMediaGroup(tgMsg, pair);
+            if (isMediaGroup) {
+                // Message is buffered, skip normal processing
+                return;
+            }
 
             const unified = messageConverter.fromTelegram(tgMsg as any);
             await this.prepareMediaForQQ(unified);
@@ -657,6 +671,111 @@ export class ForwardFeature {
     }
 
 
+
+    /**
+     * Handle Media Group batching for TG->QQ
+     * @returns true if the message is part of a media group and is buffered
+     */
+    private async handleMediaGroup(tgMsg: Message, pair: any): Promise<boolean> {
+        const groupId = (tgMsg as any).mediaGroupId || (tgMsg as any).raw?.groupedId?.toString();
+
+        if (!groupId) return false;  // Not a media group
+
+        logger.info(`[MediaGroup] Message ${tgMsg.id} belongs to group ${groupId}`);
+
+        if (!this.mediaGroupBuffer.has(groupId)) {
+            // First message in this group
+            this.mediaGroupBuffer.set(groupId, {
+                messages: [tgMsg],
+                timer: setTimeout(() => {
+                    this.flushMediaGroup(groupId).catch(err => {
+                        logger.error('Failed to flush media group:', err);
+                    });
+                }, 1000),  // 1 second delay
+                pair,
+            });
+            logger.info(`[MediaGroup] Started buffer for group ${groupId}`);
+        } else {
+            // Subsequent message in same group
+            const buffer = this.mediaGroupBuffer.get(groupId)!;
+            buffer.messages.push(tgMsg);
+
+            // Reset timer
+            clearTimeout(buffer.timer);
+            buffer.timer = setTimeout(() => {
+                this.flushMediaGroup(groupId).catch(err => {
+                    logger.error('Failed to flush media group:', err);
+                });
+            }, 1000);
+            logger.info(`[MediaGroup] Added message to group ${groupId} (total: ${buffer.messages.length})`);
+        }
+
+        return true;  // Message is buffered
+    }
+
+    /**
+     * Flush buffered Media Group messages to QQ
+     */
+    private async flushMediaGroup(groupId: string) {
+        const buffer = this.mediaGroupBuffer.get(groupId);
+        if (!buffer) return;
+
+        this.mediaGroupBuffer.delete(groupId);
+        logger.info(`[MediaGroup] Flushing group ${groupId} with ${buffer.messages.length} messages`);
+
+        // Sort by message ID to preserve order
+        buffer.messages.sort((a, b) => a.id - b.id);
+
+        // Build QQ message chain
+        const napCatSegments: any[] = [];
+
+        for (const msg of buffer.messages) {
+            const unified = messageConverter.fromTelegram(msg as any);
+            await this.prepareMediaForQQ(unified);
+
+            // Extract media elements (image/video)
+            const mediaContent = unified.content.filter(c => ['image', 'video'].includes(c.type));
+            const segments = await messageConverter.toNapCat({ ...unified, content: mediaContent });
+            napCatSegments.push(...segments);
+        }
+
+        // Get caption from last message
+        const lastMsg = buffer.messages[buffer.messages.length - 1];
+        const caption = (lastMsg as any).text || (lastMsg as any).caption;
+        if (caption) {
+            napCatSegments.push({ type: 'text', data: { text: caption } });
+        }
+
+        const showTGToQQNickname = this.nicknameMode[1] === '1';
+        if (showTGToQQNickname) {
+            const firstMsg = buffer.messages[0];
+            const unified = messageConverter.fromTelegram(firstMsg as any);
+            const headerText = `${unified.sender.name}:\n`;
+            napCatSegments.unshift({ type: 'text', data: { text: headerText } });
+        }
+
+        // Send to QQ
+        try {
+            const msgWithSegments: UnifiedMessage = {
+                id: String(lastMsg.id),
+                platform: 'telegram' as const,
+                chat: { id: String(buffer.pair.qqRoomId), type: 'group' as const, name: '' },
+                sender: { id: String(lastMsg.sender?.id || '0'), name: '', avatar: '' },
+                timestamp: Math.floor(lastMsg.date.getTime() / 1000),
+                content: napCatSegments as any,
+            };
+            (msgWithSegments as any).__napCatSegments = true;
+
+            const receipt = await this.qqClient.sendMessage(String(buffer.pair.qqRoomId), msgWithSegments);
+
+            if (receipt.success) {
+                const msgId = receipt.messageId || (receipt as any).data?.message_id || (receipt as any).id;
+                logger.info(`[MediaGroup] Flushed group ${groupId} -> QQ ${buffer.pair.qqRoomId} (seq: ${msgId})`);
+            }
+        } catch (error) {
+            logger.error(`[MediaGroup] Failed to flush group ${groupId}:`, error);
+        }
+    }
 
     destroy() {
         this.qqClient.removeListener('message', this.handleQQMessage);

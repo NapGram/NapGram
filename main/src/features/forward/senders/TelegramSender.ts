@@ -430,6 +430,25 @@ export class TelegramSender {
 
         // Multiple media: build Media Group
         this.logger.info(`Sending Media Group with ${mediaItems.length} items`);
+
+        // Send separate Rich Header message before Media Group
+        if (richHeaderUsed && richHeaderUrl) {
+            const actionText = '发来一组图文消息：';
+            const { text, params } = this.applyRichHeader(actionText, richHeaderUrl);
+            params.replyTo = this.buildReplyTo(pair, replyToMsgId);
+            if (pair?.tgThreadId) {
+                params.messageThreadId = Number(pair.tgThreadId);
+            }
+
+            try {
+                await chat.sendMessage(text, params);
+                this.logger.info('[Forward] Sent Rich Header before Media Group');
+                richHeaderUsed = false;  // Mark as consumed
+            } catch (e) {
+                this.logger.warn(e, 'Failed to send Rich Header before Media Group:');
+            }
+        }
+
         const mediaInputs: any[] = [];
 
         for (const media of mediaItems) {
@@ -461,22 +480,21 @@ export class TelegramSender {
             return null;
         }
 
-        // Combine header + caption for the first media
+        // Combine header + caption for Media Group
+        // Do NOT use Rich Header URL (already sent separately)
         let fullCaption = '';
-        if (header) {
+        if (header && !richHeaderUsed) {
+            // Only use text header if Rich Header was not sent separately
             fullCaption += header;
         }
         if (caption) {
-            fullCaption += (header ? '' : '') + caption;  // Header already has \n
+            fullCaption += caption;
         }
 
-        // Apply caption and formatting to the first media
+        // Use plain text caption (no Rich Header link preview)
         if (fullCaption && mediaInputs[0]) {
-            const { text, params } = this.applyRichHeader(fullCaption, richHeaderUsed ? richHeaderUrl : undefined);
-            mediaInputs[0].caption = text;
-            if (params.parseMode) {
-                mediaInputs[0].parseMode = params.parseMode;
-            }
+            mediaInputs[0].caption = fullCaption;
+            mediaInputs[0].parseMode = 'html';
         }
 
         // Build send parameters
