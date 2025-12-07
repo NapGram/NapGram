@@ -739,9 +739,15 @@ export class ForwardFeature {
             napCatSegments.push(...segments);
         }
 
-        // Get caption/text from last message (mtcute uses .text for both caption and text)
-        const lastMsg = buffer.messages[buffer.messages.length - 1];
-        const caption = lastMsg.text;  // mtcute Message.text includes caption for media messages
+        // Get caption/text from any message in the group (find first non-empty text)
+        // In Telegram Media Groups, caption can be on any photo, usually the first one
+        let caption = '';
+        for (const msg of buffer.messages) {
+            if (msg.text && msg.text.trim()) {
+                caption = msg.text;
+                break;  // Use first non-empty caption found
+            }
+        }
         if (caption) {
             napCatSegments.push({ type: 'text', data: { text: caption } });
         }
@@ -756,6 +762,8 @@ export class ForwardFeature {
 
         // Send to QQ
         try {
+            // Use last message for metadata (ID, timestamp, etc)
+            const lastMsg = buffer.messages[buffer.messages.length - 1];
             const msgWithSegments: UnifiedMessage = {
                 id: String(lastMsg.id),
                 platform: 'telegram' as const,
