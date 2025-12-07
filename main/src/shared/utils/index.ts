@@ -6,5 +6,6 @@ export * from './hashing';
 export * from './highLevelFunces';
 export * from './pastebin';
 export * from './processNestedForward';
+export { default as emojiUtils } from './emoji';
 export * from './random';
 export * from './urls';

@@ -122,7 +122,7 @@ describe('MessageConverter', () => {
     });
 
     describe('toNapCat', () => {
-        it('should convert text message to NapCat format', () => {
+        it('should convert text message to NapCat format', async () => {
             const unifiedMsg: UnifiedMessage = {
                 id: '123',
                 platform: 'qq',
@@ -143,14 +143,14 @@ describe('MessageConverter', () => {
                 timestamp: 1234567890000,
             };
 
-            const result = converter.toNapCat(unifiedMsg);
+            const result = await converter.toNapCat(unifiedMsg);
 
             expect(result).toHaveLength(1);
             expect(result[0].type).toBe('text');
             expect(result[0].data.text).toBe('Hello World');
         });
 
-        it('should convert image message to NapCat format', () => {
+        it('should convert image message to NapCat format', async () => {
             const unifiedMsg: UnifiedMessage = {
                 id: '123',
                 platform: 'qq',
@@ -171,10 +171,10 @@ describe('MessageConverter', () => {
                         },
                     },
                 ],
-                timestamp: 1234567890000,
+                timestamp: 1234567890000, 
             };
 
-            const result = converter.toNapCat(unifiedMsg);
+            const result = await converter.toNapCat(unifiedMsg);
 
             expect(result).toHaveLength(1);
             expect(result[0].type).toBe('image');
@@ -182,7 +182,7 @@ describe('MessageConverter', () => {
             expect(result[0].data.sub_type).toBe('0');
         });
 
-        it('should convert spoiler image to NapCat format', () => {
+        it('should convert spoiler image to NapCat format', async () => {
             const unifiedMsg: UnifiedMessage = {
                 id: '123',
                 platform: 'qq',
@@ -206,7 +206,7 @@ describe('MessageConverter', () => {
                 timestamp: 1234567890000,
             };
 
-            const result = converter.toNapCat(unifiedMsg);
+            const result = await converter.toNapCat(unifiedMsg);
 
             expect(result[0].data.sub_type).toBe('7');
         });
