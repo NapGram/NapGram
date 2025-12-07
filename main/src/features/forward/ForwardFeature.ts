@@ -180,53 +180,9 @@ export class ForwardFeature {
                 return;
             }
 
+
             // Use ThreadIdExtractor to get threadId from raw message or wrapper
             const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg);
-
-            // 兜底处理 /bind，防止命令层未捕获
-            if (rawText.startsWith('/bind') || rawText.startsWith('/unbind')) {
-                const tokens = rawText.split(/\s+/);
-                // 支持 /bind@bot 格式
-                if (tokens[0].includes('@')) tokens[0] = tokens[0].split('@')[0];
-                const cmd = tokens[0].replace('/', '');
-                const qqId = tokens[1];
-                const chatId = tgMsg.chat.id;
-                const senderId = tgMsg.sender.id;
-
-                if (!this.isAdmin(String(senderId))) {
-                    await this.replyTG(chatId, '无权限执行该命令', threadId);
-                    return;
-                }
-
-                if (cmd === 'bind') {
-                    if (!qqId || !/^-?\d+$/.test(qqId) || !chatId) {
-                        await this.replyTG(chatId, '用法：/bind <qq_group_id> [thread_id]', threadId);
-                        return;
-                    }
-
-                    const bindThreadId = tokens[2] ? parseInt(tokens[2]) : undefined;
-                    const existed = this.forwardMap.findByQQ(qqId) || this.forwardMap.findByTG(chatId, bindThreadId);
-                    if (existed) {
-                        await this.replyTG(chatId, '该 QQ 或 TG 已存在绑定', threadId);
-                        return;
-                    }
-
-                    await this.forwardMap.add(qqId, chatId, bindThreadId);
-                    const threadInfo = bindThreadId ? ` (话题 ${bindThreadId})` : '';
-                    await this.replyTG(chatId, `绑定成功：QQ ${qqId} <-> TG ${chatId}${threadInfo}`, threadId);
-                } else if (cmd === 'unbind') {
-                    const target = qqId && /^-?\d+$/.test(qqId)
-                        ? this.forwardMap.findByQQ(qqId)
-                        : this.forwardMap.findByTG(chatId);
-                    if (!target) {
-                        await this.replyTG(chatId, '未找到绑定关系', threadId);
-                        return;
-                    }
-                    await this.forwardMap.remove(target.qqRoomId);
-                    await this.replyTG(chatId, `已解绑：QQ ${target.qqRoomId} <-> TG ${target.tgChatId}`, threadId);
-                }
-                return;
-            }
 
             // Check forward mode (TG -> QQ is index 1)
             if (this.forwardMode[1] === '0') {

@@ -15,7 +15,7 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
     && rm -rf /var/lib/apt/lists/*
 
 # 指定 pnpm 版本防止变动
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@latest --activate && npm install -g npm@latest
 WORKDIR /app
 
 FROM base AS build

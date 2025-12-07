@@ -139,7 +139,11 @@ export default class Telegram {
   private onMessage = async (msg: Message) => {
     this.logger.info(`[TG] recv ${msg.id} from ${msg.chat.id}`);
     for (const handler of this.onMessageHandlers) {
-      await handler(msg);
+      const result = await handler(msg);
+      // 如果 handler 返回 true，表示消息已被处理，停止调用后续 handler
+      if (result === true) {
+        return;
+      }
     }
   };
 
@@ -150,7 +154,8 @@ export default class Telegram {
   };
 
   private onDeleteMessage = async (update: any) => {
-    this.logger.info(`[TG] message deleted in ${update.channelId}: ${update.messages.join(', ')}`);
+    const ids = update.messageIds || update.messages || [];
+    this.logger.info(`[TG] message deleted in ${update.channelId || update.chatId}: ${ids.join(', ')}`);
     for (const handler of this.onDeletedMessageHandlers) {
       await handler(update);
     }
