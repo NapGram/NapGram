@@ -58,11 +58,17 @@ export default class TelegramSession {
     this.log.trace('save session string');
     this._sessionString = session;
     if (this._dbId) {
-      await db.session.update({
+      await db.session.upsert({
         where: { id: this._dbId },
-        data: {
+        update: {
           authKey: Buffer.from(session, 'utf-8'),
-        }
+        },
+        create: {
+          id: this._dbId,
+          dcId: env.TG_INITIAL_DCID || 2,
+          serverAddress: env.TG_INITIAL_SERVER || '149.154.167.50',
+          authKey: Buffer.from(session, 'utf-8'),
+        },
       });
     }
   }

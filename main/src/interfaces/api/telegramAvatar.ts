@@ -60,20 +60,23 @@ const getUserAvatarPath = async (tgBot: Telegram, userId: string) => {
 };
 
 export default new Elysia()
-  .get('/telegramAvatar/:instanceId/:userId', async ({ params, set }) => {
-    log.debug('请求头像', params.userId);
-    const instance = Instance.instances.find(it => it.id.toString() === params.instanceId);
-    if (!instance) {
-      set.status = 404;
-      return 'Instance not found';
-    }
-    const avatar = await getUserAvatarPath(instance.tgBot, params.userId);
+  .get('/telegramAvatar/:instanceId/:userId', ({ params, set }) => handleRequest(params.instanceId, params.userId, set))
+  .get('/api/avatar/telegram/:instanceId/:userId', ({ params, set }) => handleRequest(params.instanceId, params.userId, set));
 
-    if (!avatar) {
-      set.status = 404;
-      return 'Not Found';
-    }
+async function handleRequest(instanceId: string, userId: string, set: any) {
+  log.debug('请求头像', userId);
+  const instance = Instance.instances.find(it => it.id.toString() === instanceId);
+  if (!instance) {
+    set.status = 404;
+    return 'Instance not found';
+  }
+  const avatar = await getUserAvatarPath(instance.tgBot, userId);
 
-    set.headers['content-type'] = 'image/jpeg';
-    return fs.createReadStream(avatar);
-  });
+  if (!avatar) {
+    set.status = 404;
+    return 'Not Found';
+  }
+
+  set.headers['content-type'] = 'image/jpeg';
+  return fs.createReadStream(avatar);
+}

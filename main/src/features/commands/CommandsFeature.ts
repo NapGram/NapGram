@@ -7,6 +7,7 @@ import type Instance from '../../domain/models/Instance';
 import ForwardMap from '../../domain/models/ForwardMap';
 import env from '../../domain/models/env';
 import db from '../../domain/models/db';
+import { ThreadIdExtractor } from './services/ThreadIdExtractor';
 
 const logger = getLogger('CommandsFeature');
 
@@ -34,6 +35,8 @@ export interface Command {
 export class CommandsFeature {
     private commands = new Map<string, Command>();
     private readonly commandPrefix = '/';
+    // Key: `${chatId}:${userId}`
+    private bindingStates = new Map<string, { threadId?: number, userId: string, timestamp: number }>();
 
     constructor(
         private readonly instance: Instance,
@@ -145,8 +148,7 @@ export class CommandsFeature {
 
     private handleTgMessage = async (tgMsg: Message): Promise<boolean> => {
         try {
-            const text = tgMsg.text || '';
-
+            const text = tgMsg.text;
             const chatId = tgMsg.chat.id;
             const senderId = tgMsg.sender.id;
 
@@ -158,17 +160,81 @@ export class CommandsFeature {
                 text: (text || '').slice(0, 200),
             });
 
+            // 检查是否有正在进行的绑定操作
+            const stateKey = `${chatId}:${senderId}`;
+            const bindingState = this.bindingStates.get(stateKey);
+
+            // 如果有等待输入的绑定状态，且消息不是命令（防止命令嵌套）
+            if (bindingState && text && !text.startsWith(this.commandPrefix)) {
+                // 检查是否超时（例如 5 分钟）
+                if (Date.now() - bindingState.timestamp > 5 * 60 * 1000) {
+                    this.bindingStates.delete(stateKey);
+                    await this.replyTG(chatId, '绑定操作已超时，请重新开始', bindingState.threadId);
+                    return true; // 即使超时也视为已处理（防止误触其他逻辑）
+                }
+
+                // 尝试解析 QQ 群号
+                if (/^-?\d+$/.test(text.trim())) {
+                    const qqGroupId = text.trim();
+                    const threadId = bindingState.threadId;
+
+                    // 执行绑定逻辑
+                    const forwardMap = this.instance.forwardPairs as ForwardMap;
+
+                    // 检查冲突
+                    const tgOccupied = forwardMap.findByTG(chatId, threadId, false);
+                    if (tgOccupied && tgOccupied.qqRoomId.toString() !== qqGroupId) {
+                        await this.replyTG(chatId, `绑定失败：该 TG 话题已绑定到其他 QQ 群 (${tgOccupied.qqRoomId})`, threadId);
+                        this.bindingStates.delete(stateKey);
+                        return true;
+                    }
+
+                    try {
+                        const rec = await forwardMap.add(qqGroupId, chatId, threadId);
+                        if (rec && rec.qqRoomId.toString() !== qqGroupId) {
+                            await this.replyTG(chatId, '绑定失败：检测到冲突，请检查现有绑定', threadId);
+                        } else {
+                            const threadInfo = threadId ? ` (话题 ${threadId})` : '';
+                            await this.replyTG(chatId, `绑定成功：QQ ${qqGroupId} <-> TG ${chatId}${threadInfo}`, threadId);
+                            logger.info(`Interactive Bind: QQ ${qqGroupId} <-> TG ${chatId}${threadInfo}`);
+                        }
+                    } catch (e) {
+                        logger.error('Interactive bind failed:', e);
+                        await this.replyTG(chatId, '绑定过程中发生错误', threadId);
+                    }
+
+                    this.bindingStates.delete(stateKey);
+                    return true;
+                } else {
+                    // 输入非数字，视为取消
+                    await this.replyTG(chatId, '输入格式错误或已取消绑定操作', bindingState.threadId);
+                    this.bindingStates.delete(stateKey);
+                    return true;
+                }
+            }
+
             if (!text || !text.startsWith(this.commandPrefix)) return false;
             if (!chatId) return false;
 
             const senderName = tgMsg.sender.displayName || `${senderId}`;
 
-            // 兼容 /cmd@bot 的写法
+            // 兼容 /cmd@bot 的写法，并解决多 bot 冲突
             const parts = text.slice(this.commandPrefix.length).split(/\s+/);
-            if (parts[0].includes('@')) {
-                parts[0] = parts[0].split('@')[0];
+            let commandName = parts[0];
+
+            if (commandName.includes('@')) {
+                const [cmd, targetBot] = commandName.split('@');
+                const myUsername = this.tgBot.me?.username;
+
+                // 如果指定了 bot 但不是我，则忽略该命令
+                if (targetBot && myUsername && targetBot.toLowerCase() !== myUsername.toLowerCase()) {
+                    logger.debug(`Ignored command for other bot: ${targetBot}`);
+                    return false;
+                }
+                commandName = cmd;
             }
-            const commandName = parts[0].toLowerCase();
+
+            commandName = commandName.toLowerCase();
             const args = parts.slice(1);
 
             const command = this.commands.get(commandName);
@@ -267,20 +333,23 @@ export class CommandsFeature {
     }
 
     private extractThreadId(msg: UnifiedMessage, args: string[]) {
+        // 1. 优先从命令参数获取（显式指定）
         const arg = args[1];
-        if (arg && /^\d+$/.test(arg)) return Number(arg);
-
-        const raw = (msg.metadata as any)?.raw as any;
-        const replyTo = raw?.replyTo;
-        const candidates = [
-            replyTo?.replyToTopId,
-            replyTo?.replyToMsgId,
-        ];
-
-        for (const candidate of candidates) {
-            if (typeof candidate === 'number') return candidate;
+        if (arg && /^\d+$/.test(arg)) {
+            logger.info(`[extractThreadId] From arg: ${arg}`);
+            return Number(arg);
         }
 
+        // 2. 使用 ThreadIdExtractor 从消息元数据中提取
+        const raw = (msg.metadata as any)?.raw;
+        if (raw) {
+            const threadId = new ThreadIdExtractor().extractFromRaw(raw);
+            logger.info(`[extractThreadId] From raw: ${threadId}, raw keys: ${Object.keys(raw).join(',')}`);
+            if (threadId) return threadId;
+        }
+
+        // 3. 回退：无 thread
+        logger.info(`[extractThreadId] No thread ID found`);
         return undefined;
     }
 
@@ -463,31 +532,47 @@ export class CommandsFeature {
      * 绑定命令处理器
      */
     private handleBind = async (msg: UnifiedMessage, args: string[]) => {
+        const threadId = this.extractThreadId(msg, args);
+
         if (args.length < 1) {
-            await this.replyTG(msg.chat.id, '用法：/bind <qq_group_id> [thread_id]');
+            // 进入交互式绑定流程
+            const stateKey = `${msg.chat.id}:${msg.sender.id}`;
+            this.bindingStates.set(stateKey, {
+                threadId,
+                userId: msg.sender.id,
+                timestamp: Date.now()
+            });
+
+            const tip = `请输入要绑定的 QQ 群号...
+(回复非数字取消)
+
+提示：也可以直接发送完整命令，如：
+/bind 123456 [topic_id]
+(topic_id 可以省略，默认绑定当前话题)`;
+
+            await this.replyTG(msg.chat.id, tip, threadId);
             return;
         }
 
         const qqGroupId = args[0];
         if (!/^-?\d+$/.test(qqGroupId)) {
-            await this.replyTG(msg.chat.id, 'qq_group_id 必须是数字');
+            await this.replyTG(msg.chat.id, 'qq_group_id 必须是数字', threadId);
             return;
         }
 
-        const threadId = this.extractThreadId(msg, args);
         const forwardMap = this.instance.forwardPairs as ForwardMap;
 
         // 如果 TG 话题已被其他 QQ 占用，拒绝绑定
         const tgOccupied = forwardMap.findByTG(msg.chat.id, threadId, false);
         if (tgOccupied && tgOccupied.qqRoomId.toString() !== qqGroupId) {
-            await this.replyTG(msg.chat.id, '该 TG 话题已绑定到其他 QQ 群');
+            await this.replyTG(msg.chat.id, '该 TG 话题已绑定到其他 QQ 群', threadId);
             return;
         }
 
         // add 会在已存在该 QQ 时更新 tgThreadId
         const rec = await forwardMap.add(qqGroupId, msg.chat.id, threadId);
         if (rec && rec.qqRoomId.toString() !== qqGroupId) {
-            await this.replyTG(msg.chat.id, '绑定失败：检测到冲突，请检查现有绑定');
+            await this.replyTG(msg.chat.id, '绑定失败：检测到冲突，请检查现有绑定', threadId);
             return;
         }
 
@@ -510,7 +595,7 @@ export class CommandsFeature {
             : forwardMap.findByTG(chatId, threadId, threadId ? false : true);
 
         if (!target) {
-            await this.replyTG(chatId, '未找到绑定关系');
+            await this.replyTG(chatId, '未找到绑定关系', threadId);
             return;
         }
 
@@ -527,7 +612,7 @@ export class CommandsFeature {
             if (threadId) params.replyTo = threadId;
             await chat.sendMessage(text, params);
         } catch (error) {
-            logger.warn('Failed to send reply:', error);
+            logger.warn(`Failed to send reply to ${chatId}: ${error}`);
         }
     }
 

@@ -53,13 +53,16 @@ export class ThreadIdExtractor {
     extractFromRaw(raw: any): number | undefined {
         if (!raw) return undefined;
         const replyTo = raw?.replyTo;
+
+        // For forum topics, replyToTopId is the correct field
+        // This is the topic/thread ID according to mtcute's Message structure
         const candidates = [
             replyTo?.replyToTopId,
-            replyTo?.replyToMsgId,
+            (raw as any).replyToTopId,
             replyTo?.forumTopicId,
             replyTo?.topicId,
             replyTo?.replyToTopicId,
-            (raw as any).replyToTopId,
+            replyTo?.replyToMsgId,
             (raw as any).replyToMsgId,
             (raw as any).topicId,
             (raw as any).forumTopicId,
@@ -68,6 +71,21 @@ export class ThreadIdExtractor {
             (raw as any).replyToTopMsgId,
             (raw as any).messageThreadId,
         ];
+
+        // Also check the TL layer raw object if it exists
+        if (raw.raw) {
+            const tlReplyTo = raw.raw.replyTo;
+            candidates.push(
+                tlReplyTo?.replyToTopId,
+                tlReplyTo?.replyToMsgId,
+                tlReplyTo?.forumTopicId,
+                tlReplyTo?.topicId,
+                (raw.raw as any).replyToTopId,
+                (raw.raw as any).topicId,
+                (raw.raw as any).messageThreadId,
+            );
+        }
+
         for (const c of candidates) {
             if (typeof c === 'number' && c > 0) return c;
         }
