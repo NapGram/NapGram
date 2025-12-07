@@ -26,6 +26,7 @@ import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor';
 import { ForwardMapper } from './services/MessageMapper';
 import { ReplyResolver } from './services/ReplyResolver';
 import { MediaGroupHandler } from './handlers/MediaGroupHandler';
+import { MessageUtils } from './utils/MessageUtils';
 
 const logger = getLogger('ForwardFeature');
 const execFileAsync = promisify(execFile);
@@ -136,7 +137,7 @@ export class ForwardFeature {
             }
 
             // 填充 @ 提及的展示名称：优先群名片，其次昵称，最后 QQ 号
-            await this.populateAtDisplayNames(msg);
+            await MessageUtils.populateAtDisplayNames(msg, this.qqClient);
 
             const tgChatId = Number(pair.tgChatId);
             const chat = await this.instance.tgBot.getChat(tgChatId);
@@ -155,50 +156,7 @@ export class ForwardFeature {
         }
     };
 
-    private async populateAtDisplayNames(msg: UnifiedMessage) {
-        if (msg.chat.type !== 'group') {
-            return;
-        }
 
-        const nameCache = new Map<string, string>();
-        for (const content of msg.content) {
-            if (content.type !== 'at') {
-                continue;
-            }
-
-            const userId = String(content.data?.userId ?? '');
-            if (!userId || userId === 'all') {
-                continue;
-            }
-
-            const cached = nameCache.get(userId);
-            if (cached) {
-                content.data.userName = cached;
-                continue;
-            }
-
-            const providedName = (content.data?.userName || '').trim();
-            if (providedName && providedName !== userId) {
-                nameCache.set(userId, providedName);
-                content.data.userName = providedName;
-                continue;
-            }
-
-            try {
-                const memberInfo = await this.qqClient.getGroupMemberInfo(msg.chat.id, userId);
-                const card = memberInfo?.card?.trim();
-                const nickname = memberInfo?.nickname?.trim();
-                const resolvedName = card || nickname || userId;
-
-                content.data.userName = resolvedName;
-                nameCache.set(userId, resolvedName);
-            } catch (error) {
-                logger.warn(error, `Failed to resolve @ mention name for ${userId} in group ${msg.chat.id}`);
-                content.data.userName = providedName || userId;
-                nameCache.set(userId, content.data.userName);
-            }
-        }
-    }
 
     private handleModeCommand = async (msg: UnifiedMessage, args: string[]) => {
         const chatId = msg.chat.id;
@@ -208,22 +166,27 @@ export class ForwardFeature {
             || raw?.replyTo?.replyToMsgId
             || raw?.replyToMsgId;
 
+        if (!MessageUtils.isAdmin(msg.sender.id, this.instance)) {
+            await MessageUtils.replyTG(this.tgBot, chatId, '您没有权限执行此命令', threadId);
+            return;
+        }
+
         const type = args[0];
         const value = args[1];
 
         if (!type || !value || !/^[01]{2}$/.test(value)) {
-            await this.replyTG(chatId, '用法：/mode <nickname|forward> <00|01|10|11>\n示例：/mode nickname 10 (QQ->TG显示昵称，TG->QQ不显示)', threadId);
+            await MessageUtils.replyTG(this.tgBot, chatId, '用法：/mode <nickname|forward> <00|01|10|11>\n示例：/mode nickname 10 (QQ->TG显示昵称，TG->QQ不显示)', threadId);
             return;
         }
 
         if (type === 'nickname') {
             this.nicknameMode = value;
-            await this.replyTG(chatId, `昵称显示模式已更新为: ${value}`, threadId);
+            await MessageUtils.replyTG(this.tgBot, chatId, `昵称显示模式已更新为: ${value}`, threadId);
         } else if (type === 'forward') {
             this.forwardMode = value;
-            await this.replyTG(chatId, `转发模式已更新为: ${value}`, threadId);
+            await MessageUtils.replyTG(this.tgBot, chatId, `转发模式已更新为: ${value}`, threadId);
         } else {
-            await this.replyTG(chatId, '未知模式类型，请使用 nickname 或 forward', threadId);
+            await MessageUtils.replyTG(this.tgBot, chatId, '未知模式类型，请使用 nickname 或 forward', threadId);
         }
     };
 
@@ -678,24 +641,7 @@ export class ForwardFeature {
         logger.info('ForwardFeature destroyed');
     }
 
-    private isAdmin(userId: string): boolean {
-        const envAdminQQ = env.ADMIN_QQ ? String(env.ADMIN_QQ) : null;
-        const envAdminTG = env.ADMIN_TG ? String(env.ADMIN_TG) : null;
-        return userId === String(this.instance.owner)
-            || (envAdminQQ && userId === envAdminQQ)
-            || (envAdminTG && userId === envAdminTG);
-    }
 
-    private async replyTG(chatId: string | number, text: string, replyTo?: any) {
-        try {
-            const chat = await this.tgBot.getChat(chatId as any);
-            const params: any = { linkPreview: { disable: true } };
-            if (replyTo) params.replyTo = replyTo;
-            await chat.sendMessage(text, params);
-        } catch (error) {
-            logger.warn('Failed to send TG reply:', error);
-        }
-    }
 
 
 
