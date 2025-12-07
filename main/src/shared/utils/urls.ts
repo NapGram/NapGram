@@ -48,3 +48,26 @@ export function getAvatar(room: number | Friend | Group) {
 export function isContainsUrl(msg: string): boolean {
   return msg.includes('https://') || msg.includes('http://');
 }
+
+export const SUPPORTED_IMAGE_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'];
+
+const QQ_ID_REG = /^[1-9]\d{4,10}$/;
+const ROOM_ID_REG = /^-?[1-9]\d{4,10}$/;
+const URL_REG = /https?:\/\/[-a-zA-Z0-9@%._+~#=]{1,256}\.[a-zA-Z]{2,6}\b[-a-zA-Z0-9@:%_+.~#?&/=]*/;
+
+export function isValidQQ(str: string): boolean {
+  return QQ_ID_REG.test(str);
+}
+
+export function isValidRoomId(str: string): boolean {
+  return ROOM_ID_REG.test(str);
+}
+
+export function isValidUrl(str: string): boolean {
+  return URL_REG.test(str);
+}
+
+export function hasSupportedImageExt(name: string): boolean {
+  const lower = name.toLowerCase();
+  return SUPPORTED_IMAGE_EXTS.some(ext => lower.endsWith(ext));
+}

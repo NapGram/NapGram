@@ -13,6 +13,7 @@ export type MessageContentType =
     | 'file'
     | 'sticker'
     | 'location'
+    | 'dice'
     | 'forward'
     | 'reply'
     | 'at'
@@ -36,10 +37,12 @@ export interface ImageContent extends MessageContent {
     data: {
         url?: string;
         file?: Buffer | string;
+        mimeType?: string;
         width?: number;
         height?: number;
         isSpoiler?: boolean; // 闪照
         isGif?: boolean;
+        isSticker?: boolean;
     };
 }
 
@@ -91,7 +94,7 @@ export interface LocationContent extends MessageContent {
         longitude: number;
         title?: string;
         address?: string;
-    };
+    }; 
 }
 
 export interface ForwardContent extends MessageContent {
@@ -124,6 +127,14 @@ export interface FaceContent extends MessageContent {
     data: {
         id: number;
         text?: string;
+    };
+}
+
+export interface DiceContent extends MessageContent {
+    type: 'dice';
+    data: {
+        emoji?: string;
+        value?: number;
     };
 }
 

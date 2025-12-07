@@ -9,14 +9,15 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
       sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources; \
     fi && \
     apt-get update && apt-get install -y --no-install-recommends \
-    curl wget \
+    curl wget bash \
     fonts-wqy-microhei \
     libpixman-1-0 libcairo2 libpango1.0-0 libgif7 libjpeg62-turbo libpng16-16 librsvg2-2 libvips42 ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# 指定 pnpm 版本防止变动
 RUN corepack enable && corepack prepare pnpm@latest --activate && npm install -g npm@latest
 WORKDIR /app
+
+FROM edasriyan/lottie-to-gif:latest AS lottie
 
 FROM base AS build
 ARG USE_MIRROR=true
@@ -50,12 +51,19 @@ RUN pnpm --filter=@napgram/core run build
 COPY web/ /app/web/
 RUN pnpm --filter=web run build
 
+# Dev/Build 阶段也带上 tgs 转换工具，便于 compose.dev 使用 target=build
+COPY --from=lottie /usr/bin/lottie_to_gif.sh /usr/local/bin/tgs_to_gif
+COPY --from=lottie /usr/bin/lottie_common.sh /usr/local/bin/lottie_common.sh
+COPY --from=lottie /usr/bin/lottie_to_png /usr/local/bin/lottie_to_png
+COPY --from=lottie /usr/bin/gifski /usr/local/bin/gifski
+ENV TGS_TO_GIF=/usr/local/bin/tgs_to_gif
+
 FROM base AS release
 # Lottie Converter
-COPY --from=edasriyan/lottie-to-gif:latest /usr/bin/lottie_to_gif.sh /usr/local/bin/tgs_to_gif
-COPY --from=edasriyan/lottie-to-gif:latest /usr/bin/lottie_common.sh /usr/local/bin/lottie_common.sh
-COPY --from=edasriyan/lottie-to-gif:latest /usr/bin/lottie_to_png /usr/local/bin/lottie_to_png
-COPY --from=edasriyan/lottie-to-gif:latest /usr/bin/gifski /usr/local/bin/gifski
+COPY --from=lottie /usr/bin/lottie_to_gif.sh /usr/local/bin/tgs_to_gif
+COPY --from=lottie /usr/bin/lottie_common.sh /usr/local/bin/lottie_common.sh
+COPY --from=lottie /usr/bin/lottie_to_png /usr/local/bin/lottie_to_png
+COPY --from=lottie /usr/bin/gifski /usr/local/bin/gifski
 ENV TGS_TO_GIF=/usr/local/bin/tgs_to_gif
 
 COPY --from=build --chown=node:node /app/node_modules /app/node_modules

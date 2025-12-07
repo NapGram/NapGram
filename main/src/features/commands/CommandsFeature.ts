@@ -52,6 +52,9 @@ export class CommandsFeature {
      * 注册默认命令
      */
     private registerDefaultCommands() {
+        // TODO: 旧版 constants/commands.ts 中有更细分的指令清单（preSetup/group/private 等），后续可按需合并： 
+        // setup/login/flags/alive/add/addfriend/addgroup/refresh_all/newinstance/info/q/rm/rmt/rmq/forwardoff/forwardon/disable_qq_forward/enable_qq_forward/disable_tg_forward/enable_tg_forward/refresh/poke/nick/mute 等。
+
         // 帮助命令
         this.registerCommand({
             name: 'help',
