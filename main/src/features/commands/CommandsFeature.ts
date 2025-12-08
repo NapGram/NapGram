@@ -8,6 +8,9 @@ import ForwardMap from '../../domain/models/ForwardMap';
 import env from '../../domain/models/env';
 import db from '../../domain/models/db';
 import { ThreadIdExtractor } from './services/ThreadIdExtractor';
+import { CommandRegistry, type Command } from './services/CommandRegistry';
+import { PermissionChecker } from './services/PermissionChecker';
+import { InteractiveStateManager } from './services/InteractiveStateManager';
 
 const logger = getLogger('CommandsFeature');
 
@@ -15,34 +18,25 @@ const logger = getLogger('CommandsFeature');
  * 命令类型
  */
 export type CommandHandler = (msg: UnifiedMessage, args: string[]) => Promise<void>;
-
-/**
- * 命令定义
- */
-export interface Command {
-    name: string;
-    aliases?: string[];
-    description: string;
-    usage?: string;
-    handler: CommandHandler;
-    adminOnly?: boolean;
-}
+export type { Command } from './services/CommandRegistry';
 
 /**
  * 命令处理功能
  * Phase 3: 统一的命令处理系统
  */
 export class CommandsFeature {
-    private commands = new Map<string, Command>();
-    private readonly commandPrefix = '/';
-    // Key: `${chatId}:${userId}`
-    private bindingStates = new Map<string, { threadId?: number, userId: string, timestamp: number }>();
+    private readonly registry: CommandRegistry;
+    private readonly permissionChecker: PermissionChecker;
+    private readonly stateManager: InteractiveStateManager;
 
     constructor(
         private readonly instance: Instance,
         private readonly tgBot: Telegram,
         private readonly qqClient: IQQClient,
     ) {
+        this.registry = new CommandRegistry();
+        this.permissionChecker = new PermissionChecker(instance);
+        this.stateManager = new InteractiveStateManager();
         this.registerDefaultCommands();
         this.setupListeners();
         logger.info('CommandsFeature initialized');
@@ -102,31 +96,17 @@ export class CommandsFeature {
         });
 
 
-        logger.debug(`Registered ${this.getUniqueCommandCount()} commands (${this.commands.size} including aliases)`);
+        logger.debug(`Registered ${this.registry.getUniqueCommandCount()} commands (${this.registry.getAll().size} including aliases)`);
     }
 
     /**
      * 注册命令
      */
     registerCommand(command: Command) {
-        this.commands.set(command.name, command);
-
-        // 注册别名
-        if (command.aliases) {
-            for (const alias of command.aliases) {
-                this.commands.set(alias, command);
-            }
-        }
-
-        logger.debug(`Registered command: ${command.name}`);
+        this.registry.register(command);
     }
 
-    /**
-     * 计算不含别名的命令数量
-     */
-    private getUniqueCommandCount() {
-        return new Set(this.commands.values()).size;
-    }
+
 
     /**
      * 设置事件监听器
@@ -164,14 +144,13 @@ export class CommandsFeature {
             });
 
             // 检查是否有正在进行的绑定操作
-            const stateKey = `${chatId}:${senderId}`;
-            const bindingState = this.bindingStates.get(stateKey);
+            const bindingState = this.stateManager.getBindingState(String(chatId), String(senderId));
 
             // 如果有等待输入的绑定状态，且消息不是命令（防止命令嵌套）
-            if (bindingState && text && !text.startsWith(this.commandPrefix)) {
-                // 检查是否超时（例如 5 分钟）
-                if (Date.now() - bindingState.timestamp > 5 * 60 * 1000) {
-                    this.bindingStates.delete(stateKey);
+            if (bindingState && text && !text.startsWith(this.registry.prefix)) {
+                // 检查是否超时
+                if (this.stateManager.isTimeout(bindingState)) {
+                    this.stateManager.deleteBindingState(String(chatId), String(senderId));
                     await this.replyTG(chatId, '绑定操作已超时，请重新开始', bindingState.threadId);
                     return true; // 即使超时也视为已处理（防止误触其他逻辑）
                 }
@@ -188,7 +167,7 @@ export class CommandsFeature {
                     const tgOccupied = forwardMap.findByTG(chatId, threadId, false);
                     if (tgOccupied && tgOccupied.qqRoomId.toString() !== qqGroupId) {
                         await this.replyTG(chatId, `绑定失败：该 TG 话题已绑定到其他 QQ 群 (${tgOccupied.qqRoomId})`, threadId);
-                        this.bindingStates.delete(stateKey);
+                        this.stateManager.deleteBindingState(String(chatId), String(senderId));
                         return true;
                     }
 
@@ -206,23 +185,23 @@ export class CommandsFeature {
                         await this.replyTG(chatId, '绑定过程中发生错误', threadId);
                     }
 
-                    this.bindingStates.delete(stateKey);
+                    this.stateManager.deleteBindingState(String(chatId), String(senderId));
                     return true;
                 } else {
                     // 输入非数字，视为取消
                     await this.replyTG(chatId, '输入格式错误或已取消绑定操作', bindingState.threadId);
-                    this.bindingStates.delete(stateKey);
+                    this.stateManager.deleteBindingState(String(chatId), String(senderId));
                     return true;
                 }
             }
 
-            if (!text || !text.startsWith(this.commandPrefix)) return false;
+            if (!text || !text.startsWith(this.registry.prefix)) return false;
             if (!chatId) return false;
 
             const senderName = tgMsg.sender.displayName || `${senderId}`;
 
             // 兼容 /cmd@bot 的写法，并解决多 bot 冲突
-            const parts = text.slice(this.commandPrefix.length).split(/\s+/);
+            const parts = text.slice(this.registry.prefix.length).split(/\s+/);
             let commandName = parts[0];
 
             if (commandName.includes('@')) {
@@ -240,13 +219,13 @@ export class CommandsFeature {
             commandName = commandName.toLowerCase();
             const args = parts.slice(1);
 
-            const command = this.commands.get(commandName);
+            const command = this.registry.get(commandName);
             if (!command) {
                 logger.debug(`Unknown command: ${commandName}`);
                 return false;
             }
 
-            if (command.adminOnly && !this.isAdmin(String(senderId))) {
+            if (command.adminOnly && !this.permissionChecker.isAdmin(String(senderId))) {
                 logger.warn(`Non-admin user ${senderId} tried to use admin command: ${commandName}`);
                 await this.replyTG(chatId, '无权限执行该命令');
                 return true;
@@ -277,7 +256,7 @@ export class CommandsFeature {
             if (textContents.length === 0) return;
 
             const text = textContents.map(c => c.data.text || '').join('').trim();
-            if (!text || !text.startsWith(this.commandPrefix)) return;
+            if (!text || !text.startsWith(this.registry.prefix)) return;
 
             const chatId = qqMsg.chat.id;
             const senderId = qqMsg.sender.id;
@@ -292,11 +271,11 @@ export class CommandsFeature {
             const senderName = qqMsg.sender.name || `${senderId}`;
 
             // 解析命令
-            const parts = text.slice(this.commandPrefix.length).split(/\s+/);
+            const parts = text.slice(this.registry.prefix.length).split(/\s+/);
             const commandName = parts[0].toLowerCase();
             const args = parts.slice(1);
 
-            const command = this.commands.get(commandName);
+            const command = this.registry.get(commandName);
             if (!command) {
                 logger.debug(`Unknown QQ command: ${commandName}`);
                 return;
@@ -324,16 +303,7 @@ export class CommandsFeature {
         }
     };
 
-    /**
-     * 检查是否是管理员
-     */
-    private isAdmin(userId: string): boolean {
-        const envAdminQQ = env.ADMIN_QQ ? String(env.ADMIN_QQ) : null;
-        const envAdminTG = env.ADMIN_TG ? String(env.ADMIN_TG) : null;
-        return userId === String(this.instance.owner)
-            || (envAdminQQ && userId === envAdminQQ)
-            || (envAdminTG && userId === envAdminTG);
-    }
+
 
     private extractThreadId(msg: UnifiedMessage, args: string[]) {
         // 1. 优先从命令参数获取（显式指定）
@@ -413,7 +383,7 @@ export class CommandsFeature {
             });
         }
 
-        const isAdmin = this.isAdmin(String(senderId));
+        const isAdmin = this.permissionChecker.isAdmin(String(senderId));
         const isSelf = record?.tgSenderId ? String(record.tgSenderId) === String(senderId) : false;
 
         if (!isAdmin && !isSelf) {
@@ -485,14 +455,14 @@ export class CommandsFeature {
         const commandList: string[] = [];
         const processedCommands = new Set<string>();
 
-        for (const [name, command] of this.commands) {
+        for (const [name, command] of this.registry.getAll()) {
             // 跳过别名
             if (name !== command.name) continue;
             if (processedCommands.has(command.name)) continue;
 
             processedCommands.add(command.name);
 
-            let line = `${this.commandPrefix}${command.name}`;
+            let line = `${this.registry.prefix}${command.name}`;
             if (command.aliases && command.aliases.length > 0) {
                 line += ` (${command.aliases.join(', ')})`;
             }
@@ -539,12 +509,10 @@ export class CommandsFeature {
 
         if (args.length < 1) {
             // 进入交互式绑定流程
-            const stateKey = `${msg.chat.id}:${msg.sender.id}`;
-            this.bindingStates.set(stateKey, {
-                threadId,
-                userId: msg.sender.id,
-                timestamp: Date.now()
-            });
+            this.stateManager.setBindingState(msg.chat.id, msg.sender.id, threadId);
+
+            // Dummy assignment to maintain structure
+
 
             const tip = `请输入要绑定的 QQ 群号...
 (回复非数字取消)
@@ -625,7 +593,7 @@ export class CommandsFeature {
     destroy() {
         this.tgBot.removeNewMessageEventHandler(this.handleTgMessage);
         this.qqClient.off('message', this.handleQqMessage);
-        this.commands.clear();
+        this.registry.clear();
         logger.info('CommandsFeature destroyed');
     }
 }
