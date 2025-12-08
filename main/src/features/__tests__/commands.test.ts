@@ -33,6 +33,10 @@ const createMockInstance = () => ({
     owner: 123456,
     forwardPairs: {
         find: vi.fn(),
+        findByTG: vi.fn().mockReturnValue(null),
+        findByQQ: vi.fn().mockReturnValue(null),
+        add: vi.fn().mockResolvedValue({ qqRoomId: '111', tgChatId: '789', tgThreadId: 222 }),
+        remove: vi.fn().mockResolvedValue(undefined),
     },
 } as any);
 
