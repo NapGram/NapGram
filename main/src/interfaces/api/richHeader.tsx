@@ -1,5 +1,4 @@
 import { Pair } from '../../domain/models/Pair';
-import { format } from 'date-fns';
 import { Group, GroupMemberInfo } from '../../infrastructure/clients/qq';
 import { Elysia } from 'elysia';
 import { html, Html } from '@elysiajs/html';
@@ -8,6 +7,16 @@ import posthog from '../../domain/models/posthog';
 import env from '../../domain/models/env';
 
 const logger = getLogger('Rich Header');
+
+const formatDate = (ts: number) => {
+  const date = new Date(ts);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const H = String(date.getHours()).padStart(2, '0');
+  const M = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d} ${H}:${M}`;
+};
 
 const handler = async ({ params, error }: any) => {
   try {
@@ -212,15 +221,15 @@ const handler = async ({ params, error }: any) => {
             }
             <div class="detailItem">
               <div class="secondary">加入时间</div>
-              {format(new Date(memberInfo.join_time * 1000), 'yyyy-MM-dd HH:mm')}
+              {formatDate(memberInfo.join_time * 1000)}
             </div>
             <div class="detailItem">
               <div class="secondary">上次发言时间</div>
-              {format(new Date(memberInfo.last_sent_time * 1000), 'yyyy-MM-dd HH:mm')}
+              {formatDate(memberInfo.last_sent_time * 1000)}
             </div>
             <div class="detailItem">
               <div class="secondary">注册时间</div>
-              {format(new Date(profile.regTimestamp * 1000), 'yyyy-MM-dd HH:mm')}
+              {formatDate(profile.regTimestamp * 1000)}
             </div>
           </div>
         </div>

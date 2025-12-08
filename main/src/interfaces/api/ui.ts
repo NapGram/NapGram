@@ -2,7 +2,30 @@ import { Elysia } from 'elysia';
 import env from '../../domain/models/env';
 import fs from 'fs';
 import path from 'path';
-import mime from 'mime-types';
+
+// Simple mime lookup to avoid heavy dependency
+const getMimeType = (filename: string) => {
+  const ext = path.extname(filename).toLowerCase();
+  const map: Record<string, string> = {
+    '.html': 'text/html',
+    '.css': 'text/css',
+    '.js': 'application/javascript',
+    '.json': 'application/json',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.woff': 'font/woff',
+    '.woff2': 'font/woff2',
+    '.ttf': 'font/ttf',
+    '.mp3': 'audio/mpeg',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm'
+  };
+  return map[ext] || 'application/octet-stream';
+};
 
 let app = new Elysia();
 
@@ -20,11 +43,11 @@ if (env.UI_PROXY) {
 else if (env.UI_PATH) {
   for (const asset of fs.readdirSync(path.join(env.UI_PATH, 'assets'))) {
     app = app.get('/ui/assets/' + asset, ({ set }) => {
-      set.headers['content-type'] = mime.lookup(asset) || undefined;
+      set.headers['content-type'] = getMimeType(asset);
       return fs.createReadStream(path.join(env.UI_PATH, 'assets', asset));
     });
     app = app.get('/ui/assets/' + asset, ({ set }) => {
-      set.headers['content-type'] = mime.lookup(asset) || undefined;
+      set.headers['content-type'] = getMimeType(asset);
       return fs.createReadStream(path.join(env.UI_PATH, 'assets', asset));
     });
   }
