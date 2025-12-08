@@ -36,6 +36,9 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=${{ matrix.node-version == 24 && 'true' || 'false' }}
+            suffix=${{ matrix.node-version == 25 && '-node-25' || '' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -59,6 +62,9 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         if: github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true'
+        strategy:
+          matrix:
+            node-version: [24, 25]
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' && github.actor != 'dependabot[bot]' }}
@@ -72,5 +78,6 @@ jobs:
             REF=${{ github.ref }}
             COMMIT=${{ github.sha }}
             USE_MIRROR=false
+            NODE_VERSION=${{ matrix.node-version }}-slim
           secrets: |
             npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GPR_TOKEN }}

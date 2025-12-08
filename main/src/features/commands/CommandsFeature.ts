@@ -170,7 +170,7 @@ export class CommandsFeature {
             const senderId = tgMsg.sender.id;
 
             // 记录所有到达的 TG 文本，方便排查是否收不到事件
-            logger.info('[Commands] TG message', {
+            logger.debug('[Commands] TG message', {
                 id: tgMsg.id,
                 chatId,
                 senderId,

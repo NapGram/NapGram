@@ -15,7 +15,7 @@ export class NapCatConverter extends BaseConverter {
      * 从 NapCat 消息转换为统一格式
      */
     fromNapCat(napCatMsg: any): UnifiedMessage {
-        this.logger.info(`Converting from NapCat: ${napCatMsg.message_id}`);
+        this.logger.debug(`[Forward][QQ->TG] Converting from NapCat: ${napCatMsg.message_id}`);
         this.logger.debug(`Converting NapCat message segments:\n${JSON.stringify(napCatMsg.message, null, 2)}`);
 
         const content: MessageContent[] = [];

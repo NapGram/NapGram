@@ -136,7 +136,7 @@ export class MediaSender {
 
         try {
             const sentMessages = await chat.client.sendMediaGroup(chat.id, mediaInputs, sendParams);
-            this.logger.info(`[Forward] QQ message ${qqMsgId || ''} -> TG Media Group (${sentMessages.length} items)${fullCaption ? ' with caption' : ''}`);
+            this.logger.debug(`[Forward] QQ message ${qqMsgId || ''} -> TG Media Group (${sentMessages.length} items)${fullCaption ? ' with caption' : ''}`);
             return sentMessages[0];  // Return first message for consistency
         } catch (err) {
             this.logger.error(err, 'Failed to send Media Group:');

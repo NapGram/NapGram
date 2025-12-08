@@ -193,7 +193,7 @@ export class TelegramMessageHandler {
 
             if (receipt.success) {
                 const msgId = receipt.messageId || (receipt as any).data?.message_id || (receipt as any).id;
-                logger.info(`[Forward] TG message ${tgMsg.id} -> QQ ${pair.qqRoomId} (seq: ${msgId})`);
+                logger.info(`[Forward][TG->QQ] message ${tgMsg.id} -> QQ ${pair.qqRoomId} (seq: ${msgId})`);
                 if (msgId) {
                     // Save mapping for reply lookup (QQ -> TG reply)
                     try {

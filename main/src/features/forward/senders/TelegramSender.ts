@@ -63,9 +63,9 @@ export class TelegramSender {
         const replyTo = this.richHeaderBuilder.buildReplyTo(pair, effectiveReplyTo);
         const messageThreadId = pair?.tgThreadId ? Number(pair.tgThreadId) : undefined;
         if (messageThreadId) {
-            this.logger.info(`Sending to thread: ${messageThreadId}`);
+            this.logger.info(`[Forward][QQ->TG] Sending to thread: ${messageThreadId}`);
         } else {
-            this.logger.info('Sending to General (no thread ID)');
+            this.logger.info('[Forward][QQ->TG] Sending to General (no thread ID)');
         }
 
         let lastSent: any = null;
@@ -389,7 +389,7 @@ export class TelegramSender {
 
                 // mtcute handles string (path) and Buffer automatically
                 const sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params);
-                this.logger.info(`[Forward] QQ message ${qqMsgId || ''} -> TG ${chat.id} (id: ${sentMsg.id})${captionText ? ' with caption' : ''}`);
+                this.logger.debug(`[Forward] QQ message ${qqMsgId || ''} -> TG ${chat.id} (id: ${sentMsg.id})${captionText ? ' with caption' : ''}`);
                 return sentMsg;  // Return the sent message
             }
         } catch (e) {

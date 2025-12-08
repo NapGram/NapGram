@@ -89,7 +89,7 @@ const logToConsole = (logger: string, level: LogLevel, args: unknown[]) => {
   const time = timeFormatter.format(new Date()).replace(' ', 'T');
   const color = levelColor[level] || '';
   const formattedArgs = formatArgs(args, true);
-  console.log(`${color}[${time}] ${level.toUpperCase()} ${logger}:${resetColor}`, ...formattedArgs);
+  console.log(`${color}[${time}] ${level.toUpperCase().padEnd(5)} ${logger.padEnd(24)}:${resetColor}`, ...formattedArgs);
 };
 
 const logToFile = (logger: string, level: LogLevel, args: unknown[]) => {

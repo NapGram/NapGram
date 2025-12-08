@@ -137,7 +137,7 @@ export default class Telegram {
   }
 
   private onMessage = async (msg: Message) => {
-    this.logger.info(`[TG] recv ${msg.id} from ${msg.chat.id}`);
+    this.logger.debug(`[TG] recv ${msg.id} from ${msg.chat.id}`);
     for (const handler of this.onMessageHandlers) {
       const result = await handler(msg);
       // 如果 handler 返回 true，表示消息已被处理，停止调用后续 handler
