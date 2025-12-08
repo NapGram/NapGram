@@ -135,6 +135,12 @@ featureManager.register(new MyFeature(...));
 
 本项目仅供教育和个人使用。请遵守 QQ 和 Telegram 的服务条款。
 
+## 💬 加入社区
+
+- **Telegram 群组**: [https://t.me/+BiKryJzcQRYzZjA1](https://t.me/+BiKryJzcQRYzZjA1)
+- **Telegram 频道**: [https://t.me/napgram_offical](https://t.me/napgram_offical)
+- **QQ 群**: 1036505332
+
 ## 📧 联系方式
 
 - GitHub Issues: [报告问题](https://github.com/magisk317/NapGram/issues)
