@@ -7,10 +7,16 @@ import type Instance from '../../domain/models/Instance';
 import ForwardMap from '../../domain/models/ForwardMap';
 import env from '../../domain/models/env';
 import db from '../../domain/models/db';
-import { ThreadIdExtractor } from './services/ThreadIdExtractor';
 import { CommandRegistry, type Command } from './services/CommandRegistry';
 import { PermissionChecker } from './services/PermissionChecker';
 import { InteractiveStateManager } from './services/InteractiveStateManager';
+import { ThreadIdExtractor } from './services/ThreadIdExtractor';
+import { CommandContext } from './handlers/CommandContext';
+import { HelpCommandHandler } from './handlers/HelpCommandHandler';
+import { StatusCommandHandler } from './handlers/StatusCommandHandler';
+import { BindCommandHandler } from './handlers/BindCommandHandler';
+import { UnbindCommandHandler } from './handlers/UnbindCommandHandler';
+import { RecallCommandHandler } from './handlers/RecallCommandHandler';
 
 const logger = getLogger('CommandsFeature');
 
@@ -28,6 +34,14 @@ export class CommandsFeature {
     private readonly registry: CommandRegistry;
     private readonly permissionChecker: PermissionChecker;
     private readonly stateManager: InteractiveStateManager;
+    private readonly commandContext: CommandContext;
+
+    // Command handlers
+    private readonly helpHandler: HelpCommandHandler;
+    private readonly statusHandler: StatusCommandHandler;
+    private readonly bindHandler: BindCommandHandler;
+    private readonly unbindHandler: UnbindCommandHandler;
+    private readonly recallHandler: RecallCommandHandler;
 
     constructor(
         private readonly instance: Instance,
@@ -37,6 +51,26 @@ export class CommandsFeature {
         this.registry = new CommandRegistry();
         this.permissionChecker = new PermissionChecker(instance);
         this.stateManager = new InteractiveStateManager();
+
+        // Create command context
+        this.commandContext = new CommandContext(
+            instance,
+            tgBot,
+            qqClient,
+            this.registry,
+            this.permissionChecker,
+            this.stateManager,
+            this.replyTG.bind(this),
+            this.extractThreadId.bind(this)
+        );
+
+        // Initialize handlers
+        this.helpHandler = new HelpCommandHandler(this.commandContext);
+        this.statusHandler = new StatusCommandHandler(this.commandContext);
+        this.bindHandler = new BindCommandHandler(this.commandContext);
+        this.unbindHandler = new UnbindCommandHandler(this.commandContext);
+        this.recallHandler = new RecallCommandHandler(this.commandContext);
+
         this.registerDefaultCommands();
         this.setupListeners();
         logger.info('CommandsFeature initialized');
@@ -54,7 +88,7 @@ export class CommandsFeature {
             name: 'help',
             aliases: ['h', '帮助'],
             description: '显示帮助信息',
-            handler: this.handleHelp,
+            handler: (msg, args) => this.helpHandler.execute(msg, args),
         });
 
         // 状态命令
@@ -62,7 +96,7 @@ export class CommandsFeature {
             name: 'status',
             aliases: ['状态'],
             description: '显示机器人状态',
-            handler: this.handleStatus,
+            handler: (msg, args) => this.statusHandler.execute(msg, args),
         });
 
         // 绑定命令
@@ -71,7 +105,7 @@ export class CommandsFeature {
             aliases: ['绑定'],
             description: '绑定指定 QQ 群到当前 TG 聊天',
             usage: '/bind <qq_group_id> [thread_id]',
-            handler: this.handleBind,
+            handler: (msg, args) => this.bindHandler.execute(msg, args),
             adminOnly: true,
         });
 
@@ -81,7 +115,7 @@ export class CommandsFeature {
             aliases: ['解绑'],
             description: '解绑当前 TG 聊天关联的 QQ 群',
             usage: '/unbind [qq_group_id] [thread_id]',
-            handler: this.handleUnbind,
+            handler: (msg, args) => this.unbindHandler.execute(msg, args),
             adminOnly: true,
         });
 
@@ -91,7 +125,7 @@ export class CommandsFeature {
             aliases: ['撤回'],
             description: '撤回指定消息（回复触发），默认撤回自己，管理员可撤回所有',
             usage: '/rm (请回复要撤回的消息)',
-            handler: this.handleRecall,
+            handler: (msg, args) => this.recallHandler.execute(msg, args),
             adminOnly: false,
         });
 
@@ -325,256 +359,6 @@ export class CommandsFeature {
         logger.info(`[extractThreadId] No thread ID found`);
         return undefined;
     }
-
-    /**
-     * 撤回命令处理器
-     */
-    private handleRecall = async (msg: UnifiedMessage, _args: string[]) => {
-        const raw = (msg.metadata as any)?.raw as any;
-
-        // 提取 replyToId：
-        // 1. TG 消息：从 raw.replyTo 中提取
-        // 2. QQ 消息：从 content 中的 reply 段提取
-        let replyToId: number | undefined;
-
-        // 先尝试 TG 结构
-        replyToId = raw?.replyTo?.replyToMsgId
-            || raw?.replyTo?.id
-            || raw?.replyTo?.replyToTopId
-            || raw?.replyToMessage?.id;
-
-        // 如果 TG 结构没找到，尝试 QQ 结构
-        if (!replyToId) {
-            const replyContent = msg.content.find(c => c.type === 'reply');
-            if (replyContent) {
-                const replyData = replyContent.data as any;
-                replyToId = Number(replyData.messageId || replyData.id || replyData.seq);
-            }
-        }
-
-        const chatId = msg.chat.id;
-        const senderId = msg.sender.id;
-        const cmdMsgId = raw?.id || msg.id;
-
-        if (!replyToId || !chatId) {
-            await this.replyTG(chatId, '请回复要撤回的消息再使用 /rm');
-            return;
-        }
-
-        // 根据消息平台使用不同的查询策略
-        let record;
-        if (msg.platform === 'qq') {
-            // QQ 消息：replyToId 是 QQ 的 seq
-            record = await db.message.findFirst({
-                where: {
-                    qqRoomId: BigInt(chatId),
-                    seq: replyToId,
-                    instanceId: this.instance.id,
-                },
-            });
-        } else {
-            // TG 消息：replyToId 是 TG 的 msgId
-            record = await db.message.findFirst({
-                where: {
-                    tgChatId: BigInt(chatId),
-                    tgMsgId: replyToId,
-                    instanceId: this.instance.id,
-                },
-            });
-        }
-
-        const isAdmin = this.permissionChecker.isAdmin(String(senderId));
-        const isSelf = record?.tgSenderId ? String(record.tgSenderId) === String(senderId) : false;
-
-        if (!isAdmin && !isSelf) {
-            await this.replyTG(chatId, '无权限撤回他人消息');
-            return;
-        }
-
-        // 根据平台处理撤回逻辑
-        if (msg.platform === 'qq') {
-            // QQ 端 /rm：撤回 QQ 的原消息(replyToId) + 删除 TG 对应消息(record.tgMsgId)
-
-            // 撤回 QQ 原消息
-            try {
-                await this.qqClient.recallMessage(String(replyToId));
-                logger.info(`QQ message ${replyToId} recalled by /rm command`);
-            } catch (e) {
-                logger.warn(e, `撤回 QQ 消息 ${replyToId} 失败`);
-            }
-
-            // 删除对应的 TG 消息
-            if (record?.tgMsgId && record?.tgChatId) {
-                try {
-                    const chat = await this.tgBot.getChat(Number(record.tgChatId));
-                    await chat.deleteMessages([record.tgMsgId]);
-                    logger.info(`TG message ${record.tgMsgId} deleted by QQ /rm command`);
-                } catch (e) {
-                    logger.warn(e, '删除 TG 消息失败');
-                }
-            }
-
-        } else {
-            // TG 端 /rm：删除 TG 原消息(replyToId) + 撤回 QQ 对应消息(record.seq)
-
-            // 删除 TG 原消息
-            try {
-                const chat = await this.tgBot.getChat(Number(chatId));
-                await chat.deleteMessages([replyToId]);
-                logger.info(`TG message ${replyToId} deleted by /rm command`);
-            } catch (e) {
-                logger.warn(e, '撤回 TG 消息失败');
-            }
-
-            // 撤回对应的 QQ 消息
-            if (record?.seq && env.ENABLE_AUTO_RECALL) {
-                try {
-                    await this.qqClient.recallMessage(String(record.seq));
-                    logger.info(`QQ message ${record.seq} recalled by /rm command`);
-                } catch (e) {
-                    logger.warn(e, '撤回 QQ 消息失败');
-                }
-            }
-        }
-
-        // 尝试删除命令消息自身
-        if (cmdMsgId) {
-            try {
-                const chat = await this.tgBot.getChat(Number(chatId));
-                await chat.deleteMessages([Number(cmdMsgId)]);
-            } catch (e) {
-                logger.warn(e, '删除命令消息失败');
-            }
-        }
-    };
-
-    /**
-     * 帮助命令处理器
-     */
-    private handleHelp = async (msg: UnifiedMessage, args: string[]) => {
-        const commandList: string[] = [];
-        const processedCommands = new Set<string>();
-
-        for (const [name, command] of this.registry.getAll()) {
-            // 跳过别名
-            if (name !== command.name) continue;
-            if (processedCommands.has(command.name)) continue;
-
-            processedCommands.add(command.name);
-
-            let line = `${this.registry.prefix}${command.name}`;
-            if (command.aliases && command.aliases.length > 0) {
-                line += ` (${command.aliases.join(', ')})`;
-            }
-            line += ` - ${command.description}`;
-            if (command.adminOnly) {
-                line += ' [管理员]';
-            }
-
-            commandList.push(line);
-        }
-
-        const helpText = `可用命令:\n${commandList.join('\n')}`;
-
-        try {
-            await this.replyTG(msg.chat.id, helpText, this.extractThreadId(msg, []));
-        } catch (e) {
-            logger.warn('发送帮助信息失败', e);
-        }
-        logger.info('Help command executed');
-    };
-
-    /**
-     * 状态命令处理器
-     */
-    private handleStatus = async (msg: UnifiedMessage, args: string[]) => {
-        const isOnline = await this.qqClient.isOnline();
-        const status = `
-机器人状态:
-- QQ: ${isOnline ? '在线' : '离线'}
-- QQ 号: ${this.qqClient.uin}
-- 昵称: ${this.qqClient.nickname}
-- 客户端类型: ${this.qqClient.clientType}
-        `.trim();
-
-        await this.replyTG(msg.chat.id, status);
-        logger.info('Status command executed');
-    };
-
-    /**
-     * 绑定命令处理器
-     */
-    private handleBind = async (msg: UnifiedMessage, args: string[]) => {
-        const threadId = this.extractThreadId(msg, args);
-
-        if (args.length < 1) {
-            // 进入交互式绑定流程
-            this.stateManager.setBindingState(msg.chat.id, msg.sender.id, threadId);
-
-            // Dummy assignment to maintain structure
-
-
-            const tip = `请输入要绑定的 QQ 群号...
-(回复非数字取消)
-
-提示：也可以直接发送完整命令，如：
-/bind 123456 [topic_id]
-(topic_id 可以省略，默认绑定当前话题)`;
-
-            await this.replyTG(msg.chat.id, tip, threadId);
-            return;
-        }
-
-        const qqGroupId = args[0];
-        if (!/^-?\d+$/.test(qqGroupId)) {
-            await this.replyTG(msg.chat.id, 'qq_group_id 必须是数字', threadId);
-            return;
-        }
-
-        const forwardMap = this.instance.forwardPairs as ForwardMap;
-
-        // 如果 TG 话题已被其他 QQ 占用，拒绝绑定
-        const tgOccupied = forwardMap.findByTG(msg.chat.id, threadId, false);
-        if (tgOccupied && tgOccupied.qqRoomId.toString() !== qqGroupId) {
-            await this.replyTG(msg.chat.id, '该 TG 话题已绑定到其他 QQ 群', threadId);
-            return;
-        }
-
-        // add 会在已存在该 QQ 时更新 tgThreadId
-        const rec = await forwardMap.add(qqGroupId, msg.chat.id, threadId);
-        if (rec && rec.qqRoomId.toString() !== qqGroupId) {
-            await this.replyTG(msg.chat.id, '绑定失败：检测到冲突，请检查现有绑定', threadId);
-            return;
-        }
-
-        const threadInfo = threadId ? ` (话题 ${threadId})` : '';
-        await this.replyTG(msg.chat.id, `绑定成功：QQ ${qqGroupId} <-> TG ${msg.chat.id}${threadInfo}`, threadId);
-        logger.info(`Bind command: QQ ${qqGroupId} <-> TG ${msg.chat.id}${threadInfo}`);
-    };
-
-    /**
-     * 解绑命令处理器
-     */
-    private handleUnbind = async (msg: UnifiedMessage, args: string[]) => {
-        const qqGroupId = args[0];
-        const chatId = msg.chat.id;
-        const forwardMap = this.instance.forwardPairs as ForwardMap;
-        const threadId = this.extractThreadId(msg, args);
-
-        const target = qqGroupId && /^-?\d+$/.test(qqGroupId)
-            ? forwardMap.findByQQ(qqGroupId)
-            : forwardMap.findByTG(chatId, threadId, threadId ? false : true);
-
-        if (!target) {
-            await this.replyTG(chatId, '未找到绑定关系', threadId);
-            return;
-        }
-
-        await forwardMap.remove(target.qqRoomId);
-        const threadInfo = target.tgThreadId ? ` (话题 ${target.tgThreadId})` : '';
-        await this.replyTG(chatId, `已解绑：QQ ${target.qqRoomId} <-> TG ${target.tgChatId}${threadInfo}`, threadId || target.tgThreadId || undefined);
-        logger.info(`Unbind command: QQ ${target.qqRoomId} <-> TG ${target.tgChatId}${threadInfo}`);
-    };
 
     private async replyTG(chatId: string | number, text: string, threadId?: number) {
         try {

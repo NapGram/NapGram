@@ -1,9 +1,5 @@
 import type { UnifiedMessage } from '../../../domain/message';
-import type { IQQClient } from '../../../infrastructure/clients/qq';
-import type Telegram from '../../../infrastructure/clients/telegram/client';
-import type Instance from '../../../domain/models/Instance';
-import ForwardMap from '../../../domain/models/ForwardMap';
-import db from '../../../domain/models/db';
+import { CommandContext } from './CommandContext';
 import { getLogger } from '../../../shared/logger';
 
 const logger = getLogger('StatusCommandHandler');
@@ -12,22 +8,20 @@ const logger = getLogger('StatusCommandHandler');
  * 状态命令处理器
  */
 export class StatusCommandHandler {
-    constructor(
-        private readonly qqClient: IQQClient,
-        private readonly replyTG: (chatId: string | number, text: string, threadId?: number) => Promise<void>
-    ) { }
+    constructor(private readonly context: CommandContext) { }
 
     async execute(msg: UnifiedMessage, args: string[]): Promise<void> {
-        const isOnline = await this.qqClient.isOnline();
+        const isOnline = await this.context.qqClient.isOnline();
         const status = `
 机器人状态:
 - QQ: ${isOnline ? '在线' : '离线'}
-- QQ 号: ${this.qqClient.uin}
-- 昵称: ${this.qqClient.nickname}
-- 客户端类型: ${this.qqClient.clientType}
+- QQ 号: ${this.context.qqClient.uin}
+- 昵称: ${this.context.qqClient.nickname}
+- 客户端类型: ${this.context.qqClient.clientType}
         `.trim();
 
-        await this.replyTG(msg.chat.id, status);
+        await this.context.replyTG(msg.chat.id, status);
         logger.info('Status command executed');
     }
 }
+
