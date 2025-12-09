@@ -18,6 +18,13 @@ jobs:
           RAW_BODY: ${{ github.event.release.body }}
         run: |
           BODY="$RAW_BODY"
+          
+          # Convert GFM to Telegram Markdown
+          # 1. Bold: **text** -> *text*
+          BODY=$(echo "$BODY" | sed 's/\*\*/\*/g')
+          # 2. Headers: # Text -> *Text*
+          BODY=$(echo "$BODY" | sed -E 's/^#{1,6} (.*)$/*\1*/')
+          
           MAX_LENGTH=1500
           
           if [ ${#BODY} -gt $MAX_LENGTH ]; then
@@ -42,6 +49,7 @@ jobs:
         with:
           to: ${{ secrets.TELEGRAM_TO_GROUP }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
+          format: markdown
           message: |
             🚀 New Release: ${{ github.event.release.tag_name }}
             
