@@ -9,7 +9,7 @@ import ForwardMap, { type ForwardPairRecord } from '../../domain/models/ForwardM
 import { MediaFeature } from '../MediaFeature';
 import { CommandsFeature } from '../commands/CommandsFeature';
 import env from '../../domain/models/env';
-import sharp from 'sharp';
+
 import db from '../../domain/models/db';
 import flags from '../../domain/constants/flags';
 import { Message } from '@mtcute/core';
