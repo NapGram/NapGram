@@ -6,8 +6,10 @@ import path from 'path';
 import fsSync from 'fs';
 import { Message } from '@mtcute/core';
 import { NapCatConverter } from './converters';
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
 import { fileTypeFromBuffer } from 'file-type';
+import convert from '../../shared/utils/convert';
+import type Instance from '../models/Instance';
 
 const logger = getLogger('MessageConverter');
 
@@ -17,6 +19,11 @@ const logger = getLogger('MessageConverter');
  */
 export class MessageConverter {
     private napCatConverter = new NapCatConverter();
+    private instance?: Instance;
+
+    setInstance(instance: Instance) {
+        this.instance = instance;
+    }
 
     /**
      * 从 NapCat 消息转换为统一格式
@@ -259,6 +266,40 @@ export class MessageConverter {
                 case 'image':
                     {
                         let file = content.data.url || content.data.file;
+
+                        // Handle sticker: if file is mtcute Media object, download it first
+                        if (content.data.isSticker && file && typeof file === 'object' && !Buffer.isBuffer(file) && 'type' in file) {
+                            try {
+                                if (!this.instance) {
+                                    logger.error('Instance not set, cannot download sticker');
+                                    segments.push({
+                                        type: 'text',
+                                        data: { text: '[贴纸下载失败:未初始化]' },
+                                    });
+                                    break;
+                                }
+                                logger.debug('Downloading mtcute Media object for sticker');
+                                const buffer = await this.instance.tgBot.downloadMedia(file);
+                                if (!buffer || buffer.length === 0) {
+                                    logger.warn('Downloaded sticker buffer is empty');
+                                    segments.push({
+                                        type: 'text',
+                                        data: { text: '[贴纸下载为空]' },
+                                    });
+                                    break;
+                                }
+                                file = buffer;
+                                logger.debug(`Downloaded sticker buffer, size: ${buffer.length}`);
+                            } catch (downloadErr) {
+                                logger.error('Failed to download sticker Media object', downloadErr);
+                                segments.push({
+                                    type: 'text',
+                                    data: { text: '[贴纸下载失败]' },
+                                });
+                                break;
+                            }
+                        }
+
                         if (Buffer.isBuffer(file)) {
                             let targetBuffer = file;
                             let targetExt = '.jpg';
@@ -273,10 +314,38 @@ export class MessageConverter {
                                     logger.debug('Converting sticker buffer for QQ', {
                                         mimeType: content.data.mimeType,
                                         detectedExt: detected?.ext,
+                                        bufferSize: file.length,
                                     });
-                                    // 转成 png，避免 TGS/WEBP 直接当 jpg 触发 QQ 富媒体失败
-                                    targetBuffer = await sharp(file).png().toBuffer();
-                                    targetExt = '.png';
+
+                                    // 检查是否是 TGS (gzip 压缩的 JSON)
+                                    // TGS 文件以 0x1f 0x8b 开头（gzip magic number）
+                                    const isTGS = file.length >= 2 && file[0] === 0x1f && file[1] === 0x8b;
+
+                                    if (isTGS) {
+                                        logger.info('Detected TGS sticker, converting to GIF...');
+                                        const tempDir = path.join(env.DATA_DIR, 'temp');
+                                        await fs.mkdir(tempDir, { recursive: true });
+                                        const tgsKey = `tgs-sticker-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+                                        try {
+                                            const gifPath = await convert.tgs2gif(tgsKey, () => Promise.resolve(file));
+                                            logger.info(`TGS converted to GIF: ${gifPath}`);
+                                            targetBuffer = await fs.readFile(gifPath);
+                                            targetExt = '.gif';
+                                        } catch (tgsErr) {
+                                            logger.error('TGS to GIF conversion failed', tgsErr);
+                                            segments.push({
+                                                type: 'text',
+                                                data: { text: '[动画贴纸转换失败]' },
+                                            });
+                                            break;
+                                        }
+                                    } else {
+                                        // 静态贴纸：转成 png，避免 WEBP 直接当 jpg 触发 QQ 富媒体失败
+                                        const image = await Jimp.read(file);
+                                        targetBuffer = await image.getBuffer('image/png');
+                                        targetExt = '.png';
+                                    }
                                 } catch (e) {
                                     logger.warn('Failed to convert sticker buffer, fallback to text', e);
                                     segments.push({

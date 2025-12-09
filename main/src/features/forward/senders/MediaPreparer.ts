@@ -31,6 +31,12 @@ export class ForwardMediaPreparer {
         await Promise.all(msg.content.map(async (content) => {
             try {
                 if (content.type === 'image') {
+                    // Skip file conversion for stickers - let toNapCat handle TGS conversion
+                    if ((content.data as any).isSticker) {
+                        this.logger.debug('Skipping file conversion for sticker, will be handled by toNapCat');
+                        // Keep the buffer/object as-is for toNapCat to process
+                        return;
+                    }
                     content.data.file = await this.ensureFilePath(await this.ensureBufferOrPath(content as ImageContent), '.jpg');
                 } else if (content.type === 'video') {
                     content.data.file = await this.ensureFilePath(await this.ensureBufferOrPath(content as VideoContent), '.mp4', false);
@@ -79,7 +85,12 @@ export class ForwardMediaPreparer {
     }
 
     async ensureBufferOrPath(content: ImageContent | VideoContent | AudioContent | FileContent, forceDownload?: boolean): Promise<Buffer | string | undefined> {
+        this.logger.debug(`[ensureBufferOrPath] Start - content.type: ${content.type}, forceDownload: ${forceDownload}`);
+        this.logger.debug(`[ensureBufferOrPath] content.data keys: ${Object.keys(content.data).join(', ')}`);
+
         if (content.data.file) {
+            this.logger.debug(`[ensureBufferOrPath] content.data.file type: ${typeof content.data.file}, isBuffer: ${Buffer.isBuffer(content.data.file)}`);
+
             if (Buffer.isBuffer(content.data.file)) return content.data.file;
             if (typeof content.data.file === 'string') {
                 if (!forceDownload && !/^https?:\/\//.test(content.data.file)) {
@@ -92,14 +103,20 @@ export class ForwardMediaPreparer {
                         this.logger.debug(`Local media file not found or accessible, falling back to download: ${content.data.file}`);
                     }
                 }
+                this.logger.debug(`[ensureBufferOrPath] Attempting URL download from: ${content.data.file}`);
                 try {
-                    return await this.media?.downloadMedia(content.data.file);
+                    const result = await this.media?.downloadMedia(content.data.file);
+                    this.logger.debug(`[ensureBufferOrPath] URL download result: ${result ? `buffer(${result.length})` : 'undefined'}`);
+                    return result;
                 } catch (e) {
                     this.logger.warn(e, 'Failed to download media by url');
                 }
             }
+            this.logger.debug(`[ensureBufferOrPath] Attempting TG object download. file object keys: ${Object.keys(content.data.file).join(', ')}`);
             try {
                 const mediaObj = content.data.file as any;
+                this.logger.debug(`[ensureBufferOrPath] TG Media object structure: ${JSON.stringify(mediaObj, null, 2).substring(0, 500)}`);
+
                 const buffer = await this.instance.tgBot.downloadMedia(mediaObj);
                 this.logger.debug(`Downloaded media buffer size: ${buffer?.length}`);
 
@@ -109,12 +126,21 @@ export class ForwardMediaPreparer {
                 }
                 return buffer as Buffer;
             } catch (e) {
-                this.logger.warn(e, 'Failed to download media from TG object:');
+                this.logger.error(e, 'Failed to download media from TG object:');
+                this.logger.error(`[ensureBufferOrPath] TG download error details: ${e instanceof Error ? e.message : String(e)}`);
             }
         }
         if (content.data.url && this.media) {
-            return await this.media.downloadMedia(content.data.url);
+            this.logger.debug(`[ensureBufferOrPath] Attempting download from content.data.url: ${content.data.url}`);
+            try {
+                const result = await this.media.downloadMedia(content.data.url);
+                this.logger.debug(`[ensureBufferOrPath] URL download from data.url result: ${result ? `buffer(${result.length})` : 'undefined'}`);
+                return result;
+            } catch (e) {
+                this.logger.error(e, '[ensureBufferOrPath] Failed to download from data.url:');
+            }
         }
+        this.logger.warn('[ensureBufferOrPath] All download attempts failed, returning undefined');
         return undefined;
     }
 

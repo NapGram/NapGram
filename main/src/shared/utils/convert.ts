@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
 import { file as createTempFile } from './temp';
 import fsP from 'fs/promises';
 import convertWithFfmpeg from './encoding/convertWithFfmpeg';
@@ -30,7 +30,9 @@ const convert = {
   // webp2png，这里 webpData 是方法因为不需要的话就不获取了
   png: (key: string, webpData: () => Promise<Buffer | Uint8Array | string>) =>
     cachedConvert(key + '.png', async (convertedPath) => {
-      await sharp(await webpData()).png().toFile(convertedPath);
+      const buffer = Buffer.from(await webpData());
+      const image = await Jimp.read(buffer);
+      await image.write(convertedPath as `${string}.${string}`);
     }),
   video2gif: (key: string, webmData: () => Promise<Buffer | Uint8Array | string>, webm = false) =>
     cachedConvert(key + '.gif', async (convertedPath) => {
@@ -41,14 +43,69 @@ const convert = {
     }),
   tgs2gif: (key: string, tgsData: () => Promise<Buffer | Uint8Array | string>) =>
     cachedConvert(key + '.gif', async (convertedPath) => {
-      const tempTgsPath = path.join(CACHE_PATH, key + '.tgs');
-      await fsP.writeFile(tempTgsPath, await tgsData());
-      await tgsToGif(tempTgsPath, convertedPath);
-      await fsP.rm(tempTgsPath);
+      const logger = getLogger('TGSConverter');
+      const src = await tgsData();
+
+      logger.debug(`[tgs2gif] Start conversion for key: ${key}, dest: ${convertedPath}`);
+      logger.debug(`[tgs2gif] src type: ${typeof src}, isBuffer: ${Buffer.isBuffer(src)}`);
+
+      if (Buffer.isBuffer(src)) {
+        logger.debug(`[tgs2gif] Processing buffer, size: ${src.length}`);
+        const tempDir = path.join(env.DATA_DIR, 'temp');
+        await fsP.mkdir(tempDir, { recursive: true });
+
+        const tempTgsPath = path.join(tempDir, `sticker-${Date.now()}-${Math.random().toString(16).slice(2)}.tgs`);
+
+        try {
+          logger.debug(`[tgs2gif] Writing TGS buffer to: ${tempTgsPath}`);
+          await fsP.writeFile(tempTgsPath, src);
+          logger.info(`[tgs2gif] TGS file written successfully, calling tgsToGif...`);
+
+          await tgsToGif(tempTgsPath, convertedPath);
+          logger.info(`[tgs2gif] tgsToGif completed, checking output...`);
+
+          // Verify output file exists
+          try {
+            const stats = await fsP.stat(convertedPath);
+            logger.info(`[tgs2gif] GIF created successfully, size: ${stats.size}`);
+          } catch (statErr) {
+            logger.error(`[tgs2gif] Output GIF file not found: ${convertedPath}`);
+            throw new Error('TGS to GIF conversion produced no output file');
+          }
+
+          // Cleanup temp files
+          try {
+            await fsP.unlink(tempTgsPath);
+            logger.debug(`[tgs2gif] Cleaned up temp TGS file: ${tempTgsPath}`);
+          } catch (cleanupErr) {
+            logger.warn(cleanupErr, '[tgs2gif] Failed to cleanup temp TGS file');
+          }
+        } catch (e) {
+          logger.error(e, `[tgs2gif] Conversion failed for key: ${key}`);
+          logger.error(`[tgs2gif] Error details: ${e instanceof Error ? e.stack : String(e)}`);
+          throw e;
+        }
+      } else if (typeof src === 'string' && /\.tgs$/i.test(src)) {
+        logger.debug(`[tgs2gif] Processing TGS file path: ${src}`);
+        try {
+          await tgsToGif(src, convertedPath);
+          logger.info(`[tgs2gif] Direct file conversion completed for key: ${key}`);
+        } catch (e) {
+          logger.error(e, `[tgs2gif] Direct file conversion failed for key: ${key}`);
+          throw e;
+        }
+      } else {
+        const errMsg = `Unsupported sticker source type for key ${key}: ${typeof src}`;
+        logger.error(`[tgs2gif] ${errMsg}`);
+        throw new Error(errMsg);
+      }
     }),
+  // 图片转webp (注：Jimp不支持WebP，改为PNG)
   webp: (key: string, imageData: () => Promise<Buffer | Uint8Array | string>) =>
-    cachedConvert(key + '.webp', async (convertedPath) => {
-      await sharp(await imageData()).webp().toFile(convertedPath);
+    cachedConvert(key + '.png', async (convertedPath) => {
+      const buffer = Buffer.from(await imageData());
+      const image = await Jimp.read(buffer);
+      await image.write(convertedPath as `${string}.${string}`);
     }),
   webm: (key: string, filePath: string) =>
     cachedConvert(key + '.webm', async (convertedPath) => {
@@ -89,13 +146,15 @@ const convert = {
     }
     if (!useSmallSize) return pathPngOrig || pathGifOrig;
     if (pathPngOrig) {
-      return await cachedConvert(key + '@50.png', async (convertedPath) => {
-        await sharp(pathPngOrig).resize(50).toFile(convertedPath);
+      return await cachedConvert(key + '@50.png', async (convertedPath) => { // 缩小到50x50px
+        const image = await Jimp.read(pathPngOrig);
+        await image.resize({ w: 50 }).write(convertedPath as `${string}.${string}`);
       });
     }
     else {
-      return await cachedConvert(key + '@50.gif', async (convertedPath) => {
-        await sharp(pathGifOrig).resize(50).toFile(convertedPath);
+      return await cachedConvert(key + '@50.gif', async (convertedPath) => { // 如果已经存在PNG版本，直接缩小PNG
+        const image = await Jimp.read(pathGifOrig);
+        await image.resize({ w: 50 }).write(convertedPath as `${string}.${string}`);
       });
     }
   },

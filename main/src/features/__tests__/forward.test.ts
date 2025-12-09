@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock silk-sdk to avoid native binding issues in tests
-vi.mock('silk-sdk', () => ({
-    default: {
-        encode: vi.fn().mockResolvedValue(Buffer.from('mock-silk-encoded')),
-        decode: vi.fn().mockResolvedValue(Buffer.from('mock-silk-decoded')),
-    },
+// Mock silk-wasm to avoid WASM loading issues in tests
+vi.mock('silk-wasm', () => ({
+    encode: vi.fn().mockResolvedValue({ data: new Uint8Array(), duration: 0 }),
+    decode: vi.fn().mockResolvedValue({ data: new Uint8Array(), duration: 0 }),
 }));
 
 import { EventEmitter } from 'events';

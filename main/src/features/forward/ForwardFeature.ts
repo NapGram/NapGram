@@ -9,7 +9,7 @@ import ForwardMap, { type ForwardPairRecord } from '../../domain/models/ForwardM
 import { MediaFeature } from '../MediaFeature';
 import { CommandsFeature } from '../commands/CommandsFeature';
 import env from '../../domain/models/env';
-import sharp from 'sharp';
+
 import db from '../../domain/models/db';
 import flags from '../../domain/constants/flags';
 import { Message } from '@mtcute/core';
@@ -223,10 +223,10 @@ export class ForwardFeature {
     private handleModeCommand = async (msg: UnifiedMessage, args: string[]) => {
         const chatId = msg.chat.id;
         // Extract threadId from raw message
+        // Extract threadId from raw message
         const raw = (msg.metadata as any)?.raw;
-        const threadId = raw?.replyTo?.replyToTopId
-            || raw?.replyTo?.replyToMsgId
-            || raw?.replyToMsgId;
+        // Do not use .extract(msg, args) here because args may contain numbers (e.g. "10" for mode) that are NOT threadId
+        const threadId = new ThreadIdExtractor().extractFromRaw(raw);
 
         if (!MessageUtils.isAdmin(msg.sender.id, this.instance)) {
             await MessageUtils.replyTG(this.tgBot, chatId, '您没有权限执行此命令', threadId);
