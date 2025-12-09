@@ -1,5 +1,5 @@
 import { file } from '../temp';
-import silk from 'silk-sdk';
+import { encode, decode } from 'silk-wasm';
 import fsP from 'fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -27,8 +27,9 @@ export default {
    * 解码 SILK 为 OGG (Opus)
    */
   async decode(bufSilk: Buffer, outputPath: string): Promise<void> {
-    // silk-sdk 解码得到 PCM 数据
-    const bufPcm = silk.decode(bufSilk);
+    // silk-wasm 解码得到 PCM 数据
+    const result = await decode(bufSilk, 24000);
+    const bufPcm = Buffer.from(result.data);
 
     // 写入临时 PCM 文件
     const { path, cleanup } = await file();
@@ -63,7 +64,8 @@ export default {
       const pcmBuffer = await fsP.readFile(pcmPath);
 
       // 3. 编码为 SILK (24000Hz)
-      return silk.encode(pcmBuffer, 24000);
+      const result = await encode(pcmBuffer, 24000);
+      return Buffer.from(result.data);
     } finally {
       cleanup();
     }
