@@ -7,6 +7,7 @@ import tempFile from './tempFile';
 import ui from './ui';
 import qqAvatar from './qqAvatar';
 import messages from './messages';
+import { setupMonitoring } from './monitoring';
 
 const log = getLogger('Web Api');
 
@@ -33,6 +34,9 @@ fastify.register(richHeader);
 fastify.register(tempFile);
 fastify.register(messages);
 fastify.register(ui);
+
+// 📊 Register monitoring and statistics API
+setupMonitoring(fastify);
 
 export default {
   async startListening() {

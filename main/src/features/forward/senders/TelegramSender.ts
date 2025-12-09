@@ -4,7 +4,7 @@ import env from '../../../domain/models/env';
 import flags from '../../../domain/constants/flags';
 import type Instance from '../../../domain/models/Instance';
 import type { MessageContent, UnifiedMessage } from '../../../domain/message';
-import type { MediaFeature } from '../../media/MediaFeature';
+import type { MediaFeature } from '../../MediaFeature';
 import { getLogger } from '../../../shared/logger';
 import { renderContent } from '../utils/render';
 import db from '../../../domain/models/db';
