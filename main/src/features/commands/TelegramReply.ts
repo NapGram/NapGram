@@ -1,5 +1,5 @@
-import { getLogger } from '../../../shared/logger';
-import type Telegram from '../../../infrastructure/clients/telegram/client';
+import { getLogger } from '../../shared/logger';
+import type Telegram from '../../infrastructure/clients/telegram/client';
 
 const logger = getLogger('TelegramReply');
 

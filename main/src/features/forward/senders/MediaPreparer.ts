@@ -6,7 +6,7 @@ import { fileTypeFromBuffer } from 'file-type';
 import silk from '../../../shared/utils/encoding/silk';
 import env from '../../../domain/models/env';
 import type Instance from '../../../domain/models/Instance';
-import type { MediaFeature } from '../../media/MediaFeature';
+import type { MediaFeature } from '../../MediaFeature';
 import type { AudioContent, FileContent, ImageContent, UnifiedMessage, VideoContent, MessageContent } from '../../../domain/message';
 import { getLogger } from '../../../shared/logger';
 import { renderContent } from '../utils/render';

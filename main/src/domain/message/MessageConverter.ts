@@ -1,13 +1,13 @@
-import type { UnifiedMessage, MessageContent } from '../types';
-import { getLogger } from '../../../shared/logger';
+import type { UnifiedMessage, MessageContent } from './types';
+import { getLogger } from '../../shared/logger';
 import type { Receive } from 'node-napcat-ts';
-import env from '../../models/env';
+import env from '../models/env';
 import fs from 'fs/promises';
 import path from 'path';
 import fsSync from 'fs';
 import { Message } from '@mtcute/core';
 
-import { NapCatConverter, TelegramConverter, UnifiedConverter } from '../converters';
+import { NapCatConverter, TelegramConverter, UnifiedConverter } from './converters';
 
 const logger = getLogger('MessageConverter');
 
