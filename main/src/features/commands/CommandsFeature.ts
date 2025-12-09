@@ -550,7 +550,10 @@ export class CommandsFeature {
     private async replyTG(chatId: string | number, text: string, threadId?: number) {
         try {
             const chat = await this.tgBot.getChat(Number(chatId));
-            const params: any = { linkPreview: { disable: true } };
+            const params: any = {
+                linkPreview: { disable: true },
+                parseMode: 'html'  // 启用 HTML 格式解析
+            };
             if (threadId) {
                 params.replyTo = threadId;
                 params.messageThreadId = threadId;

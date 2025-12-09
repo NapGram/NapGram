@@ -30,12 +30,12 @@ export class InfoCommandHandler {
             return;
         }
 
-        // 构建绑定信息
-        let info = `📊 **绑定信息**\n\n`;
-        info += `🔗 QQ 群号: \`${pair.qqRoomId}\`\n`;
-        info += `🔗 TG 聊天 ID: \`${pair.tgChatId}\`\n`;
+        // 构建绑定信息 - 使用 Markdown HTML 格式
+        let info = `<b>📊 绑定信息</b>\n\n`;
+        info += `🔗 QQ 群号: <code>${pair.qqRoomId}</code>\n`;
+        info += `🔗 TG 聊天 ID: <code>${pair.tgChatId}</code>\n`;
         if (pair.tgThreadId) {
-            info += `🔗 TG 话题 ID: \`${pair.tgThreadId}\`\n`;
+            info += `🔗 TG 话题 ID: <code>${pair.tgThreadId}</code>\n`;
         }
         info += `\n`;
 
@@ -59,22 +59,22 @@ export class InfoCommandHandler {
 
         // 昵称模式
         if (pair.nicknameMode) {
-            info += `👤 昵称模式: \`${pair.nicknameMode}\`\n`;
+            info += `👤 昵称模式: <code>${pair.nicknameMode}</code>\n`;
         }
 
         // 如果有ignore规则
         if (pair.ignoreRegex) {
-            info += `🚫 忽略正则: \`${pair.ignoreRegex}\`\n`;
+            info += `🚫 忽略正则: <code>${pair.ignoreRegex}</code>\n`;
         }
         if (pair.ignoreSenders) {
-            info += `🚫 忽略发送者: \`${pair.ignoreSenders}\`\n`;
+            info += `🚫 忽略发送者: <code>${pair.ignoreSenders}</code>\n`;
         }
 
         // 检查是否回复了某条消息
         const raw = (msg.metadata as any)?.raw;
         if (raw?.replyTo) {
-            info += `\n📬 **回复的消息信息**\n`;
-            info += `消息 ID: \`${raw.replyTo.replyToMsgId || raw.replyTo}\`\n`;
+            info += `\n<b>📬 回复的消息信息</b>\n`;
+            info += `消息 ID: <code>${raw.replyTo.replyToMsgId || raw.replyTo}</code>\n`;
             // 可以在这里添加更多消息详情，如果有消息映射数据库的话
         }
 
