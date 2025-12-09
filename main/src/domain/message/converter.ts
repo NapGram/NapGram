@@ -6,7 +6,7 @@ import path from 'path';
 import fsSync from 'fs';
 import { Message } from '@mtcute/core';
 import { NapCatConverter } from './converters';
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
 import { fileTypeFromBuffer } from 'file-type';
 import convert from '../../shared/utils/convert';
 import type Instance from '../models/Instance';
@@ -342,7 +342,8 @@ export class MessageConverter {
                                         }
                                     } else {
                                         // 静态贴纸：转成 png，避免 WEBP 直接当 jpg 触发 QQ 富媒体失败
-                                        targetBuffer = await sharp(file).png().toBuffer();
+                                        const image = await Jimp.read(file);
+                                        targetBuffer = await image.getBuffer('image/png');
                                         targetExt = '.png';
                                     }
                                 } catch (e) {

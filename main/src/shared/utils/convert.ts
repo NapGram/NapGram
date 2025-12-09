@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
 import { file as createTempFile } from './temp';
 import fsP from 'fs/promises';
 import convertWithFfmpeg from './encoding/convertWithFfmpeg';
@@ -30,7 +30,9 @@ const convert = {
   // webp2png，这里 webpData 是方法因为不需要的话就不获取了
   png: (key: string, webpData: () => Promise<Buffer | Uint8Array | string>) =>
     cachedConvert(key + '.png', async (convertedPath) => {
-      await sharp(await webpData()).png().toFile(convertedPath);
+      const buffer = Buffer.from(await webpData());
+      const image = await Jimp.read(buffer);
+      await image.write(convertedPath);
     }),
   video2gif: (key: string, webmData: () => Promise<Buffer | Uint8Array | string>, webm = false) =>
     cachedConvert(key + '.gif', async (convertedPath) => {
@@ -98,9 +100,12 @@ const convert = {
         throw new Error(errMsg);
       }
     }),
+  // 图片转webp (注：Jimp不支持WebP，改为PNG)
   webp: (key: string, imageData: () => Promise<Buffer | Uint8Array | string>) =>
-    cachedConvert(key + '.webp', async (convertedPath) => {
-      await sharp(await imageData()).webp().toFile(convertedPath);
+    cachedConvert(key + '.png', async (convertedPath) => {
+      const buffer = Buffer.from(await imageData());
+      const image = await Jimp.read(buffer);
+      await image.write(convertedPath);
     }),
   webm: (key: string, filePath: string) =>
     cachedConvert(key + '.webm', async (convertedPath) => {
@@ -141,13 +146,15 @@ const convert = {
     }
     if (!useSmallSize) return pathPngOrig || pathGifOrig;
     if (pathPngOrig) {
-      return await cachedConvert(key + '@50.png', async (convertedPath) => {
-        await sharp(pathPngOrig).resize(50).toFile(convertedPath);
+      return await cachedConvert(key + '@50.png', async (convertedPath) => { // 缩小到50x50px
+        const image = await Jimp.read(pathPngOrig);
+        await image.resize({ w: 50 }).write(convertedPath);
       });
     }
     else {
-      return await cachedConvert(key + '@50.gif', async (convertedPath) => {
-        await sharp(pathGifOrig).resize(50).toFile(convertedPath);
+      return await cachedConvert(key + '@50.gif', async (convertedPath) => { // 如果已经存在PNG版本，直接缩小PNG
+        const image = await Jimp.read(pathGifOrig);
+        await image.resize({ w: 50 }).write(convertedPath);
       });
     }
   },
