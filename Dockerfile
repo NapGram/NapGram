@@ -39,10 +39,12 @@ COPY web/package.json /app/web/
 # 三步安装策略：
 # 1. 先安装 Prisma 相关包并运行 postinstall（下载引擎）
 # 2. 再安装其他依赖并跳过脚本（避免 sharp 尝试源码编译）
-# 3. 最后重新编译必需的原生模块
+# 3. 编译必需的原生模块
+#    - better-sqlite3: mtcute 用于 Telegram session 存储
+#    - silk-wasm 是纯 WASM，无需编译
 RUN pnpm install --filter=prisma --filter=@prisma/client --filter=@prisma/engines --frozen-lockfile --shamefully-hoist && \
     pnpm install --frozen-lockfile --shamefully-hoist --ignore-scripts && \
-    pnpm -r rebuild better-sqlite3 silk-sdk
+    pnpm -r rebuild better-sqlite3
 
 # 源码构建
 COPY main/ /app/main/
