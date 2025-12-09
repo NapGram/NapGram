@@ -40,8 +40,8 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           flavor: |
-            latest=${{ matrix.node-version == 24 && 'true' || 'false' }}
-            suffix=${{ matrix.node-version == 25 && '-node-25' || '' }}
+            latest=${{ matrix.node-version == 25 && 'true' || 'false' }}
+            suffix=${{ matrix.node-version == 24 && '-node-24' || '' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
