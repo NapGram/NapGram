@@ -17,7 +17,7 @@ export class CommandContext {
         public readonly registry: CommandRegistry,
         public readonly permissionChecker: PermissionChecker,
         public readonly stateManager: InteractiveStateManager,
-        public readonly replyTG: (chatId: string | number, text: string, threadId?: number) => Promise<void>,
+        public readonly replyTG: (chatId: string | number, text: any, threadId?: number) => Promise<void>,
         public readonly extractThreadId: (msg: UnifiedMessage, args: string[]) => number | undefined
     ) { }
 }

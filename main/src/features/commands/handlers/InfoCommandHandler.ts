@@ -2,6 +2,7 @@ import type { UnifiedMessage } from '../../../domain/message';
 import { CommandContext } from './CommandContext';
 import ForwardMap from '../../../domain/models/ForwardMap';
 import { getLogger } from '../../../shared/logger';
+import { md } from '@mtcute/markdown-parser';
 
 const logger = getLogger('InfoCommandHandler');
 
@@ -30,14 +31,10 @@ export class InfoCommandHandler {
             return;
         }
 
-        // 构建绑定信息
-        let info = `📊 **绑定信息**\n\n`;
-        info += `🔗 QQ 群号: \`${pair.qqRoomId}\`\n`;
-        info += `🔗 TG 聊天 ID: \`${pair.tgChatId}\`\n`;
-        if (pair.tgThreadId) {
-            info += `🔗 TG 话题 ID: \`${pair.tgThreadId}\`\n`;
-        }
-        info += `\n`;
+        // 构建绑定信息 - 使用 mtcute 的 md 标签模板（Markdown格式）
+        const qqRoomId = pair.qqRoomId.toString();
+        const tgChatId = pair.tgChatId.toString();
+        const tgThreadId = pair.tgThreadId?.toString();
 
         // 转发模式
         const forwardMode = pair.forwardMode || 'normal';
@@ -55,27 +52,46 @@ export class InfoCommandHandler {
             default:
                 modeText = '✅ 双向正常';
         }
-        info += `📡 转发状态: ${modeText}\n`;
+
+        // 使用 md 标签模板构建消息（Markdown格式）
+        let info = md`**📊 绑定信息**
+
+🔗 QQ 群号: \`${qqRoomId}\`
+🔗 TG 聊天 ID: \`${tgChatId}\``;
+
+        if (tgThreadId) {
+            info = md`${info}
+🔗 TG 话题 ID: \`${tgThreadId}\``;
+        }
+
+        info = md`${info}
+
+📡 转发状态: ${modeText}`;
 
         // 昵称模式
         if (pair.nicknameMode) {
-            info += `👤 昵称模式: \`${pair.nicknameMode}\`\n`;
+            info = md`${info}
+👤 昵称模式: \`${pair.nicknameMode}\``;
         }
 
         // 如果有ignore规则
         if (pair.ignoreRegex) {
-            info += `🚫 忽略正则: \`${pair.ignoreRegex}\`\n`;
+            info = md`${info}
+🚫 忽略正则: \`${pair.ignoreRegex}\``;
         }
         if (pair.ignoreSenders) {
-            info += `🚫 忽略发送者: \`${pair.ignoreSenders}\`\n`;
+            info = md`${info}
+🚫 忽略发送者: \`${pair.ignoreSenders}\``;
         }
 
         // 检查是否回复了某条消息
         const raw = (msg.metadata as any)?.raw;
         if (raw?.replyTo) {
-            info += `\n📬 **回复的消息信息**\n`;
-            info += `消息 ID: \`${raw.replyTo.replyToMsgId || raw.replyTo}\`\n`;
-            // 可以在这里添加更多消息详情，如果有消息映射数据库的话
+            const replyId = (raw.replyTo.replyToMsgId || raw.replyTo).toString();
+            info = md`${info}
+
+**📬 回复的消息信息**
+消息 ID: \`${replyId}\``;
         }
 
         await this.context.replyTG(chatId, info, threadId);

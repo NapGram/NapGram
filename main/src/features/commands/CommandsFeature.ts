@@ -19,7 +19,6 @@ import { UnbindCommandHandler } from './handlers/UnbindCommandHandler';
 import { RecallCommandHandler } from './handlers/RecallCommandHandler';
 import { ForwardControlCommandHandler } from './handlers/ForwardControlCommandHandler';
 import { InfoCommandHandler } from './handlers/InfoCommandHandler';
-import { ExtendedRecallCommandHandler } from './handlers/ExtendedRecallCommandHandler';
 import { QQInteractionCommandHandler } from './handlers/QQInteractionCommandHandler';
 import { RefreshCommandHandler } from './handlers/RefreshCommandHandler';
 import { FlagsCommandHandler } from './handlers/FlagsCommandHandler';
@@ -51,7 +50,6 @@ export class CommandsFeature {
     private readonly recallHandler: RecallCommandHandler;
     private readonly forwardControlHandler: ForwardControlCommandHandler;
     private readonly infoHandler: InfoCommandHandler;
-    private readonly extendedRecallHandler: ExtendedRecallCommandHandler;
     private readonly qqInteractionHandler: QQInteractionCommandHandler;
     private readonly refreshHandler: RefreshCommandHandler;
     private readonly flagsHandler: FlagsCommandHandler;
@@ -86,7 +84,6 @@ export class CommandsFeature {
         this.recallHandler = new RecallCommandHandler(this.commandContext);
         this.forwardControlHandler = new ForwardControlCommandHandler(this.commandContext);
         this.infoHandler = new InfoCommandHandler(this.commandContext);
-        this.extendedRecallHandler = new ExtendedRecallCommandHandler(this.commandContext);
         this.qqInteractionHandler = new QQInteractionCommandHandler(this.commandContext);
         this.refreshHandler = new RefreshCommandHandler(this.commandContext);
         this.flagsHandler = new FlagsCommandHandler(this.commandContext);
@@ -140,30 +137,13 @@ export class CommandsFeature {
             adminOnly: true,
         });
 
-        // 撤回命令
+        // 撤回命令（支持双向同步和批量撤回）
         this.registerCommand({
             name: 'rm',
             aliases: ['撤回'],
-            description: '撤回指定消息（回复触发），默认撤回自己，管理员可撤回所有',
-            usage: '/rm (请回复要撤回的消息)',
+            description: '撤回消息（双向同步）。回复消息撤回单条，或使用 /rm 数字 批量撤回',
+            usage: '/rm [数字] 或回复消息使用 /rm',
             handler: (msg, args) => this.recallHandler.execute(msg, args),
-            adminOnly: false,
-        });
-
-        // 扩展撤回命令
-        this.registerCommand({
-            name: 'rmt',
-            description: '仅在 Telegram 端撤回消息',
-            usage: '/rmt (请回复要撤回的消息)',
-            handler: (msg, args) => this.extendedRecallHandler.execute(msg, args, 'rmt'),
-            adminOnly: false,
-        });
-
-        this.registerCommand({
-            name: 'rmq',
-            description: '仅在 QQ 端撤回消息',
-            usage: '/rmq (请回复要撤回的消息)',
-            handler: (msg, args) => this.extendedRecallHandler.execute(msg, args, 'rmq'),
             adminOnly: false,
         });
 
@@ -547,10 +527,12 @@ export class CommandsFeature {
         return undefined;
     }
 
-    private async replyTG(chatId: string | number, text: string, threadId?: number) {
+    private async replyTG(chatId: string | number, text: any, threadId?: number) {
         try {
             const chat = await this.tgBot.getChat(Number(chatId));
-            const params: any = { linkPreview: { disable: true } };
+            const params: any = {
+                linkPreview: { disable: true }
+            };
             if (threadId) {
                 params.replyTo = threadId;
                 params.messageThreadId = threadId;
