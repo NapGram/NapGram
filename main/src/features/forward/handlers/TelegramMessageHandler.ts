@@ -20,7 +20,7 @@ export class TelegramMessageHandler {
         private readonly replyResolver: ReplyResolver,
         private readonly prepareMediaForQQ: (msg: UnifiedMessage) => Promise<void>,
         private readonly renderContent: (content: any) => string,
-        private readonly getNicknameMode: () => string,
+        private readonly getNicknameMode: (pair: any) => string,
     ) { }
 
     async handleTGMessage(tgMsg: Message, pair: any): Promise<void> {
@@ -32,7 +32,6 @@ export class TelegramMessageHandler {
                 text: rawText.slice(0, 100),
             });
 
-            // 跳过命令消息，避免转发到 QQ
             // 跳过命令消息，避免转发到 QQ
             const trimmedText = rawText.trim();
             if (trimmedText.startsWith('/')) {
@@ -101,7 +100,7 @@ export class TelegramMessageHandler {
 
             const hasMedia = unified.content.some(c => ['video', 'file'].includes(c.type));
             const hasSplitMedia = unified.content.some(c => ['audio', 'image'].includes(c.type));
-            const nicknameMode = this.getNicknameMode();
+            const nicknameMode = this.getNicknameMode(pair);
             const showTGToQQNickname = nicknameMode[1] === '1';
 
             let receipt;

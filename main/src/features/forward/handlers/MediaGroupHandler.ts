@@ -22,7 +22,7 @@ export class MediaGroupHandler {
     constructor(
         private readonly qqClient: IQQClient,
         private readonly prepareMediaForQQ: (msg: UnifiedMessage) => Promise<void>,
-        private readonly getNicknameMode: () => string,
+        private readonly getNicknameMode: (pair: any) => string,
     ) { }
 
     /**
@@ -105,7 +105,7 @@ export class MediaGroupHandler {
             napCatSegments.push({ type: 'text', data: { text: caption } });
         }
 
-        const nicknameMode = this.getNicknameMode();
+        const nicknameMode = this.getNicknameMode(buffer.pair);
         const showTGToQQNickname = nicknameMode[1] === '1';
         if (showTGToQQNickname) {
             const firstMsg = buffer.messages[0];
