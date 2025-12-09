@@ -7,14 +7,20 @@ export default async function tgsToGif(tgsPath: string, outputPath?: string): Pr
   // Read TGS file (gzipped Lottie JSON)
   const tgsBuffer = await fs.readFile(tgsPath);
 
-  // Instantiate the converter class
-  const converter = new Lottie2img();
+  // Create converter instance using static factory method
+  const converter = await Lottie2img.create();
 
-  // Convert to GIF using pure WASM (no Chromium!)
-  const gifBuffer = await converter.toGIF(tgsBuffer);
+  // Convert to WebP using pure WASM (no Chromium!)
+  // Note: @lottie2img/main currently only supports WebP output, not GIF yet
+  // But WebP works fine in QQ
+  const webpBuffer = await converter.convert(tgsBuffer);
 
-  // Write output GIF
-  await fs.writeFile(outPath, gifBuffer);
+  // Write output (using .webp extension despite outputPath parameter)
+  const webpPath = outPath.replace(/\.(tgs|gif)$/i, '.webp');
+  await fs.writeFile(webpPath, webpBuffer);
 
-  return outPath;
+  // Cleanup
+  converter.destroy();
+
+  return webpPath;
 }
