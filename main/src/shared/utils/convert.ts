@@ -32,7 +32,7 @@ const convert = {
     cachedConvert(key + '.png', async (convertedPath) => {
       const buffer = Buffer.from(await webpData());
       const image = await Jimp.read(buffer);
-      await image.write(convertedPath);
+      await image.write(convertedPath as `${string}.${string}`);
     }),
   video2gif: (key: string, webmData: () => Promise<Buffer | Uint8Array | string>, webm = false) =>
     cachedConvert(key + '.gif', async (convertedPath) => {
@@ -105,7 +105,7 @@ const convert = {
     cachedConvert(key + '.png', async (convertedPath) => {
       const buffer = Buffer.from(await imageData());
       const image = await Jimp.read(buffer);
-      await image.write(convertedPath);
+      await image.write(convertedPath as `${string}.${string}`);
     }),
   webm: (key: string, filePath: string) =>
     cachedConvert(key + '.webm', async (convertedPath) => {
@@ -148,13 +148,13 @@ const convert = {
     if (pathPngOrig) {
       return await cachedConvert(key + '@50.png', async (convertedPath) => { // 缩小到50x50px
         const image = await Jimp.read(pathPngOrig);
-        await image.resize({ w: 50 }).write(convertedPath);
+        await image.resize({ w: 50 }).write(convertedPath as `${string}.${string}`);
       });
     }
     else {
       return await cachedConvert(key + '@50.gif', async (convertedPath) => { // 如果已经存在PNG版本，直接缩小PNG
         const image = await Jimp.read(pathGifOrig);
-        await image.resize({ w: 50 }).write(convertedPath);
+        await image.resize({ w: 50 }).write(convertedPath as `${string}.${string}`);
       });
     }
   },
