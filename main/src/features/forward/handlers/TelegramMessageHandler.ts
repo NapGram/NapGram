@@ -120,12 +120,19 @@ export class TelegramMessageHandler {
 
                     // 发送提示消息
                     try {
+                        let hintText = '';
+                        if (actionText) {
+                            hintText = `${unified.sender.name}：\n${actionText}`;
+                        } else {
+                            hintText = `${unified.sender.name} ${actionText}`; // Fallback
+                        }
+
                         const hintMsg: UnifiedMessage = {
                             id: unified.id + '_hint',
                             platform: 'qq',
                             sender: unified.sender,
                             chat: { id: String(pair.qqRoomId), type: 'group' },
-                            content: [{ type: 'text', data: { text: `${unified.sender.name} ${actionText}` } }],
+                            content: [{ type: 'text', data: { text: hintText } }],
                             timestamp: Date.now()
                         };
                         await this.qqClient.sendMessage(String(pair.qqRoomId), hintMsg);
@@ -153,7 +160,9 @@ export class TelegramMessageHandler {
                     else if (unified.content.some(c => c.type === 'audio')) actionText = '发来一条语音';
                 }
 
-                const headerText = showTGToQQNickname ? `${unified.sender.name}${actionText ? ' ' + actionText : ''}:\n` : '';
+                const headerText = showTGToQQNickname ?
+                    (actionText ? `${unified.sender.name}：\n${actionText}` : `${unified.sender.name}：\n`)
+                    : '';
                 const textSegments = unified.content.filter(c =>
                     !['audio', 'image'].includes(c.type) &&
                     !(c.type === 'text' && !c.data.text)
