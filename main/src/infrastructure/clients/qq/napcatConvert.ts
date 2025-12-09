@@ -1,5 +1,5 @@
 import type { WSSendReturn } from 'node-napcat-ts';
-import type { ForwardMessage } from '../types';
+import type { ForwardMessage } from './types';
 
 /**
  * 将 NapCat 的合并转发消息转换为统一格式

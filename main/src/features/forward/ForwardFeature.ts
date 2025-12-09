@@ -1,4 +1,5 @@
 import { getLogger } from '../../shared/logger';
+import { performanceMonitor } from '../../infrastructure';
 import type { IQQClient } from '../../infrastructure/clients/qq';
 import type { UnifiedMessage, MessageContent, ImageContent, VideoContent, AudioContent, FileContent } from '../../domain/message';
 import { messageConverter } from '../../domain/message';
@@ -135,6 +136,8 @@ export class ForwardFeature {
     }
 
     private handleQQMessage = async (msg: UnifiedMessage) => {
+        const startTime = Date.now(); // 📊 开始计时
+
         try {
             const pair = this.forwardMap.findByQQ(msg.chat.id);
             if (!pair) {
@@ -199,9 +202,16 @@ export class ForwardFeature {
 
             if (sentMsg) {
                 await this.mapper.saveMessage(msg, sentMsg, pair.instanceId, pair.qqRoomId, BigInt(tgChatId));
-                logger.info(`[Forward][QQ->TG] message ${msg.id} -> TG ${tgChatId} (id: ${sentMsg.id})`);
+
+                // 📊 记录成功 - 计算处理延迟
+                const latency = Date.now() - startTime;
+                performanceMonitor.recordMessage(latency);
+
+                logger.info(`[Forward][QQ->TG] message ${msg.id} -> TG ${tgChatId} (id: ${sentMsg.id}) in ${latency}ms`);
             }
         } catch (error) {
+            // 📊 记录错误
+            performanceMonitor.recordError();
             logger.error('Failed to forward QQ message:', error);
         }
     };

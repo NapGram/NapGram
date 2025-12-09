@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { Readable } from 'stream';
 import { fileTypeFromBuffer } from 'file-type';
-import type { MediaFeature } from '../../media/MediaFeature';
+import type { MediaFeature } from '../../MediaFeature';
 import type { MessageContent } from '../../../domain/message';
 import { getLogger } from '../../../shared/logger';
 
