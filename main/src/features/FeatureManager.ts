@@ -31,6 +31,11 @@ export class FeatureManager {
             this.features.set('media', this.media);
             logger.info('✓ Media feature initialized');
 
+            // Set instance to messageConverter for sticker download
+            const { messageConverter } = await import('../domain/message');
+            messageConverter.setInstance(this.instance);
+            logger.debug('✓ MessageConverter instance set');
+
             this.commands = new CommandsFeature(this.instance, this.tgBot, this.qqClient);
             this.features.set('commands', this.commands);
             logger.info('✓ Commands feature initialized');
