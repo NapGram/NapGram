@@ -9,6 +9,7 @@ import { NapCatConverter } from './converters';
 import sharp from 'sharp';
 import { fileTypeFromBuffer } from 'file-type';
 import convert from '../../shared/utils/convert';
+import type Instance from '../models/Instance';
 
 const logger = getLogger('MessageConverter');
 
@@ -18,6 +19,11 @@ const logger = getLogger('MessageConverter');
  */
 export class MessageConverter {
     private napCatConverter = new NapCatConverter();
+    private instance?: Instance;
+
+    setInstance(instance: Instance) {
+        this.instance = instance;
+    }
 
     /**
      * 从 NapCat 消息转换为统一格式
@@ -260,6 +266,40 @@ export class MessageConverter {
                 case 'image':
                     {
                         let file = content.data.url || content.data.file;
+
+                        // Handle sticker: if file is mtcute Media object, download it first
+                        if (content.data.isSticker && file && typeof file === 'object' && !Buffer.isBuffer(file) && 'type' in file) {
+                            try {
+                                if (!this.instance) {
+                                    logger.error('Instance not set, cannot download sticker');
+                                    segments.push({
+                                        type: 'text',
+                                        data: { text: '[贴纸下载失败:未初始化]' },
+                                    });
+                                    break;
+                                }
+                                logger.debug('Downloading mtcute Media object for sticker');
+                                const buffer = await this.instance.tgBot.downloadMedia(file);
+                                if (!buffer || buffer.length === 0) {
+                                    logger.warn('Downloaded sticker buffer is empty');
+                                    segments.push({
+                                        type: 'text',
+                                        data: { text: '[贴纸下载为空]' },
+                                    });
+                                    break;
+                                }
+                                file = buffer;
+                                logger.debug(`Downloaded sticker buffer, size: ${buffer.length}`);
+                            } catch (downloadErr) {
+                                logger.error('Failed to download sticker Media object', downloadErr);
+                                segments.push({
+                                    type: 'text',
+                                    data: { text: '[贴纸下载失败]' },
+                                });
+                                break;
+                            }
+                        }
+
                         if (Buffer.isBuffer(file)) {
                             let targetBuffer = file;
                             let targetExt = '.jpg';
