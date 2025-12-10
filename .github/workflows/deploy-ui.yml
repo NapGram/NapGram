@@ -12,6 +12,9 @@ on:
 jobs:
   deploy-ui:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
 
     steps:
       - name: Checkout repository
@@ -24,8 +27,26 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'pnpm'
-          cache-dependency-path: 'web/pnpm-lock.yaml'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
+      
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+      
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       
       - name: Install dependencies
         run: |
@@ -38,6 +59,7 @@ jobs:
           pnpm run build
         env:
           NODE_ENV: production
+          VITE_API_ORIGIN: ${{ secrets.VITE_API_ORIGIN }}
 
       # 直接上传 dist 到 Cloudflare Pages，跳过 CF 的自带构建
       - name: Publish to Cloudflare Pages
