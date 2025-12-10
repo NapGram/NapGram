@@ -12,7 +12,7 @@ on:
 jobs:
   deploy-ui:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,31 +38,17 @@ jobs:
           npm run build
         env:
           NODE_ENV: production
-      
-      - name: Configure Git
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Add and commit dist
-        run: |
-          # 临时添加dist到git（通常在.gitignore中）
-          git add -f web/dist
-          git commit -m "chore(web): build dist for deployment [skip ci]" || echo "No changes to commit"
-      
-      - name: Setup SSH for deployment
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.UI_DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-      
-      - name: Push to UI distribution repository
-        run: |
-          git remote add web-ui git@github.com:magisk317/napgram-ui-dist.git 2>/dev/null || true
-          GIT_SSH_COMMAND='ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no' git subtree push --prefix=web/dist web-ui main
-      
+
+      # 直接上传 dist 到 Cloudflare Pages，跳过 CF 的自带构建
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          projectName: ${{ secrets.CF_PAGES_PROJECT }} # e.g. napgram-ui-dist
+          directory: ./web/dist
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy summary
         run: |
-          echo "✅ UI built and pushed to napgram-ui-dist repository"
-          echo "🚀 Cloudflare Pages will automatically deploy the changes"
+          echo "✅ UI built locally and uploaded to Cloudflare Pages (direct upload)"
