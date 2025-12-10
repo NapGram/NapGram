@@ -7,6 +7,7 @@ import { LoginPage } from '@/pages/LoginPage';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Dashboard } from '@/pages/admin/Dashboard';
 import { PairManagement } from '@/pages/admin/PairManagement';
+import { InstanceManagement } from '@/pages/admin/InstanceManagement';
 
 function ViewerWrapper() {
   const { uuid } = useParams();
@@ -42,6 +43,7 @@ function App() {
           }>
             <Route index element={<Dashboard />} />
             <Route path="pairs" element={<PairManagement />} />
+            <Route path="instances" element={<InstanceManagement />} />
             {/* Other admin routes will be added in future phases */}
           </Route>
 
