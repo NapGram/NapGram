@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cookie from '@fastify/cookie';
 import { getLogger } from '../shared/logger';
 import env from '../domain/models/env';
 import telegramAvatar from './telegramAvatar';
@@ -7,6 +8,8 @@ import tempFile from './tempFile';
 import ui from './ui';
 import qqAvatar from './qqAvatar';
 import messages from './messages';
+import auth from './auth';
+import pairs from './pairs';
 import { setupMonitoring } from './monitoring';
 
 const log = getLogger('Web Api');
@@ -14,6 +17,9 @@ const log = getLogger('Web Api');
 const fastify = Fastify({
   logger: false // We use our own logger
 });
+
+// Register cookie support
+fastify.register(cookie);
 
 // Global error handler
 fastify.setErrorHandler((error, request, reply) => {
@@ -34,6 +40,8 @@ fastify.register(richHeader);
 fastify.register(tempFile);
 fastify.register(messages);
 fastify.register(ui);
+fastify.register(auth);
+fastify.register(pairs);
 
 // 📊 Register monitoring and statistics API
 setupMonitoring(fastify);

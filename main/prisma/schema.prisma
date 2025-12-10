@@ -140,9 +140,90 @@ model AvatarCache {
 }
 
 model ForwardMultiple {
-  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String      @id @default(dbgenerated("gen_random_uuid()"))  @db.Uuid
   resId      String
   fileName   String
   fromPairId Int
   fromPair   ForwardPair @relation(fields: [fromPairId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// 管理后台认证模型
+// ============================================
+
+// 管理员用户表
+model AdminUser {
+  id           Int             @id @default(autoincrement())
+  username     String          @unique
+  passwordHash String          // bcrypt hash
+  displayName  String?
+  email        String?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  sessions     AdminSession[]
+  auditLogs    AdminAuditLog[]
+
+  @@index([username])
+}
+
+// 管理员会话表（用于 remember me 功能）
+model AdminSession {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    Int
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique // session token
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  ipAddress String?
+  userAgent String?
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+// Access Token 表（用于 API 访问，可独立于用户存在）
+model AccessToken {
+  id          Int       @id @default(autoincrement())
+  token       String    @unique
+  description String?   // token 用途描述
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  createdBy   Int?      // 可以为 null，表示系统生成
+  lastUsedAt  DateTime?
+
+  @@index([token])
+  @@index([isActive])
+}
+
+// 审计日志
+model AdminAuditLog {
+  id         Int        @id @default(autoincrement())
+  userId     Int?
+  user       AdminUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String     // 'login', 'logout', 'create_pair', 'delete_pair', etc.
+  resource   String?    // 'pair', 'instance', etc.
+  resourceId String?    // 资源 ID
+  details    Json?      // 详细信息
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime   @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// 全局配置表（可选，用于存储运行时配置）
+model GlobalConfig {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   Int?
+
+  @@index([key])
 }
