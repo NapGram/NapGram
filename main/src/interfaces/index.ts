@@ -10,6 +10,7 @@ import qqAvatar from './qqAvatar';
 import messages from './messages';
 import auth from './auth';
 import pairs from './pairs';
+import instances from './instances';
 import { setupMonitoring } from './monitoring';
 
 const log = getLogger('Web Api');
@@ -42,6 +43,7 @@ fastify.register(messages);
 fastify.register(ui);
 fastify.register(auth);
 fastify.register(pairs);
+fastify.register(instances);
 
 // 📊 Register monitoring and statistics API
 setupMonitoring(fastify);
