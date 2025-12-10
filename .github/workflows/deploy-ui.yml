@@ -24,18 +24,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: 'web/package-lock.json'
+          cache: 'pnpm'
+          cache-dependency-path: 'web/pnpm-lock.yaml'
       
       - name: Install dependencies
         run: |
           cd web
-          npm ci
+          pnpm install --frozen-lockfile
       
       - name: Build UI
         run: |
           cd web
-          npm run build
+          pnpm run build
         env:
           NODE_ENV: production
 
@@ -48,6 +48,8 @@ jobs:
           projectName: ${{ secrets.CF_PAGES_PROJECT }} # e.g. napgram-ui-dist
           directory: ./web/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
 
       - name: Deploy summary
         run: |
