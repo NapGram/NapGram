@@ -41,18 +41,18 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install pnpm
-        if: github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true'
+        if: (github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true') && hashFiles('web/src/**') != ''
         uses: pnpm/action-setup@v4
         with:
           version: 9
           run_install: true
 
       - name: Install dependencies
-        if: github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true'
+        if: (github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true') && hashFiles('web/src/**') != ''
         run: pnpm install --frozen-lockfile
 
       - name: Build web dist
-        if: github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true'
+        if: (github.event_name != 'schedule' || steps.check_push.outputs.has_push == 'true') && hashFiles('web/src/**') != ''
         run: pnpm --filter web build
 
       - name: OCI meta
