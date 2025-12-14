@@ -7,6 +7,10 @@ docs/_book
 
 test/
 
+# Local helper script / recovery
+build.sh
+.recovery/
+
 ### ArchLinuxPackages template
 *.tar
 *.tar.*
