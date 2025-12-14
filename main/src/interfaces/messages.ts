@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import db from '../domain/models/db';
 import processNestedForward from '../shared/utils/processNestedForward';
 import { TTLCache } from '../shared/utils/cache';
+import { ApiResponse } from '../shared/utils/api-response';
 import { ErrorResponses } from '../shared/utils/fastify';
 import { authMiddleware } from '../infrastructure/auth/authMiddleware';
 
