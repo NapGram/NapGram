@@ -7,22 +7,35 @@ export class ApiResponse {
      * 创建成功响应
      */
     static success<T = any>(data?: T, message?: string) {
-        return {
-            success: true as const,
-            ...(data !== undefined && { data }),
-            ...(message && { message }),
+        const response: any = {
+            success: true
         };
+
+        if (data !== undefined) {
+            response.data = data;
+        }
+
+        if (message) {
+            response.message = message;
+        }
+
+        return response;
     }
 
     /**
      * 创建错误响应
      */
     static error(message: string, error?: any) {
-        return {
-            success: false as const,
-            message,
-            ...(error && { error: error?.message || error }),
+        const response: any = {
+            success: false,
+            message
         };
+
+        if (error) {
+            response.error = typeof error === 'string' ? error : (error?.message || String(error));
+        }
+
+        return response;
     }
 
     /**
