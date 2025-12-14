@@ -117,7 +117,7 @@ export default async function (fastify: FastifyInstance) {
                 return reply.code(400).send({
                     success: false,
                     error: 'Invalid request',
-                    details: error.errors
+                    details: error.issues
                 });
             }
             throw error;
