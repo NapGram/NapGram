@@ -67,7 +67,7 @@ export default async function (fastify: FastifyInstance) {
                 return reply.code(400).send({
                     success: false,
                     error: 'Invalid request',
-                    details: error.errors
+                    details: error.issues
                 });
             }
             throw error;
@@ -108,7 +108,7 @@ export default async function (fastify: FastifyInstance) {
                 return reply.code(400).send({
                     success: false,
                     error: 'Invalid request',
-                    details: error.errors
+                    details: error.issues
                 });
             }
             throw error;
@@ -204,7 +204,7 @@ export default async function (fastify: FastifyInstance) {
                 return reply.code(400).send({
                     success: false,
                     error: 'Invalid request',
-                    details: error.errors
+                    details: error.issues
                 });
             }
             if (error.code === 'P2002') {
@@ -253,7 +253,7 @@ export default async function (fastify: FastifyInstance) {
             if (error instanceof z.ZodError) {
                 return reply.code(400).send({
                     ...ApiResponse.error('Invalid request'),
-                    details: error.errors
+                    details: error.issues
                 });
             }
             throw error;
