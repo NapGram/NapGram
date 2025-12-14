@@ -255,10 +255,7 @@ export class NapCatAdapter extends EventEmitter {
     async getFile(fileId: string): Promise<any> {
         try {
             const normalizedId = fileId.replace(/^\//, '');
-            if (typeof (this.client as any).getFile === 'function') {
-                return await (this.client as any).getFile(normalizedId);
-            }
-            return await this.client.callApi('get_file', { file_id: normalizedId });
+            return await this.client.getFile(normalizedId);
         } catch (e) {
             logger.warn(e, 'get_file failed');
             return null;
