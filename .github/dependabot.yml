@@ -10,4 +10,4 @@ updates:
     directory: "/main"
     schedule:
       interval: "daily"
-    target-branch: "main"
+    target-branch: "dev"
