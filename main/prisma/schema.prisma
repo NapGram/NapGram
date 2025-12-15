@@ -50,7 +50,6 @@ model Instance {
 }
 
 enum QqBotType {
-  oicq
   napcat
 }
 
@@ -63,7 +62,7 @@ model QqBot {
   signApi      String?
   signVer      String?
   signDockerId String?
-  type         QqBotType  @default(oicq)
+  type         QqBotType  @default(napcat)
   wsUrl        String?
 }
 
