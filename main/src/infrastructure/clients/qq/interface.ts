@@ -40,7 +40,7 @@ export interface IQQClient extends EventEmitter {
     readonly nickname: string;
 
     /** 客户端类型 */
-    readonly clientType: 'napcat' | 'oicq';
+    readonly clientType: 'napcat';
 
     /** 是否在线 */
     isOnline(): Promise<boolean>;
@@ -376,24 +376,13 @@ export interface IQQClient extends EventEmitter {
 /**
  * QQ 客户端创建参数
  */
-export type QQClientCreateParams = NapCatCreateParams | OicqCreateParams;
+export type QQClientCreateParams = NapCatCreateParams;
 
 export interface NapCatCreateParams {
     type: 'napcat';
     wsUrl: string;
     reconnect?: boolean;
     reconnectInterval?: number;
-}
-
-export interface OicqCreateParams {
-    type: 'oicq';
-    uin: number;
-    password?: string;
-    platform?: number;
-    signApi?: string;
-    signVer?: string;
-    onVerifyDevice?: (phone: string) => Promise<string>;
-    onVerifySlider?: (url: string) => Promise<string>;
 }
 
 /**

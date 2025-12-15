@@ -22,13 +22,8 @@ export default async function (fastify: FastifyInstance) {
     });
 
     const createQqBotSchema = z.object({
-        uin: z.string().or(z.number()).transform(val => BigInt(val)).optional(),
-        password: z.string().optional(),
-        platform: z.number().optional(),
-        type: z.enum(['oicq', 'napcat']).default('napcat'),
-        wsUrl: z.string().optional(),
-        signApi: z.string().optional(),
-        signVer: z.string().optional()
+        type: z.literal('napcat').default('napcat'),
+        wsUrl: z.string().optional()
     });
 
     /**
@@ -306,13 +301,8 @@ export default async function (fastify: FastifyInstance) {
 
             const bot = await db.qqBot.create({
                 data: {
-                    uin: body.uin || null,
-                    password: body.password || null,
-                    platform: body.platform || 0,
                     type: body.type,
-                    wsUrl: body.wsUrl || null,
-                    signApi: body.signApi || null,
-                    signVer: body.signVer || null
+                    wsUrl: body.wsUrl || null
                 }
             });
 
