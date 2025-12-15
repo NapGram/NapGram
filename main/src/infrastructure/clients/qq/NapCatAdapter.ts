@@ -78,6 +78,7 @@ export class NapCatAdapter extends EventEmitter {
         // 消息事件 - 使用SDK的细粒度事件
         this.client.on('message', async (data: MessageEvent) => {
             try {
+                this.normalizeMediaIds(data.message);
                 await this.client.hydrateMessage(data.message);
                 const unifiedMsg = messageConverter.fromNapCat(data);
                 (this as any).emit('message', unifiedMsg);
@@ -154,6 +155,25 @@ export class NapCatAdapter extends EventEmitter {
                 timestamp: data.time * 1000,
             });
         });
+    }
+
+    private normalizeMediaIds(message: any) {
+        const segments = Array.isArray(message) ? message : [];
+        for (const segment of segments) {
+            const data = segment?.data;
+            if (!data || typeof data !== 'object') continue;
+
+            for (const key of ['file_id', 'file'] as const) {
+                const value = (data as any)[key];
+                if (typeof value !== 'string') continue;
+                if (!value.startsWith('/')) continue;
+
+                const rest = value.slice(1);
+                if (rest.includes('/')) continue; // likely a local absolute path
+
+                (data as any)[key] = rest;
+            }
+        }
     }
 
     private async refreshSelfInfo() {
@@ -250,15 +270,7 @@ export class NapCatAdapter extends EventEmitter {
             const segments = Array.isArray(content) ? content : (content ? [content] : []);
             if (segments.length === 0) return;
 
-            // 兼容 NapCat 某些段使用 file_id 而不是 file
-            for (const segment of segments) {
-                const data = segment?.data;
-                if (!data || typeof data !== 'object') continue;
-                if (data.file == null && typeof (data as any).file_id === 'string') {
-                    (data as any).file = (data as any).file_id;
-                }
-            }
-
+            this.normalizeMediaIds(segments);
             await this.client.hydrateMessage(segments);
         }));
 

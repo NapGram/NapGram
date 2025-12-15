@@ -35,8 +35,8 @@ importers:
         specifier: ^0.27.3
         version: 0.27.3(ws@8.18.3)
       '@naplink/naplink':
-        specifier: ^0.0.1
-        version: 0.0.1
+        specifier: ^0.0.2
+        version: 0.0.2
       '@prisma/adapter-pg':
         specifier: 7.1.0
         version: 7.1.0
@@ -1016,8 +1016,8 @@ packages:
   '@napi-rs/wasm-runtime@1.1.0':
     resolution: {integrity: sha512-Fq6DJW+Bb5jaWE69/qOE0D1TUN9+6uWhCeZpdnSBk14pjLcCWR7Q8n49PTSPHazM37JqrsdpEthXy2xn6jWWiA==}
 
-  '@naplink/naplink@0.0.1':
-    resolution: {integrity: sha512-LUK8CtFMYbLO5VkSw6ifuv5pwZS8RRmNUmXD8CUg6lumIeaHU6pF3WdieHeTOIQjlSa0sCeMvTKgxsT8c0x2KA==}
+  '@naplink/naplink@0.0.2':
+    resolution: {integrity: sha512-UvVVDYJ3zhxVuaDokL7MbX7f1E596gsIrJeio+CsrxxmkQpaWu1ilMAZ2fdN8nWwnBtUIloSF58ieX+8revM9g==}
     engines: {node: '>=18.0.0'}
 
   '@oxc-project/runtime@0.97.0':
@@ -5173,7 +5173,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@naplink/naplink@0.0.1':
+  '@naplink/naplink@0.0.2':
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.18.3)
       ws: 8.18.3
