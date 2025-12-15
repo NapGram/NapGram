@@ -363,6 +363,131 @@ export class NapCatAdapter extends EventEmitter {
         return this.client.callApi(method, params);
     }
 
+    // ============ NapLink OneBot API（可选直通封装）===========
+
+    async getStrangerInfo(userId: string, noCache: boolean = false): Promise<any> {
+        return this.client.api.getStrangerInfo(userId, noCache);
+    }
+
+    async getVersionInfo(): Promise<any> {
+        return this.client.api.getVersionInfo();
+    }
+
+    async hydrateMedia(message: any[]): Promise<void> {
+        return this.client.api.hydrateMedia(message);
+    }
+
+    async getImage(file: string): Promise<any> {
+        return this.client.api.getImage(file);
+    }
+
+    async getRecord(file: string, outFormat?: string): Promise<any> {
+        return this.client.api.getRecord(file, outFormat);
+    }
+
+    async sendPrivateMessage(userId: string, message: any): Promise<any> {
+        return this.client.api.sendPrivateMessage(userId, message);
+    }
+
+    async sendGroupMessage(groupId: string, message: any): Promise<any> {
+        return this.client.api.sendGroupMessage(groupId, message);
+    }
+
+    async setEssenceMessage(messageId: string): Promise<any> {
+        return this.client.api.setEssenceMessage(messageId);
+    }
+
+    async deleteEssenceMessage(messageId: string): Promise<any> {
+        return this.client.api.deleteEssenceMessage(messageId);
+    }
+
+    async getEssenceMessageList(groupId: string): Promise<any> {
+        return this.client.api.getEssenceMessageList(groupId);
+    }
+
+    async markMessageAsRead(messageId: string): Promise<any> {
+        return this.client.api.markMessageAsRead(messageId);
+    }
+
+    async getGroupAtAllRemain(groupId: string): Promise<number> {
+        return this.client.api.getGroupAtAllRemain(groupId);
+    }
+
+    async getGroupSystemMsg(): Promise<any> {
+        return this.client.api.getGroupSystemMsg();
+    }
+
+    async setGroupLeave(groupId: string, isDismiss: boolean = false): Promise<any> {
+        return this.client.api.setGroupLeave(groupId, isDismiss);
+    }
+
+    async setGroupAnonymousBan(groupId: string, anonymousFlag: string, duration?: number): Promise<any> {
+        return this.client.api.setGroupAnonymousBan(groupId, anonymousFlag, duration);
+    }
+
+    async uploadGroupFile(groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string): Promise<any> {
+        return this.client.api.uploadGroupFile(groupId, file, name);
+    }
+
+    async uploadPrivateFile(userId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string): Promise<any> {
+        return this.client.api.uploadPrivateFile(userId, file, name);
+    }
+
+    async setGroupPortrait(groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream): Promise<any> {
+        return this.client.api.setGroupPortrait(groupId, file);
+    }
+
+    async getGroupFileSystemInfo(groupId: string): Promise<any> {
+        return this.client.api.getGroupFileSystemInfo(groupId);
+    }
+
+    async getGroupRootFiles(groupId: string): Promise<any> {
+        return this.client.api.getGroupRootFiles(groupId);
+    }
+
+    async getGroupFilesByFolder(groupId: string, folderId: string): Promise<any> {
+        return this.client.api.getGroupFilesByFolder(groupId, folderId);
+    }
+
+    async getGroupFileUrl(groupId: string, fileId: string, busid?: number): Promise<any> {
+        return this.client.api.getGroupFileUrl(groupId, fileId, busid);
+    }
+
+    async deleteGroupFile(groupId: string, fileId: string, busid?: number): Promise<any> {
+        return this.client.api.deleteGroupFile(groupId, fileId, busid);
+    }
+
+    async createGroupFileFolder(groupId: string, name: string, parentId?: string): Promise<any> {
+        return this.client.api.createGroupFileFolder(groupId, name, parentId);
+    }
+
+    async deleteGroupFolder(groupId: string, folderId: string): Promise<any> {
+        return this.client.api.deleteGroupFolder(groupId, folderId);
+    }
+
+    async downloadFile(url: string, threadCount?: number, headers?: Record<string, string>): Promise<any> {
+        return this.client.api.downloadFile(url, threadCount, headers);
+    }
+
+    async uploadFileStream(
+        file: string | Buffer | Uint8Array | NodeJS.ReadableStream,
+        options?: {
+            chunkSize?: number;
+            streamId?: string;
+            expectedSha256?: string;
+            fileRetention?: number;
+            filename?: string;
+            reset?: boolean;
+            verifyOnly?: boolean;
+        }
+    ): Promise<any> {
+        return this.client.api.uploadFileStream(file, options as any);
+    }
+
+    async getUploadStreamStatus(streamId: string): Promise<any> {
+        return this.client.api.getUploadStreamStatus(streamId);
+    }
+
     // ============ 群组管理 ============
 
     /**

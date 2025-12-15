@@ -13,22 +13,71 @@ const log = getLogger('PairsApi');
  * 配对管理 API
  */
 export default async function (fastify: FastifyInstance) {
+    const bigIntId = z.preprocess((v) => {
+        if (typeof v === 'bigint') return v;
+        if (typeof v === 'number' && Number.isFinite(v)) return BigInt(v);
+        if (typeof v === 'string') {
+            const trimmed = v.trim();
+            if (trimmed === '') return undefined;
+            if (/^-?\d+$/.test(trimmed)) return BigInt(trimmed);
+        }
+        return v;
+    }, z.bigint());
+
+    const optionalInt = z.preprocess((v) => {
+        if (v === '' || v === undefined || v === null) return null;
+        if (typeof v === 'string') {
+            const trimmed = v.trim();
+            if (trimmed === '') return null;
+            const num = Number(trimmed);
+            return Number.isFinite(num) ? num : v;
+        }
+        return v;
+    }, z.number().int().nullable());
+
+    const intWithDefault = (defaultValue: number) =>
+        z.preprocess((v) => {
+            if (v === '' || v === undefined || v === null) return defaultValue;
+            if (typeof v === 'string') {
+                const trimmed = v.trim();
+                if (trimmed === '') return defaultValue;
+                const num = Number(trimmed);
+                return Number.isFinite(num) ? num : v;
+            }
+            return v;
+        }, z.number().int());
+
+    const optionalMode = z.preprocess((v) => {
+        if (v === '' || v === undefined || v === null) return null;
+        if (typeof v === 'string') {
+            const trimmed = v.trim().toLowerCase();
+            if (trimmed === '' || trimmed === 'null' || trimmed === 'default') return null;
+        }
+        return v;
+    }, z.enum(['00', '01', '10', '11']).nullable());
+
+    const optionalText = z.preprocess((v) => {
+        if (v === '' || v === undefined || v === null) return null;
+        if (typeof v === 'string' && v.trim() === '') return null;
+        return v;
+    }, z.string().nullable());
+
     const createPairSchema = z.object({
-        qqRoomId: z.string().or(z.number()).transform(val => BigInt(val)),
-        tgChatId: z.string().or(z.number()).transform(val => BigInt(val)),
-        tgThreadId: z.number().nullable().optional(),
-        instanceId: z.number().default(0),
-        forwardMode: z.enum(['00', '01', '10', '11']).nullable().optional(),
-        nicknameMode: z.enum(['00', '01', '10', '11']).nullable().optional(),
-        ignoreRegex: z.string().nullable().optional(),
-        ignoreSenders: z.string().nullable().optional()
+        qqRoomId: bigIntId,
+        tgChatId: bigIntId,
+        tgThreadId: optionalInt.optional(),
+        instanceId: intWithDefault(0).default(0),
+        forwardMode: optionalMode.optional(),
+        nicknameMode: optionalMode.optional(),
+        ignoreRegex: optionalText.optional(),
+        ignoreSenders: optionalText.optional(),
     });
 
     const updatePairSchema = z.object({
-        forwardMode: z.enum(['00', '01', '10', '11']).nullable().optional(),
-        nicknameMode: z.enum(['00', '01', '10', '11']).nullable().optional(),
-        ignoreRegex: z.string().nullable().optional(),
-        ignoreSenders: z.string().nullable().optional()
+        forwardMode: optionalMode.optional(),
+        nicknameMode: optionalMode.optional(),
+        ignoreRegex: optionalText.optional(),
+        ignoreSenders: optionalText.optional(),
     });
 
     /**
