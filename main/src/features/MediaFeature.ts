@@ -101,15 +101,18 @@ export class MediaFeature {
                         try {
                             return { buffer: await this.downloadMedia(fileUrl), url: fileUrl };
                         } catch (error) {
-                            if (typeof qq.callApi === 'function') {
-                                const downloaded = await qq.callApi('download_file', { url: fileUrl, thread_count: 3 }).catch(() => null);
-                                const local = downloaded?.file || downloaded?.path;
-                                if (local && typeof local === 'string') {
-                                    try {
-                                        return { buffer: await fsP.readFile(local), path: local };
-                                    } catch {
-                                        // ignore
-                                    }
+                            const downloaded =
+                                typeof qq.downloadFile === 'function'
+                                    ? await qq.downloadFile(fileUrl, 3).catch(() => null)
+                                    : typeof qq.callApi === 'function'
+                                        ? await qq.callApi('download_file', { url: fileUrl, thread_count: 3 }).catch(() => null)
+                                        : null;
+                            const local = downloaded?.file || downloaded?.path;
+                            if (local && typeof local === 'string') {
+                                try {
+                                    return { buffer: await fsP.readFile(local), path: local };
+                                } catch {
+                                    // ignore
                                 }
                             }
                             throw error;

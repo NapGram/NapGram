@@ -90,6 +90,59 @@ export interface IQQClient extends EventEmitter {
      */
     callApi?(method: string, params?: any): Promise<any>;
 
+    // ============ NapLink OneBot API（可选直通封装）===========
+
+    // AccountApi
+    getStrangerInfo?(userId: string, noCache?: boolean): Promise<any>;
+    getVersionInfo?(): Promise<any>;
+
+    // MediaApi
+    hydrateMedia?(message: any[]): Promise<void>;
+    getImage?(file: string): Promise<any>;
+    getRecord?(file: string, outFormat?: string): Promise<any>;
+
+    // MessageApi（低层消息能力）
+    sendPrivateMessage?(userId: string, message: any): Promise<any>;
+    sendGroupMessage?(groupId: string, message: any): Promise<any>;
+    setEssenceMessage?(messageId: string): Promise<any>;
+    deleteEssenceMessage?(messageId: string): Promise<any>;
+    getEssenceMessageList?(groupId: string): Promise<any>;
+    markMessageAsRead?(messageId: string): Promise<any>;
+    getGroupAtAllRemain?(groupId: string): Promise<number>;
+    getGroupSystemMsg?(): Promise<any>;
+
+    // GroupApi（补齐 NapLink 暴露能力）
+    setGroupLeave?(groupId: string, isDismiss?: boolean): Promise<any>;
+    setGroupAnonymousBan?(groupId: string, anonymousFlag: string, duration?: number): Promise<any>;
+
+    // FileApi（文件/群文件系统）
+    uploadGroupFile?(groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string): Promise<any>;
+    uploadPrivateFile?(userId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string): Promise<any>;
+    setGroupPortrait?(groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream): Promise<any>;
+    getGroupFileSystemInfo?(groupId: string): Promise<any>;
+    getGroupRootFiles?(groupId: string): Promise<any>;
+    getGroupFilesByFolder?(groupId: string, folderId: string): Promise<any>;
+    getGroupFileUrl?(groupId: string, fileId: string, busid?: number): Promise<any>;
+    deleteGroupFile?(groupId: string, fileId: string, busid?: number): Promise<any>;
+    createGroupFileFolder?(groupId: string, name: string, parentId?: string): Promise<any>;
+    deleteGroupFolder?(groupId: string, folderId: string): Promise<any>;
+    downloadFile?(url: string, threadCount?: number, headers?: Record<string, string>): Promise<any>;
+
+    // StreamApi（大文件分片上传）
+    uploadFileStream?(
+        file: string | Buffer | Uint8Array | NodeJS.ReadableStream,
+        options?: {
+            chunkSize?: number;
+            streamId?: string;
+            expectedSha256?: string;
+            fileRetention?: number;
+            filename?: string;
+            reset?: boolean;
+            verifyOnly?: boolean;
+        }
+    ): Promise<any>;
+    getUploadStreamStatus?(streamId: string): Promise<any>;
+
     // ============ 联系人操作 ============
 
     /**
