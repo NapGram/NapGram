@@ -66,6 +66,7 @@ const configParsed = z.object({
   POSTHOG_OPTOUT: z.string().default('false').transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())),
   SHOW_NICKNAME_MODE: z.string().regex(/^[01]{2}$/).default('11'),
   FORWARD_MODE: z.string().regex(/^[01]{2}$/).default('11'),
+  COMMAND_REPLY_BOTH_SIDES: z.string().default('false').transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())),
   ENABLE_AUTO_RECALL: z.string().default('true').transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())),
   ENABLE_OFFLINE_NOTIFICATION: z.string().default('true').transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())),
   OFFLINE_NOTIFICATION_COOLDOWN: z.string().regex(/^\d+$/).default('3600000').transform(Number), // 默认1小时
