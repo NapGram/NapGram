@@ -89,6 +89,7 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
   private pending = new Map<string, { resolve: (value: any) => void; reject: (error: any) => void }>();
   private heartbeat?: NodeJS.Timeout;
   private channelInstance = new Map<string, number>();
+  private channelPair = new Map<string, { instanceId: number; pairId: number; side: 'qq' | 'tg' }>();
 
   constructor(ctx: any, bot: NapGramBot) {
     super(ctx, bot);
@@ -132,6 +133,7 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
     if (frame.op === 'ready') {
       const user = frame.data?.user;
       if (user?.id) this.bot.user = { id: String(user.id), name: String(user.name || user.id) };
+      this.ingestReadyPairs(frame.data);
       this.bot.online();
       this.startHeartbeat();
       return;
@@ -163,6 +165,8 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
     const e = event as MessageCreatedEvent;
 
     this.channelInstance.set(e.channelId, e.instanceId);
+    // keep a minimal cache so sending can pick correct instance even without ready pairs
+    this.channelPair.set(e.channelId, { instanceId: e.instanceId, pairId: -1, side: e.message.platform === 'qq' ? 'qq' : 'tg' });
 
     const isDirect = this.isDirect(e);
     const session = this.bot.session({
@@ -206,7 +210,15 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
   }
 
   getInstanceIdForChannel(channelId: string): number {
-    return this.channelInstance.get(channelId) ?? Number(this.bot.config.defaultInstanceId ?? 0);
+    return this.channelPair.get(channelId)?.instanceId
+      ?? this.channelInstance.get(channelId)
+      ?? Number(this.bot.config.defaultInstanceId ?? 0);
+  }
+
+  getPairIdForChannel(channelId: string): number | undefined {
+    const pair = this.channelPair.get(channelId);
+    if (!pair || pair.pairId < 0) return undefined;
+    return pair.pairId;
   }
 
   call(action: string, params: any, instanceId?: number): Promise<any> {
@@ -239,10 +251,29 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
       }, 30_000);
     });
   }
+
+  private ingestReadyPairs(data: any): void {
+    const instances = Array.isArray(data?.instances) ? data.instances : [];
+    for (const inst of instances) {
+      const instanceId = Number(inst?.id);
+      if (!Number.isFinite(instanceId)) continue;
+      const pairs = Array.isArray(inst?.pairs) ? inst.pairs : [];
+      for (const p of pairs) {
+        const pairId = Number(p?.pairId);
+        const qqChannelId = typeof p?.qq?.channelId === 'string' ? p.qq.channelId : undefined;
+        const tgChannelId = typeof p?.tg?.channelId === 'string' ? p.tg.channelId : undefined;
+        if (Number.isFinite(pairId)) {
+          if (qqChannelId) this.channelPair.set(qqChannelId, { instanceId, pairId, side: 'qq' });
+          if (tgChannelId) this.channelPair.set(tgChannelId, { instanceId, pairId, side: 'tg' });
+        }
+        if (qqChannelId) this.channelInstance.set(qqChannelId, instanceId);
+        if (tgChannelId) this.channelInstance.set(tgChannelId, instanceId);
+      }
+    }
+  }
 }
 
 export function apply(ctx: any, config: Config) {
   const bot = new NapGramBot(ctx, config);
   new NapGramAdapter(ctx, bot);
 }
-
