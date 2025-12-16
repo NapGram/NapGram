@@ -74,11 +74,33 @@ export default async function (fastify: FastifyInstance) {
     });
 
     const updatePairSchema = z.object({
+        qqRoomId: bigIntId.optional(),
+        tgChatId: bigIntId.optional(),
+        tgThreadId: optionalInt.optional(),
+        instanceId: z.preprocess((v) => {
+            if (v === '' || v === undefined || v === null) return undefined;
+            if (typeof v === 'string') {
+                const trimmed = v.trim();
+                if (trimmed === '') return undefined;
+                const num = Number(trimmed);
+                return Number.isFinite(num) ? num : v;
+            }
+            return v;
+        }, z.number().int()).optional(),
         forwardMode: optionalMode.optional(),
         nicknameMode: optionalMode.optional(),
         ignoreRegex: optionalText.optional(),
         ignoreSenders: optionalText.optional(),
     });
+
+    const refreshInstanceForwardMap = async (instanceId: number) => {
+        const inst = Instance.instances.find(it => it.id === instanceId);
+        const map = inst?.forwardPairs as any;
+        if (map && typeof map.reload === 'function') {
+            await map.reload();
+            log.info({ instanceId }, 'forward map reloaded');
+        }
+    };
 
     /**
      * GET /api/admin/pairs
@@ -88,6 +110,8 @@ export default async function (fastify: FastifyInstance) {
         preHandler: authMiddleware
     }, async (request) => {
         const { page = 1, pageSize = 20, instanceId, search, withNames = 'false' } = request.query as any;
+        const pageNum = typeof page === 'string' ? parseInt(page, 10) : page;
+        const pageSizeNum = typeof pageSize === 'string' ? parseInt(pageSize, 10) : pageSize;
         const needNames = String(withNames).toLowerCase() === 'true';
 
         const where: any = {};
@@ -97,17 +121,21 @@ export default async function (fastify: FastifyInstance) {
         }
 
         if (search) {
-            where.OR = [
-                { qqRoomId: { contains: search } },
-                { tgChatId: { contains: search } }
-            ];
+            const trimmed = String(search).trim();
+            if (/^-?\d+$/.test(trimmed)) {
+                const id = BigInt(trimmed);
+                where.OR = [
+                    { qqRoomId: id },
+                    { tgChatId: id },
+                ];
+            }
         }
 
         const [items, total] = await Promise.all([
             db.forwardPair.findMany({
                 where,
-                skip: (page - 1) * pageSize,
-                take: pageSize,
+                skip: (pageNum - 1) * pageSizeNum,
+                take: pageSizeNum,
                 include: {
                     instance: {
                         include: {
@@ -240,6 +268,8 @@ export default async function (fastify: FastifyInstance) {
                 request.headers['user-agent']
             );
 
+            await refreshInstanceForwardMap(pair.instanceId);
+
             return {
                 success: true,
                 data: {
@@ -251,6 +281,7 @@ export default async function (fastify: FastifyInstance) {
             };
         } catch (error: any) {
             if (error instanceof z.ZodError) {
+                log.warn({ issues: error.issues }, 'create_pair invalid request');
                 return reply.code(400).send({
                     success: false,
                     error: 'Invalid request',
@@ -258,10 +289,16 @@ export default async function (fastify: FastifyInstance) {
                 });
             }
             if (error.code === 'P2002') {
+                log.warn(error, 'create_pair conflict (P2002)');
                 return reply.code(409).send(
-                    ApiResponse.error('Pair already exists for this QQ room or TG chat')
+                    {
+                        ...ApiResponse.error('Pair already exists for this QQ room or TG chat'),
+                        errorCode: error.code,
+                        details: error.meta
+                    }
                 );
             }
+            log.error(error, 'create_pair failed');
             throw error;
         }
     });
@@ -278,9 +315,22 @@ export default async function (fastify: FastifyInstance) {
             const body = updatePairSchema.parse(request.body);
             const auth = (request as any).auth;
 
+            const pairId = parseInt(id);
+            const existing = await db.forwardPair.findUnique({ where: { id: pairId } });
+            if (!existing) {
+                return reply.code(404).send({
+                    success: false,
+                    error: 'Pair not found'
+                });
+            }
+
             const pair = await db.forwardPair.update({
-                where: { id: parseInt(id) },
+                where: { id: pairId },
                 data: {
+                    ...(body.qqRoomId !== undefined ? { qqRoomId: body.qqRoomId } : {}),
+                    ...(body.tgChatId !== undefined ? { tgChatId: body.tgChatId } : {}),
+                    ...(body.tgThreadId !== undefined ? { tgThreadId: body.tgThreadId } : {}),
+                    ...(body.instanceId !== undefined ? { instanceId: body.instanceId } : {}),
                     forwardMode: body.forwardMode,
                     nicknameMode: body.nicknameMode,
                     ignoreRegex: body.ignoreRegex,
@@ -300,6 +350,11 @@ export default async function (fastify: FastifyInstance) {
                 request.headers['user-agent']
             );
 
+            await refreshInstanceForwardMap(existing.instanceId);
+            if (pair.instanceId !== existing.instanceId) {
+                await refreshInstanceForwardMap(pair.instanceId);
+            }
+
             return {
                 success: true,
                 data: {
@@ -311,18 +366,22 @@ export default async function (fastify: FastifyInstance) {
             };
         } catch (error: any) {
             if (error instanceof z.ZodError) {
+                log.warn({ issues: error.issues }, 'update_pair invalid request');
                 return reply.code(400).send({
                     success: false,
                     error: 'Invalid request',
                     details: error.issues
                 });
             }
-            if (error.code === 'P2025') {
-                return reply.code(404).send({
-                    success: false,
-                    error: 'Pair not found'
+            if (error.code === 'P2002') {
+                log.warn(error, 'update_pair conflict (P2002)');
+                return reply.code(409).send({
+                    ...ApiResponse.error('Pair already exists for this QQ room or TG chat'),
+                    errorCode: error.code,
+                    details: error.meta
                 });
             }
+            log.error(error, 'update_pair failed');
             throw error;
         }
     });
@@ -338,9 +397,16 @@ export default async function (fastify: FastifyInstance) {
         const auth = (request as any).auth;
 
         try {
-            const pair = await db.forwardPair.delete({
-                where: { id: parseInt(id) }
-            });
+            const pairId = parseInt(id);
+            const existing = await db.forwardPair.findUnique({ where: { id: pairId } });
+            if (!existing) {
+                return reply.code(404).send({
+                    success: false,
+                    error: 'Pair not found'
+                });
+            }
+
+            const pair = await db.forwardPair.delete({ where: { id: pairId } });
 
             // 审计日志
             const { AuthService } = await import('../infrastructure/auth');
@@ -357,14 +423,11 @@ export default async function (fastify: FastifyInstance) {
                 request.headers['user-agent']
             );
 
+            await refreshInstanceForwardMap(existing.instanceId);
+
             return ApiResponse.success(undefined, 'Pair deleted successfully');
         } catch (error: any) {
-            if (error.code === 'P2025') {
-                return reply.code(404).send({
-                    success: false,
-                    error: 'Pair not found'
-                });
-            }
+            log.error(error, 'delete_pair failed');
             throw error;
         }
     });

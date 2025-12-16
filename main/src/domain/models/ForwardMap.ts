@@ -39,6 +39,36 @@ export class ForwardMap {
     return new ForwardMap(rows as ForwardPairRecord[], instanceId);
   }
 
+  /**
+   * Reload mappings from database (in-place).
+   * This is used by the web admin panel so changes take effect without restarting the process.
+   */
+  async reload() {
+    const rows = await db.forwardPair.findMany({
+      where: { instanceId: this.instanceId },
+      select: {
+        id: true,
+        qqRoomId: true,
+        tgChatId: true,
+        tgThreadId: true,
+        flags: true,
+        instanceId: true,
+        apiKey: true,
+        ignoreRegex: true,
+        ignoreSenders: true,
+        forwardMode: true,
+        nicknameMode: true,
+      },
+    });
+
+    this.byQQ.clear();
+    this.byTG.clear();
+    for (const pair of rows as any as ForwardPairRecord[]) {
+      this.byQQ.set(pair.qqRoomId.toString(), pair);
+      this.byTG.set(this.getTgKey(pair.tgChatId, pair.tgThreadId), pair);
+    }
+  }
+
   // 兼容旧接口：根据 QQ/TG/数字进行查找
   find(target: any) {
     if (!target) return null;
