@@ -54,6 +54,20 @@ export interface ReadyFrame extends BaseFrame {
         instances: Array<{
             id: number;
             name: string;
+            pairs?: Array<{
+                pairId: number;
+                qq: {
+                    channelId: string;
+                    roomId: string;
+                    name?: string | null;
+                };
+                tg: {
+                    channelId: string;
+                    chatId: string;
+                    threadId?: number | null;
+                    name?: string | null;
+                };
+            }>;
         }>;
     };
 }

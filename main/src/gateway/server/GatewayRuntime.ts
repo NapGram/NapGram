@@ -11,6 +11,7 @@ import type Telegram from '../../infrastructure/clients/telegram/client';
 import { ActionExecutor } from '../adapters/ActionExecutor';
 import { EventPublisher } from '../adapters/EventPublisher';
 import { GatewayServer } from './GatewayServer';
+import type ForwardMap from '../../domain/models/ForwardMap';
 
 const logger = getLogger('GatewayRuntime');
 
@@ -18,11 +19,13 @@ export class GatewayRuntime {
   private static server?: GatewayServer;
   private static publisher?: EventPublisher;
   private static executors = new Map<number, ActionExecutor>();
+  private static pairsProvider = new Map<number, () => any[]>();
 
   static ensureStarted(port = 8765) {
     if (!this.server) {
       this.server = new GatewayServer(port, {
         resolveExecutor: (instanceId) => this.executors.get(instanceId),
+        resolvePairs: (instanceId) => (this.pairsProvider.get(instanceId)?.() as any[]) || [],
       });
       this.publisher = new EventPublisher(this.server);
       logger.info(`Gateway runtime started (port=${port})`);
@@ -30,17 +33,20 @@ export class GatewayRuntime {
     return { server: this.server, publisher: this.publisher! };
   }
 
-  static registerInstance(instanceId: number, qqClient: IQQClient, tgBot: Telegram) {
+  static registerInstance(instanceId: number, qqClient: IQQClient, tgBot: Telegram, forwardPairs?: ForwardMap) {
     const { server, publisher } = this.ensureStarted();
     const executor = new ActionExecutor(qqClient, tgBot);
     this.executors.set(instanceId, executor);
+    if (forwardPairs) {
+      this.pairsProvider.set(instanceId, () => forwardPairs.getAll());
+    }
     logger.info({ instanceId }, 'Gateway instance registered');
     return { server, publisher, executor };
   }
 
   static unregisterInstance(instanceId: number) {
     this.executors.delete(instanceId);
+    this.pairsProvider.delete(instanceId);
     logger.info({ instanceId }, 'Gateway instance unregistered');
   }
 }
-

@@ -50,6 +50,9 @@ async function testGatewayClient() {
                 console.log('✅ Authenticated! Ready to receive events');
                 console.log('User:', frame.data.user);
                 console.log('Instances:', frame.data.instances);
+                if (frame.data.instances?.[0]?.pairs) {
+                    console.log('Pairs (instance 0):', frame.data.instances[0].pairs);
+                }
 
                 // 开始心跳
                 setInterval(() => {
