@@ -15,6 +15,7 @@ import statistics from './statistics';
 import { setupMonitoring } from './monitoring';
 import logs from './logs';
 import settings from './settings';
+import tokens from './tokens';
 
 const log = getLogger('Web Api');
 
@@ -50,6 +51,7 @@ fastify.register(instances);
 fastify.register(statistics);
 fastify.register(logs);
 fastify.register(settings);
+fastify.register(tokens);
 
 // 📊 Register monitoring and statistics API
 setupMonitoring(fastify);
