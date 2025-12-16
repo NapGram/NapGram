@@ -5,7 +5,7 @@
 
 // ============= 消息片段 (Segment) =============
 export interface Segment {
-    type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'at' | 'reply' | 'forward';
+    type: 'text' | 'image' | 'video' | 'audio' | 'file' | 'at' | 'reply' | 'forward' | 'raw';
     data: any;
 }
 
@@ -15,6 +15,7 @@ export interface MessageCreatedEvent {
     type: 'message.created';
     instanceId: number;
     channelId: string;          // QQ: "qq:g:<id>" | "qq:p:<id>" ; TG: "tg:c:<chat_id>" | "tg:c:<chat_id>:t:<thread_id>"
+    threadId?: number | null;   // TG topic/thread id (if any)
     actor: {
         userId: string;          // 格式: "qq:u:<id>" 或 "tg:u:<id>"
         name: string;
@@ -22,6 +23,7 @@ export interface MessageCreatedEvent {
     message: {
         messageId: string;       // QQ: "qq:m:<msg_id>" ; TG: "tg:m:<chat_id>:<msg_id>"
         platform: 'qq' | 'tg';
+        threadId?: number | null;
         native: any;             // 原始平台消息对象
         segments: Segment[];     // 统一消息片段
         timestamp: number;
