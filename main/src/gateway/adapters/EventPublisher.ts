@@ -37,6 +37,7 @@ export class EventPublisher {
                 type: 'message.created',
                 instanceId,
                 channelId,
+                threadId: threadId ?? null,
                 actor: {
                     userId,
                     name: msg.sender.name || 'Unknown'
@@ -44,8 +45,9 @@ export class EventPublisher {
                 message: {
                     messageId,
                     platform,
-                    native: this.extractNative(msg),
-                    segments: this.convertToSegments(msg.content),
+                    threadId: threadId ?? null,
+                    native: this.extractNative(platform, msg, threadId),
+                    segments: this.convertToSegments(platform, msg),
                     timestamp: msg.timestamp
                 }
             };
@@ -99,48 +101,163 @@ export class EventPublisher {
     /**
      * 提取原始消息对象（简化版）
      */
-    private extractNative(msg: UnifiedMessage): any {
+    private extractNative(platform: 'qq' | 'tg', msg: UnifiedMessage, threadId?: number): any {
+        if (platform === 'qq') {
+            const raw = msg.metadata?.raw;
+            return {
+                platform: 'qq',
+                chatId: msg.chat.id,
+                msgId: msg.id,
+                senderId: msg.sender.id,
+                timestamp: msg.timestamp,
+                raw: raw && typeof raw === 'object' ? raw : undefined,
+            };
+        }
+
+        // tg
+        const chatIdNum = Number(msg.chat.id);
+        const msgIdNum = Number(msg.id);
+        const raw = msg.metadata?.raw as any;
+        const text = msg.content
+            .filter(c => c.type === 'text')
+            .map(c => (c.data as any)?.text || '')
+            .join('');
+
+        const reply = msg.content.find(c => c.type === 'reply') as any;
+        const replyToMsgId = reply?.data?.messageId ? String(reply.data.messageId) : undefined;
+
         return {
-            id: msg.id,
-            chatId: msg.chat.id,
+            platform: 'tg',
+            chatId: Number.isFinite(chatIdNum) ? chatIdNum : msg.chat.id,
+            msgId: Number.isFinite(msgIdNum) ? msgIdNum : msg.id,
+            threadId: threadId ?? null,
             senderId: msg.sender.id,
-            timestamp: msg.timestamp
+            timestamp: msg.timestamp,
+            isTopicMessage: typeof raw?.isTopicMessage === 'boolean' ? raw.isTopicMessage : undefined,
+            replyToMsgId,
+            text: text || undefined,
+            entities: Array.isArray(raw?.entities)
+                ? raw.entities
+                    .filter((e: any) => e && typeof e === 'object' && (e.kind === 'mention' || e.kind === 'text_mention'))
+                    .map((e: any) => ({
+                        kind: e.kind,
+                        offset: e.offset,
+                        length: e.length,
+                        text: e.text,
+                        userId: e.kind === 'text_mention' ? e.params?.userId : undefined,
+                    }))
+                : undefined,
         };
     }
 
     /**
      * 转换 UnifiedMessage.content 到 Gateway Segments
      */
-    private convertToSegments(content: any[]): Segment[] {
-        return content.map(item => {
-            // 简化版转换，保留核心类型
+    private convertToSegments(platform: 'qq' | 'tg', msg: UnifiedMessage): Segment[] {
+        const chatId = msg.chat.id;
+        return msg.content.map(item => {
             switch (item.type) {
                 case 'text':
-                    return { type: 'text', data: { text: item.data.text } };
+                    return { type: 'text', data: { text: String(item.data?.text ?? '') } };
 
-                case 'image':
-                    return { type: 'image', data: { url: item.data.url || item.data.file } };
+                case 'image': {
+                    const ref = this.extractMediaRef(item.data);
+                    return { type: 'image', data: { ...ref, width: item.data?.width, height: item.data?.height } };
+                }
 
-                case 'video':
-                    return { type: 'video', data: { url: item.data.url || item.data.file } };
+                case 'video': {
+                    const ref = this.extractMediaRef(item.data);
+                    return { type: 'video', data: { ...ref, duration: item.data?.duration } };
+                }
 
-                case 'audio':
-                    return { type: 'audio', data: { url: item.data.url || item.data.file } };
+                case 'audio': {
+                    const ref = this.extractMediaRef(item.data);
+                    return { type: 'audio', data: { ...ref, duration: item.data?.duration } };
+                }
 
-                case 'file':
-                    return { type: 'file', data: { url: item.data.url, name: item.data.name } };
+                case 'file': {
+                    const ref = this.extractMediaRef(item.data);
+                    return {
+                        type: 'file',
+                        data: {
+                            ...ref,
+                            name: item.data?.filename || item.data?.name,
+                            size: item.data?.size,
+                            mimeType: item.data?.mimeType,
+                        }
+                    };
+                }
 
-                case 'at':
-                    return { type: 'at', data: { userId: item.data.qq || item.data.user } };
+                case 'at': {
+                    const rawUserId = String(item.data?.userId ?? item.data?.targetId ?? item.data?.qq ?? item.data?.user ?? '');
+                    const name = String(item.data?.userName ?? item.data?.name ?? '').trim();
+                    if (!rawUserId) return { type: 'raw', data: { type: 'at', data: item.data } };
+                    if (platform === 'tg' && !/^\d+$/.test(rawUserId)) {
+                        const username = rawUserId.replace(/^@/, '').trim();
+                        return {
+                            type: 'at',
+                            data: {
+                                userId: `tg:username:${username || rawUserId}`,
+                                name: name || undefined,
+                                username: username || undefined,
+                            }
+                        };
+                    }
+                    return {
+                        type: 'at',
+                        data: {
+                            userId: this.buildUserId(platform, rawUserId),
+                            name: name || undefined,
+                        }
+                    };
+                }
 
-                case 'reply':
-                    return { type: 'reply', data: { messageId: item.data.id } };
+                case 'reply': {
+                    const replyRawId = String(item.data?.messageId ?? item.data?.id ?? '');
+                    if (!replyRawId) return { type: 'raw', data: { type: 'reply', data: item.data } };
+
+                    const messageId = platform === 'tg'
+                        ? this.buildMessageId('tg', chatId, replyRawId.replace(/^tg:m:[^:]+:/, ''))
+                        : this.buildMessageId('qq', chatId, replyRawId.replace(/^qq:m:/, ''));
+
+                    const senderId = item.data?.senderId ? String(item.data.senderId) : '';
+                    const senderName = item.data?.senderName ? String(item.data.senderName) : '';
+                    const sender = senderId
+                        ? { userId: this.buildUserId(platform, senderId), name: senderName || 'Unknown' }
+                        : undefined;
+
+                    return {
+                        type: 'reply',
+                        data: {
+                            messageId,
+                            sender,
+                            text: item.data?.text ? String(item.data.text) : undefined,
+                        }
+                    };
+                }
+
+                case 'forward':
+                    return { type: 'forward', data: item.data };
 
                 default:
-                    logger.warn(`Unknown content type: ${item.type}`);
-                    return { type: item.type as any, data: item.data };
+                    return { type: 'raw', data: { type: item.type, data: item.data } };
             }
         });
+    }
+
+    private extractMediaRef(data: any): { url?: string; fileId?: string; uniqueFileId?: string } {
+        if (!data || typeof data !== 'object') return {};
+
+        const urlCandidate = [data.url, data.file].find((v: any) => typeof v === 'string' && v.length > 0);
+        const fileObj = data.file && typeof data.file === 'object' ? data.file : undefined;
+        const fileIdCandidate = [data.fileId, fileObj?.fileId].find((v: any) => typeof v === 'string' && v.length > 0);
+        const uniqueFileIdCandidate = [data.uniqueFileId, fileObj?.uniqueFileId].find((v: any) => typeof v === 'string' && v.length > 0);
+
+        return {
+            url: urlCandidate,
+            fileId: fileIdCandidate,
+            uniqueFileId: uniqueFileIdCandidate,
+        };
     }
 
     /**
