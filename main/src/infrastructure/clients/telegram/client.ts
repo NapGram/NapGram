@@ -245,10 +245,11 @@ export default class Telegram {
     options?: { prefix?: string; filename?: string; ext?: string; returnType?: 'url' | 'path' },
   ): Promise<string> {
     const prefix = options?.prefix || 'tg';
-    const rawName =
-      options?.filename ||
-      (typeof (media as any)?.fileName === 'string' ? (media as any).fileName : undefined) ||
-      `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const nameFromMedia = typeof (media as any)?.fileName === 'string' ? (media as any).fileName : undefined;
+    const baseName = options?.filename || nameFromMedia;
+    const rawName = baseName
+      ? `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}-${baseName}`
+      : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
     const sanitized = this.sanitizeFilename(rawName);
     const ext = options?.ext ? (options.ext.startsWith('.') ? options.ext : `.${options.ext}`) : '';
