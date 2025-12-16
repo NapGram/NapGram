@@ -6,8 +6,8 @@
     "declaration": true,
     "outDir": "dist",
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "noEmitOnError": false
   },
   "include": ["src/**/*.ts"]
 }
-
