@@ -387,6 +387,12 @@ export class TelegramSender {
             }
 
             if (mediaInput) {
+                const ttlSeconds = env.TG_MEDIA_TTL_SECONDS && env.TG_MEDIA_TTL_SECONDS > 0 ? env.TG_MEDIA_TTL_SECONDS : undefined;
+                const ttlAllowedTypes = new Set(['photo', 'video', 'voice', 'animation']);
+                if (ttlSeconds && typeof (mediaInput as any).type === 'string' && ttlAllowedTypes.has((mediaInput as any).type)) {
+                    (mediaInput as any).ttlSeconds = ttlSeconds;
+                }
+
                 const params: any = {
                     ...commonParams,
                     ...formattingParams,
@@ -396,7 +402,18 @@ export class TelegramSender {
                 if (!params.messageThreadId) delete params.messageThreadId;
 
                 // mtcute handles string (path) and Buffer automatically
-                const sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params);
+                let sentMsg: any;
+                try {
+                    sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params);
+                } catch (e) {
+                    if ((mediaInput as any)?.ttlSeconds) {
+                        this.logger.warn(e, 'sendMedia failed with ttlSeconds, retrying without ttlSeconds');
+                        delete (mediaInput as any).ttlSeconds;
+                        sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params);
+                    } else {
+                        throw e;
+                    }
+                }
                 this.logger.debug(`[Forward] QQ message ${qqMsgId || ''} -> TG ${chat.id} (id: ${sentMsg.id})${captionText ? ' with caption' : ''}`);
                 return sentMsg;  // Return the sent message
             }
