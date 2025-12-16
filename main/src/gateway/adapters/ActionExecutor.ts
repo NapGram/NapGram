@@ -168,10 +168,38 @@ export class ActionExecutor {
                     return { type: 'audio', data: { url: seg.data.url } };
 
                 case 'file':
-                    return { type: 'file', data: { url: seg.data.url, name: seg.data.name } };
+                    return {
+                        type: 'file',
+                        data: {
+                            url: seg.data.url,
+                            filename: seg.data.name || seg.data.filename || 'file',
+                            size: seg.data.size,
+                        }
+                    };
 
                 case 'at':
-                    return { type: 'at', data: { qq: seg.data.userId } };
+                    {
+                        const id = String(seg.data?.userId ?? '');
+                        const rawId = id.startsWith('qq:u:') ? id.slice('qq:u:'.length) : id;
+                        return {
+                            type: 'at',
+                            data: {
+                                userId: rawId,
+                                userName: String(seg.data?.name ?? seg.data?.userName ?? ''),
+                            }
+                        };
+                    }
+
+                case 'reply':
+                    return {
+                        type: 'reply',
+                        data: {
+                            messageId: String(seg.data?.messageId ?? ''),
+                            senderId: String(seg.data?.sender?.userId ?? ''),
+                            senderName: String(seg.data?.sender?.name ?? ''),
+                            text: seg.data?.text ? String(seg.data.text) : undefined,
+                        }
+                    };
 
                 default:
                     logger.warn(`Unknown segment type: ${seg.type}`);
