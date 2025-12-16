@@ -148,7 +148,7 @@ export default class Instance {
         // 初始化 Gateway（全局单例，按实例注册执行器）
         this.log.debug('Gateway 正在初始化');
         try {
-          const { server, publisher, executor } = GatewayRuntime.registerInstance(this.id, this.qqClient, this.tgBot);
+          const { server, publisher, executor } = GatewayRuntime.registerInstance(this.id, this.qqClient, this.tgBot, this.forwardPairs);
           this.gatewayServer = server;
           this.eventPublisher = publisher;
           this.actionExecutor = executor;

@@ -20,6 +20,7 @@ import {
     createErrorFrame,
     createPongFrame
 } from '../protocol/frames';
+import type { ForwardPairRecord } from '../../domain/models/ForwardMap';
 
 const logger = getLogger('GatewayServer');
 
@@ -33,6 +34,7 @@ export class GatewayServer {
         private readonly port: number = 8765,
         private readonly opts?: {
             resolveExecutor?: (instanceId: number) => any;
+            resolvePairs?: (instanceId: number) => ForwardPairRecord[];
         }
     ) {
         this.sessions = new SessionManager();
@@ -165,11 +167,35 @@ export class GatewayServer {
         const ready = createReadyFrame(
             authResult.userId!,
             authResult.userName!,
-            instances.map(id => ({ id, name: `Instance ${id}` }))
+            instances.map(id => ({
+                id,
+                name: `Instance ${id}`,
+                pairs: this.buildPairsMeta(id)
+            }))
         );
         this.send(session.ws, ready);
 
         logger.info(`Session ${session.id} authenticated as ${authResult.userName}`);
+    }
+
+    private buildPairsMeta(instanceId: number) {
+        const pairs = this.opts?.resolvePairs?.(instanceId) || [];
+        return pairs.map(pair => ({
+            pairId: pair.id,
+            qq: {
+                channelId: `qq:g:${pair.qqRoomId.toString()}`,
+                roomId: pair.qqRoomId.toString(),
+                name: null,
+            },
+            tg: {
+                channelId: pair.tgThreadId
+                    ? `tg:c:${pair.tgChatId.toString()}:t:${pair.tgThreadId}`
+                    : `tg:c:${pair.tgChatId.toString()}`,
+                chatId: pair.tgChatId.toString(),
+                threadId: pair.tgThreadId ?? null,
+                name: null,
+            }
+        }));
     }
 
     private async handleCall(session: Session, frame: CallFrame) {
