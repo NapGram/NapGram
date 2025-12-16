@@ -34,6 +34,8 @@ const configParsed = z.object({
   TG_INITIAL_DCID: z.string().regex(/^\d+$/).transform(Number).optional(),
   TG_INITIAL_SERVER: z.union([z.ipv4(), z.ipv6()]).optional(),
   TG_USE_TEST_DC: z.string().default('false').transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())),
+  // Telegram 媒体自毁（view-once/TTL），单位秒；不设置或 <=0 表示禁用
+  TG_MEDIA_TTL_SECONDS: z.string().regex(/^\d+$/).transform(Number).optional(),
   IPV6: z.string().default('false').transform((v) => ['true', '1', 'yes'].includes(v.toLowerCase())),
   ADMIN_QQ: z.string().regex(/^\d+$/).transform(Number).optional(),
   ADMIN_TG: z.string().regex(/^-?\d+$/).transform(Number).optional(),
