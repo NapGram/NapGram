@@ -1,5 +1,6 @@
 import type { MessageContent } from '../../../domain/message';
 import { getLogger } from '../../../shared/logger';
+import env from '../../../domain/models/env';
 import type { FileNormalizer, NormalizedFile } from './FileNormalizer';
 import type { RichHeaderBuilder } from './RichHeaderBuilder';
 
@@ -74,6 +75,8 @@ export class MediaSender {
         }
 
         const mediaInputs: any[] = [];
+        const ttlSeconds = env.TG_MEDIA_TTL_SECONDS && env.TG_MEDIA_TTL_SECONDS > 0 ? env.TG_MEDIA_TTL_SECONDS : undefined;
+        const ttlAllowedTypes = new Set(['photo', 'video', 'voice', 'animation']);
 
         for (const media of mediaItems) {
             try {
@@ -93,11 +96,16 @@ export class MediaSender {
                 }
 
                 const isGif = this.fileNormalizer.isGifMedia(normalized);
-                mediaInputs.push({
-                    type: media.type === 'video' ? 'video' : (isGif ? 'animation' : 'photo'),
+                const inputType = media.type === 'video' ? 'video' : (isGif ? 'animation' : 'photo');
+                const input: any = {
+                    type: inputType,
                     file: normalized.data,
                     fileName: normalized.fileName,
-                });
+                };
+                if (ttlSeconds && ttlAllowedTypes.has(inputType)) {
+                    input.ttlSeconds = ttlSeconds;
+                }
+                mediaInputs.push(input);
             } catch (err) {
                 this.logger.warn(err, `Failed to process media item in group:`);
             }
@@ -135,7 +143,20 @@ export class MediaSender {
         if (!sendParams.replyTo) delete sendParams.replyTo;
 
         try {
-            const sentMessages = await chat.client.sendMediaGroup(chat.id, mediaInputs, sendParams);
+            let sentMessages: any;
+            try {
+                sentMessages = await chat.client.sendMediaGroup(chat.id, mediaInputs, sendParams);
+            } catch (err) {
+                if (ttlSeconds) {
+                    this.logger.warn(err, 'sendMediaGroup failed with ttlSeconds, retrying without ttlSeconds');
+                    for (const item of mediaInputs) {
+                        if (item && typeof item === 'object') delete item.ttlSeconds;
+                    }
+                    sentMessages = await chat.client.sendMediaGroup(chat.id, mediaInputs, sendParams);
+                } else {
+                    throw err;
+                }
+            }
             this.logger.debug(`[Forward] QQ message ${qqMsgId || ''} -> TG Media Group (${sentMessages.length} items)${fullCaption ? ' with caption' : ''}`);
             return sentMessages[0];  // Return first message for consistency
         } catch (err) {
