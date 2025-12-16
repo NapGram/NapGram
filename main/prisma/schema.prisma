@@ -104,6 +104,9 @@ model ForwardPair {
   ignoreSenders   String?           /// 忽略的 QQ 发送者 ID 列表 (逗号分隔)
   forwardMode     String?           /// 转发方向配置: "00"=全禁用, "01"=仅TG→QQ, "10"=仅QQ→TG, "11"=双向 (null=使用环境变量默认值)
   nicknameMode    String?           /// 昵称显示配置: 同上格式 (null=使用环境变量默认值)
+  commandReplyMode String?          /// 命令回复模式: "0"=仅回复发起平台, "1"=双向回复 (null=使用环境变量默认值)
+  commandReplyFilter String?        /// 命令回复过滤模式: "whitelist"=白名单, "blacklist"=黑名单, null=不过滤
+  commandReplyList String?          /// 命令列表(逗号分隔): "help,status,info" 配合 commandReplyFilter 使用
   apiKey          String            @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   ForwardMultiple ForwardMultiple[]
 
