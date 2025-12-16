@@ -100,6 +100,36 @@
    docker-compose up -d
    ```
 
+### 升级 FAQ
+
+#### 1) 升级流程建议（从旧版本升级到新版本）
+
+- 建议优先使用镜像默认的启动方式（`/app/entrypoint.sh`），让 Prisma 执行 `migrate deploy`；不要长期使用 `prisma db push` 作为生产升级手段。
+- 如果你的 `docker-compose.yml` 里手动写了 `command: npx prisma db push ...`，升级时建议先去掉该 `command` 覆盖，让容器走默认 entrypoint（会自动跑迁移）。
+
+#### 2) 升级后出现 `QqBotType` 移除 `oicq` 的报错怎么办？
+
+这是 Prisma 的保护提示：新版本移除了枚举值 `oicq`，但你的数据库里可能仍有旧数据/旧枚举分支。
+
+推荐做法（一次性修复）：
+
+1. **先备份数据库**
+2. **把历史数据中的 `oicq` 统一改为 `napcat`**
+   ```sql
+   UPDATE "public"."QqBot" SET "type" = 'napcat' WHERE "type" = 'oicq';
+   ```
+3. **再执行迁移**
+   - 推荐：`npx prisma migrate deploy`
+   - 如果你确实在用 `prisma db push`（开发/临时场景），需要加 `--accept-data-loss`（这里的 data loss 仅指移除枚举分支）：
+     ```bash
+     npx prisma db push --accept-data-loss
+     ```
+
+如果你是 `compose.dev.yaml` 这种挂载源码运行的方式，也可以直接执行：
+```bash
+sh ./main/tools/prisma-db-push-safe.sh
+```
+
 ## 📚 文档
 
 - 📖 **项目文档（Wiki）**：https://github.com/NapLink/NapGram/wiki
