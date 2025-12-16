@@ -10,14 +10,22 @@ export class TelegramConverter extends BaseConverter {
         this.logger.debug(tgMsg.id, 'Converting from Telegram:');
 
         const content: MessageContent[] = [];
-        const text = tgMsg.text;
-
-        if (text) {
+        // Reply (quote)
+        if (tgMsg.replyToMessage) {
+            const reply = tgMsg.replyToMessage;
             content.push({
-                type: 'text',
-                data: { text },
+                type: 'reply',
+                data: {
+                    messageId: String(reply.id),
+                    senderId: String((reply.sender as any)?.id || ''),
+                    senderName: reply.sender?.displayName || 'Unknown',
+                    text: (reply as any).text || '',
+                },
             });
         }
+
+        // Text + mentions
+        content.push(...this.convertTextWithMentions(tgMsg));
 
         const media = tgMsg.media;
 
@@ -86,19 +94,6 @@ export class TelegramConverter extends BaseConverter {
             }
         }
 
-        if (tgMsg.replyToMessage) {
-            const reply = tgMsg.replyToMessage;
-            content.push({
-                type: 'reply',
-                data: {
-                    messageId: String(reply.id),
-                    senderId: String((reply.sender as any)?.id || ''),
-                    senderName: reply.sender?.displayName || 'Unknown',
-                    text: (reply as any).text || '',
-                },
-            });
-        }
-
         const senderId = String(tgMsg.sender?.id ?? 'unknown');
         const senderName = tgMsg.sender?.displayName || 'Unknown';
         const chatId = String(tgMsg.chat?.id ?? 'unknown');
@@ -121,5 +116,66 @@ export class TelegramConverter extends BaseConverter {
                 raw: tgMsg,
             },
         };
+    }
+
+    private convertTextWithMentions(tgMsg: Message): MessageContent[] {
+        const text = tgMsg.text || '';
+        if (!text) return [];
+
+        const entities = Array.from(tgMsg.entities || []);
+        const mentionEntities = entities
+            .filter(e => e.is('mention') || e.is('text_mention'))
+            .sort((a, b) => a.offset - b.offset);
+
+        if (mentionEntities.length === 0) {
+            return [{
+                type: 'text',
+                data: { text },
+            }];
+        }
+
+        const segments: MessageContent[] = [];
+        let cursor = 0;
+
+        for (const entity of mentionEntities) {
+            const start = Math.max(0, Math.min(text.length, entity.offset));
+            const end = Math.max(start, Math.min(text.length, entity.offset + entity.length));
+
+            if (start > cursor) {
+                const before = text.slice(cursor, start);
+                if (before) {
+                    segments.push({ type: 'text', data: { text: before } });
+                }
+            }
+
+            const entityText = text.slice(start, end);
+            if (entity.is('text_mention')) {
+                segments.push({
+                    type: 'at',
+                    data: {
+                        userId: String(entity.params.userId),
+                        userName: entityText || 'Unknown',
+                    },
+                });
+            } else if (entity.is('mention')) {
+                const username = entityText.replace(/^@/, '').trim();
+                segments.push({
+                    type: 'at',
+                    data: {
+                        userId: username || entityText,
+                        userName: username || entityText || 'Unknown',
+                    },
+                });
+            }
+
+            cursor = end;
+        }
+
+        if (cursor < text.length) {
+            const tail = text.slice(cursor);
+            if (tail) segments.push({ type: 'text', data: { text: tail } });
+        }
+
+        return segments.length ? segments : [{ type: 'text', data: { text } }];
     }
 }

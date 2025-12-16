@@ -84,10 +84,20 @@ export class UnifiedConverter extends BaseConverter {
                     break;
 
                 case 'at':
-                    segments.push({
-                        type: 'at',
-                        data: { qq: content.data.targetId },
-                    });
+                    {
+                        const raw = String(content.data?.userId ?? content.data?.targetId ?? content.data?.qq ?? content.data?.user ?? '').trim();
+                        // NapCat/QQ only supports numeric uin mentions; non-numeric falls back to plain text.
+                        if (!/^\d+$/.test(raw)) {
+                            const name = String(content.data?.userName ?? content.data?.name ?? raw).trim();
+                            const text = name.startsWith('@') ? name : `@${name}`;
+                            segments.push({ type: 'text', data: { text } });
+                            break;
+                        }
+                        segments.push({
+                            type: 'at',
+                            data: { qq: raw },
+                        });
+                    }
                     break;
 
                 case 'reply':
