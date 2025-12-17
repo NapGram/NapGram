@@ -28,6 +28,7 @@ export default class Instance {
   public forwardPairs!: ForwardMap;
   private featureManager?: FeatureManager;
   public isInit = false;
+  private initPromise?: Promise<void>;
 
   // Gateway 组件
   public gatewayServer?: GatewayServer;
@@ -64,8 +65,10 @@ export default class Instance {
     this._flags = dbEntry.flags;
   }
 
-  private init(botToken?: string) {
-    (async () => {
+  private async init(botToken?: string) {
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = (async () => {
       this.log.debug('TG Bot 正在登录');
       const token = botToken ?? env.TG_BOT_TOKEN;
       if (this.botSessionId) {
@@ -160,17 +163,21 @@ export default class Instance {
       }
 
       this.isInit = true;
-    })()
+    })();
+
+    this.initPromise
       .then(() => this.log.info('Instance ✓ 初始化完成'))
       .catch((err) => {
         this.log.error('初始化失败', err);
         posthog.capture('初始化失败', { error: err });
       });
+
+    return this.initPromise;
   }
 
   public async login(botToken?: string) {
     await this.load();
-    this.init(botToken);
+    await this.init(botToken);
   }
 
   public static async start(instanceId: number, botToken?: string) {

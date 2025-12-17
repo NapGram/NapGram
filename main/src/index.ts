@@ -73,9 +73,7 @@ import { KoishiHost } from './koishi/KoishiHost';
   const instanceEntries = await db.instance.findMany();
   const targets = instanceEntries.length ? instanceEntries.map(it => it.id) : [0];
 
-  for (const id of targets) {
-    await Instance.start(id);
-  }
+  await Promise.all(targets.map(id => Instance.start(id)));
 
   await KoishiHost.start({ defaultInstances: targets });
 
