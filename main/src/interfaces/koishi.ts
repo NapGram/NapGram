@@ -5,6 +5,7 @@ import { KoishiHost } from '../koishi/KoishiHost';
 import { normalizeModuleSpecifierForConfig, patchKoishiPlugin, readKoishiPluginsConfig, removeKoishiPlugin, upsertKoishiPlugin } from '../koishi/store';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { getPluginVersions, installFromMarketplace, rollbackPlugin, uninstallPlugin, upgradePlugin } from '../koishi/installer';
 
 /**
  * KoishiHost Admin API
@@ -189,6 +190,126 @@ export default async function (fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const result = await removeKoishiPlugin(String((request.params as any).id));
+      return ApiResponse.success(result);
+    } catch (error: any) {
+      return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
+    }
+  });
+
+  const installSchema = z.object({
+    marketplaceId: z.string().min(1),
+    pluginId: z.string().min(1),
+    version: z.string().min(1).optional(),
+    enabled: z.boolean().optional(),
+    config: z.any().optional(),
+    reload: z.boolean().optional().default(true),
+    dryRun: z.boolean().optional().default(false),
+  });
+
+  /**
+   * POST /api/admin/koishi/plugins/install
+   * Install a plugin from a cached marketplace index
+   */
+  fastify.post('/api/admin/koishi/plugins/install', {
+    preHandler: requireKoishiAdmin,
+  }, async (request, reply) => {
+    const body = installSchema.safeParse(request.body ?? {});
+    if (!body.success) {
+      return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
+    }
+    try {
+      const result = await installFromMarketplace(body.data);
+      if (body.data.reload && !body.data.dryRun) await KoishiHost.reload();
+      return ApiResponse.success(result);
+    } catch (error: any) {
+      return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
+    }
+  });
+
+  const upgradeSchema = z.object({
+    marketplaceId: z.string().min(1).optional(),
+    version: z.string().min(1).optional(),
+    reload: z.boolean().optional().default(true),
+    dryRun: z.boolean().optional().default(false),
+  });
+
+  /**
+   * POST /api/admin/koishi/plugins/:id/upgrade
+   */
+  fastify.post('/api/admin/koishi/plugins/:id/upgrade', {
+    preHandler: requireKoishiAdmin,
+  }, async (request, reply) => {
+    const body = upgradeSchema.safeParse(request.body ?? {});
+    if (!body.success) {
+      return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
+    }
+    try {
+      const result = await upgradePlugin(String((request.params as any).id), body.data);
+      if (body.data.reload && !body.data.dryRun) await KoishiHost.reload();
+      return ApiResponse.success(result);
+    } catch (error: any) {
+      return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
+    }
+  });
+
+  const rollbackSchema = z.object({
+    version: z.string().min(1).optional(),
+    reload: z.boolean().optional().default(true),
+    dryRun: z.boolean().optional().default(false),
+  });
+
+  /**
+   * POST /api/admin/koishi/plugins/:id/rollback
+   */
+  fastify.post('/api/admin/koishi/plugins/:id/rollback', {
+    preHandler: requireKoishiAdmin,
+  }, async (request, reply) => {
+    const body = rollbackSchema.safeParse(request.body ?? {});
+    if (!body.success) {
+      return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
+    }
+    try {
+      const result = await rollbackPlugin(String((request.params as any).id), body.data);
+      if (body.data.reload && !body.data.dryRun) await KoishiHost.reload();
+      return ApiResponse.success(result);
+    } catch (error: any) {
+      return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
+    }
+  });
+
+  const uninstallSchema = z.object({
+    removeFiles: z.boolean().optional().default(false),
+    reload: z.boolean().optional().default(true),
+    dryRun: z.boolean().optional().default(false),
+  });
+
+  /**
+   * POST /api/admin/koishi/plugins/:id/uninstall
+   */
+  fastify.post('/api/admin/koishi/plugins/:id/uninstall', {
+    preHandler: requireKoishiAdmin,
+  }, async (request, reply) => {
+    const body = uninstallSchema.safeParse(request.body ?? {});
+    if (!body.success) {
+      return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
+    }
+    try {
+      const result = await uninstallPlugin(String((request.params as any).id), body.data);
+      if (body.data.reload && !body.data.dryRun) await KoishiHost.reload();
+      return ApiResponse.success(result);
+    } catch (error: any) {
+      return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
+    }
+  });
+
+  /**
+   * GET /api/admin/koishi/plugins/:id/versions
+   */
+  fastify.get('/api/admin/koishi/plugins/:id/versions', {
+    preHandler: requireKoishiAdmin,
+  }, async (request, reply) => {
+    try {
+      const result = await getPluginVersions(String((request.params as any).id));
       return ApiResponse.success(result);
     } catch (error: any) {
       return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
