@@ -87,14 +87,16 @@ class NapGramMessageEncoder extends MessageEncoder {
     }
 
     if (type === 'at') {
-      const userId = String(attrs?.id ?? '');
+      const rawId = String(attrs?.id ?? '').trim();
       const display = attrs?.name ? String(attrs.name) : undefined;
+      const userId = this.normalizeAtId(rawId);
       if (userId) this.segments.push({ type: 'at', data: { userId, name: display } });
       return;
     }
 
     if (type === 'quote') {
-      const messageId = String(attrs?.id ?? '');
+      const rawId = String(attrs?.id ?? '').trim();
+      const messageId = this.normalizeReplyId(rawId);
       if (messageId) this.segments.push({ type: 'reply', data: { messageId } });
       return;
     }
@@ -103,6 +105,37 @@ class NapGramMessageEncoder extends MessageEncoder {
       const text = String(element.toString());
       if (text) this.segments.push({ type: 'text', data: { text } });
     }
+  }
+
+  private normalizeAtId(rawId: string): string {
+    if (!rawId) return '';
+    if (rawId.includes(':')) return rawId;
+
+    const channelId = String(this.channelId || '');
+    if (channelId.startsWith('tg:c:')) {
+      const id = rawId.replace(/^@/, '');
+      return /^\d+$/.test(id) ? `tg:u:${id}` : `tg:username:${id}`;
+    }
+    if (channelId.startsWith('qq:')) {
+      return `qq:u:${rawId}`;
+    }
+    return rawId;
+  }
+
+  private normalizeReplyId(rawId: string): string {
+    if (!rawId) return '';
+    if (rawId.includes(':')) return rawId;
+
+    const channelId = String(this.channelId || '');
+    if (channelId.startsWith('tg:c:')) {
+      const parts = channelId.split(':');
+      const chatId = parts[2];
+      if (chatId) return `tg:m:${chatId}:${rawId}`;
+    }
+    if (channelId.startsWith('qq:')) {
+      return `qq:m:${rawId}`;
+    }
+    return rawId;
   }
 }
 
@@ -192,31 +225,64 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
     this.channelInstance.set(e.channelId, e.instanceId);
     this.channelPair.set(e.channelId, { instanceId: e.instanceId, pairId: -1, side: e.message.platform === 'qq' ? 'qq' : 'tg' });
 
-    const isDirect = this.isDirect(e);
+    const ids = this.resolveChannelIds(e);
+    const isDirect = ids.isDirect;
     const session = this.bot.session({
       type: 'message-created',
       timestamp: e.message.timestamp,
-      user: { id: e.actor.userId, name: e.actor.name },
-      channel: { id: e.channelId, type: isDirect ? Universal.Channel.Type.DIRECT : Universal.Channel.Type.TEXT },
-      guild: isDirect ? undefined : { id: e.channelId },
+      user: { id: ids.userId, name: e.actor.name },
+      channel: { id: ids.channelId, type: isDirect ? Universal.Channel.Type.DIRECT : Universal.Channel.Type.TEXT },
+      guild: ids.guildId ? { id: ids.guildId } : undefined,
       message: { id: e.message.messageId },
-      referrer: { napgram: { instanceId: e.instanceId, threadId: e.threadId ?? null } },
+      referrer: { napgram: { instanceId: e.instanceId, threadId: e.threadId ?? null, platform: e.message.platform } },
     });
 
     session.content = segmentsToSatoriContent(e.message.segments);
     this.bot.dispatch(session);
   }
 
-  private isDirect(e: MessageCreatedEvent): boolean {
-    if (e.channelId.startsWith('qq:p:')) return true;
-    if (e.channelId.includes(':t:')) return false;
-    if (e.message.platform === 'tg') {
-      const chatId = typeof e.message.native?.chatId === 'number'
-        ? e.message.native.chatId
-        : Number(e.message.native?.chatId);
-      if (Number.isFinite(chatId)) return chatId > 0;
+  private resolveChannelIds(e: MessageCreatedEvent): {
+    channelId: string;
+    guildId?: string;
+    isDirect: boolean;
+    userId: string;
+  } {
+    const channelId = e.channelId;
+    const userId = this.normalizeUserId(e.actor.userId);
+
+    if (channelId.startsWith('qq:p:')) {
+      return { channelId, isDirect: true, userId };
     }
-    return false;
+    if (channelId.startsWith('qq:g:')) {
+      return { channelId, guildId: channelId, isDirect: false, userId };
+    }
+
+    if (channelId.startsWith('tg:c:')) {
+      const parts = channelId.split(':'); // tg:c:<chatId>[:t:<threadId>]
+      const chatId = parts[2];
+      const baseGuildId = chatId ? `tg:c:${chatId}` : undefined;
+      const isTopic = channelId.includes(':t:');
+      const chatIdNum = chatId ? Number(chatId) : NaN;
+      const isDirect = !isTopic && Number.isFinite(chatIdNum) && chatIdNum > 0;
+      return {
+        channelId,
+        guildId: isDirect ? undefined : baseGuildId,
+        isDirect,
+        userId,
+      };
+    }
+
+    // fallback
+    return { channelId, isDirect: false, guildId: channelId, userId };
+  }
+
+  private normalizeUserId(id: string): string {
+    const raw = String(id || '').trim();
+    const m = raw.match(/^(qq|tg):u:(.+)$/);
+    if (m) return m[2];
+    const u = raw.match(/^tg:username:(.+)$/);
+    if (u) return u[1];
+    return raw;
   }
 
   private startHeartbeat(): void {
@@ -295,4 +361,3 @@ export function apply(ctx: any, config: Config) {
   const bot = new NapGramBot(ctx, config);
   new NapGramAdapter(ctx, bot);
 }
-

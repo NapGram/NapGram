@@ -125,16 +125,24 @@ export class ActionExecutor {
         try {
             const chatIdNum = Number(chatId);
 
-            // 简单处理：只发送文本
-            const textSegments = segments.filter(s => s.type === 'text');
-            const text = textSegments.map(s => s.data.text).join(' ');
+            const chat = await this.tgBot.getChat(chatIdNum);
 
+            const params: any = {};
+            if (threadId) params.messageThreadId = threadId;
+
+            // reply：优先使用 segments 中的 reply
+            const replySeg = segments.find(s => s?.type === 'reply');
+            if (replySeg?.data?.messageId) {
+                const replyTo = this.extractTgMsgId(String(replySeg.data.messageId), chatId);
+                if (replyTo) params.replyTo = replyTo;
+            }
+
+            const text = this.buildTgTextFromSegments(segments);
             if (!text) {
                 throw new Error('No text content to send');
             }
 
-            const chat = await this.tgBot.getChat(chatIdNum);
-            const result = await chat.sendMessage(text, threadId ? { messageThreadId: threadId } as any : undefined);
+            const result = await chat.sendMessage(text, params);
 
             logger.info(`Message sent to TG: ${chatId}`);
 
@@ -147,6 +155,68 @@ export class ActionExecutor {
             logger.error('Failed to send TG message:', error);
             throw new Error(`Failed to send TG message: ${error.message}`);
         }
+    }
+
+    private extractTgMsgId(messageId: string, fallbackChatId: string): number | undefined {
+        const raw = String(messageId || '').trim();
+        if (!raw) return undefined;
+
+        // tg:m:<chatId>:<msgId>
+        const m = raw.match(/^tg:m:([^:]+):(\d+)$/);
+        if (m) return Number(m[2]);
+
+        // numeric string
+        if (/^\d+$/.test(raw)) return Number(raw);
+
+        // maybe tg messageId with different shape -> take last numeric
+        const tail = raw.split(':').pop();
+        if (tail && /^\d+$/.test(tail)) return Number(tail);
+
+        // allow "tg:m::<msgId>" etc (fallback)
+        const fallback = `${fallbackChatId}:${raw}`;
+        const m2 = fallback.match(/^([^:]+):(\d+)$/);
+        if (m2) return Number(m2[2]);
+
+        return undefined;
+    }
+
+    private buildTgTextFromSegments(segments: Segment[]): string {
+        const parts: string[] = [];
+
+        for (const seg of segments) {
+            if (!seg) continue;
+            if (seg.type === 'text') {
+                const text = seg.data?.text != null ? String(seg.data.text) : '';
+                if (text) parts.push(text);
+                continue;
+            }
+            if (seg.type === 'at') {
+                const userId = String(seg.data?.userId ?? '').trim();
+                const name = String(seg.data?.name ?? seg.data?.username ?? '').trim();
+                const mention = this.formatTgMention(userId, name);
+                if (mention) parts.push(mention);
+                continue;
+            }
+            // reply 仅用于 params.replyTo，不拼进文本
+        }
+
+        return parts.join('');
+    }
+
+    private formatTgMention(userId: string, name?: string): string {
+        const raw = String(userId || '').trim();
+        const display = (name || '').trim();
+
+        const u = raw.match(/^tg:username:(.+)$/);
+        if (u) return `@${u[1]}`;
+
+        const id = raw.match(/^tg:u:(\d+)$/);
+        if (id) return display ? `@${display}` : `@${id[1]}`;
+
+        if (/^\d+$/.test(raw)) return display ? `@${display}` : `@${raw}`;
+
+        if (raw.startsWith('@')) return raw;
+        return display ? `@${display}` : raw;
     }
 
     /**

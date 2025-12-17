@@ -4,6 +4,15 @@ function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 }
 
+function normalizeAtId(userId: any): string {
+  const raw = String(userId ?? '').trim();
+  const m = raw.match(/^(qq|tg):u:(.+)$/);
+  if (m) return m[2];
+  const u = raw.match(/^tg:username:(.+)$/);
+  if (u) return u[1];
+  return raw.replace(/^@/, '');
+}
+
 // MVP：足够支持 ping/pong 与基础回复；后续再做严格映射（TG at/reply 等）
 export function segmentsToSatoriContent(segments: Segment[]): string {
   const parts: string[] = [];
@@ -16,7 +25,7 @@ export function segmentsToSatoriContent(segments: Segment[]): string {
       continue;
     }
     if (seg.type === 'at') {
-      const id = String(seg.data?.userId ?? '');
+      const id = normalizeAtId(seg.data?.userId);
       const name = String(seg.data?.name ?? seg.data?.username ?? '').trim();
       if (id) {
         const attrs = [`id="${escapeAttr(id)}"`];
@@ -34,4 +43,3 @@ export function segmentsToSatoriContent(segments: Segment[]): string {
 
   return parts.join('');
 }
-
