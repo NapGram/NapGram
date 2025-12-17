@@ -8,6 +8,8 @@ import type Telegram from '../../infrastructure/clients/telegram/client';
 import type { Segment } from '../protocol/events';
 import type { MessageSendResult } from '../protocol/actions';
 import type { UnifiedMessage, MessageContent } from '../../domain/message';
+import type { InputText } from '@mtcute/core';
+import { tl } from '@mtcute/node';
 import { getLogger } from '../../shared/logger';
 
 const logger = getLogger('ActionExecutor');
@@ -137,7 +139,7 @@ export class ActionExecutor {
                 if (replyTo) params.replyTo = replyTo;
             }
 
-            const text = this.buildTgTextFromSegments(segments);
+            const text = this.buildTgInputTextFromSegments(segments);
             if (!text) {
                 throw new Error('No text content to send');
             }
@@ -180,43 +182,57 @@ export class ActionExecutor {
         return undefined;
     }
 
-    private buildTgTextFromSegments(segments: Segment[]): string {
-        const parts: string[] = [];
+    private buildTgInputTextFromSegments(segments: Segment[]): InputText | '' {
+        let text = '';
+        const entities: tl.TypeMessageEntity[] = [];
 
         for (const seg of segments) {
             if (!seg) continue;
+
             if (seg.type === 'text') {
-                const text = seg.data?.text != null ? String(seg.data.text) : '';
-                if (text) parts.push(text);
+                const part = seg.data?.text != null ? String(seg.data.text) : '';
+                if (part) text += part;
                 continue;
             }
+
             if (seg.type === 'at') {
-                const userId = String(seg.data?.userId ?? '').trim();
-                const name = String(seg.data?.name ?? seg.data?.username ?? '').trim();
-                const mention = this.formatTgMention(userId, name);
-                if (mention) parts.push(mention);
+                const rawUserId = String(seg.data?.userId ?? '').trim();
+                const display = String(seg.data?.name ?? seg.data?.username ?? '').trim();
+
+                // tg:username:xxx -> plain @xxx (Telegram will parse it)
+                const username = rawUserId.match(/^tg:username:(.+)$/)?.[1]
+                    || (rawUserId.startsWith('@') ? rawUserId.slice(1) : '');
+                if (username) {
+                    text += `@${username}`;
+                    continue;
+                }
+
+                // tg:u:123 / 123 -> mention link entity (equivalent to <a href="tg://user?id=123">name</a>)
+                const id = rawUserId.match(/^tg:u:(\d+)$/)?.[1] || (/^\d+$/.test(rawUserId) ? rawUserId : '');
+                if (id) {
+                    const label = display || `user${id}`;
+                    const offset = text.length;
+                    text += label;
+                    entities.push({
+                        _: 'messageEntityTextUrl',
+                        offset,
+                        length: label.length,
+                        url: `tg://user?id=${id}`,
+                    } as any);
+                    continue;
+                }
+
+                // fallback: render as-is
+                if (display) text += `@${display}`;
+                else if (rawUserId) text += rawUserId;
                 continue;
             }
+
             // reply 仅用于 params.replyTo，不拼进文本
         }
 
-        return parts.join('');
-    }
-
-    private formatTgMention(userId: string, name?: string): string {
-        const raw = String(userId || '').trim();
-        const display = (name || '').trim();
-
-        const u = raw.match(/^tg:username:(.+)$/);
-        if (u) return `@${u[1]}`;
-
-        const id = raw.match(/^tg:u:(\d+)$/);
-        if (id) return display ? `@${display}` : `@${id[1]}`;
-
-        if (/^\d+$/.test(raw)) return display ? `@${display}` : `@${raw}`;
-
-        if (raw.startsWith('@')) return raw;
-        return display ? `@${display}` : raw;
+        if (!text) return '';
+        return entities.length ? { text, entities } : text;
     }
 
     /**
