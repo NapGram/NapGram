@@ -16,6 +16,7 @@ import { setupMonitoring } from './monitoring';
 import logs from './logs';
 import settings from './settings';
 import tokens from './tokens';
+import koishi from './koishi';
 
 const log = getLogger('Web Api');
 
@@ -52,6 +53,7 @@ fastify.register(statistics);
 fastify.register(logs);
 fastify.register(settings);
 fastify.register(tokens);
+fastify.register(koishi);
 
 // 📊 Register monitoring and statistics API
 setupMonitoring(fastify);
