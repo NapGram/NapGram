@@ -4,6 +4,7 @@ import db from './domain/models/db';
 import api from './interfaces';
 import posthog from './domain/models/posthog';
 import env from './domain/models/env';
+import { KoishiHost } from './koishi/KoishiHost';
 
 (async () => {
   const log = getLogger('Main');
@@ -75,6 +76,8 @@ import env from './domain/models/env';
   for (const id of targets) {
     await Instance.start(id);
   }
+
+  await KoishiHost.start({ defaultInstances: targets });
 
   posthog.capture('启动完成', { instanceCount: targets.length });
 })();
