@@ -48,8 +48,8 @@ COPY web/package.json /app/web/
 # 3. 编译必需的原生模块
 #    - better-sqlite3: mtcute 用于 Telegram session 存储
 #    - silk-wasm 是纯 WASM，无需编译
-RUN pnpm install --filter=prisma --filter=@prisma/client --filter=@prisma/engines --frozen-lockfile --shamefully-hoist && \
-    pnpm install --frozen-lockfile --shamefully-hoist --ignore-scripts && \
+RUN pnpm install --filter=prisma --filter=@prisma/client --filter=@prisma/engines --no-frozen-lockfile --shamefully-hoist && \
+    pnpm install --no-frozen-lockfile --shamefully-hoist --ignore-scripts && \
     pnpm -r rebuild better-sqlite3
 
 # 源码构建（后端）
