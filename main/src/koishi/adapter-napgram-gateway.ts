@@ -143,8 +143,16 @@ class NapGramBot extends Bot<any, Config> {
   static MessageEncoder = NapGramMessageEncoder;
 
   constructor(ctx: any, config: Config) {
-    super(ctx, config, 'napgram');
+    super(ctx?.root ?? ctx, config, 'napgram');
     this.user = { id: config.selfId || 'napgram', name: 'NapGram Gateway' };
+  }
+
+  override dispose(): any {
+    const ctx = (this as any).ctx;
+    if (!ctx || !Array.isArray(ctx.bots)) {
+      return this.stop();
+    }
+    return super.dispose();
   }
 }
 
