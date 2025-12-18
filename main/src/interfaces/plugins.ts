@@ -49,6 +49,55 @@ export default async function (fastify: FastifyInstance) {
     }
   });
 
+  fastify.get('/api/admin/plugins/policy', { preHandler: requirePluginAdmin }, async () => {
+    const readBool = (...keys: string[]) => {
+      for (const key of keys) {
+        const raw = String((process.env as any)[key] || '').trim();
+        if (!raw) continue;
+        const v = raw.toLowerCase();
+        return { key, value: v === '1' || v === 'true' || v === 'yes' || v === 'on' };
+      }
+      return { key: null as string | null, value: false };
+    };
+
+    const readString = (...keys: string[]) => {
+      for (const key of keys) {
+        const raw = String((process.env as any)[key] || '').trim();
+        if (raw) return { key, value: raw };
+      }
+      return { key: null as string | null, value: '' };
+    };
+
+    const allowNetwork = readBool('PLUGIN_ALLOW_NETWORK');
+    const allowFs = readBool('PLUGIN_ALLOW_FS');
+    const allowNpmInstall = readBool('PLUGIN_ALLOW_NPM_INSTALL');
+    const allowInstallScripts = readBool('PLUGIN_ALLOW_INSTALL_SCRIPTS');
+
+    const allowlistRaw = readString('PLUGIN_NETWORK_ALLOWLIST');
+    const allowlist = allowlistRaw.value
+      ? allowlistRaw.value.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    const registry = readString('PLUGIN_NPM_REGISTRY');
+
+    return ApiResponse.success({
+      allowNetwork: allowNetwork.value,
+      allowFs: allowFs.value,
+      allowNpmInstall: allowNpmInstall.value,
+      allowInstallScripts: allowInstallScripts.value,
+      networkAllowlist: allowlist,
+      npmRegistry: registry.value || null,
+      sources: {
+        allowNetwork: allowNetwork.key,
+        allowFs: allowFs.key,
+        allowNpmInstall: allowNpmInstall.key,
+        allowInstallScripts: allowInstallScripts.key,
+        networkAllowlist: allowlistRaw.key,
+        npmRegistry: registry.key,
+      },
+    });
+  });
+
   fastify.get('/api/admin/plugins/status', { preHandler: requirePluginAdmin }, async () => {
     return ApiResponse.success(PluginRuntime.getLastReport());
   });
