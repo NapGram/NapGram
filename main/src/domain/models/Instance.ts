@@ -6,7 +6,7 @@ import posthog from './posthog';
 import { qqClientFactory, type IQQClient } from '../../infrastructure/clients/qq';
 import { FeatureManager } from '../../features';
 import ForwardMap from './ForwardMap';
-import { GatewayRuntime, type GatewayServer, type EventPublisher, type ActionExecutor } from '../../gateway';
+import { getEventPublisher } from '../../plugins/core/event-publisher';
 
 export type WorkMode = 'personal' | 'group' | 'public';
 
@@ -29,11 +29,7 @@ export default class Instance {
   private featureManager?: FeatureManager;
   public isInit = false;
   private initPromise?: Promise<void>;
-
-  // Gateway 组件
-  public gatewayServer?: GatewayServer;
-  public eventPublisher?: EventPublisher;
-  public actionExecutor?: ActionExecutor;
+  public eventPublisher?: { publishMessageCreated: (...args: any[]) => Promise<void> };
 
   private constructor(public readonly id: number) {
     this.log = getLogger(`Instance - ${this.id}`);
@@ -99,6 +95,138 @@ export default class Instance {
       await this.qqClient.login();
       this.log.info('NapCat 客户端 ✓ 初始化完成');
 
+      // 插件系统：桥接 QQ 侧事件到插件 EventBus
+      try {
+        const eventPublisher = getEventPublisher();
+        const instanceId = this.id;
+        const qqClient = this.qqClient;
+
+        (qqClient as any).on('request.friend', async (e: any) => {
+          const requestId = String(e?.flag ?? '');
+          if (!requestId) return;
+          const userId = String(e?.userId ?? '');
+          const userName = String(e?.userName ?? userId ?? 'Unknown');
+          eventPublisher.publishFriendRequest({
+            instanceId,
+            platform: 'qq',
+            requestId,
+            userId,
+            userName,
+            comment: typeof e?.comment === 'string' ? e.comment : undefined,
+            timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
+            approve: async () => {
+              if (typeof (qqClient as any).handleFriendRequest !== 'function') {
+                throw new Error('QQ client does not support handleFriendRequest()');
+              }
+              await (qqClient as any).handleFriendRequest(requestId, true);
+            },
+            reject: async (reason?: string) => {
+              if (typeof (qqClient as any).handleFriendRequest !== 'function') {
+                throw new Error('QQ client does not support handleFriendRequest()');
+              }
+              await (qqClient as any).handleFriendRequest(requestId, false, reason);
+            },
+          });
+        });
+
+        (qqClient as any).on('request.group', async (e: any) => {
+          const requestId = String(e?.flag ?? '');
+          if (!requestId) return;
+          const groupId = String(e?.groupId ?? '');
+          const userId = String(e?.userId ?? '');
+          const userName = String(e?.userName ?? userId ?? 'Unknown');
+          const subType = (e?.subType === 'invite' ? 'invite' : 'add') as 'add' | 'invite';
+          eventPublisher.publishGroupRequest({
+            instanceId,
+            platform: 'qq',
+            requestId,
+            groupId,
+            userId,
+            userName,
+            comment: typeof e?.comment === 'string' ? e.comment : undefined,
+            timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
+            approve: async () => {
+              if (typeof (qqClient as any).handleGroupRequest !== 'function') {
+                throw new Error('QQ client does not support handleGroupRequest()');
+              }
+              await (qqClient as any).handleGroupRequest(requestId, subType, true);
+            },
+            reject: async (reason?: string) => {
+              if (typeof (qqClient as any).handleGroupRequest !== 'function') {
+                throw new Error('QQ client does not support handleGroupRequest()');
+              }
+              await (qqClient as any).handleGroupRequest(requestId, subType, false, reason);
+            },
+          });
+        });
+
+        qqClient.on('group.increase', (groupId: string, member: any) => {
+          eventPublisher.publishNotice({
+            instanceId,
+            platform: 'qq',
+            noticeType: 'group-member-increase',
+            groupId: String(groupId),
+            userId: String(member?.id ?? ''),
+            timestamp: Date.now(),
+            raw: { groupId, member },
+          });
+        });
+
+        qqClient.on('group.decrease', (groupId: string, uin: string) => {
+          eventPublisher.publishNotice({
+            instanceId,
+            platform: 'qq',
+            noticeType: 'group-member-decrease',
+            groupId: String(groupId),
+            userId: String(uin),
+            timestamp: Date.now(),
+            raw: { groupId, uin },
+          });
+        });
+
+        qqClient.on('friend.increase', (friend: any) => {
+          eventPublisher.publishNotice({
+            instanceId,
+            platform: 'qq',
+            noticeType: 'friend-add',
+            userId: String(friend?.id ?? ''),
+            timestamp: Date.now(),
+            raw: friend,
+          });
+        });
+
+        qqClient.on('recall', (evt: any) => {
+          const chatId = String(evt?.chatId ?? '');
+          const operatorId = String(evt?.operatorId ?? '');
+          const noticeType = chatId && operatorId && chatId === operatorId ? 'friend-recall' : 'group-recall';
+          eventPublisher.publishNotice({
+            instanceId,
+            platform: 'qq',
+            noticeType,
+            groupId: noticeType === 'group-recall' ? chatId : undefined,
+            userId: noticeType === 'friend-recall' ? chatId : undefined,
+            operatorId: operatorId || undefined,
+            timestamp: typeof evt?.timestamp === 'number' ? evt.timestamp : Date.now(),
+            raw: evt,
+          });
+        });
+
+        qqClient.on('poke', (chatId: string, operatorId: string, targetId: string) => {
+          eventPublisher.publishNotice({
+            instanceId,
+            platform: 'qq',
+            noticeType: 'other',
+            groupId: String(chatId),
+            userId: String(targetId),
+            operatorId: String(operatorId),
+            timestamp: Date.now(),
+            raw: { type: 'poke', chatId, operatorId, targetId },
+          });
+        });
+      } catch (error) {
+        this.log.warn('Plugin event bridge init failed:', error);
+      }
+
       // 仅 NapCat 链路，使用轻量转发表
       this.forwardPairs = await ForwardMap.load(this.id);
 
@@ -146,19 +274,6 @@ export default class Instance {
           });
 
           this.log.info('Offline notification service ✓ 初始化完成');
-        }
-
-        // 初始化 Gateway（全局单例，按实例注册执行器）
-        this.log.debug('Gateway 正在初始化');
-        try {
-          const { server, publisher, executor } = GatewayRuntime.registerInstance(this.id, this.qqClient, this.tgBot, this.forwardPairs);
-          this.gatewayServer = server;
-          this.eventPublisher = publisher;
-          this.actionExecutor = executor;
-          this.log.info('Gateway ✓ 初始化完成');
-        } catch (error) {
-          this.log.error('Gateway initialization failed', error);
-          // Gateway 失败不应阻止实例启动
         }
       }
 
