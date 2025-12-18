@@ -1,22 +1,24 @@
-**简体中文** | [English](./README_en.md)
+<p align="center"><strong>简体中文</strong> | <a href="./README_en.md">English</a></p>
 
-# NapGram
+<h1 align="center">NapGram</h1>
 
-> 基于 NapCat 和 mtcute 的现代化 QQ-Telegram 消息桥接工具
+<p align="center">基于 NapCat 和 mtcute 的现代化 QQ-Telegram 消息桥接工具</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-25-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![CI/CD](https://img.shields.io/github/actions/workflow/status/magisk317/NapGram/docker-publish.yml?branch=main&label=Build%20%26%20Publish&logo=githubactions)](https://github.com/magisk317/NapGram/actions/workflows/docker-publish.yml)
-[![Release](https://img.shields.io/github/v/release/magisk317/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest)](https://github.com/magisk317/NapGram/releases)
-[![Downloads](https://img.shields.io/github/downloads/magisk317/NapGram/total?label=Release%20Downloads&logo=github)](https://github.com/magisk317/NapGram/releases)
-[![GHCR Image](https://img.shields.io/badge/ghcr.io%2Fmagisk317%2Fnapgram-blue?logo=docker&label=Container)](https://github.com/users/magisk317/packages/container/package/napgram)
-[![Last Commit](https://img.shields.io/github/last-commit/magisk317/NapGram/main?logo=github&label=Last%20Commit)](https://github.com/magisk317/NapGram/commits/main)
-[![Commit Activity](https://img.shields.io/github/commit-activity/m/magisk317/NapGram?logo=github&label=Commit%20Activity)](https://github.com/magisk317/NapGram/pulse)
-[![Issues](https://img.shields.io/github/issues/magisk317/NapGram?logo=github)](https://github.com/magisk317/NapGram/issues)
-[![PRs](https://img.shields.io/github/issues-pr/magisk317/NapGram?logo=github&label=Pull%20Requests)](https://github.com/magisk317/NapGram/pulls)
-[![Stars](https://img.shields.io/github/stars/magisk317/NapGram?style=social)](https://github.com/magisk317/NapGram/stargazers)
-[![Forks](https://img.shields.io/github/forks/magisk317/NapGram?style=social)](https://github.com/magisk317/NapGram/network/members)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-25-green.svg" alt="Node.js" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
+  <a href="https://github.com/NapLink/NapGram/actions/workflows/docker-release.yml"><img src="https://img.shields.io/github/actions/workflow/status/NapLink/NapGram/docker-release.yml?branch=main&label=Release%20Build&logo=githubactions" alt="CI/CD" /></a>
+  <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapLink/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
+  <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/downloads/NapLink/NapGram/total?label=Release%20Downloads&logo=github" alt="Downloads" /></a>
+  <a href="https://github.com/NapLink/NapGram/pkgs/container/napgram"><img src="https://img.shields.io/badge/ghcr.io%2Fnaplink%2Fnapgram-blue?logo=docker&label=Container" alt="GHCR Image" /></a>
+  <a href="https://github.com/NapLink/NapGram/commits/main"><img src="https://img.shields.io/github/last-commit/NapLink/NapGram/main?logo=github&label=Last%20Commit" alt="Last Commit" /></a>
+  <a href="https://github.com/NapLink/NapGram/pulse"><img src="https://img.shields.io/github/commit-activity/m/NapLink/NapGram?logo=github&label=Commit%20Activity" alt="Commit Activity" /></a>
+  <a href="https://github.com/NapLink/NapGram/issues"><img src="https://img.shields.io/github/issues/NapLink/NapGram?logo=github" alt="Issues" /></a>
+  <a href="https://github.com/NapLink/NapGram/pulls"><img src="https://img.shields.io/github/issues-pr/NapLink/NapGram?logo=github&label=Pull%20Requests" alt="PRs" /></a>
+  <a href="https://github.com/NapLink/NapGram/stargazers"><img src="https://img.shields.io/github/stars/NapLink/NapGram?style=social" alt="Stars" /></a>
+  <a href="https://github.com/NapLink/NapGram/network/members"><img src="https://img.shields.io/github/forks/NapLink/NapGram?style=social" alt="Forks" /></a>
+</p>
 
 ## ✨ 核心特性
 
@@ -48,9 +50,10 @@
   - 实时延迟统计 (p50/p95/p99)
   - 错误率追踪与自动恢复
   - 消息队列优先级管理
-- **Web 控制台 (WIP)**:
-  - 🚧 可视化配置管理 (开发中)
-  - 📊 系统状态监控大屏 (开发中)
+- **Web 控制台**：
+  - ✅ Docker 镜像内置前端（默认端口 `8080`，访问 `http://<host>:8080/`）
+  - 📊 系统状态与性能指标（统计概览、趋势、延迟）
+  - ⚙️ 可视化管理（实例/绑定/配置、日志与消息查询）
 
 ## 🏗️ 技术栈列表
 
@@ -71,46 +74,61 @@
 - **数据库**：PostgreSQL 14+
 - **网络**：NapGram 容器需能访问 NapCat 服务端口
 
+### 镜像标签约定
+
+- 稳定版（Release 构建）：`latest` + `vX.Y.Z`
+- 开发版（每日构建）：`dev-latest` + `dev-YYYYMMDD`
+
 ### Docker Compose 部署 (推荐)
 
 1. **获取项目**
    ```bash
-   git clone https://github.com/magisk317/NapGram.git
+   git clone https://github.com/NapLink/NapGram.git
    cd NapGram
    ```
 
-2. **环境配置**
+2. **复制并配置 Compose**
    ```bash
-   cp main/.env.example main/.env
-   # 编辑 .env 填入 NapCat 连接信息和 TG Bot Token
+   cp compose.example.yaml docker-compose.yml
+   # 编辑 docker-compose.yml 的 environment（必填项：TG_API_ID / TG_API_HASH / TG_BOT_TOKEN）
    ```
 
 3. **启动服务**
    ```bash
-   cp compose.example.yaml docker-compose.yml
+   docker-compose pull
    docker-compose up -d
    ```
 
-## 📖 开发者文档
+## 📚 文档
+
+- 📖 **项目文档（Wiki）**：https://github.com/NapLink/NapGram/wiki
+- 📝 **更新日志**：https://github.com/NapLink/NapGram/wiki/Changelog
+- 🧩 **插件系统**：https://github.com/NapLink/NapGram/wiki/Operations-Plugins
+- ⬆️ **升级与迁移（FAQ）**：https://github.com/NapLink/NapGram/wiki/Operations-Upgrade
+- 💬 **常用命令**：https://github.com/NapLink/NapGram/wiki/Guide-Commands
+- 🔗 **相关项目**：NapCat SDK（TypeScript）[NapLink](https://github.com/NapLink/NapLink)
 
 ## 📅 更新日志
 
-📝 **[查看版本更新日志](./docs/changelog.md)**
+📝 **[查看版本更新日志](https://github.com/NapLink/NapGram/wiki/Changelog)**
 
 ## 📖 开发者文档
 
 ### 目录结构
 ```bash
-main/src/
-├── features/             # 功能模块
-│   ├── forward/         # 消息转发核心
-│   ├── recall/          # 撤回同步
-│   ├── media/           # 媒体处理流水线
-│   └── commands/        # 下一代命令系统
-├── infrastructure/       # 基础设施
-│   ├── clients/qq/      # QQ 协议适配层
-│   └── clients/telegram/# MTProto 封装
-└── domain/              # 领域模型与转换器
+.
+├── main/                 # 后端核心（Fastify + mtcute + NapCat）
+│   ├── src/
+│   │   ├── domain/       # 领域模型、转换器与业务逻辑
+│   │   ├── features/     # 功能模块（Forward/Media/Recall/Commands）
+│   │   ├── infrastructure/# 协议适配与外部依赖（QQ/TG 客户端等）
+│   │   ├── interfaces/   # Web API + Web 控制台托管（Fastify）
+│   │   └── shared/       # 通用工具、日志、服务
+│   ├── prisma/           # Prisma schema & migrations
+├── web/                  # Web 控制台静态资源（Docker 镜像内置 dist）
+│   └── dist/             # 前端构建产物（提供 SPA）
+├── Dockerfile            # 容器构建（默认启用 Web 控制台）
+└── compose*.yaml         # Docker Compose 示例
 ```
 
 ### 创建新功能
@@ -141,28 +159,16 @@ featureManager.register(new MyFeature(...));
 - **ForwardFeature**: 包含去重逻辑和高级转发策略
 - **RecallFeature**: 双向撤回同步
 - **MediaFeature**: 统一媒体下载与转码
-- **CommandsFeature**: 丰富的管理命令系统
-  - 基础命令: `/mode`, `/bind`, `/help`
-  - 群组管理: `/ban`, `/unban`, `/kick`, `/card`
+- **CommandsFeature**: 丰富的管理命令系统（发送 `/help` 查看完整列表）
 
-### 群组管理命令 (仅管理员)
+### 常用命令
 
-| 命令 | 说明 | 用法示例 |
-|------|------|----------|
-| `/ban` | 禁言群成员 | `/ban <QQ号>` 或回复消息使用 `/ban [时长]`<br>时长格式: `1m` (1分钟), `30m`, `1h`, `1d` |
-| `/unban` | 解除禁言 | `/unban <QQ号>` 或回复消息使用 `/unban` |
-| `/kick` | 踢出群成员 | `/kick <QQ号>` 或回复消息使用 `/kick` |
-| `/card` | 设置群名片 | `/card <QQ号> <名片>` 或回复消息使用 `/card <名片>` |
-
-> **注意**: 
-> - 仅群主和管理员可使用这些命令
-> - 管理员无法对群主和其他管理员执行操作
-> - 支持回复消息快捷操作，无需手动输入 QQ 号
+常用命令与完整说明已迁移到 Wiki：https://github.com/NapLink/NapGram/wiki/Guide-Commands
 
 ## 🤝 贡献与致谢
 
 - 核心协议库感谢 [NapCat](https://github.com/NapNeko/NapCatQQ) 和 [mtcute](https://github.com/mtcute/mtcute) 的开源贡献
-- 感谢 [原始 q2tg 项目](https://github.com/Clansty/Q2TG) 为本项目提供了重要的参考和灵感
+- 感谢 [原始 q2tg 项目](https://github.com/Clansty/Q2TG) 和[node-napcat-ts](https://github.com/HkTeamX/node-napcat-ts)为本项目提供了重要的参考和灵感
 
 
 ## ⚠️ 免责声明
@@ -177,12 +183,12 @@ featureManager.register(new MyFeature(...));
 
 ## ⭐ Star 趋势
 
-[![Star History Chart](https://starchart.cc/magisk317/NapGram.svg)](https://starchart.cc/magisk317/NapGram)
+[![Star History Chart](https://starchart.cc/NapLink/NapGram.svg)](https://starchart.cc/NapLink/NapGram)
 
 ---
 
 ## 📧 联系方式
 
-- GitHub Issues: [报告问题](https://github.com/magisk317/NapGram/issues)
+- GitHub Issues: [报告问题](https://github.com/NapLink/NapGram/issues)
 
 ---
