@@ -87,77 +87,25 @@
    cd NapGram
    ```
 
-2. **环境配置**
+2. **复制并配置 Compose**
    ```bash
-   cp main/.env.example main/.env
-   # 编辑 .env 填入 NapCat 连接信息和 TG Bot Token
+   cp compose.example.yaml docker-compose.yml
+   # 编辑 docker-compose.yml 的 environment（必填项：TG_API_ID / TG_API_HASH / TG_BOT_TOKEN）
    ```
 
 3. **启动服务**
    ```bash
-   cp compose.example.yaml docker-compose.yml  
-      # 编辑相关信息
+   docker-compose pull
    docker-compose up -d
    ```
-
-### 插件宿主（可选）
-
-NapGram 支持在**进程内启动插件宿主**（通过 NapGram Gateway 收消息/发消息），用于后续插件市场与生态兼容。
-
-相关环境变量（可选）：
-
-- `PLUGINS_ENABLED=1`：启用插件宿主（默认关闭）
-- `PLUGINS_GATEWAY_URL=ws://127.0.0.1:8765`：Gateway 地址（默认本机）
-- `PLUGINS_INSTANCES=0`：订阅实例列表（逗号分隔）
-- `PLUGINS_CONFIG_PATH=/app/data/plugins/plugins.yaml`：从 JSON/YAML 配置加载插件（必须在 `DATA_DIR` 下）
-- `PLUGINS_DIR=/app/data/plugins/local`：从目录加载插件（必须在 `DATA_DIR` 下；默认只加载 `.js/.mjs/.cjs`）
-- `PLUGINS_ALLOW_TS=1`：允许加载 `.ts` 插件（仅建议开发环境；生产默认拒绝）
-- `PLUGINS_DEBUG_SESSIONS=1`：打印插件 `session`（用于联调）
-- `PLUGIN_ADMIN_TOKEN=...`：可选：插件管理接口额外管理令牌（不依赖 DB Token；不设置时仅允许 `ADMIN_TOKEN`）
-
-Marketplace 安装（可选，默认更推荐 “自带依赖的 zip/tgz 包”）：
-
-- `PLUGIN_ALLOW_NPM_INSTALL=1`：允许安装阶段执行 `pnpm install`（兼容 npm 风格插件包；默认关闭）
-- `PLUGIN_ALLOW_NETWORK=1`：安装阶段需要网络（与插件运行期 network 权限共用开关）
-- `PLUGIN_ALLOW_INSTALL_SCRIPTS=1`：允许执行 postinstall 等脚本（风险高，默认关闭）
-- `PLUGIN_NPM_REGISTRY=...`：可选：指定 npm registry
-- `PLUGIN_NETWORK_ALLOWLIST=...`：可选：运行期 network allowlist（逗号分隔前缀）
-- `PLUGIN_ALLOW_FS=1`：运行期 fs 权限开关（高风险）
-
-### 升级 FAQ
-
-#### 1) 升级流程建议（从旧版本升级到新版本）
-
-- 建议优先使用镜像默认的启动方式（`/app/entrypoint.sh`），让 Prisma 执行 `migrate deploy`；不要长期使用 `prisma db push` 作为生产升级手段。
-- 如果你的 `docker-compose.yml` 里手动写了 `command: npx prisma db push ...`，升级时建议先去掉该 `command` 覆盖，让容器走默认 entrypoint（会自动跑迁移）。
-
-#### 2) 升级后出现 `QqBotType` 移除 `oicq` 的报错怎么办？
-
-这是 Prisma 的保护提示：新版本移除了枚举值 `oicq`，但你的数据库里可能仍有旧数据/旧枚举分支。
-
-推荐做法（一次性修复）：
-
-1. **先备份数据库**
-2. **把历史数据中的 `oicq` 统一改为 `napcat`**
-   ```sql
-   UPDATE "public"."QqBot" SET "type" = 'napcat' WHERE "type" = 'oicq';
-   ```
-3. **再执行迁移**
-   - 推荐：`npx prisma migrate deploy`
-   - 如果你确实在用 `prisma db push`（开发/临时场景），需要加 `--accept-data-loss`（这里的 data loss 仅指移除枚举分支）：
-     ```bash
-     npx prisma db push --accept-data-loss
-     ```
-
-如果你是 `compose.dev.yaml` 这种挂载源码运行的方式，也可以直接执行：
-```bash
-sh ./main/tools/prisma-db-push-safe.sh
-```
 
 ## 📚 文档
 
 - 📖 **项目文档（Wiki）**：https://github.com/NapLink/NapGram/wiki
 - 📝 **更新日志**：https://github.com/NapLink/NapGram/wiki/Changelog
+- 🧩 **插件系统**：https://github.com/NapLink/NapGram/wiki/Operations-Plugins
+- ⬆️ **升级与迁移（FAQ）**：https://github.com/NapLink/NapGram/wiki/Operations-Upgrade
+- 💬 **常用命令**：https://github.com/NapLink/NapGram/wiki/Guide-Commands
 - 🔗 **相关项目**：NapCat SDK（TypeScript）[NapLink](https://github.com/NapLink/NapLink)
 
 ## 📅 更新日志
@@ -177,7 +125,6 @@ sh ./main/tools/prisma-db-push-safe.sh
 │   │   ├── interfaces/   # Web API + Web 控制台托管（Fastify）
 │   │   └── shared/       # 通用工具、日志、服务
 │   ├── prisma/           # Prisma schema & migrations
-│   └── .env.example      # 环境变量示例
 ├── web/                  # Web 控制台静态资源（Docker 镜像内置 dist）
 │   └── dist/             # 前端构建产物（提供 SPA）
 ├── Dockerfile            # 容器构建（默认启用 Web 控制台）
@@ -216,48 +163,7 @@ featureManager.register(new MyFeature(...));
 
 ### 常用命令
 
-| 命令 | 说明 | 权限 |
-|------|------|------|
-| `/help` | 帮助信息 | 全员 |
-| `/status` | 运行状态 | 全员 |
-| `/bind` / `/unbind` | 绑定/解绑 TG 聊天与 QQ 群 | 管理员 |
-| `/mode` | 转发显示模式（昵称/转发开关） | 全员 |
-| `/rm` | 撤回消息（支持回复消息/批量） | 全员 |
-| `/forwardoff` / `/forwardon` | 暂停/恢复双向转发 | 管理员 |
-| `/disable_qq_forward` / `/enable_qq_forward` | 关闭/开启 QQ→TG | 管理员 |
-| `/disable_tg_forward` / `/enable_tg_forward` | 关闭/开启 TG→QQ | 管理员 |
-| `/refresh` / `/refresh_all` | 刷新群头像/简介（单群/全部） | 管理员 |
-| `/flags` | 实验性功能开关 | 管理员 |
-| `/info` | 查看群/消息详情 | 全员 |
-| `/q` | QuotLy 引用图片（开发中） | 全员 |
-| `/poke` / `/nick` / `/like` / `/honor` | QQ 交互（戳一戳/名片/点赞/群荣誉） | 全员 |
-
-### 群组管理命令（管理员）
-
-| 命令 | 说明 | 用法示例 |
-|------|------|----------|
-| `/ban` | 禁言群成员 | `/ban <QQ号>` 或回复消息使用 `/ban [时长]`<br>时长格式: `1m` (1分钟), `30m`, `1h`, `1d` |
-| `/unban` | 解除禁言 | `/unban <QQ号>` 或回复消息使用 `/unban` |
-| `/kick` | 踢出群成员 | `/kick <QQ号>` 或回复消息使用 `/kick` |
-| `/card` | 设置群名片 | `/card <QQ号> <名片>` 或回复消息使用 `/card <名片>` |
-| `/muteall` / `/unmuteall` | 全员禁言开关 | `/muteall on` / `/muteall off` |
-| `/admin` | 设置/取消管理员（仅群主） | `/admin <QQ号> <on\|off>` |
-| `/groupname` | 修改群名 | `/groupname <新群名>` |
-| `/title` / `/头衔` | 设置专属头衔（仅群主） | `/头衔 <QQ号> <头衔>` 或回复消息 `/头衔 <头衔>` |
-
-> **注意**: 
-> - 仅群主和管理员可使用这些命令
-> - 管理员无法对群主和其他管理员执行操作
-> - 支持回复消息快捷操作，无需手动输入 QQ 号
-
-### 请求管理命令（管理员）
-
-| 命令 | 说明 | 用法示例 |
-|------|------|----------|
-| `/pending` | 查看待处理请求 | `/pending [friend\|group]` |
-| `/approve` / `/reject` | 通过/拒绝请求 | `/approve <flag>` / `/reject <flag> [理由]` |
-| `/reqstats` | 请求统计 | `/reqstats [today\|week\|month\|all]` |
-| `/approveall` / `/rejectall` | 批量处理请求 | `/approveall [friend\|group]` / `/rejectall [friend\|group] [reason]` |
+常用命令与完整说明已迁移到 Wiki：https://github.com/NapLink/NapGram/wiki/Guide-Commands
 
 ## 🤝 贡献与致谢
 
