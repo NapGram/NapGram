@@ -61,21 +61,17 @@
 git clone https://github.com/NapLink/NapGram.git
 cd NapGram
 
-# Configure environment
-cp main/.env.example main/.env
-# Edit main/.env with:
-# - NapCat connection URL (WebSocket or HTTP)
-# - Telegram Bot Token and API credentials
-# - PostgreSQL database connection info
-
-# Start with Docker Compose
+# Copy and edit Docker Compose
 cp compose.example.yaml docker-compose.yml
+## Edit docker-compose.yml -> services.napgram.environment (required: TG_API_ID / TG_API_HASH / TG_BOT_TOKEN)
+
+docker-compose pull
 docker-compose up -d
 ```
 
 **NapCat Configuration**:
 - Ensure NapCat has WebSocket or HTTP interface enabled
-- Configure `NAPCAT_WS_URL` or `NAPCAT_HTTP_URL` in `.env`
+- Configure `NAPCAT_WS_URL` in `docker-compose.yml`
 - NapCat and NapGram must be in the same network or accessible to each other
 
 ### Manual Installation
@@ -95,6 +91,9 @@ pnpm --filter=@napgram/core start
 
 - GitHub Wiki: https://github.com/NapLink/NapGram/wiki
 - Changelog: https://github.com/NapLink/NapGram/wiki/Changelog
+- Plugins: https://github.com/NapLink/NapGram/wiki/Operations-Plugins
+- Upgrade & Migration (FAQ): https://github.com/NapLink/NapGram/wiki/Operations-Upgrade
+- Commands: https://github.com/NapLink/NapGram/wiki/Guide-Commands
 
 ## 📅 Changelog
 
@@ -111,25 +110,7 @@ pnpm --filter=@napgram/core start
 
 ### Commands
 
-| Command | Description |
-|--------|-------------|
-| `/help` | Help |
-| `/status` | Runtime status |
-| `/bind` / `/unbind` | Bind/unbind TG chat ↔ QQ group |
-| `/mode` | Forwarding mode (nickname/forward switches) |
-| `/rm` | Recall messages (reply/batch supported) |
-| `/forwardoff` / `/forwardon` | Pause/resume forwarding |
-| `/disable_qq_forward` / `/enable_qq_forward` | Toggle QQ→TG |
-| `/disable_tg_forward` / `/enable_tg_forward` | Toggle TG→QQ |
-| `/ban` / `/unban` / `/kick` / `/card` | Group management |
-| `/muteall` / `/unmuteall` | Mute/unmute all (owner only) |
-| `/admin` | Set/unset group admin (owner only) |
-| `/groupname` | Rename group |
-| `/title` / `/头衔` | Set member title (owner only) |
-| `/pending` / `/approve` / `/reject` | Request management |
-| `/reqstats` / `/approveall` / `/rejectall` | Request stats & batch operations |
-| `/poke` / `/nick` / `/like` / `/honor` | QQ interactions |
-| `/q` | QuotLy quote image (WIP) |
+See Wiki: https://github.com/NapLink/NapGram/wiki/Guide-Commands
 
 ## 🛠️ Development
 
