@@ -30,6 +30,8 @@ import { ReplyResolver } from './services/ReplyResolver';
 import { MediaGroupHandler } from './handlers/MediaGroupHandler';
 import { MessageUtils } from './utils/MessageUtils';
 import { TelegramMessageHandler } from './handlers/TelegramMessageHandler';
+import { getEventPublisher } from '../../plugins/core/event-publisher';
+import type { MessageSegment } from '../../plugins/core/interfaces';
 
 const logger = getLogger('ForwardFeature');
 const execFileAsync = promisify(execFile);
@@ -148,6 +150,167 @@ export class ForwardFeature {
         const startTime = Date.now(); // 📊 开始计时
 
         try {
+            // Publish plugin event (doesn't affect forwarding)
+            try {
+                const eventPublisher = getEventPublisher();
+
+                const channelType =
+                    msg.chat.type === 'private' ? 'private'
+                        : msg.chat.type === 'group' ? 'group'
+                            : 'group';
+
+                const text = (msg.content || [])
+                    .filter(c => c.type === 'text')
+                    .map(c => (c.data as any).text || '')
+                    .join('')
+                    .trim();
+
+                const toPluginSegments = (contents: MessageContent[], platform: 'qq' | 'tg'): MessageSegment[] => {
+                    const out: MessageSegment[] = [];
+                    for (const c of contents || []) {
+                        if (!c) continue;
+                        switch (c.type) {
+                            case 'text':
+                                out.push({ type: 'text', data: { text: String((c.data as any)?.text ?? '') } });
+                                break;
+                            case 'at':
+                                out.push({
+                                    type: 'at',
+                                    data: {
+                                        userId: String((c.data as any)?.userId ?? ''),
+                                        userName: (c.data as any)?.userName ? String((c.data as any).userName) : undefined,
+                                    },
+                                });
+                                break;
+                            case 'reply':
+                                out.push({ type: 'reply', data: { messageId: String((c.data as any)?.messageId ?? '') } });
+                                break;
+                            case 'image': {
+                                const data = c.data as any;
+                                out.push({
+                                    type: 'image',
+                                    data: { url: typeof data?.url === 'string' ? data.url : undefined, file: typeof data?.file === 'string' ? data.file : undefined },
+                                });
+                                break;
+                            }
+                            case 'video': {
+                                const data = c.data as any;
+                                out.push({
+                                    type: 'video',
+                                    data: { url: typeof data?.url === 'string' ? data.url : undefined, file: typeof data?.file === 'string' ? data.file : undefined },
+                                });
+                                break;
+                            }
+                            case 'audio': {
+                                const data = c.data as any;
+                                out.push({
+                                    type: 'audio',
+                                    data: { url: typeof data?.url === 'string' ? data.url : undefined, file: typeof data?.file === 'string' ? data.file : undefined },
+                                });
+                                break;
+                            }
+                            case 'file': {
+                                const data = c.data as any;
+                                out.push({
+                                    type: 'file',
+                                    data: {
+                                        url: typeof data?.url === 'string' ? data.url : undefined,
+                                        file: typeof data?.file === 'string' ? data.file : undefined,
+                                        name: data?.filename ? String(data.filename) : undefined,
+                                    },
+                                });
+                                break;
+                            }
+                            case 'forward': {
+                                const msgs = Array.isArray((c.data as any)?.messages) ? (c.data as any).messages : [];
+                                out.push({
+                                    type: 'forward',
+                                    data: {
+                                        messages: msgs.map((m: UnifiedMessage) => ({
+                                            userId: String(m?.sender?.id ?? ''),
+                                            userName: String(m?.sender?.name ?? ''),
+                                            segments: toPluginSegments(m?.content || [], platform),
+                                        })),
+                                    },
+                                });
+                                break;
+                            }
+                            default:
+                                out.push({ type: 'raw', data: { platform, content: c } });
+                                break;
+                        }
+                    }
+                    return out;
+                };
+
+                const segments = toPluginSegments(msg.content as any, 'qq');
+
+                const contentToText = (content: string | any[]) => {
+                    if (typeof content === 'string') return content;
+                    if (!Array.isArray(content)) return String(content ?? '');
+                    return content
+                        .map((seg: any) => {
+                            if (!seg) return '';
+                            if (typeof seg === 'string') return seg;
+                            if (seg.type === 'text') return String(seg.data?.text ?? '');
+                            if (seg.type === 'at') return seg.data?.userName ? `@${seg.data.userName}` : '@';
+                            return '';
+                        })
+                        .filter(Boolean)
+                        .join('');
+                };
+
+                eventPublisher.publishMessage({
+                    instanceId: this.instance.id,
+                    platform: 'qq',
+                    channelId: String(msg.chat.id),
+                    channelType,
+                    sender: {
+                        userId: `qq:u:${msg.sender?.id || ''}`,
+                        userName: msg.sender?.name || 'Unknown',
+                    },
+                    message: {
+                        id: String(msg.id),
+                        text,
+                        segments,
+                        timestamp: msg.timestamp || Date.now(),
+                    },
+                    raw: msg,
+                    reply: async (content) => {
+                        const text = contentToText(content);
+                        const receipt = await this.qqClient.sendMessage(String(msg.chat.id), {
+                            id: `plugin-reply-${Date.now()}`,
+                            platform: 'qq',
+                            sender: { id: String(this.qqClient.uin), name: this.qqClient.nickname, isBot: true },
+                            chat: { id: String(msg.chat.id), type: msg.chat.type },
+                            content: [
+                                { type: 'reply', data: { messageId: String(msg.id), senderId: '', senderName: '' } },
+                                { type: 'text', data: { text } },
+                            ],
+                            timestamp: Date.now(),
+                        } as any);
+                        return { messageId: `qq:${String(receipt.messageId)}` };
+                    },
+                    send: async (content) => {
+                        const text = contentToText(content);
+                        const receipt = await this.qqClient.sendMessage(String(msg.chat.id), {
+                            id: `plugin-send-${Date.now()}`,
+                            platform: 'qq',
+                            sender: { id: String(this.qqClient.uin), name: this.qqClient.nickname, isBot: true },
+                            chat: { id: String(msg.chat.id), type: msg.chat.type },
+                            content: [{ type: 'text', data: { text } }],
+                            timestamp: Date.now(),
+                        } as any);
+                        return { messageId: `qq:${String(receipt.messageId)}` };
+                    },
+                    recall: async () => {
+                        await this.qqClient.recallMessage(String(msg.id));
+                    },
+                });
+            } catch (e) {
+                logger.debug(e, '[Plugin] publishMessage (QQ) failed');
+            }
+
             const pair = this.forwardMap.findByQQ(msg.chat.id);
             if (!pair) {
                 logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`);
