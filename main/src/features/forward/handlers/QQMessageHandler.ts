@@ -6,6 +6,7 @@ import type { ForwardModeService } from '../services/ForwardModeService';
 import type { ForwardMapper } from '../services/MessageMapper';
 import type { ReplyResolver } from '../services/ReplyResolver';
 import type { TelegramSender } from '../senders/TelegramSender';
+import { getEventPublisher } from '../../../plugins/core/event-publisher';
 
 const logger = getLogger('QQMessageHandler');
 
@@ -51,6 +52,80 @@ export class QQMessageHandler {
             if (sentMsg) {
                 await this.mapper.saveMessage(msg, sentMsg, pair.instanceId, pair.qqRoomId, BigInt(tgChatId));
                 logger.info(`QQ message ${msg.id} forwarded to TG ${tgChatId} (TG ID: ${sentMsg.id})`);
+
+                // 发布消息事件到插件系统（QQ 侧消息）
+                try {
+                    const eventPublisher = getEventPublisher();
+                    const qqClient = this.instance.qqClient;
+                    if (!qqClient) throw new Error('QQ client not initialized');
+
+                    const contentToText = () => {
+                        const parts = (msg.content || [])
+                            .filter((c: any) => c?.type === 'text' && c?.data?.text)
+                            .map((c: any) => String(c.data.text));
+                        return parts.join(' ').trim();
+                    };
+
+                    const channelType =
+                        msg.chat.type === 'private' ? 'private'
+                            : msg.chat.type === 'group' ? 'group'
+                                : 'group';
+
+                    eventPublisher.publishMessage({
+                        instanceId: pair.instanceId,
+                        platform: 'qq',
+                        channelId: String(msg.chat.id),
+                        channelType,
+                        sender: {
+                            userId: `qq:u:${msg.sender.id}`,
+                            userName: msg.sender.name,
+                        },
+                        message: {
+                            id: String(msg.id),
+                            text: contentToText(),
+                            segments: msg.content as any,
+                            timestamp: msg.timestamp || Date.now(),
+                        },
+                        raw: msg,
+                        reply: async (content) => {
+                            const text = typeof content === 'string'
+                                ? content
+                                : Array.isArray(content)
+                                    ? content.map((x: any) => (x?.type === 'text' ? String(x.data?.text ?? '') : '')).join('')
+                                    : String(content ?? '');
+                            const receipt = await qqClient.sendMessage(String(msg.chat.id), {
+                                id: `plugin-reply-${Date.now()}`,
+                                platform: 'qq',
+                                sender: { id: String(qqClient.uin), name: qqClient.nickname, isBot: true },
+                                chat: { id: String(msg.chat.id), type: msg.chat.type },
+                                content: [{ type: 'text', data: { text } }],
+                                timestamp: Date.now(),
+                            } as any);
+                            return { messageId: receipt.messageId };
+                        },
+                        send: async (content) => {
+                            const text = typeof content === 'string'
+                                ? content
+                                : Array.isArray(content)
+                                    ? content.map((x: any) => (x?.type === 'text' ? String(x.data?.text ?? '') : '')).join('')
+                                    : String(content ?? '');
+                            const receipt = await qqClient.sendMessage(String(msg.chat.id), {
+                                id: `plugin-send-${Date.now()}`,
+                                platform: 'qq',
+                                sender: { id: String(qqClient.uin), name: qqClient.nickname, isBot: true },
+                                chat: { id: String(msg.chat.id), type: msg.chat.type },
+                                content: [{ type: 'text', data: { text } }],
+                                timestamp: Date.now(),
+                            } as any);
+                            return { messageId: receipt.messageId };
+                        },
+                        recall: async () => {
+                            logger.warn('[Plugin] Recall not implemented for QQ events');
+                        },
+                    });
+                } catch (publishError) {
+                    logger.warn('Failed to publish QQ message event to plugin system:', publishError);
+                }
             }
         } catch (error) {
             logger.error(error, 'Failed to forward QQ message:');
