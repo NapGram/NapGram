@@ -1,4 +1,4 @@
-import type { Segment } from './adapter-napgram-gateway';
+import type { Segment } from './adapter';
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
@@ -13,7 +13,6 @@ function normalizeAtId(userId: any): string {
   return raw.replace(/^@/, '');
 }
 
-// MVP：足够支持 ping/pong 与基础回复；后续再做严格映射（TG at/reply 等）
 export function segmentsToSatoriContent(segments: Segment[]): string {
   const parts: string[] = [];
 
@@ -43,3 +42,4 @@ export function segmentsToSatoriContent(segments: Segment[]): string {
 
   return parts.join('');
 }
+

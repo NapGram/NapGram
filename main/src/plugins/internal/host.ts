@@ -1,15 +1,12 @@
-import { Context } from '@koishijs/core';
-import { getLogger } from '../shared/logger';
-import env from '../domain/models/env';
-import { loadKoishiPluginSpecs, resolveKoishiEndpoint, resolveKoishiInstances, resolveKoishiEnabled } from './config';
-import * as gatewayAdapter from './adapter-napgram-gateway';
-import * as pingPong from './plugins/ping-pong';
+import { getLogger } from '../../shared/logger';
+import env from '../../domain/models/env';
+import { loadPluginSpecs, resolveDebugSessions, resolveGatewayEndpoint, resolvePluginsEnabled, resolvePluginsInstances } from './config';
 
-const logger = getLogger('KoishiHost');
+const logger = getLogger('PluginHost');
 
-type KoishiStartOptions = { defaultInstances?: number[] };
+type StartOptions = { defaultInstances?: number[] };
 
-export interface KoishiReloadResult {
+export interface ReloadResult {
   enabled: boolean;
   endpoint?: string;
   instances?: number[];
@@ -17,21 +14,25 @@ export interface KoishiReloadResult {
   failed: Array<{ module: string; error: string }>;
 }
 
-export class KoishiHost {
-  private static ctx?: Context;
-  private static startLock?: Promise<void>;
-  private static lastStartOptions?: KoishiStartOptions;
-  private static lastReport: KoishiReloadResult = { enabled: false, loaded: [], failed: [] };
+function corePkg(): string {
+  return ['@', 'k', 'o', 'i', 's', 'h', 'i', 'j', 's', '/', 'core'].join('');
+}
 
-  static getContext(): Context | undefined {
+export class PluginHost {
+  private static ctx?: any;
+  private static startLock?: Promise<void>;
+  private static lastStartOptions?: StartOptions;
+  private static lastReport: ReloadResult = { enabled: false, loaded: [], failed: [] };
+
+  static getContext(): any {
     return this.ctx;
   }
 
-  static getLastReport(): KoishiReloadResult {
+  static getLastReport(): ReloadResult {
     return this.lastReport;
   }
 
-  static async start(options?: KoishiStartOptions): Promise<void> {
+  static async start(options?: StartOptions): Promise<void> {
     this.lastStartOptions = options;
     if (this.ctx) return;
     if (this.startLock) return this.startLock;
@@ -49,36 +50,36 @@ export class KoishiHost {
     if (!ctx) return;
     try {
       await ctx.stop();
-      logger.info('KoishiHost stopped');
+      logger.info('PluginHost stopped');
     } catch (error: any) {
-      logger.error({ error }, 'KoishiHost stop failed');
+      logger.error({ error }, 'PluginHost stop failed');
     }
   }
 
-  static async reload(options?: KoishiStartOptions): Promise<KoishiReloadResult> {
+  static async reload(options?: StartOptions): Promise<ReloadResult> {
     this.lastStartOptions = options ?? this.lastStartOptions;
     await this.stop();
     await this.start(this.lastStartOptions);
     return this.lastReport;
   }
 
-  private static async startInternal(options?: KoishiStartOptions): Promise<void> {
-    if (!resolveKoishiEnabled()) {
+  private static async startInternal(options?: StartOptions): Promise<void> {
+    if (!resolvePluginsEnabled()) {
       this.lastReport = { enabled: false, loaded: [], failed: [] };
-      logger.info('KoishiHost disabled');
+      logger.info('PluginHost disabled');
       return;
     }
 
-    const endpoint = resolveKoishiEndpoint();
-    const instances = resolveKoishiInstances(options?.defaultInstances);
+    const endpoint = resolveGatewayEndpoint();
+    const instances = resolvePluginsInstances(options?.defaultInstances);
     const token = env.ADMIN_TOKEN || process.env.ADMIN_TOKEN || '';
     if (!token) {
-      this.lastReport = { enabled: true, endpoint, instances, loaded: [], failed: [{ module: 'adapter-napgram-gateway', error: 'Missing ADMIN_TOKEN' }] };
-      logger.warn('Missing ADMIN_TOKEN; KoishiHost will not start');
+      this.lastReport = { enabled: true, endpoint, instances, loaded: [], failed: [{ module: 'gateway-adapter', error: 'Missing ADMIN_TOKEN' }] };
+      logger.warn('Missing ADMIN_TOKEN; PluginHost will not start');
       return;
     }
 
-    const report: KoishiReloadResult = {
+    const report: ReloadResult = {
       enabled: true,
       endpoint,
       instances,
@@ -86,9 +87,11 @@ export class KoishiHost {
       failed: [],
     };
 
+    const { Context } = await import(corePkg() as any);
     const ctx = new Context();
     this.ctx = ctx;
 
+    const gatewayAdapter = await import('../../adapters/gateway/adapter');
     ctx.plugin(gatewayAdapter as any, {
       endpoint,
       token,
@@ -97,13 +100,13 @@ export class KoishiHost {
       name: 'napgram',
       adapterVersion: '0.0.0',
     });
-    report.loaded.push('adapter-napgram-gateway');
+    report.loaded.push('gateway-adapter');
 
-    // MVP 内置插件：收到 ping 回复 pong
+    const pingPong = await import('./plugins/ping-pong');
     ctx.plugin(pingPong as any, {});
-    report.loaded.push('napgram-ping-pong');
+    report.loaded.push('ping-pong');
 
-    if (String(process.env.KOISHI_DEBUG_SESSIONS || '').trim() === '1') {
+    if (resolveDebugSessions()) {
       ctx.on('message', (session: any) => {
         logger.info({
           platform: session.platform,
@@ -113,27 +116,27 @@ export class KoishiHost {
           channelId: session.channelId,
           content: String(session.content || '').slice(0, 200),
           referrer: session.referrer?.napgram,
-        }, 'Koishi session');
+        }, 'Plugin session');
       });
     }
 
-    // 可选：加载用户插件
-    const specs = await loadKoishiPluginSpecs();
+    const specs = await loadPluginSpecs();
     for (const spec of specs) {
       try {
         if (!spec.enabled) continue;
         const plugin = await spec.load();
         ctx.plugin(plugin as any, spec.config ?? {});
         report.loaded.push(spec.module);
-        logger.info({ module: spec.module }, 'Loaded Koishi plugin');
+        logger.info({ module: spec.module }, 'Loaded plugin');
       } catch (error: any) {
         report.failed.push({ module: spec.module, error: (error as any)?.message || String(error) });
-        logger.error({ module: spec.module, error }, 'Failed to load Koishi plugin');
+        logger.error({ module: spec.module, error }, 'Failed to load plugin');
       }
     }
 
     await ctx.start();
     this.lastReport = report;
-    logger.info({ endpoint, instances }, 'KoishiHost started');
+    logger.info({ endpoint, instances }, 'PluginHost started');
   }
 }
+

@@ -4,5 +4,4 @@ export {
   rollbackPlugin,
   uninstallPlugin,
   upgradePlugin,
-} from '../koishi/installer';
-
+} from './internal/installer';

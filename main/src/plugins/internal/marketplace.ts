@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import YAML from 'yaml';
-import env from '../domain/models/env';
+import env from '../../domain/models/env';
 
 export interface MarketplaceIndexSpec {
   id: string;
@@ -37,16 +37,22 @@ function sanitizeId(id: string): string {
     .slice(0, 64) || 'market';
 }
 
-export function getManagedMarketplacesPath(): string {
-  return path.join(resolveDataDir(), 'koishi', 'marketplaces.yaml');
+export async function getManagedMarketplacesPath(): Promise<string> {
+  const override = String(process.env.PLUGINS_MARKETPLACES_PATH || '').trim();
+  if (override) return path.resolve(override);
+
+  const baseDir = path.join(resolveDataDir(), 'plugins');
+  return path.join(baseDir, 'marketplaces.yaml');
 }
 
-export function getMarketCacheDir(): string {
-  return path.join(resolveDataDir(), 'koishi', 'cache');
+export async function getMarketCacheDir(): Promise<string> {
+  const override = String(process.env.PLUGINS_CACHE_DIR || '').trim();
+  if (override) return path.resolve(override);
+  return path.join(resolveDataDir(), 'plugins', 'cache');
 }
 
 export async function readMarketplaces(): Promise<{ path: string; config: MarketplacesConfigFile; exists: boolean }> {
-  const filePath = getManagedMarketplacesPath();
+  const filePath = await getManagedMarketplacesPath();
   const ok = await exists(filePath);
   if (!ok) return { path: filePath, config: { version: 1, indexes: [] }, exists: false };
   const raw = await fs.readFile(filePath, 'utf8');
@@ -63,7 +69,7 @@ export async function readMarketplaces(): Promise<{ path: string; config: Market
 }
 
 export async function writeMarketplaces(next: MarketplacesConfigFile): Promise<{ path: string; config: MarketplacesConfigFile }> {
-  const filePath = getManagedMarketplacesPath();
+  const filePath = await getManagedMarketplacesPath();
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   const normalized: MarketplacesConfigFile = {
     version: 1,
@@ -99,10 +105,10 @@ export async function removeMarketplaceIndex(id: string) {
 }
 
 export async function refreshMarketplaceIndex(id: string, url: string) {
-  const res = await fetch(url, { headers: { 'accept': 'application/json' } });
+  const res = await fetch(url, { headers: { accept: 'application/json' } });
   if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
   const json = await res.json();
-  const cacheDir = getMarketCacheDir();
+  const cacheDir = await getMarketCacheDir();
   await fs.mkdir(cacheDir, { recursive: true });
   const cachePath = path.join(cacheDir, `marketplace-${sanitizeId(id)}.json`);
   await fs.writeFile(cachePath, JSON.stringify({ fetchedAt: Date.now(), url, data: json }, null, 2), 'utf8');
@@ -110,10 +116,13 @@ export async function refreshMarketplaceIndex(id: string, url: string) {
 }
 
 export async function readMarketplaceCache(id: string) {
-  const cachePath = path.join(getMarketCacheDir(), `marketplace-${sanitizeId(id)}.json`);
+  const cacheDir = await getMarketCacheDir();
+  const cachePath = path.join(cacheDir, `marketplace-${sanitizeId(id)}.json`);
   const ok = await exists(cachePath);
-  if (!ok) return { exists: false, cachePath, data: null as any };
-  const raw = await fs.readFile(cachePath, 'utf8');
-  return { exists: true, cachePath, data: JSON.parse(raw) };
-}
+  if (ok) {
+    const raw = await fs.readFile(cachePath, 'utf8');
+    return { exists: true, cachePath, data: JSON.parse(raw) };
+  }
 
+  return { exists: false, cachePath, data: null as any };
+}

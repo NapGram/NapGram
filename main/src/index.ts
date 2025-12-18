@@ -4,7 +4,7 @@ import db from './domain/models/db';
 import api from './interfaces';
 import posthog from './domain/models/posthog';
 import env from './domain/models/env';
-import { KoishiHost } from './koishi/KoishiHost';
+import { PluginRuntime } from './plugins/runtime';
 
 (async () => {
   const log = getLogger('Main');
@@ -75,7 +75,7 @@ import { KoishiHost } from './koishi/KoishiHost';
 
   await Promise.all(targets.map(id => Instance.start(id)));
 
-  await KoishiHost.start({ defaultInstances: targets });
+  await PluginRuntime.start({ defaultInstances: targets });
 
   posthog.capture('启动完成', { instanceCount: targets.length });
 })();

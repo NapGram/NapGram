@@ -1,4 +1,5 @@
-import { Adapter, Bot, MessageEncoder, Schema, Universal } from '@koishijs/core';
+import crypto from 'node:crypto';
+import { Adapter, Bot, MessageEncoder, Schema } from '@koishijs/core';
 import WebSocket from 'ws';
 import { segmentsToSatoriContent } from './mapping';
 
@@ -49,10 +50,10 @@ export interface Config extends Adapter.WsClientConfig {
 export const name = 'adapter-napgram-gateway';
 
 export const Config: Schema<Config> = Schema.object({
-  endpoint: Schema.string().description('NapGram Gateway WebSocket 地址。').default('ws://127.0.0.1:8765'),
+  endpoint: Schema.string().description('Gateway WebSocket 地址。').default('ws://127.0.0.1:8765'),
   token: Schema.string().description('Gateway Token（当前复用 ADMIN_TOKEN）。').required(),
   instances: Schema.array(Number).description('订阅/可访问的 instanceId 列表。').default([0]),
-  selfId: Schema.string().description('Koishi 侧 bot selfId。').default('napgram'),
+  selfId: Schema.string().description('Adapter 侧 bot selfId。').default('napgram'),
   name: Schema.string().description('Adapter 名称（Identify 上报）。').default('napgram'),
   adapterVersion: Schema.string().description('Adapter 版本（Identify 上报）。').default('0.0.0'),
   defaultInstanceId: Schema.number().description('发送消息时默认使用的 instanceId。').default(0),
@@ -220,115 +221,90 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
       const pending = id ? this.pending.get(String(id)) : undefined;
       if (!pending) return;
       this.pending.delete(String(id));
-      if ((frame as any).data?.success) pending.resolve((frame as any).data.result);
-      else pending.reject((frame as any).data?.error || new Error('Gateway call failed'));
+      pending.resolve((frame as any).data?.result);
       return;
     }
-  }
 
-  private handleEvent(event: GatewayEvent): void {
-    if (event.type !== 'message.created') return;
-    const e = event as MessageCreatedEvent;
-
-    this.channelInstance.set(e.channelId, e.instanceId);
-    this.channelPair.set(e.channelId, { instanceId: e.instanceId, pairId: -1, side: e.message.platform === 'qq' ? 'qq' : 'tg' });
-
-    const ids = this.resolveChannelIds(e);
-    const isDirect = ids.isDirect;
-    const session = this.bot.session({
-      type: 'message-created',
-      timestamp: e.message.timestamp,
-      user: { id: ids.userId, name: e.actor.name },
-      channel: { id: ids.channelId, type: isDirect ? Universal.Channel.Type.DIRECT : Universal.Channel.Type.TEXT },
-      guild: ids.guildId ? { id: ids.guildId } : undefined,
-      message: { id: e.message.messageId },
-      referrer: { napgram: { instanceId: e.instanceId, threadId: e.threadId ?? null, platform: e.message.platform } },
-    });
-
-    session.content = segmentsToSatoriContent(e.message.segments);
-    this.bot.dispatch(session);
-  }
-
-  private resolveChannelIds(e: MessageCreatedEvent): {
-    channelId: string;
-    guildId?: string;
-    isDirect: boolean;
-    userId: string;
-  } {
-    const channelId = e.channelId;
-    const userId = this.normalizeUserId(e.actor.userId);
-
-    if (channelId.startsWith('qq:p:')) {
-      return { channelId, isDirect: true, userId };
+    if (frame.op === 'error') {
+      const id = (frame as any).data?.id;
+      const pending = id ? this.pending.get(String(id)) : undefined;
+      if (!pending) return;
+      this.pending.delete(String(id));
+      pending.reject(new Error((frame as any).data?.message || 'Gateway error'));
     }
-    if (channelId.startsWith('qq:g:')) {
-      return { channelId, guildId: channelId, isDirect: false, userId };
-    }
-
-    if (channelId.startsWith('tg:c:')) {
-      const parts = channelId.split(':'); // tg:c:<chatId>[:t:<threadId>]
-      const chatId = parts[2];
-      const baseGuildId = chatId ? `tg:c:${chatId}` : undefined;
-      const isTopic = channelId.includes(':t:');
-      const chatIdNum = chatId ? Number(chatId) : NaN;
-      const isDirect = !isTopic && Number.isFinite(chatIdNum) && chatIdNum > 0;
-      return {
-        channelId,
-        guildId: isDirect ? undefined : baseGuildId,
-        isDirect,
-        userId,
-      };
-    }
-
-    // fallback
-    return { channelId, isDirect: false, guildId: channelId, userId };
-  }
-
-  private normalizeUserId(id: string): string {
-    const raw = String(id || '').trim();
-    const m = raw.match(/^(qq|tg):u:(.+)$/);
-    if (m) return m[2];
-    const u = raw.match(/^tg:username:(.+)$/);
-    if (u) return u[1];
-    return raw;
   }
 
   private startHeartbeat(): void {
-    if (this.heartbeat) return;
-    const interval = Number(this.bot.config.heartbeatMs || 25_000);
+    const ms = Number(this.bot.config.heartbeatMs || 25_000);
+    this.stopHeartbeat();
     this.heartbeat = setInterval(() => {
-      this.socket?.send(JSON.stringify({ op: 'ping', v: 1, t: Date.now() }));
-    }, interval);
+      try {
+        this.socket?.send(JSON.stringify({ op: 'ping', v: 1, t: Date.now(), data: {} }));
+      } catch {
+        // ignore
+      }
+    }, ms);
   }
 
   private stopHeartbeat(): void {
-    if (!this.heartbeat) return;
-    clearInterval(this.heartbeat);
+    if (this.heartbeat) clearInterval(this.heartbeat);
     this.heartbeat = undefined;
   }
 
-  getInstanceIdForChannel(channelId: string): number {
-    return this.channelPair.get(channelId)?.instanceId
-      ?? this.channelInstance.get(channelId)
-      ?? Number(this.bot.config.defaultInstanceId ?? 0);
+  private handleEvent(event: GatewayEvent): void {
+    if (!event || event.type !== 'message.created') return;
+    const msg = (event as any).message;
+    const segments: Segment[] = Array.isArray(msg?.segments) ? msg.segments : [];
+    const content = segmentsToSatoriContent(segments);
+
+    (this as any).dispatch({
+      type: 'message',
+      platform: this.bot.platform,
+      selfId: this.bot.selfId,
+      user: {
+        id: String((event as any).actor?.userId || ''),
+        name: String((event as any).actor?.name || ''),
+      },
+      guild: {
+        id: String((event as any).channelId || ''),
+      },
+      channel: {
+        id: String((event as any).channelId || ''),
+      },
+      message: {
+        id: String(msg?.messageId || ''),
+        content,
+      },
+      timestamp: Number(msg?.timestamp || Date.now()),
+      referrer: {
+        napgram: {
+          instanceId: Number((event as any).instanceId),
+          threadId: (event as any).threadId ?? null,
+          platform: String(msg?.platform || ''),
+        },
+      },
+    } as any);
   }
 
-  call(action: string, params: any, instanceId?: number): Promise<any> {
-    const socket = this.socket;
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      return Promise.reject(new Error('Gateway socket not connected'));
-    }
+  getInstanceIdForChannel(channelId: string): number {
+    const mapped = this.channelInstance.get(channelId);
+    if (typeof mapped === 'number') return mapped;
+    return Number(this.bot.config.defaultInstanceId || 0);
+  }
 
-    const id = `call-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  async call(action: string, params: any, instanceId?: number): Promise<any> {
+    const socket = this.socket;
+    if (!socket) throw new Error('Adapter not connected');
+    const id = cryptoId();
     const payload = {
       op: 'call',
       v: 1,
       t: Date.now(),
       data: {
         id,
-        instanceId: typeof instanceId === 'number' ? instanceId : undefined,
+        instanceId: typeof instanceId === 'number' ? instanceId : Number(this.bot.config.defaultInstanceId || 0),
         action,
-        params,
+        params: params ?? {},
       },
     };
 
@@ -363,6 +339,10 @@ class NapGramAdapter extends Adapter.WsClient<any, NapGramBot> {
       }
     }
   }
+}
+
+function cryptoId(): string {
+  return crypto.randomBytes(12).toString('hex');
 }
 
 export function apply(ctx: any, config: Config) {
