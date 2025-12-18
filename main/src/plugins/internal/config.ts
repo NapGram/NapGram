@@ -2,30 +2,30 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import YAML from 'yaml';
-import { getLogger } from '../shared/logger';
-import env from '../domain/models/env';
+import { getLogger } from '../../shared/logger';
+import env from '../../domain/models/env';
+import { readBoolEnv, readStringEnv } from './env';
+import { getManagedPluginsConfigPath } from './store';
 
-const logger = getLogger('KoishiHost');
+const logger = getLogger('PluginHost');
 
-export interface KoishiPluginSpec {
+export interface PluginSpec {
   module: string;
   enabled: boolean;
   config?: any;
   load: () => Promise<any>;
 }
 
-export function resolveKoishiEnabled(): boolean {
-  const raw = String(process.env.KOISHI_ENABLED || '').trim().toLowerCase();
-  if (!raw) return false;
-  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+export function resolvePluginsEnabled(): boolean {
+  return readBoolEnv(['PLUGINS_ENABLED']);
 }
 
-export function resolveKoishiEndpoint(): string {
-  return String(process.env.KOISHI_GATEWAY_URL || 'ws://127.0.0.1:8765');
+export function resolveGatewayEndpoint(): string {
+  return readStringEnv(['PLUGINS_GATEWAY_URL']) || 'ws://127.0.0.1:8765';
 }
 
-export function resolveKoishiInstances(defaultInstances?: number[]): number[] {
-  const raw = String(process.env.KOISHI_INSTANCES || '').trim();
+export function resolvePluginsInstances(defaultInstances?: number[]): number[] {
+  const raw = readStringEnv(['PLUGINS_INSTANCES']);
   if (!raw) return Array.isArray(defaultInstances) && defaultInstances.length ? defaultInstances : [0];
   const instances = raw
     .split(',')
@@ -36,10 +36,12 @@ export function resolveKoishiInstances(defaultInstances?: number[]): number[] {
   return instances.length ? instances : (defaultInstances?.length ? defaultInstances : [0]);
 }
 
-export function resolveKoishiAllowTsPlugins(): boolean {
-  const raw = String(process.env.KOISHI_ALLOW_TS || '').trim().toLowerCase();
-  if (!raw) return false;
-  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
+export function resolveAllowTsPlugins(): boolean {
+  return readBoolEnv(['PLUGINS_ALLOW_TS']);
+}
+
+export function resolveDebugSessions(): boolean {
+  return readBoolEnv(['PLUGINS_DEBUG_SESSIONS']);
 }
 
 function resolveDataDir(): string {
@@ -88,7 +90,6 @@ function resolveModuleSpecifier(spec: string, baseDir: string): string {
   if (!spec) return spec;
   if (spec.startsWith('file://')) return spec;
   if (spec.startsWith('.') || spec.startsWith('/')) return path.resolve(baseDir, spec);
-  // disallow package-name imports by default (marketplace/security layer)
   return '';
 }
 
@@ -106,8 +107,8 @@ function fileUrlToPathSafe(specifier: string): string {
 }
 
 async function loadModule(specifier: string): Promise<any> {
-  if (isTsFile(specifier) && !resolveKoishiAllowTsPlugins()) {
-    throw new Error(`Refusing to load TypeScript plugin without KOISHI_ALLOW_TS=1: ${specifier}`);
+  if (isTsFile(specifier) && !resolveAllowTsPlugins()) {
+    throw new Error(`Refusing to load TypeScript plugin without PLUGINS_ALLOW_TS=1: ${specifier}`);
   }
   if (specifier.startsWith('file://')) {
     const mod = await import(specifier);
@@ -121,13 +122,13 @@ async function loadModule(specifier: string): Promise<any> {
   throw new Error(`Refusing to load package module: ${specifier}`);
 }
 
-export async function loadKoishiPluginSpecs(): Promise<KoishiPluginSpec[]> {
-  const specs: KoishiPluginSpec[] = [];
-  const allowTs = resolveKoishiAllowTsPlugins();
+export async function loadPluginSpecs(): Promise<PluginSpec[]> {
+  const specs: PluginSpec[] = [];
+  const allowTs = resolveAllowTsPlugins();
   const dataDir = resolveDataDir();
 
-  const managedConfigPath = path.join(dataDir, 'koishi', 'plugins.yaml');
-  const configPath = String(process.env.KOISHI_CONFIG_PATH || managedConfigPath).trim();
+  const managedConfigPath = await getManagedPluginsConfigPath();
+  const configPath = readStringEnv(['PLUGINS_CONFIG_PATH']) || managedConfigPath;
   if (configPath && await exists(configPath)) {
     try {
       const abs = await resolvePathUnderDataDir(configPath);
@@ -139,11 +140,11 @@ export async function loadKoishiPluginSpecs(): Promise<KoishiPluginSpec[]> {
         const moduleRaw = typeof p?.module === 'string' ? p.module : '';
         const module = resolveModuleSpecifier(moduleRaw, baseDir);
         if (!module) {
-          logger.warn({ module: moduleRaw }, 'Skip non-file Koishi plugin (only DATA_DIR file paths are allowed)');
+          logger.warn({ module: moduleRaw }, 'Skip non-file plugin (only DATA_DIR file paths are allowed)');
           continue;
         }
         if (isTsFile(module) && !allowTs) {
-          logger.warn({ module }, 'Skip .ts Koishi plugin (set KOISHI_ALLOW_TS=1 to enable)');
+          logger.warn({ module }, 'Skip .ts plugin (set PLUGINS_ALLOW_TS=1 to enable)');
           continue;
         }
         const resolved = module.startsWith('file://')
@@ -158,12 +159,12 @@ export async function loadKoishiPluginSpecs(): Promise<KoishiPluginSpec[]> {
         });
       }
     } catch (error: any) {
-      logger.error({ configPath, dataDir, error }, 'Failed to load KOISHI_CONFIG_PATH');
+      logger.error({ configPath, dataDir, error }, 'Failed to load PLUGINS_CONFIG_PATH');
     }
   }
 
-  const managedPluginsDir = path.join(dataDir, 'koishi', 'plugins');
-  const pluginsDir = String(process.env.KOISHI_PLUGINS_DIR || managedPluginsDir).trim();
+  const defaultDir = path.join(dataDir, 'plugins', 'local');
+  const pluginsDir = readStringEnv(['PLUGINS_DIR']) || defaultDir;
   if (pluginsDir && await exists(pluginsDir)) {
     try {
       const absDir = await resolvePathUnderDataDir(pluginsDir);
@@ -184,7 +185,7 @@ export async function loadKoishiPluginSpecs(): Promise<KoishiPluginSpec[]> {
         });
       }
     } catch (error: any) {
-      logger.error({ pluginsDir, dataDir, error }, 'Failed to load KOISHI_PLUGINS_DIR');
+      logger.error({ pluginsDir, dataDir, error }, 'Failed to load PLUGINS_DIR');
     }
   }
 

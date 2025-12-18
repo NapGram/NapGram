@@ -1,9 +1,7 @@
-import type { Context } from '@koishijs/core';
-
 export const name = 'napgram-ping-pong';
 
-export function apply(ctx: Context) {
-  ctx.on('message', async (session) => {
+export function apply(ctx: any) {
+  ctx.on('message', async (session: any) => {
     if (!String(session.content || '').includes('ping')) return;
     await session.send('pong');
   });

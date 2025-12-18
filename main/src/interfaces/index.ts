@@ -16,8 +16,6 @@ import { setupMonitoring } from './monitoring';
 import logs from './logs';
 import settings from './settings';
 import tokens from './tokens';
-import koishi from './koishi';
-import koishiMarketplaces from './koishiMarketplaces';
 import plugins from './plugins';
 import marketplaces from './marketplaces';
 
@@ -56,8 +54,6 @@ fastify.register(statistics);
 fastify.register(logs);
 fastify.register(settings);
 fastify.register(tokens);
-fastify.register(koishi);
-fastify.register(koishiMarketplaces);
 fastify.register(plugins);
 fastify.register(marketplaces);
 

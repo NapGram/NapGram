@@ -5,5 +5,4 @@ export {
   removeMarketplaceIndex,
   upsertMarketplaceIndex,
   writeMarketplaces,
-} from '../koishi/marketplace';
-
+} from './internal/marketplace';

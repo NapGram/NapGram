@@ -2,9 +2,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
-import env from '../domain/models/env';
+import env from '../../domain/models/env';
+import { readStringEnv } from './env';
 
-export interface KoishiPluginsConfigFile {
+export interface PluginsConfigFile {
   plugins: Array<{
     id: string;
     module: string;
@@ -48,13 +49,7 @@ async function exists(p: string): Promise<boolean> {
   }
 }
 
-export function getManagedKoishiConfigPath(): string {
-  const raw = String(process.env.KOISHI_CONFIG_PATH || '').trim();
-  if (raw) return path.resolve(raw);
-  return path.join(resolveDataDir(), 'koishi', 'plugins.yaml');
-}
-
-function parseConfig(raw: string, ext: string): KoishiPluginsConfigFile {
+function parseConfig(raw: string, ext: string): PluginsConfigFile {
   const data = (ext === '.yaml' || ext === '.yml') ? YAML.parse(raw) : JSON.parse(raw);
   const plugins = Array.isArray((data as any)?.plugins) ? (data as any).plugins : [];
   const normalized = plugins
@@ -67,16 +62,6 @@ function parseConfig(raw: string, ext: string): KoishiPluginsConfigFile {
     }))
     .filter((p: any) => p.id && p.module);
   return { plugins: normalized };
-}
-
-export async function readKoishiPluginsConfig(): Promise<{ path: string; config: KoishiPluginsConfigFile; exists: boolean }> {
-  const configPath = getManagedKoishiConfigPath();
-  await ensureUnderDataDir(configPath);
-  const ok = await exists(configPath);
-  if (!ok) return { path: configPath, config: { plugins: [] }, exists: false };
-  const raw = await fs.readFile(configPath, 'utf8');
-  const ext = path.extname(configPath).toLowerCase();
-  return { path: configPath, config: parseConfig(raw, ext), exists: true };
 }
 
 function inferIdFromModule(modulePath: string): string {
@@ -98,8 +83,16 @@ function sanitizeId(id: string): string {
     .slice(0, 64) || 'plugin';
 }
 
-export async function normalizeModuleSpecifierForConfig(moduleRaw: string): Promise<{ stored: string; absolute: string }> {
-  const configPath = getManagedKoishiConfigPath();
+export async function getManagedPluginsConfigPath(): Promise<string> {
+  const override = readStringEnv(['PLUGINS_CONFIG_PATH']);
+  if (override) return path.resolve(override);
+
+  const baseDir = path.join(resolveDataDir(), 'plugins');
+  return path.join(baseDir, 'plugins.yaml');
+}
+
+export async function normalizeModuleSpecifierForPluginsConfig(moduleRaw: string): Promise<{ stored: string; absolute: string }> {
+  const configPath = await getManagedPluginsConfigPath();
   await ensureUnderDataDir(configPath);
   const baseDir = path.dirname(configPath);
 
@@ -121,9 +114,19 @@ export async function normalizeModuleSpecifierForConfig(moduleRaw: string): Prom
   return { stored, absolute };
 }
 
-export async function upsertKoishiPlugin(entry: { id?: string; module: string; enabled?: boolean; config?: any; source?: any }) {
-  const { path: configPath, config } = await readKoishiPluginsConfig();
-  const { stored, absolute } = await normalizeModuleSpecifierForConfig(entry.module);
+export async function readPluginsConfig(): Promise<{ path: string; config: PluginsConfigFile; exists: boolean }> {
+  const configPath = await getManagedPluginsConfigPath();
+  await ensureUnderDataDir(configPath);
+  const ok = await exists(configPath);
+  if (!ok) return { path: configPath, config: { plugins: [] }, exists: false };
+  const raw = await fs.readFile(configPath, 'utf8');
+  const ext = path.extname(configPath).toLowerCase();
+  return { path: configPath, config: parseConfig(raw, ext), exists: true };
+}
+
+export async function upsertPluginConfig(entry: { id?: string; module: string; enabled?: boolean; config?: any; source?: any }) {
+  const { path: configPath, config } = await readPluginsConfig();
+  const { stored, absolute } = await normalizeModuleSpecifierForPluginsConfig(entry.module);
 
   const inferredId = sanitizeId(entry.id || inferIdFromModule(absolute));
   const enabled = entry.enabled === false ? false : true;
@@ -147,9 +150,9 @@ export async function upsertKoishiPlugin(entry: { id?: string; module: string; e
   return { id: inferredId, path: configPath, record };
 }
 
-export async function patchKoishiPlugin(id: string, patch: { module?: string; enabled?: boolean; config?: any; source?: any }) {
+export async function patchPluginConfig(id: string, patch: { module?: string; enabled?: boolean; config?: any; source?: any }) {
   const pluginId = sanitizeId(id);
-  const { path: configPath, config } = await readKoishiPluginsConfig();
+  const { path: configPath, config } = await readPluginsConfig();
   const idx = config.plugins.findIndex(p => p.id === pluginId);
   if (idx < 0) throw new Error(`Plugin not found: ${pluginId}`);
 
@@ -158,7 +161,7 @@ export async function patchKoishiPlugin(id: string, patch: { module?: string; en
   if ('config' in patch) next.config = patch.config;
   if ('source' in patch) next.source = patch.source;
   if (typeof patch.module === 'string' && patch.module.trim()) {
-    const { stored } = await normalizeModuleSpecifierForConfig(patch.module);
+    const { stored } = await normalizeModuleSpecifierForPluginsConfig(patch.module);
     next.module = stored;
   }
 
@@ -169,9 +172,9 @@ export async function patchKoishiPlugin(id: string, patch: { module?: string; en
   return { id: pluginId, path: configPath, record: next };
 }
 
-export async function removeKoishiPlugin(id: string) {
+export async function removePluginConfig(id: string) {
   const pluginId = sanitizeId(id);
-  const { path: configPath, config } = await readKoishiPluginsConfig();
+  const { path: configPath, config } = await readPluginsConfig();
   const idx = config.plugins.findIndex(p => p.id === pluginId);
   if (idx < 0) return { removed: false, id: pluginId, path: configPath };
   config.plugins.splice(idx, 1);
@@ -179,4 +182,3 @@ export async function removeKoishiPlugin(id: string) {
   await fs.writeFile(configPath, YAML.stringify({ plugins: config.plugins }), 'utf8');
   return { removed: true, id: pluginId, path: configPath };
 }
-

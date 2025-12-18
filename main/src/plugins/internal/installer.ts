@@ -4,9 +4,9 @@ import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { unzipSync } from 'fflate';
-import env from '../domain/models/env';
+import env from '../../domain/models/env';
 import { readMarketplaceCache } from './marketplace';
-import { patchKoishiPlugin, readKoishiPluginsConfig, upsertKoishiPlugin } from './store';
+import { patchPluginConfig, readPluginsConfig, removePluginConfig, upsertPluginConfig } from './store';
 
 const execFileAsync = promisify(execFile);
 
@@ -85,8 +85,8 @@ function resolveDataDir(): string {
   return path.resolve(String(env.DATA_DIR || process.env.DATA_DIR || '/app/data'));
 }
 
-function resolveKoishiDir(...parts: string[]): string {
-  return path.join(resolveDataDir(), 'koishi', ...parts);
+function resolvePluginsRoot(...parts: string[]): string {
+  return path.join(resolveDataDir(), 'plugins', ...parts);
 }
 
 function normalizeHexSha256(input: string): string {
@@ -135,7 +135,6 @@ function compareVersions(a: string, b: string): number {
     const d = (pa[i] as number) - (pb[i] as number);
     if (d) return d;
   }
-  // prefer stable over prerelease
   const ra = pa[3] || '';
   const rb = pb[3] || '';
   if (!ra && rb) return 1;
@@ -152,12 +151,12 @@ function resolveRequestedPermissions(p?: MarketplacePluginVersion['permissions']
 }
 
 function validatePermissions(permissions: Required<NonNullable<MarketplacePluginVersion['permissions']>>) {
-  const allowNetwork = String(process.env.PLUGIN_ALLOW_NETWORK || process.env.KOISHI_PLUGIN_ALLOW_NETWORK || '').trim().toLowerCase();
+  const allowNetwork = String(process.env.PLUGIN_ALLOW_NETWORK || '').trim().toLowerCase();
   const networkAllowed = allowNetwork === '1' || allowNetwork === 'true' || allowNetwork === 'yes' || allowNetwork === 'on';
-  const allowFs = String(process.env.PLUGIN_ALLOW_FS || process.env.KOISHI_PLUGIN_ALLOW_FS || '').trim().toLowerCase();
+  const allowFs = String(process.env.PLUGIN_ALLOW_FS || '').trim().toLowerCase();
   const fsAllowed = allowFs === '1' || allowFs === 'true' || allowFs === 'yes' || allowFs === 'on';
 
-  const allowlistRaw = String(process.env.PLUGIN_NETWORK_ALLOWLIST || process.env.KOISHI_PLUGIN_NETWORK_ALLOWLIST || '').trim();
+  const allowlistRaw = String(process.env.PLUGIN_NETWORK_ALLOWLIST || '').trim();
   const allowlist = allowlistRaw
     ? allowlistRaw.split(',').map(s => s.trim()).filter(Boolean)
     : [];
@@ -181,17 +180,17 @@ function validatePermissions(permissions: Required<NonNullable<MarketplacePlugin
 }
 
 function canInstallWithPnpm(): boolean {
-  const raw = String(process.env.PLUGIN_ALLOW_NPM_INSTALL || process.env.KOISHI_PLUGIN_ALLOW_NPM_INSTALL || '').trim().toLowerCase();
+  const raw = String(process.env.PLUGIN_ALLOW_NPM_INSTALL || '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 }
 
 function canRunInstallScripts(): boolean {
-  const raw = String(process.env.PLUGIN_ALLOW_INSTALL_SCRIPTS || process.env.KOISHI_PLUGIN_ALLOW_INSTALL_SCRIPTS || '').trim().toLowerCase();
+  const raw = String(process.env.PLUGIN_ALLOW_INSTALL_SCRIPTS || '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 }
 
 function isNetworkAllowedForInstall(): boolean {
-  const raw = String(process.env.PLUGIN_ALLOW_NETWORK || process.env.KOISHI_PLUGIN_ALLOW_NETWORK || '').trim().toLowerCase();
+  const raw = String(process.env.PLUGIN_ALLOW_NETWORK || '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on';
 }
 
@@ -253,7 +252,6 @@ async function listTarEntriesVerbose(tgzPath: string): Promise<Array<{ type: str
   const lines = String(stdout || '').split('\n').map(s => s.trim()).filter(Boolean);
   return lines.map(line => {
     const type = line[0] || '?';
-    // best-effort: tar verbose prints file name as the last token, except symlink prints "name -> target"
     const arrow = line.indexOf(' -> ');
     const last = arrow >= 0 ? line.slice(0, arrow) : line;
     const name = last.split(/\s+/).slice(-1)[0] || '';
@@ -265,7 +263,6 @@ async function extractTgz(tgzPath: string, destDir: string): Promise<void> {
   const entries = await listTarEntriesVerbose(tgzPath);
   for (const e of entries) {
     if (!isSafeArchivePath(e.name)) throw new Error(`Unsafe tar entry path: ${e.name}`);
-    // Reject symlinks, devices, pipes, etc.
     if (!['-', 'd'].includes(e.type)) {
       throw new Error(`Unsupported tar entry type "${e.type}" for: ${e.name}`);
     }
@@ -312,8 +309,6 @@ async function runPnpmInstall(projectDir: string, opts: Required<NonNullable<Mar
   if (opts.ignoreScripts) args.push('--ignore-scripts');
   if (opts.frozenLockfile) args.push('--frozen-lockfile');
   else args.push('--no-frozen-lockfile');
-
-  // do not inherit workspace filter/lockfile; treat plugin as standalone project
   args.push('--prefer-offline');
 
   const envVars: NodeJS.ProcessEnv = { ...process.env };
@@ -350,14 +345,13 @@ function pickVersion(versions: MarketplacePluginVersion[], requested?: string): 
 }
 
 function buildModuleSpecifier(pluginId: string, version: string, entryPath: string): string {
-  // stored in DATA_DIR/koishi/plugins.yaml (baseDir = DATA_DIR/koishi)
-  return `./plugins/${pluginId}/${version}/${entryPath.split(path.sep).join('/')}`;
+  return `./${pluginId}/${version}/${entryPath.split(path.sep).join('/')}`;
 }
 
 async function listInstalledVersions(pluginId: string): Promise<string[]> {
-  const dir = resolveKoishiDir('plugins', pluginId);
-  if (!(await pathExists(dir))) return [];
-  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const root = resolvePluginsRoot(pluginId);
+  if (!await pathExists(root)) return [];
+  const entries = await fs.readdir(root, { withFileTypes: true });
   return entries
     .filter(e => e.isDirectory())
     .map(e => e.name)
@@ -365,19 +359,20 @@ async function listInstalledVersions(pluginId: string): Promise<string[]> {
     .sort((a, b) => compareVersions(a, b));
 }
 
-async function writeInstallMeta(installDir: string, meta: any) {
-  await fs.writeFile(path.join(installDir, 'napgram-plugin.json'), JSON.stringify(meta, null, 2), 'utf8');
-}
-
 async function inferCurrentVersion(pluginId: string): Promise<string | null> {
-  const { config } = await readKoishiPluginsConfig();
+  const { config } = await readPluginsConfig();
   const entry = config.plugins.find(p => p.id === pluginId);
-  if (!entry) return null;
-  const srcVersion = (entry as any)?.source?.version;
-  if (typeof srcVersion === 'string' && srcVersion.trim()) return srcVersion.trim();
-  const m = String(entry.module || '').match(new RegExp(`^\\./plugins/${pluginId}/([^/]+)/`));
+  const src = (entry as any)?.source;
+  if (typeof src?.version === 'string' && src.version) return src.version;
+
+  const mod = String(entry?.module || '');
+  const m = mod.match(new RegExp(`^\\./${pluginId}/([^/]+)/`));
   if (m) return m[1];
   return null;
+}
+
+async function writeInstallMeta(installDir: string, meta: any) {
+  await fs.writeFile(path.join(installDir, 'napgram-plugin.json'), JSON.stringify(meta, null, 2), 'utf8');
 }
 
 async function withInstallLock<T>(fn: () => Promise<T>): Promise<T> {
@@ -397,7 +392,7 @@ export async function installFromMarketplace(opts: InstallOptions): Promise<Plug
     const marketplaceId = sanitizeId(opts.marketplaceId);
     const pluginId = sanitizeId(opts.pluginId);
 
-    const existing = (await readKoishiPluginsConfig()).config.plugins.find(p => p.id === pluginId);
+    const existing = (await readPluginsConfig()).config.plugins.find(p => p.id === pluginId);
     const enabled = typeof opts.enabled === 'boolean' ? opts.enabled : (existing ? existing.enabled !== false : true);
     const userConfig = typeof opts.config === 'undefined' ? existing?.config : opts.config;
 
@@ -423,18 +418,17 @@ export async function installFromMarketplace(opts: InstallOptions): Promise<Plug
       production: target.install?.production !== false,
       ignoreScripts: target.install?.ignoreScripts !== false,
       frozenLockfile: target.install?.frozenLockfile === true,
-      registry: (target.install?.registry || String(process.env.KOISHI_PLUGIN_NPM_REGISTRY || '').trim() || undefined) as string | undefined,
+      registry: (target.install?.registry || String(process.env.PLUGIN_NPM_REGISTRY || '').trim() || undefined) as string | undefined,
     };
 
     if (install.mode === 'pnpm') {
-      // install requires network access even if runtime permissions are empty
       if (!canInstallWithPnpm()) {
-        throw new Error('Plugin requires pnpm install; set KOISHI_PLUGIN_ALLOW_NPM_INSTALL=1 to enable');
+        throw new Error('Plugin requires pnpm install; set PLUGIN_ALLOW_NPM_INSTALL=1 to enable');
       }
     }
 
-    const installDir = resolveKoishiDir('plugins', pluginId, target.version);
-    const tmpDir = resolveKoishiDir('tmp');
+    const installDir = resolvePluginsRoot(pluginId, target.version);
+    const tmpDir = resolvePluginsRoot('tmp');
     const archivePath = path.join(tmpDir, `${pluginId}-${target.version}.${distType}`);
 
     if (opts.dryRun) {
@@ -456,7 +450,6 @@ export async function installFromMarketplace(opts: InstallOptions): Promise<Plug
       throw new Error(`sha256 mismatch: expected=${expected} got=${sha256}`);
     }
 
-    // clean installDir if exists (idempotent re-install)
     await fs.rm(installDir, { recursive: true, force: true });
     await ensureDir(installDir);
     await extractArchive(distType, archivePath, installDir);
@@ -468,7 +461,7 @@ export async function installFromMarketplace(opts: InstallOptions): Promise<Plug
     }
 
     const entryFile = await resolveEntryFile(installDir, entryPath);
-    const entryRel = path.relative(path.join(resolveKoishiDir('plugins', pluginId, target.version)), entryFile).split(path.sep).join('/');
+    const entryRel = path.relative(installDir, entryFile).split(path.sep).join('/');
     const module = buildModuleSpecifier(pluginId, target.version, entryRel);
 
     const source = { type: 'marketplace', marketplaceId, pluginId, version: target.version, dist: { type: distType, url, sha256: expected }, install, permissions };
@@ -478,7 +471,7 @@ export async function installFromMarketplace(opts: InstallOptions): Promise<Plug
       entry: { path: entryRel },
     });
 
-    await upsertKoishiPlugin({
+    await upsertPluginConfig({
       id: pluginId,
       module,
       enabled,
@@ -496,7 +489,7 @@ export async function upgradePlugin(pluginIdRaw: string, options: UpgradeOptions
     const current = await inferCurrentVersion(pluginId);
     const marketplaceId = sanitizeId(options.marketplaceId || '');
     if (!marketplaceId) {
-      const { config } = await readKoishiPluginsConfig();
+      const { config } = await readPluginsConfig();
       const entry = config.plugins.find(p => p.id === pluginId);
       const src = (entry as any)?.source;
       const mid = typeof src?.marketplaceId === 'string' ? src.marketplaceId : '';
@@ -538,8 +531,7 @@ export async function rollbackPlugin(pluginIdRaw: string, options: RollbackOptio
     }
     if (!installed.includes(target)) throw new Error(`Target version not installed: ${target}`);
 
-    // reuse stored module entry path by reading meta if exists
-    const installDir = resolveKoishiDir('plugins', pluginId, target);
+    const installDir = resolvePluginsRoot(pluginId, target);
     const metaPath = path.join(installDir, 'napgram-plugin.json');
     const meta = await pathExists(metaPath) ? JSON.parse(await fs.readFile(metaPath, 'utf8')) : null;
     const entryRel = String(meta?.entry?.path || '').trim();
@@ -548,7 +540,7 @@ export async function rollbackPlugin(pluginIdRaw: string, options: RollbackOptio
     const module = buildModuleSpecifier(pluginId, target, entryRel);
 
     if (!options.dryRun) {
-      await patchKoishiPlugin(pluginId, { module, source: { ...(meta || {}), version: target } });
+      await patchPluginConfig(pluginId, { module, source: { ...(meta || {}), version: target } });
     }
 
     return { id: pluginId, from: current, to: target, module };
@@ -558,29 +550,27 @@ export async function rollbackPlugin(pluginIdRaw: string, options: RollbackOptio
 export async function uninstallPlugin(pluginIdRaw: string, options: UninstallOptions): Promise<{ id: string; removed: boolean; filesRemoved: boolean }> {
   return withInstallLock(async () => {
     const pluginId = sanitizeId(pluginIdRaw);
-    const { config } = await readKoishiPluginsConfig();
-    const removed = config.plugins.some(p => p.id === pluginId);
+    const { config } = await readPluginsConfig();
+    const idx = config.plugins.findIndex(p => p.id === pluginId);
+    const removed = idx >= 0;
     if (!options.dryRun && removed) {
-      const store = await import('./store');
-      await store.removeKoishiPlugin(pluginId);
+      await removePluginConfig(pluginId);
     }
 
     let filesRemoved = false;
-    if (!options.dryRun && options.removeFiles) {
-      const dir = resolveKoishiDir('plugins', pluginId);
+    if (options.removeFiles && !options.dryRun) {
+      const dir = resolvePluginsRoot(pluginId);
       await fs.rm(dir, { recursive: true, force: true });
       filesRemoved = true;
     }
-
     return { id: pluginId, removed, filesRemoved };
   });
 }
 
-export async function getPluginVersions(pluginIdRaw: string): Promise<{ id: string; current: string | null; installed: string[] }> {
+export async function getPluginVersions(pluginIdRaw: string): Promise<{ current: string | null; installed: string[] }> {
   const pluginId = sanitizeId(pluginIdRaw);
-  return {
-    id: pluginId,
-    current: await inferCurrentVersion(pluginId),
-    installed: await listInstalledVersions(pluginId),
-  };
+  const current = await inferCurrentVersion(pluginId);
+  const installed = await listInstalledVersions(pluginId);
+  return { current, installed };
 }
+
