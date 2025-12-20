@@ -40,7 +40,7 @@ export class TelegramSender {
     async sendToTelegram(chat: any, msg: UnifiedMessage, pair: any, replyToMsgId: number | undefined, nicknameMode: string) {
         this.logger.debug(`Forwarding message to TG (sendToTelegram):\n${JSON.stringify(msg, null, 2)}`);
         const showQQToTGNickname = nicknameMode[0] === '1';
-        let header = showQQToTGNickname ? `${msg.sender.name}:\n` : '';
+        let header = showQQToTGNickname ? `${msg.sender.name} (${msg.sender.id}):\n` : '';
         // 保存原始header供媒体消息使用（媒体需要caption，即使启用了富头）
         const originalHeader = header;
         let textParts: string[] = [];
