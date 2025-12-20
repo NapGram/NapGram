@@ -156,6 +156,13 @@ export class ForwardMap {
   findByTG(tgChatId: string | number | bigint, tgThreadId?: number, allowFallback = true): ForwardPairRecord | undefined {
     const key = this.getTgKey(tgChatId, tgThreadId);
     const exact = this.byTG.get(key);
+
+    // Debug log for troubleshooting
+    if (!exact && (this.byTG.size > 0)) {
+      console.debug(`[ForwardMap] findByTG failed. Key: "${key}", Total keys: ${this.byTG.size}`);
+      console.debug(`[ForwardMap] Available keys: ${Array.from(this.byTG.keys()).join(', ')}`);
+    }
+
     if (exact) return exact;
     return allowFallback ? this.byTG.get(String(tgChatId)) : undefined; // Fallback to chatId only
   }
