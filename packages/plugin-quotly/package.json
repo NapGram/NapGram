@@ -1,0 +1,16 @@
+{
+    "name": "@napgram/plugin-quotly",
+    "version": "1.0.0",
+    "description": "Quotly plugin for NapGram",
+    "main": "dist/index.js",
+    "type": "module",
+    "scripts": {
+        "build": "tsc -p tsconfig.json"
+    },
+    "keywords": [],
+    "author": "NapGram Team",
+    "license": "MIT",
+    "devDependencies": {
+        "typescript": "^5.0.0"
+    }
+}
