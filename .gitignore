@@ -232,6 +232,19 @@ PublishScripts/
 !packages/gateway-client/**
 !packages/gateway-sdk/
 !packages/gateway-sdk/**
+!packages/napgram-plugin-types/
+!packages/napgram-plugin-types/**
+!packages/napgram-plugin-utils/
+!packages/napgram-plugin-utils/**
+# NapGram plugins (tracked)
+!packages/plugin-qq-interaction/
+!packages/plugin-qq-interaction/**
+!packages/plugin-quotly/
+!packages/plugin-quotly/**
+!packages/plugin-refresh/
+!packages/plugin-refresh/**
+!packages/plugin-flags/
+!packages/plugin-flags/**
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
