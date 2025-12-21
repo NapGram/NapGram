@@ -99,7 +99,6 @@ export class FlagsCommandHandler {
 
             message += `⚠️ **警告**: 实验性功能可能不稳定！\n`;
             message += `\n可用标志（示例）:\n`;
-            message += `• \`experimental_quotly\` - QuotLy 生成功能\n`;
             message += `• \`experimental_forward_optimization\` - 转发优化\n`;
             message += `• \`debug_mode\` - 调试模式`;
 
