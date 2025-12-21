@@ -23,7 +23,6 @@ import { InfoCommandHandler } from './handlers/InfoCommandHandler';
 import { QQInteractionCommandHandler } from './handlers/QQInteractionCommandHandler';
 import { RefreshCommandHandler } from './handlers/RefreshCommandHandler';
 import { FlagsCommandHandler } from './handlers/FlagsCommandHandler';
-import { QuotLyCommandHandler } from './handlers/QuotLyCommandHandler';
 import { GroupManagementCommandHandler } from './handlers/GroupManagementCommandHandler';
 import { AdvancedGroupManagementCommandHandler } from './handlers/AdvancedGroupManagementCommandHandler';
 import { RequestManagementCommandHandler } from './handlers/RequestManagementCommandHandler';
@@ -58,7 +57,6 @@ export class CommandsFeature {
     private readonly qqInteractionHandler: QQInteractionCommandHandler;
     private readonly refreshHandler: RefreshCommandHandler;
     private readonly flagsHandler: FlagsCommandHandler;
-    private readonly quotlyHandler: QuotLyCommandHandler;
     private readonly groupManagementHandler: GroupManagementCommandHandler;
     private readonly advancedGroupManagementHandler: AdvancedGroupManagementCommandHandler;
     private readonly requestManagementHandler: RequestManagementCommandHandler;
@@ -95,7 +93,6 @@ export class CommandsFeature {
         this.qqInteractionHandler = new QQInteractionCommandHandler(this.commandContext);
         this.refreshHandler = new RefreshCommandHandler(this.commandContext);
         this.flagsHandler = new FlagsCommandHandler(this.commandContext);
-        this.quotlyHandler = new QuotLyCommandHandler(this.commandContext);
         this.groupManagementHandler = new GroupManagementCommandHandler(this.commandContext);
         this.advancedGroupManagementHandler = new AdvancedGroupManagementCommandHandler(this.commandContext);
         this.requestManagementHandler = new RequestManagementCommandHandler(this.commandContext);
@@ -302,17 +299,6 @@ export class CommandsFeature {
                 usage: '/flags [list|enable|disable] [flag_name]',
                 handler: (msg, args) => this.flagsHandler.execute(msg, args),
                 adminOnly: true,
-            });
-        }
-
-        // QuotLy 命令
-        // TODO: Remove after plugin-quotly is stable
-        if (!pluginCommands.has('q')) {
-            this.registerCommand({
-                name: 'q',
-                description: '生成 QuotLy 引用图片（开发中）',
-                usage: '/q (请回复要引用的消息)',
-                handler: (msg, args) => this.quotlyHandler.execute(msg, args),
             });
         }
 

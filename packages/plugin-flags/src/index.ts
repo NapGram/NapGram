@@ -116,7 +116,6 @@ const plugin: NapGramPlugin = {
 
             message += `⚠️ **警告**: 实验性功能可能不稳定！\n`;
             message += `\n可用标志参考:\n`;
-            message += `• \`experimental_quotly\` - QuotLy 生成功能\n`;
             message += `• \`debug_mode\` - 调试模式`;
 
             applyInstanceFlags(event, flagsMap);
