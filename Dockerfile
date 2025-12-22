@@ -56,8 +56,8 @@ RUN pnpm install --no-frozen-lockfile --shamefully-hoist --ignore-scripts && \
 # 源码构建（后端）
 COPY external/sdk/ /app/external/sdk/
 COPY main/ /app/main/
-RUN DATABASE_URL="postgresql://dummy" pnpm --filter=@napgram/app exec prisma generate --no-hints
-RUN pnpm --filter=@napgram/app run build
+RUN DATABASE_URL="postgresql://dummy" pnpm --filter ./main exec prisma generate --no-hints
+RUN pnpm --filter ./main run build
 
 # Frontend 使用预构建产物
 COPY web/dist/ /app/web/dist/
