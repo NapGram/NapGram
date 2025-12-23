@@ -8,16 +8,16 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-25-green.svg" alt="Node.js" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
-  <a href="https://github.com/NapLink/NapGram/actions/workflows/docker-release.yml"><img src="https://img.shields.io/github/actions/workflow/status/NapLink/NapGram/docker-release.yml?branch=main&label=Release%20Build&logo=githubactions" alt="CI/CD" /></a>
-  <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapLink/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
-  <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/downloads/NapLink/NapGram/total?label=Release%20Downloads&logo=github" alt="Downloads" /></a>
-  <a href="https://github.com/NapLink/NapGram/pkgs/container/napgram"><img src="https://img.shields.io/badge/ghcr.io%2Fnaplink%2Fnapgram-blue?logo=docker&label=Container" alt="GHCR Image" /></a>
-  <a href="https://github.com/NapLink/NapGram/commits/main"><img src="https://img.shields.io/github/last-commit/NapLink/NapGram/main?logo=github&label=Last%20Commit" alt="Last Commit" /></a>
-  <a href="https://github.com/NapLink/NapGram/pulse"><img src="https://img.shields.io/github/commit-activity/m/NapLink/NapGram?logo=github&label=Commit%20Activity" alt="Commit Activity" /></a>
-  <a href="https://github.com/NapLink/NapGram/issues"><img src="https://img.shields.io/github/issues/NapLink/NapGram?logo=github" alt="Issues" /></a>
-  <a href="https://github.com/NapLink/NapGram/pulls"><img src="https://img.shields.io/github/issues-pr/NapLink/NapGram?logo=github&label=Pull%20Requests" alt="PRs" /></a>
-  <a href="https://github.com/NapLink/NapGram/stargazers"><img src="https://img.shields.io/github/stars/NapLink/NapGram?style=social" alt="Stars" /></a>
-  <a href="https://github.com/NapLink/NapGram/network/members"><img src="https://img.shields.io/github/forks/NapLink/NapGram?style=social" alt="Forks" /></a>
+  <a href="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml"><img src="https://img.shields.io/github/actions/workflow/status/NapGram/NapGram/docker-release.yml?branch=main&label=Release%20Build&logo=githubactions" alt="CI/CD" /></a>
+  <a href="https://github.com/NapGram/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapGram/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
+  <a href="https://github.com/NapGram/NapGram/pkgs/container/napgram"><img src="https://ghcr-badge.egpl.dev/napgram/napgram/downloads?color=blue&tag=latest&label=Container%20Downloads&logo=docker" alt="Downloads" /></a>
+  <a href="https://github.com/NapGram/NapGram/pkgs/container/napgram"><img src="https://ghcr-badge.egpl.dev/napgram/napgram/latest_tag?color=blue&ignore=*-*&label=Container&logo=docker" alt="GHCR Image" /></a>
+  <a href="https://github.com/NapGram/NapGram/commits/main"><img src="https://img.shields.io/github/last-commit/NapGram/NapGram/main?logo=github&label=Last%20Commit" alt="Last Commit" /></a>
+  <a href="https://github.com/NapGram/NapGram/pulse"><img src="https://img.shields.io/github/commit-activity/m/NapGram/NapGram?logo=github&label=Commit%20Activity" alt="Commit Activity" /></a>
+  <a href="https://github.com/NapGram/NapGram/issues"><img src="https://img.shields.io/github/issues/NapGram/NapGram?logo=github" alt="Issues" /></a>
+  <a href="https://github.com/NapGram/NapGram/pulls"><img src="https://img.shields.io/github/issues-pr/NapGram/NapGram?logo=github&label=Pull%20Requests" alt="PRs" /></a>
+  <a href="https://github.com/NapGram/NapGram/stargazers"><img src="https://img.shields.io/github/stars/NapGram/NapGram?style=social" alt="Stars" /></a>
+  <a href="https://github.com/NapGram/NapGram/network/members"><img src="https://img.shields.io/github/forks/NapGram/NapGram?style=social" alt="Forks" /></a>
 </p>
 
 ## ✨ 核心特性
@@ -83,7 +83,7 @@
 
 1. **获取项目**
    ```bash
-   git clone https://github.com/NapLink/NapGram.git
+   git clone https://github.com/NapGram/NapGram.git
    cd NapGram
    ```
 
@@ -101,16 +101,16 @@
 
 ## 📚 文档
 
-- 📖 **项目文档（Wiki）**：https://github.com/NapLink/NapGram/wiki
-- 📝 **更新日志**：https://github.com/NapLink/NapGram/wiki/Changelog
-- 🧩 **插件系统**：https://github.com/NapLink/NapGram/wiki/Operations-Plugins
-- ⬆️ **升级与迁移（FAQ）**：https://github.com/NapLink/NapGram/wiki/Operations-Upgrade
-- 💬 **常用命令**：https://github.com/NapLink/NapGram/wiki/Guide-Commands
-- 🔗 **相关项目**：NapCat SDK（TypeScript）[NapLink](https://github.com/NapLink/NapLink)
+- 📖 **项目文档（Wiki）**：https://github.com/NapGram/NapGram/wiki
+- 📝 **更新日志**：https://github.com/NapGram/NapGram/wiki/Changelog
+- 🧩 **插件系统**：https://github.com/NapGram/NapGram/wiki/Operations-Plugins
+- ⬆️ **升级与迁移（FAQ）**：https://github.com/NapGram/NapGram/wiki/Operations-Upgrade
+- 💬 **常用命令**：https://github.com/NapGram/NapGram/wiki/Guide-Commands
+- 🔗 **相关项目**：NapCat SDK（TypeScript）[NapLink](https://github.com/NapGram/NapLink)
 
 ## 📅 更新日志
 
-📝 **[查看版本更新日志](https://github.com/NapLink/NapGram/wiki/Changelog)**
+📝 **[查看版本更新日志](https://github.com/NapGram/NapGram/wiki/Changelog)**
 
 ## 📖 开发者文档
 
@@ -163,7 +163,7 @@ featureManager.register(new MyFeature(...));
 
 ### 常用命令
 
-常用命令与完整说明已迁移到 Wiki：https://github.com/NapLink/NapGram/wiki/Guide-Commands
+常用命令与完整说明已迁移到 Wiki：https://github.com/NapGram/NapGram/wiki/Guide-Commands
 
 ## 🤝 贡献与致谢
 
@@ -183,12 +183,12 @@ featureManager.register(new MyFeature(...));
 
 ## ⭐ Star 趋势
 
-[![Star History Chart](https://starchart.cc/NapLink/NapGram.svg)](https://starchart.cc/NapLink/NapGram)
+[![Star History Chart](https://starchart.cc/NapGram/NapGram.svg)](https://starchart.cc/NapGram/NapGram)
 
 ---
 
 ## 📧 联系方式
 
-- GitHub Issues: [报告问题](https://github.com/NapLink/NapGram/issues)
+- GitHub Issues: [报告问题](https://github.com/NapGram/NapGram/issues)
 
 ---
