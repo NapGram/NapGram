@@ -106,6 +106,15 @@ export class CommandsFeature {
     }
 
     /**
+     * 重新加载命令（用于插件重载后刷新命令处理器）
+     */
+    async reloadCommands() {
+        this.registry.clear();
+        await this.registerDefaultCommands();
+        logger.info('CommandsFeature commands reloaded');
+    }
+
+    /**
      * 注册默认命令
      */
     private async registerDefaultCommands() {

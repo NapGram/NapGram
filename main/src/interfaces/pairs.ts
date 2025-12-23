@@ -74,15 +74,17 @@ export default async function (fastify: FastifyInstance) {
             if (typeof v === 'string' && (v === '0' || v === '1')) return v;
             return null;
         }, z.enum(['0', '1']).nullable()).optional(),
-        commandReplyFilter: z.preprocess((v) => {
-            if (v === '' || v === undefined || v === null) return null;
-            if (typeof v === 'string' && (v === 'whitelist' || v === 'blacklist')) return v;
-            return null;
-        }, z.enum(['whitelist', 'blacklist']).nullable()).optional(),
-        commandReplyList: optionalText.optional(),
-        ignoreRegex: optionalText.optional(),
-        ignoreSenders: optionalText.optional(),
-    });
+    commandReplyFilter: z.preprocess((v) => {
+        if (v === '' || v === undefined || v === null) return null;
+        if (typeof v === 'string' && (v === 'whitelist' || v === 'blacklist')) return v;
+        return null;
+    }, z.enum(['whitelist', 'blacklist']).nullable()).optional(),
+    commandReplyList: optionalText.optional(),
+    notifyTelegram: z.boolean().default(false),
+    notifyQQ: z.boolean().default(false),
+    ignoreRegex: optionalText.optional(),
+    ignoreSenders: optionalText.optional(),
+});
 
     const updatePairSchema = z.object({
         qqRoomId: bigIntId.optional(),
@@ -110,10 +112,12 @@ export default async function (fastify: FastifyInstance) {
             if (typeof v === 'string' && (v === 'whitelist' || v === 'blacklist')) return v;
             return null;
         }, z.enum(['whitelist', 'blacklist']).nullable()).optional(),
-        commandReplyList: optionalText.optional(),
-        ignoreRegex: optionalText.optional(),
-        ignoreSenders: optionalText.optional(),
-    });
+    commandReplyList: optionalText.optional(),
+    notifyTelegram: z.boolean().optional(),
+    notifyQQ: z.boolean().optional(),
+    ignoreRegex: optionalText.optional(),
+    ignoreSenders: optionalText.optional(),
+});
 
     const refreshInstanceForwardMap = async (instanceId: number) => {
         const inst = Instance.instances.find(it => it.id === instanceId);
@@ -185,6 +189,9 @@ export default async function (fastify: FastifyInstance) {
                     uin: item.instance.qqBot.uin?.toString() || null
                 } : null
             } : null
+            ,
+            notifyTelegram: item.notifyTelegram,
+            notifyQQ: item.notifyQQ
         }));
 
         if (needNames) {
@@ -247,6 +254,9 @@ export default async function (fastify: FastifyInstance) {
                         uin: pair.instance.qqBot.uin?.toString() || null
                     } : null
                 } : null
+                ,
+                notifyTelegram: pair.notifyTelegram,
+                notifyQQ: pair.notifyQQ
             }
         };
     });
@@ -273,6 +283,8 @@ export default async function (fastify: FastifyInstance) {
                     commandReplyMode: body.commandReplyMode || null,
                     commandReplyFilter: body.commandReplyFilter || null,
                     commandReplyList: body.commandReplyList || null,
+                    notifyTelegram: body.notifyTelegram,
+                    notifyQQ: body.notifyQQ,
                     ignoreRegex: body.ignoreRegex || null,
                     ignoreSenders: body.ignoreSenders || null
                 }
@@ -294,6 +306,10 @@ export default async function (fastify: FastifyInstance) {
             );
 
             await refreshInstanceForwardMap(pair.instanceId);
+            await notifyPairBinding(pair, {
+                notifyTelegram: body.notifyTelegram,
+                notifyQQ: body.notifyQQ
+            });
 
             return {
                 success: true,
@@ -361,6 +377,8 @@ export default async function (fastify: FastifyInstance) {
                     commandReplyMode: body.commandReplyMode,
                     commandReplyFilter: body.commandReplyFilter,
                     commandReplyList: body.commandReplyList,
+                    ...(body.notifyTelegram !== undefined ? { notifyTelegram: body.notifyTelegram } : {}),
+                    ...(body.notifyQQ !== undefined ? { notifyQQ: body.notifyQQ } : {}),
                     ignoreRegex: body.ignoreRegex,
                     ignoreSenders: body.ignoreSenders
                 }
@@ -453,12 +471,61 @@ export default async function (fastify: FastifyInstance) {
 
             await refreshInstanceForwardMap(existing.instanceId);
 
-            return ApiResponse.success(undefined, 'Pair deleted successfully');
+        return ApiResponse.success(undefined, 'Pair deleted successfully');
+    } catch (error: any) {
+        log.error(error, 'delete_pair failed');
+        throw error;
+    }
+});
+
+type PairNotificationOptions = {
+    notifyTelegram: boolean
+    notifyQQ: boolean
+}
+
+async function notifyPairBinding(pair: any, options: PairNotificationOptions) {
+    if (!options.notifyTelegram && !options.notifyQQ) return;
+
+    const instance = Instance.instances.find(it => it.id === pair.instanceId);
+    if (!instance) {
+        log.warn({ instanceId: pair.instanceId }, 'Instance not available for pair notification');
+        return;
+    }
+
+    const tgChatId = pair.tgChatId?.toString() || '';
+    const qqRoomId = pair.qqRoomId?.toString() || '';
+    const description = `✅ 新配对已创建\nQQ 群: ${qqRoomId}\nTG 群: ${tgChatId}${pair.tgThreadId ? ` 话题 ${pair.tgThreadId}` : ''}`;
+
+    if (options.notifyTelegram && instance.tgBot) {
+        try {
+            const chat = await instance.tgBot.getChat(tgChatId || 0);
+            await chat.sendMessage(description, { disableWebPreview: true });
+            log.info({ instanceId: instance.id, tgChatId }, 'Telegram binding notification sent');
         } catch (error: any) {
-            log.error(error, 'delete_pair failed');
-            throw error;
+            log.warn(error, 'Failed to send Telegram binding notification');
         }
-    });
+    }
+
+    if (options.notifyQQ && instance.qqClient) {
+        try {
+            const now = Date.now();
+            await instance.qqClient.sendMessage(String(qqRoomId), {
+                id: `binding-${now}`,
+                platform: 'qq',
+                sender: {
+                    id: String(instance.qqClient.uin ?? ''),
+                    name: instance.qqClient.nickname || 'NapGram',
+                },
+                chat: { id: String(qqRoomId), type: 'group' },
+                content: [{ type: 'text', data: { text: description } }],
+                timestamp: now,
+            } as any);
+            log.info({ instanceId: instance.id, qqRoomId }, 'QQ binding notification sent');
+        } catch (error: any) {
+            log.warn(error, 'Failed to send QQ binding notification');
+        }
+    }
+}
 
     /**
      * GET /api/admin/pairs/:id/statistics
