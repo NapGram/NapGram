@@ -3,13 +3,16 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { pathToFileURL } from 'node:url';
 import { unzipSync } from 'fflate';
 import env from '../../domain/models/env';
+import { getLogger } from '../../shared/logger';
 import { readMarketplaceCache } from './marketplace';
 import { patchPluginConfig, readPluginsConfig, removePluginConfig, upsertPluginConfig } from './store';
 import { PluginRuntime } from '../runtime';
 
 const execFileAsync = promisify(execFile);
+const logger = getLogger('PluginInstaller');
 
 export type DistType = 'zip' | 'tgz';
 
@@ -211,6 +214,7 @@ async function pathExists(p: string): Promise<boolean> {
 }
 
 async function downloadToFile(url: string, filePath: string): Promise<{ sha256: string; bytes: number }> {
+  logger.info({ url }, 'Downloading plugin archive');
   const res = await fetch(url);
   if (!res.ok || !res.body) {
     throw new Error(`Download failed: ${res.status} ${res.statusText}`);
@@ -233,10 +237,12 @@ async function downloadToFile(url: string, filePath: string): Promise<{ sha256: 
     await file.close();
   }
 
+  logger.info({ url, bytes }, 'Plugin archive downloaded');
   return { sha256: hash.digest('hex'), bytes };
 }
 
 async function extractZip(zipPath: string, destDir: string): Promise<void> {
+  logger.info({ zipPath }, 'Extracting zip archive');
   const data = await fs.readFile(zipPath);
   const files = unzipSync(new Uint8Array(data));
   for (const [name, content] of Object.entries(files)) {
@@ -248,6 +254,7 @@ async function extractZip(zipPath: string, destDir: string): Promise<void> {
     await ensureDir(path.dirname(outPath));
     await fs.writeFile(outPath, Buffer.from(content));
   }
+  logger.info({ zipPath }, 'Zip archive extracted');
 }
 
 async function listTarEntriesVerbose(tgzPath: string): Promise<Array<{ type: string; name: string }>> {
@@ -263,6 +270,7 @@ async function listTarEntriesVerbose(tgzPath: string): Promise<Array<{ type: str
 }
 
 async function extractTgz(tgzPath: string, destDir: string): Promise<void> {
+  logger.info({ tgzPath }, 'Extracting tgz archive');
   const entries = await listTarEntriesVerbose(tgzPath);
   for (const e of entries) {
     if (!isSafeArchivePath(e.name)) throw new Error(`Unsafe tar entry path: ${e.name}`);
@@ -271,6 +279,7 @@ async function extractTgz(tgzPath: string, destDir: string): Promise<void> {
     }
   }
   await execFileAsync('tar', ['-xzf', tgzPath, '-C', destDir, '--no-same-owner', '--no-same-permissions'], { maxBuffer: 10 * 1024 * 1024 });
+  logger.info({ tgzPath }, 'Tgz archive extracted');
 }
 
 async function extractArchive(distType: DistType, archivePath: string, destDir: string): Promise<void> {
@@ -371,6 +380,7 @@ async function findPnpmProjectDir(destDir: string): Promise<string | null> {
 }
 
 async function runPnpmInstall(projectDir: string, opts: Required<NonNullable<MarketplacePluginVersion['install']>>) {
+  logger.info({ projectDir }, 'Running pnpm install for plugin');
   if (!canInstallWithPnpm()) {
     throw new Error('Refusing to run pnpm install without PLUGIN_ALLOW_NPM_INSTALL=1');
   }
@@ -396,9 +406,79 @@ async function runPnpmInstall(projectDir: string, opts: Required<NonNullable<Mar
     env: envVars,
     maxBuffer: 20 * 1024 * 1024,
   });
+  logger.info({ projectDir }, 'pnpm install completed');
+}
+
+async function loadPluginDefaultConfig(installDir: string): Promise<any | null> {
+  const candidates = [
+    path.join(installDir, 'dist', 'config.js'),
+    path.join(installDir, 'dist', 'config.mjs'),
+    path.join(installDir, 'config.js'),
+    path.join(installDir, 'config.mjs'),
+    path.join(installDir, 'config.json'),
+  ];
+
+  for (const candidate of candidates) {
+    if (!await pathExists(candidate)) continue;
+    try {
+      if (candidate.endsWith('.json')) {
+        const raw = await fs.readFile(candidate, 'utf8');
+        return JSON.parse(raw);
+      }
+      const mod = await import(pathToFileURL(candidate).href);
+      if (mod?.defaultConfig) return mod.defaultConfig;
+      if (mod?.default) return mod.default;
+    } catch (error) {
+      logger.warn({ error, candidate }, 'Failed to load plugin default config');
+    }
+  }
+
+  return null;
+}
+
+async function syncPluginSchemaIfNeeded(installDir: string, pluginId: string) {
+  const candidates = [
+    path.join(installDir, 'dist', 'prisma-client', 'schema.prisma'),
+    path.join(installDir, 'prisma', 'schema.prisma'),
+    path.join(installDir, 'schema.prisma'),
+  ];
+
+  for (const schemaPath of candidates) {
+    if (!await pathExists(schemaPath)) continue;
+    const dbUrl = String(process.env.DATABASE_URL || '').trim();
+    if (!dbUrl) {
+      logger.warn({ pluginId, schemaPath }, 'DATABASE_URL not set; skip schema sync');
+      return false;
+    }
+    logger.info({ pluginId, schemaPath }, 'Syncing plugin database schema');
+    const allowDataLoss = String(process.env.PLUGIN_PRISMA_ACCEPT_DATA_LOSS || '').trim().toLowerCase();
+    const args = ['exec', 'prisma', 'db', 'push', '--schema', schemaPath, '--url', dbUrl];
+    if (['1', 'true', 'yes', 'on'].includes(allowDataLoss)) {
+      args.push('--accept-data-loss');
+      logger.warn({ pluginId, schemaPath }, 'Plugin schema sync will accept data loss');
+    }
+    try {
+      await execFileAsync('pnpm', args, {
+        cwd: installDir,
+        env: { ...process.env },
+        maxBuffer: 20 * 1024 * 1024,
+      });
+    } catch (error: any) {
+      const message = String(error?.message || error || '');
+      if (message.includes('accept-data-loss')) {
+        logger.warn({ pluginId, schemaPath }, 'Schema push requires --accept-data-loss; set PLUGIN_PRISMA_ACCEPT_DATA_LOSS=1 to allow');
+      }
+      throw error;
+    }
+    logger.info({ pluginId, schemaPath }, 'Plugin database schema synced');
+    return true;
+  }
+
+  return false;
 }
 
 async function loadMarketplaceIndex(marketplaceId: string): Promise<MarketplaceIndexV1> {
+  logger.info({ marketplaceId }, 'Loading marketplace index');
   const cached = await readMarketplaceCache(marketplaceId);
   if (!cached.exists) {
     throw new Error(`Marketplace cache not found for "${marketplaceId}". Call /api/admin/marketplaces/refresh first.`);
@@ -407,6 +487,7 @@ async function loadMarketplaceIndex(marketplaceId: string): Promise<MarketplaceI
   if (!data || data.schemaVersion !== 1 || !Array.isArray(data.plugins)) {
     throw new Error('Invalid marketplace index schema');
   }
+  logger.info({ marketplaceId, pluginCount: data.plugins.length }, 'Marketplace index loaded');
   return data as MarketplaceIndexV1;
 }
 
@@ -464,111 +545,140 @@ async function withInstallLock<T>(fn: () => Promise<T>): Promise<T> {
   }
 }
 
-export async function installFromMarketplace(opts: InstallOptions): Promise<PluginInstallResult> {
-  return withInstallLock(async () => {
-    const marketplaceId = sanitizeId(opts.marketplaceId);
-    const pluginId = sanitizeId(opts.pluginId);
+async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<PluginInstallResult> {
+  const marketplaceId = sanitizeId(opts.marketplaceId);
+  const pluginId = sanitizeId(opts.pluginId);
+  logger.info({
+    marketplaceId,
+    pluginId,
+    version: opts.version || 'latest',
+    dryRun: opts.dryRun === true,
+  }, 'Marketplace install started');
 
-    const existing = (await readPluginsConfig()).config.plugins.find(p => p.id === pluginId);
-    const enabled = typeof opts.enabled === 'boolean' ? opts.enabled : (existing ? existing.enabled !== false : true);
-    const userConfig = typeof opts.config === 'undefined' ? existing?.config : opts.config;
+  const existing = (await readPluginsConfig()).config.plugins.find(p => p.id === pluginId);
+  const enabled = typeof opts.enabled === 'boolean' ? opts.enabled : (existing ? existing.enabled !== false : true);
+  const requestedConfig = typeof opts.config === 'undefined' ? undefined : opts.config;
+  const existingConfig = existing?.config;
 
-    const index = await loadMarketplaceIndex(marketplaceId);
-    const plugin = index.plugins.find(p => sanitizeId(p.id) === pluginId);
-    if (!plugin) throw new Error(`Plugin not found in marketplace: ${pluginId}`);
+  const index = await loadMarketplaceIndex(marketplaceId);
+  const plugin = index.plugins.find(p => sanitizeId(p.id) === pluginId);
+  if (!plugin) throw new Error(`Plugin not found in marketplace: ${pluginId}`);
 
-    const target = pickVersion(plugin.versions, opts.version);
-    const entryPath = String(target.entry?.path || '').trim().replace(/^\/+/, '');
-    if (!entryPath) throw new Error('Invalid entry.path');
+  const target = pickVersion(plugin.versions, opts.version);
+  logger.info({ pluginId, version: target.version }, 'Selected plugin version');
+  const entryPath = String(target.entry?.path || '').trim().replace(/^\/+/, '');
+  if (!entryPath) throw new Error('Invalid entry.path');
 
-    const distType = target.dist?.type;
-    if (distType !== 'zip' && distType !== 'tgz') throw new Error('Invalid dist.type');
-    const url = String(target.dist?.url || '').trim();
-    if (!url) throw new Error('Missing dist.url');
-    const expected = normalizeHexSha256(target.dist?.sha256);
+  const distType = target.dist?.type;
+  if (distType !== 'zip' && distType !== 'tgz') throw new Error('Invalid dist.type');
+  const url = String(target.dist?.url || '').trim();
+  if (!url) throw new Error('Missing dist.url');
+  const expected = normalizeHexSha256(target.dist?.sha256);
 
-    const permissions = resolveRequestedPermissions(target.permissions);
-    validatePermissions(permissions);
+  const permissions = resolveRequestedPermissions(target.permissions);
+  validatePermissions(permissions);
 
-    const install = {
-      mode: (target.install?.mode || 'none') as 'none' | 'pnpm',
-      production: target.install?.production !== false,
-      ignoreScripts: target.install?.ignoreScripts !== false,
-      frozenLockfile: target.install?.frozenLockfile === true,
-      registry: (target.install?.registry || String(process.env.PLUGIN_NPM_REGISTRY || '').trim() || undefined) as string | undefined,
-    };
+  const install = {
+    mode: (target.install?.mode || 'none') as 'none' | 'pnpm',
+    production: target.install?.production !== false,
+    ignoreScripts: target.install?.ignoreScripts !== false,
+    frozenLockfile: target.install?.frozenLockfile === true,
+    registry: (target.install?.registry || String(process.env.PLUGIN_NPM_REGISTRY || '').trim() || undefined) as string | undefined,
+  };
 
-    if (install.mode === 'pnpm') {
-      if (!canInstallWithPnpm()) {
-        throw new Error('Plugin requires pnpm install; set PLUGIN_ALLOW_NPM_INSTALL=1 to enable');
-      }
+  if (install.mode === 'pnpm') {
+    if (!canInstallWithPnpm()) {
+      throw new Error('Plugin requires pnpm install; set PLUGIN_ALLOW_NPM_INSTALL=1 to enable');
     }
+  }
 
-    const installDir = resolvePluginsRoot(pluginId, target.version);
-    const tmpDir = resolvePluginsRoot('tmp');
-    const archivePath = path.join(tmpDir, `${pluginId}-${target.version}.${distType}`);
+  const installDir = resolvePluginsRoot(pluginId, target.version);
+  const tmpDir = resolvePluginsRoot('tmp');
+  const archivePath = path.join(tmpDir, `${pluginId}-${target.version}.${distType}`);
 
-    if (opts.dryRun) {
-      const module = buildModuleSpecifier(pluginId, target.version, entryPath);
-      return {
-        id: pluginId,
-        version: target.version,
-        entryPath,
-        module,
-        installDir,
-        permissions,
-        source: { type: 'marketplace', marketplaceId, pluginId, version: target.version, dist: { type: distType, url, sha256: expected }, install, permissions },
-      };
-    }
-
-    await ensureDir(tmpDir);
-    const { sha256 } = await downloadToFile(url, archivePath);
-    if (sha256 !== expected) {
-      throw new Error(`sha256 mismatch: expected=${expected} got=${sha256}`);
-    }
-
-    await fs.rm(installDir, { recursive: true, force: true });
-    await ensureDir(installDir);
-    await extractArchive(distType, archivePath, installDir);
-
-    if (install.mode === 'pnpm') {
-      const projectDir = await findPnpmProjectDir(installDir);
-      if (!projectDir) throw new Error('install.mode=pnpm but package.json not found after extract');
-      await runPnpmInstall(projectDir, install as any);
-    }
-
-    // Link host SDK packages to plugin's node_modules
-    await linkHostSdk(installDir);
-
-    const entryFile = await resolveEntryFile(installDir, entryPath);
-    const entryRel = path.relative(installDir, entryFile).split(path.sep).join('/');
-    const module = buildModuleSpecifier(pluginId, target.version, entryRel);
-
-    const source = { type: 'marketplace', marketplaceId, pluginId, version: target.version, dist: { type: distType, url, sha256: expected }, install, permissions };
-    await writeInstallMeta(installDir, {
-      installedAt: new Date().toISOString(),
-      ...source,
-      entry: { path: entryRel },
-    });
-
-    await upsertPluginConfig({
+  if (opts.dryRun) {
+    const module = buildModuleSpecifier(pluginId, target.version, entryPath);
+    logger.info({ pluginId, version: target.version }, 'Marketplace install dry-run resolved');
+    return {
       id: pluginId,
+      version: target.version,
+      entryPath,
       module,
-      enabled,
-      config: userConfig,
-      source,
-    });
+      installDir,
+      permissions,
+      source: { type: 'marketplace', marketplaceId, pluginId, version: target.version, dist: { type: distType, url, sha256: expected }, install, permissions },
+    };
+  }
 
-    return { id: pluginId, version: target.version, entryPath: entryRel, module, installDir, permissions, source };
+  await ensureDir(tmpDir);
+  logger.info({ pluginId, version: target.version, distType }, 'Downloading plugin package');
+  const { sha256 } = await downloadToFile(url, archivePath);
+  if (sha256 !== expected) {
+    throw new Error(`sha256 mismatch: expected=${expected} got=${sha256}`);
+  }
+
+  await fs.rm(installDir, { recursive: true, force: true });
+  await ensureDir(installDir);
+  logger.info({ pluginId, version: target.version, distType }, 'Extracting plugin package');
+  await extractArchive(distType, archivePath, installDir);
+
+  await syncPluginSchemaIfNeeded(installDir, pluginId);
+
+  if (install.mode === 'pnpm') {
+    const projectDir = await findPnpmProjectDir(installDir);
+    if (!projectDir) throw new Error('install.mode=pnpm but package.json not found after extract');
+    await runPnpmInstall(projectDir, install as any);
+  }
+
+  // Link host SDK packages to plugin's node_modules
+  logger.info({ pluginId, version: target.version }, 'Linking host SDK packages');
+  await linkHostSdk(installDir);
+
+  const entryFile = await resolveEntryFile(installDir, entryPath);
+  const entryRel = path.relative(installDir, entryFile).split(path.sep).join('/');
+  const module = buildModuleSpecifier(pluginId, target.version, entryRel);
+
+  const source = { type: 'marketplace', marketplaceId, pluginId, version: target.version, dist: { type: distType, url, sha256: expected }, install, permissions };
+  logger.info({ pluginId, version: target.version }, 'Writing plugin config');
+
+  let resolvedConfig = typeof requestedConfig === 'undefined' ? existingConfig : requestedConfig;
+  if (typeof resolvedConfig === 'undefined') {
+    const defaults = await loadPluginDefaultConfig(installDir);
+    if (defaults && typeof defaults === 'object') {
+      resolvedConfig = JSON.parse(JSON.stringify(defaults));
+      logger.info({ pluginId }, 'Applied plugin default config');
+    }
+  }
+
+  await writeInstallMeta(installDir, {
+    installedAt: new Date().toISOString(),
+    ...source,
+    entry: { path: entryRel },
   });
+
+  await upsertPluginConfig({
+    id: pluginId,
+    module,
+    enabled,
+    config: resolvedConfig,
+    source,
+  });
+
+  logger.info({ pluginId, version: target.version }, 'Marketplace install completed');
+  return { id: pluginId, version: target.version, entryPath: entryRel, module, installDir, permissions, source };
+}
+
+export async function installFromMarketplace(opts: InstallOptions): Promise<PluginInstallResult> {
+  return withInstallLock(() => installFromMarketplaceUnlocked(opts));
 }
 
 export async function upgradePlugin(pluginIdRaw: string, options: UpgradeOptions): Promise<PluginInstallResult> {
   return withInstallLock(async () => {
     const pluginId = sanitizeId(pluginIdRaw);
     const current = await inferCurrentVersion(pluginId);
-    const marketplaceId = sanitizeId(options.marketplaceId || '');
-    if (!marketplaceId) {
+    logger.info({ pluginId, current: current || '-', version: options.version || 'latest' }, 'Marketplace upgrade requested');
+    const rawMarketplaceId = String(options.marketplaceId || '').trim();
+    if (!rawMarketplaceId) {
       const { config } = await readPluginsConfig();
       const entry = config.plugins.find(p => p.id === pluginId);
       const src = (entry as any)?.source;
@@ -577,20 +687,24 @@ export async function upgradePlugin(pluginIdRaw: string, options: UpgradeOptions
       options.marketplaceId = mid;
     }
 
-    const index = await loadMarketplaceIndex(sanitizeId(options.marketplaceId!));
+    const marketplaceId = sanitizeId(options.marketplaceId || '');
+    const index = await loadMarketplaceIndex(marketplaceId);
     const plugin = index.plugins.find(p => sanitizeId(p.id) === pluginId);
     if (!plugin) throw new Error(`Plugin not found in marketplace: ${pluginId}`);
     const target = pickVersion(plugin.versions, options.version);
     if (current && target.version === current) {
       throw new Error(`Already on version ${current}`);
     }
-    return installFromMarketplace({
+    logger.info({ pluginId, from: current || '-', to: target.version }, 'Marketplace upgrade resolved');
+    const result = await installFromMarketplaceUnlocked({
       marketplaceId: sanitizeId(options.marketplaceId!),
       pluginId,
       version: target.version,
       reload: options.reload,
       dryRun: options.dryRun,
     });
+    logger.info({ pluginId, version: result.version }, 'Marketplace upgrade completed');
+    return result;
   });
 }
 

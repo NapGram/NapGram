@@ -4,6 +4,7 @@ import { ApiResponse } from '../shared/utils/api-response';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import env from '../domain/models/env';
+import { getLogger } from '../shared/logger';
 import {
   normalizeModuleSpecifierForPluginsConfig,
   patchPluginConfig,
@@ -13,6 +14,17 @@ import {
 } from '../plugins/store';
 import { PluginRuntime } from '../plugins/runtime';
 import { getPluginVersions, installFromMarketplace, rollbackPlugin, uninstallPlugin, upgradePlugin } from '../plugins/installer';
+
+const logger = getLogger('PluginAdmin');
+
+function logPluginAdminHit(request: any, meta?: Record<string, any>) {
+  logger.info({
+    method: request.method,
+    url: request.url,
+    ip: request.ip,
+    ...(meta || {}),
+  }, 'Plugin admin request hit');
+}
 
 /**
  * Plugin Admin API
@@ -223,15 +235,25 @@ export default async function (fastify: FastifyInstance) {
   });
 
   fastify.post('/api/admin/plugins/install', { preHandler: requirePluginAdmin }, async (request, reply) => {
+    logPluginAdminHit(request);
     const body = installSchema.safeParse(request.body ?? {});
     if (!body.success) {
+      logger.warn({ issues: body.error.issues }, 'Plugin install request validation failed');
       return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
     }
     try {
+      logger.info({
+        marketplaceId: body.data.marketplaceId,
+        pluginId: body.data.pluginId,
+        version: body.data.version || 'latest',
+        dryRun: body.data.dryRun === true,
+      }, 'Plugin install requested');
       const result = await installFromMarketplace(body.data);
+      logger.info({ pluginId: result.id, version: result.version }, 'Plugin install completed');
       if (body.data.reload && !body.data.dryRun) await PluginRuntime.reload();
       return ApiResponse.success(result);
     } catch (error: any) {
+      logger.error({ error: error?.message || String(error) }, 'Plugin install failed');
       return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
     }
   });
@@ -244,15 +266,25 @@ export default async function (fastify: FastifyInstance) {
   });
 
   fastify.post('/api/admin/plugins/:id/upgrade', { preHandler: requirePluginAdmin }, async (request, reply) => {
+    logPluginAdminHit(request, { pluginId: String((request.params as any).id || '').trim() });
     const body = upgradeSchema.safeParse(request.body ?? {});
     if (!body.success) {
+      logger.warn({ issues: body.error.issues }, 'Plugin upgrade request validation failed');
       return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
     }
     try {
+      logger.info({
+        pluginId: String((request.params as any).id || '').trim(),
+        marketplaceId: body.data.marketplaceId || '',
+        version: body.data.version || 'latest',
+        dryRun: body.data.dryRun === true,
+      }, 'Plugin upgrade requested');
       const result = await upgradePlugin(String((request.params as any).id), body.data);
+      logger.info({ pluginId: result.id, version: result.version }, 'Plugin upgrade completed');
       if (body.data.reload && !body.data.dryRun) await PluginRuntime.reload();
       return ApiResponse.success(result);
     } catch (error: any) {
+      logger.error({ error: error?.message || String(error) }, 'Plugin upgrade failed');
       return reply.code(500).send(ApiResponse.error(error?.message || String(error)));
     }
   });
@@ -264,8 +296,10 @@ export default async function (fastify: FastifyInstance) {
   });
 
   fastify.post('/api/admin/plugins/:id/rollback', { preHandler: requirePluginAdmin }, async (request, reply) => {
+    logPluginAdminHit(request, { pluginId: String((request.params as any).id || '').trim() });
     const body = rollbackSchema.safeParse(request.body ?? {});
     if (!body.success) {
+      logger.warn({ issues: body.error.issues }, 'Plugin rollback request validation failed');
       return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
     }
     try {
@@ -284,8 +318,10 @@ export default async function (fastify: FastifyInstance) {
   });
 
   fastify.post('/api/admin/plugins/:id/uninstall', { preHandler: requirePluginAdmin }, async (request, reply) => {
+    logPluginAdminHit(request, { pluginId: String((request.params as any).id || '').trim() });
     const body = uninstallSchema.safeParse(request.body ?? {});
     if (!body.success) {
+      logger.warn({ issues: body.error.issues }, 'Plugin uninstall request validation failed');
       return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues });
     }
     try {

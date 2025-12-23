@@ -1,6 +1,6 @@
 /**
  * NapGram 插件运行时 - 公共 API
- * 
+ *  
  * 原生插件系统的统一入口
  */
 
@@ -19,6 +19,21 @@ const logger = getLogger('PluginRuntimeAPI');
  * 插件运行时公共 API
  */
 export class PluginRuntime {
+  private static async reloadCommandsForInstances() {
+    for (const instance of Instance.instances) {
+      try {
+        const featureManager = (instance as any)?.featureManager;
+        const commands = featureManager?.commands;
+        if (commands && typeof commands.reloadCommands === 'function') {
+          await commands.reloadCommands();
+          logger.info({ instanceId: instance.id }, 'CommandsFeature commands reloaded');
+        }
+      } catch (error) {
+        logger.warn({ instanceId: instance.id, error }, 'Failed to reload CommandsFeature commands');
+      }
+    }
+  }
+
   private static configureApis() {
     const instanceResolver = (instanceId: number) => Instance.instances.find(it => it.id === instanceId);
     const instancesResolver = () => Instance.instances;
@@ -103,6 +118,8 @@ export class PluginRuntime {
         failed: report.failed.length,
       }, 'Plugin runtime reloaded');
 
+      await this.reloadCommandsForInstances();
+
       return report;
     } catch (error) {
       logger.error({ error }, 'Failed to reload plugin runtime');
@@ -126,7 +143,9 @@ export class PluginRuntime {
     }
 
     const runtime = getGlobalRuntime();
-    return await runtime.reloadPlugin(id, spec.config ?? {});
+    const result = await runtime.reloadPlugin(id, spec.config ?? {});
+    await this.reloadCommandsForInstances();
+    return result;
   }
 
   /**

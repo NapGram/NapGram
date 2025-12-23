@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG NODE_VERSION=25-slim
+ARG INSTALL_PG_CLIENT=true
 
 # === Stage: Extract TGS conversion binaries ===
 FROM edasriyan/lottie-to-gif:latest AS lottie
@@ -7,6 +8,7 @@ FROM edasriyan/lottie-to-gif:latest AS lottie
 # === Stage: Base ===
 FROM node:${NODE_VERSION} AS base
 ARG USE_MIRROR=true
+ARG INSTALL_PG_CLIENT=true
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 基础运行时依赖
@@ -17,6 +19,7 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
     curl wget bash \
     fonts-wqy-microhei \
     libpixman-1-0 libcairo2 libpango1.0-0 libgif7 libjpeg62-turbo libpng16-16 librsvg2-2 libvips42 ffmpeg \
+    $(if [ "$INSTALL_PG_CLIENT" = "true" ]; then echo postgresql-client; fi) \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制TGS转换工具（lottie_to_png和gifski）

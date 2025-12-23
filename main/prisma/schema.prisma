@@ -107,6 +107,8 @@ model ForwardPair {
   commandReplyMode String?          /// 命令回复模式: "0"=仅回复发起平台, "1"=双向回复 (null=使用环境变量默认值)
   commandReplyFilter String?        /// 命令回复过滤模式: "whitelist"=白名单, "blacklist"=黑名单, null=不过滤
   commandReplyList String?          /// 命令列表(逗号分隔): "help,status,info" 配合 commandReplyFilter 使用
+  notifyTelegram Boolean @default(false)
+  notifyQQ Boolean @default(false)
   apiKey          String            @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   ForwardMultiple ForwardMultiple[]
 
