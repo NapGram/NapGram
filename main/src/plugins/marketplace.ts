@@ -1,8 +1,8 @@
 export {
-  readMarketplaces,
   readMarketplaceCache,
+  readMarketplaces,
   refreshMarketplaceIndex,
   removeMarketplaceIndex,
   upsertMarketplaceIndex,
   writeMarketplaces,
-} from './internal/marketplace';
+} from './internal/marketplace'
