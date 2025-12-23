@@ -1,5 +1,5 @@
-import esbuild from 'esbuild';
-import packageJson from './package.json';
+import esbuild from 'esbuild'
+import packageJson from './package.json'
 
 const banner = {
   js: `
@@ -10,7 +10,7 @@ const banner = {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
   `,
-};
+}
 
 esbuild.buildSync({
   bundle: true,
@@ -21,4 +21,4 @@ esbuild.buildSync({
   format: 'esm',
   banner,
   external: Object.keys(packageJson.dependencies),
-});
+})
