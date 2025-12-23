@@ -277,7 +277,9 @@ export default async function (fastify: FastifyInstance) {
                     qqRoomId: body.qqRoomId,
                     tgChatId: body.tgChatId,
                     tgThreadId: body.tgThreadId || null,
-                    instanceId: body.instanceId,
+                    instance: {
+                        connect: { id: body.instanceId }
+                    },
                     forwardMode: body.forwardMode || null,
                     nicknameMode: body.nicknameMode || null,
                     commandReplyMode: body.commandReplyMode || null,
@@ -371,7 +373,11 @@ export default async function (fastify: FastifyInstance) {
                     ...(body.qqRoomId !== undefined ? { qqRoomId: body.qqRoomId } : {}),
                     ...(body.tgChatId !== undefined ? { tgChatId: body.tgChatId } : {}),
                     ...(body.tgThreadId !== undefined ? { tgThreadId: body.tgThreadId } : {}),
-                    ...(body.instanceId !== undefined ? { instanceId: body.instanceId } : {}),
+                    ...(body.instanceId !== undefined ? {
+                        instance: {
+                            connect: { id: body.instanceId }
+                        }
+                    } : {}),
                     forwardMode: body.forwardMode,
                     nicknameMode: body.nicknameMode,
                     commandReplyMode: body.commandReplyMode,
@@ -492,15 +498,21 @@ async function notifyPairBinding(pair: any, options: PairNotificationOptions) {
         return;
     }
 
-    const tgChatId = pair.tgChatId?.toString() || '';
+    const tgChatId = pair.tgChatId;
+    const tgChatIdStr = tgChatId?.toString() || '';
+    const tgChatIdValue = tgChatId !== null && tgChatId !== undefined ? Number(tgChatId) : null;
     const qqRoomId = pair.qqRoomId?.toString() || '';
-    const description = `✅ 新配对已创建\nQQ 群: ${qqRoomId}\nTG 群: ${tgChatId}${pair.tgThreadId ? ` 话题 ${pair.tgThreadId}` : ''}`;
+    const description = `✅ 新配对已创建\nQQ 群: ${qqRoomId}\nTG 群: ${tgChatIdStr}${pair.tgThreadId ? ` 话题 ${pair.tgThreadId}` : ''}`;
 
     if (options.notifyTelegram && instance.tgBot) {
         try {
-            const chat = await instance.tgBot.getChat(tgChatId || 0);
+            if (tgChatIdValue === null || !Number.isFinite(tgChatIdValue)) {
+                log.warn({ instanceId: instance.id, tgChatId: tgChatIdStr }, 'Invalid Telegram chat id for notification');
+                return;
+            }
+            const chat = await instance.tgBot.getChat(tgChatIdValue);
             await chat.sendMessage(description, { disableWebPreview: true });
-            log.info({ instanceId: instance.id, tgChatId }, 'Telegram binding notification sent');
+            log.info({ instanceId: instance.id, tgChatId: tgChatIdStr }, 'Telegram binding notification sent');
         } catch (error: any) {
             log.warn(error, 'Failed to send Telegram binding notification');
         }

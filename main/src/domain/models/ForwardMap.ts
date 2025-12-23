@@ -128,7 +128,9 @@ export class ForwardMap {
         qqRoomId: BigInt(qqRoomId),
         tgChatId: BigInt(tgChatId),
         tgThreadId: normalizedThreadId,
-        instanceId: this.instanceId,
+        instance: {
+          connect: { id: this.instanceId },
+        },
       },
       select: { id: true, qqRoomId: true, tgChatId: true, tgThreadId: true, flags: true, instanceId: true, apiKey: true, ignoreRegex: true, ignoreSenders: true, forwardMode: true, nicknameMode: true, commandReplyMode: true, commandReplyFilter: true, commandReplyList: true },
     });
