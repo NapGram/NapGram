@@ -1,12 +1,6 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
     "target": "ESNext",
-    "esModuleInterop": true,
-    "sourceMap": false,
-    "moduleResolution": "Bundler",
-    "outDir": "build",
-    "skipLibCheck": true,
     "plugins": [
       {
         "name": "@kitajs/ts-html-plugin"
@@ -15,8 +9,14 @@
     "jsx": "react",
     "jsxFactory": "Html.createElement",
     "jsxFragmentFactory": "Html.Fragment",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
     "noEmit": true,
-    "resolveJsonModule": true
+    "outDir": "build",
+    "sourceMap": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules",
