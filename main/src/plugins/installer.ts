@@ -4,4 +4,4 @@ export {
   rollbackPlugin,
   uninstallPlugin,
   upgradePlugin,
-} from './internal/installer';
+} from './internal/installer'

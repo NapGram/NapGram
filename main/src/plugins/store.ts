@@ -5,4 +5,4 @@ export {
   readPluginsConfig,
   removePluginConfig,
   upsertPluginConfig,
-} from './internal/store';
+} from './internal/store'
