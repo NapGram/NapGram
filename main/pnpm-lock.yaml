@@ -33,8 +33,8 @@ importers:
         specifier: ^0.27.2
         version: 0.27.3(ws@8.18.3)
       '@naplink/naplink':
-        specifier: ^0.0.1
-        version: 0.0.1
+        specifier: ^0.0.3
+        version:  0.0.3
       '@prisma/adapter-pg':
         specifier: 7.1.0
         version: 7.1.0
@@ -676,8 +676,8 @@ packages:
   '@mtcute/wasm@0.27.0':
     resolution: {integrity: sha512-1v4eO1N1BVRQ8L+cyUsMAeLXs5suTGXyVv/tftkbd/mGGHxc+fvOWItp3Fmq+GIwN7m4VX7kztuMMLhHxv2i2Q==}
 
-  '@naplink/naplink@0.0.1':
-    resolution: {integrity: sha512-LUK8CtFMYbLO5VkSw6ifuv5pwZS8RRmNUmXD8CUg6lumIeaHU6pF3WdieHeTOIQjlSa0sCeMvTKgxsT8c0x2KA==}
+  '@naplink/naplink@0.0.3':
+    resolution: {integrity: sha512-Kj9decWNurJyCOQgSMlMZLOYg0xJtdgMVZO+O8nHMDPND7rhwwqqbVX11M7CIRBmHO1mjl5NTuY3OaI2lUCvGw==}
     engines: {node: '>=18.0.0'}
 
   '@pinojs/redact@0.4.0':
@@ -3056,7 +3056,7 @@ snapshots:
 
   '@mtcute/wasm@0.27.0': {}
 
-  '@naplink/naplink@0.0.1':
+  '@naplink/naplink@0.0.3':
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.18.3)
       ws: 8.18.3
