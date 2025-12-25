@@ -184,5 +184,16 @@ describe('commandArgsParser', () => {
 
             expect(CommandArgsParser.hasReplyMessage(msg)).toBe(true)
         })
+
+        it('returns false for replyToMessage without sender or chat', () => {
+            const msg: any = {
+                content: [], // Explicitly no 'reply' content
+                metadata: {
+                    raw: { replyToMessage: { id: 1 } },
+                },
+            }
+
+            expect(CommandArgsParser.hasReplyMessage(msg)).toBe(false)
+        })
     })
 })
