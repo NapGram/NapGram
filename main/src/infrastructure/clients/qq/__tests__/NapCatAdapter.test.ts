@@ -896,5 +896,61 @@ describe('NapCatAdapter', () => {
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_unidirectional_friend_list')
       mockNapLinkInstance.api.getUnidirectionalFriendList = vi.fn()
     })
+
+    it('should fallback for handleQuickOperation', async () => {
+      mockNapLinkInstance.api.handleQuickOperation = undefined
+      await adapter.handleQuickOperation({ ctx: 'test' }, { op: 'approve' })
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('.handle_quick_operation', { context: { ctx: 'test' }, operation: { op: 'approve' } })
+      mockNapLinkInstance.api.handleQuickOperation = vi.fn()
+    })
+
+    it('should fallback for getModelShow', async () => {
+      mockNapLinkInstance.api.getModelShow = undefined
+      await adapter.getModelShow('model1')
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_get_model_show', { model: 'model1' })
+      mockNapLinkInstance.api.getModelShow = vi.fn()
+    })
+
+    it('should fallback for setModelShow', async () => {
+      mockNapLinkInstance.api.setModelShow = undefined
+      await adapter.setModelShow('model1', 'show1')
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_set_model_show', { model: 'model1', model_show: 'show1' })
+      mockNapLinkInstance.api.setModelShow = vi.fn()
+    })
+
+    it('should fallback for getPacketStatus', async () => {
+      mockNapLinkInstance.api.getPacketStatus = undefined
+      await adapter.getPacketStatus()
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('nc_get_packet_status')
+      mockNapLinkInstance.api.getPacketStatus = vi.fn()
+    })
+
+    it('should fallback for setInputStatus', async () => {
+      mockNapLinkInstance.api.setInputStatus = undefined
+      await adapter.setInputStatus('u', 1)
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_input_status', { user_id: 'u', event_type: 1, eventType: 1 })
+      mockNapLinkInstance.api.setInputStatus = vi.fn()
+    })
+
+    it('should fallback for ocrImage', async () => {
+      mockNapLinkInstance.api.ocrImage = undefined
+      await adapter.ocrImage('img.jpg', false)
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('ocr_image', { image: 'img.jpg' })
+      mockNapLinkInstance.api.ocrImage = vi.fn()
+    })
+
+    it('should fallback for translateEn2zh', async () => {
+      mockNapLinkInstance.api.translateEn2zh = undefined
+      await adapter.translateEn2zh(['hello', 'world'])
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('translate_en2zh', { words: ['hello', 'world'] })
+      mockNapLinkInstance.api.translateEn2zh = vi.fn()
+    })
+
+    it('should fallback for checkUrlSafely', async () => {
+      mockNapLinkInstance.api.checkUrlSafely = undefined
+      await adapter.checkUrlSafely('https://example.com')
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('check_url_safely', { url: 'https://example.com' })
+      mockNapLinkInstance.api.checkUrlSafely = vi.fn()
+    })
   })
 })
