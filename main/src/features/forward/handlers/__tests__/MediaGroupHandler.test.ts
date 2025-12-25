@@ -85,4 +85,91 @@ describe('mediaGroupHandler', () => {
     expect(texts.some(text => text.includes('Alice'))).toBe(true)
     expect(texts.some(text => text.includes('caption here'))).toBe(true)
   })
+
+  it('handles flush error gracefully', async () => {
+    vi.mocked(messageConverter.fromTelegram).mockReturnValue({
+      id: '1',
+      platform: 'telegram',
+      sender: { id: '1', name: 'Alice' },
+      chat: { id: '100', type: 'group' },
+      content: [{ type: 'image', data: { url: 'img' } }],
+      timestamp: 1,
+    } as UnifiedMessage)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
+
+    const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
+    const msg: any = {
+      id: 10,
+      text: '',
+      date: new Date(),
+      sender: { id: 1, displayName: 'Alice' },
+      chat: { id: 100 },
+      mediaGroupId: 'g2',
+    }
+
+    await handler.handleMediaGroup(msg, { qqRoomId: '888' })
+
+    // Mock sendMessage to fail
+    vi.mocked(qqClient.sendMessage).mockRejectedValueOnce(new Error('Send failed'))
+
+    await vi.runAllTimersAsync()
+
+    // Should not throw, error is logged
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+  })
+
+  it('uses raw.groupedId when mediaGroupId is missing', async () => {
+    vi.mocked(messageConverter.fromTelegram).mockReturnValue({
+      id: '1',
+      platform: 'telegram',
+      sender: { id: '1', name: 'Alice' },
+      chat: { id: '100', type: 'group' },
+      content: [{ type: 'image', data: { url: 'img' } }],
+      timestamp: 1,
+    } as UnifiedMessage)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
+
+    const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
+    const msg: any = {
+      id: 10,
+      text: '',
+      date: new Date(),
+      sender: { id: 1, displayName: 'Alice' },
+      chat: { id: 100 },
+      raw: { groupedId: 'g3' }, // Test raw.groupedId path
+    }
+
+    const result = await handler.handleMediaGroup(msg, { qqRoomId: '888' })
+    expect(result).toBe(true)
+  })
+
+
+  it('destroys handler and clears timers', async () => {
+    const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
+
+    const msg1: any = {
+      id: 10,
+      date: new Date(),
+      sender: { id: 1 },
+      chat: { id: 100 },
+      mediaGroupId: 'g4',
+    }
+    const msg2: any = {
+      id: 11,
+      date: new Date(),
+      sender: { id: 1 },
+      chat: { id: 100 },
+      mediaGroupId: 'g5',
+    }
+
+    await handler.handleMediaGroup(msg1, { qqRoomId: '888' })
+    await handler.handleMediaGroup(msg2, { qqRoomId: '888' })
+
+    // Destroy should clear all timers
+    handler.destroy()
+
+    // Advance timers - nothing should flush
+    await vi.runAllTimersAsync()
+    expect(qqClient.sendMessage).not.toHaveBeenCalled()
+  })
 })
