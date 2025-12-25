@@ -1007,5 +1007,30 @@ describe('NapCatAdapter', () => {
       await expect(adapter.cleanStreamTempFile()).rejects.toThrow('cleanStreamTempFile is not available')
       mockNapLinkInstance.api.cleanStreamTempFile = vi.fn()
     })
+
+    it('should fallback for getRecentContact', async () => {
+      mockNapLinkInstance.api.getRecentContact = undefined
+      await adapter.getRecentContact(10)
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_recent_contact', { count: 10 })
+      mockNapLinkInstance.api.getRecentContact = vi.fn()
+    })
+
+    it('should throw error for downloadFileStreamToFile when not available', async () => {
+      mockNapLinkInstance.api.downloadFileStreamToFile = undefined
+      await expect(adapter.downloadFileStreamToFile('file123')).rejects.toThrow('downloadFileStreamToFile is not available')
+      mockNapLinkInstance.api.downloadFileStreamToFile = vi.fn()
+    })
+
+    it('should throw error for downloadFileImageStreamToFile when not available', async () => {
+      mockNapLinkInstance.api.downloadFileImageStreamToFile = undefined
+      await expect(adapter.downloadFileImageStreamToFile('img123')).rejects.toThrow('downloadFileImageStreamToFile is not available')
+      mockNapLinkInstance.api.downloadFileImageStreamToFile = vi.fn()
+    })
+
+    it('should throw error for downloadFileRecordStreamToFile when not available', async () => {
+      mockNapLinkInstance.api.downloadFileRecordStreamToFile = undefined
+      await expect(adapter.downloadFileRecordStreamToFile('rec123')).rejects.toThrow('downloadFileRecordStreamToFile is not available')
+      mockNapLinkInstance.api.downloadFileRecordStreamToFile = vi.fn()
+    })
   })
 })
