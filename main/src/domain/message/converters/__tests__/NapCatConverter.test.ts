@@ -96,4 +96,60 @@ describe('NapCatConverter', () => {
     expect(result.sender.name).toBe('Nick')
     expect(result.chat).toEqual({ id: '999', type: 'private', name: undefined })
   })
+
+
+  it('handles empty text for truncation', () => {
+    const converter = new NapCatConverter()
+    // Mock access to private method via any
+    const truncated = (converter as any).truncateText(null)
+    expect(truncated).toBe('')
+  })
+
+  it('handles short text for truncation', () => {
+    const converter = new NapCatConverter()
+    const text = 'short'
+    // length <= maxLength
+    const truncated = (converter as any).truncateText(text, 100)
+    expect(truncated).toBe('short')
+  })
+
+  it('handles JSON segment returning object', () => {
+    const converter = new NapCatConverter()
+    // Mock jsonCardConverter attached to instance
+    const mockJsonConverter = {
+      convertJsonCard: () => ({ type: 'json_card', data: {} })
+    };
+    (converter as any).jsonCardConverter = mockJsonConverter
+
+    const napCatMsg = {
+      message_id: 3,
+      time: 123,
+      user_id: 1,
+      message: [{ type: 'json', data: { data: '{}' } }]
+    }
+    const result = converter.fromNapCat(napCatMsg)
+    // Should return the converted object directly (line 128)
+    expect(result.content[0].type).toBe('json_card')
+  })
+
+  it('handles segment converter returning array', () => {
+    const converter = new NapCatConverter()
+    // Mock textConverter to return array
+    const mockTextConverter = {
+      convertText: () => [{ type: 'text', data: { text: 'a' } }, { type: 'text', data: { text: 'b' } }]
+    };
+    (converter as any).textConverter = mockTextConverter
+
+    const napCatMsg = {
+      message_id: 4,
+      time: 123,
+      user_id: 1,
+      message: [{ type: 'text', data: { text: 'split' } }]
+    }
+    const result = converter.fromNapCat(napCatMsg)
+    // Should flatten the array (line 30)
+    expect(result.content).toHaveLength(2)
+    expect(result.content[0].data.text).toBe('a')
+    expect(result.content[1].data.text).toBe('b')
+  })
 })
