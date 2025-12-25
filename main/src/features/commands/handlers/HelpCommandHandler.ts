@@ -18,8 +18,7 @@ export class HelpCommandHandler {
       // 跳过别名
       if (name !== command.name)
         continue
-      if (processedCommands.has(command.name))
-        continue
+
 
       processedCommands.add(command.name)
 

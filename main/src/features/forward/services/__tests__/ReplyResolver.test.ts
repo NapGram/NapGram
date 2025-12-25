@@ -26,6 +26,10 @@ function createMessage(): UnifiedMessage {
 }
 
 describe('replyResolver', () => {
+  beforeEach(() => {
+    debugMock.mockClear()
+  })
+
   it('returns undefined when QQ message has no reply content', async () => {
     const mapper = {
       findTgMsgId: vi.fn(),
@@ -53,7 +57,27 @@ describe('replyResolver', () => {
     const result = await resolver.resolveQQReply(msg, 1, BigInt(456))
 
     expect(mapper.findTgMsgId).toHaveBeenCalledWith(1, BigInt(456), '88')
+    expect(mapper.findTgMsgId).toHaveBeenCalledWith(1, BigInt(456), '88')
     expect(result).toBe(99)
+  })
+
+  it('handle QQ reply when TG message ID not found', async () => {
+    const mapper = {
+      findTgMsgId: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolver = new ReplyResolver(mapper as any)
+
+    const msg = createMessage()
+    msg.content.push({
+      type: 'reply',
+      data: { messageId: '77' },
+    } as any)
+
+    const result = await resolver.resolveQQReply(msg, 1, BigInt(456))
+
+    expect(mapper.findTgMsgId).toHaveBeenCalledWith(1, BigInt(456), '77')
+    expect(result).toBeUndefined()
+    expect(debugMock).not.toHaveBeenCalled()
   })
 
   it('returns undefined when TG message has no replyToMessage', async () => {
