@@ -167,13 +167,25 @@ describe('messageUtils', () => {
 
         it('returns true for instance owner', () => {
             const result = MessageUtils.isAdmin('1234567890', mockInstance)
-
             expect(result).toBe(true)
+        })
+
+        it('returns true if matches ADMIN_QQ', () => {
+            (env as any).ADMIN_QQ = '1111'
+            const result = MessageUtils.isAdmin('1111', mockInstance)
+            expect(result).toBe(true)
+                ; (env as any).ADMIN_QQ = null
+        })
+
+        it('returns true if matches ADMIN_TG', () => {
+            (env as any).ADMIN_TG = '2222'
+            const result = MessageUtils.isAdmin('2222', mockInstance)
+            expect(result).toBe(true)
+                ; (env as any).ADMIN_TG = null
         })
 
         it('returns false for non-admin user', () => {
             const result = MessageUtils.isAdmin('9999999999', mockInstance)
-
             expect(result).toBeFalsy()
         })
     })
