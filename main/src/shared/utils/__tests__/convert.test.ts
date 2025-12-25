@@ -294,4 +294,13 @@ describe('convert', () => {
     // Input is string path ending in .tgs
     await expect(convert.tgs2gif('key', async () => '/path/to.tgs')).rejects.toThrow('Direct fail')
   })
+
+  it('tgs2gif warns on cleanup failure', async () => {
+    // fs unlink fails
+    fsPromMocks.unlink.mockRejectedValueOnce(new Error('unlink failed'))
+
+    await convert.tgs2gif('cleanup_fail', async () => Buffer.from('tgs'))
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith(expect.any(Error), '[tgs2gif] Failed to cleanup temp TGS file')
+  })
 })

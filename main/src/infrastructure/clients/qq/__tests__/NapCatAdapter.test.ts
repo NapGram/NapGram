@@ -655,4 +655,176 @@ describe('NapCatAdapter', () => {
       }
     })
   })
+
+  describe('Wrapper Error Handling', () => {
+    it('should handle banUser error', async () => {
+      mockNapLinkInstance.setGroupBan.mockRejectedValue(new Error('fail'))
+      await expect(adapter.banUser('g', 'u', 100)).rejects.toThrow('fail')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle unbanUser error', async () => {
+      mockNapLinkInstance.unsetGroupBan.mockRejectedValue(new Error('fail'))
+      await expect(adapter.unbanUser('g', 'u')).rejects.toThrow('fail')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle kickUser error', async () => {
+      mockNapLinkInstance.setGroupKick.mockRejectedValue(new Error('fail'))
+      await expect(adapter.kickUser('g', 'u')).rejects.toThrow('fail')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle setGroupCard error', async () => {
+      mockNapLinkInstance.setGroupCard.mockRejectedValue(new Error('fail'))
+      await expect(adapter.setGroupCard('g', 'u', '')).rejects.toThrow('fail')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle setGroupWholeBan error', async () => {
+      mockNapLinkInstance.setGroupWholeBan.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.setGroupWholeBan('g', true)).rejects.toThrow('设置全员禁言失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle setGroupAdmin error', async () => {
+      mockNapLinkInstance.setGroupAdmin.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.setGroupAdmin('g', 'u', true)).rejects.toThrow('设置管理员失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle setGroupName error', async () => {
+      mockNapLinkInstance.setGroupName.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.setGroupName('g', 'n')).rejects.toThrow('修改群名失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle setGroupSpecialTitle error', async () => {
+      mockNapLinkInstance.setGroupSpecialTitle.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.setGroupSpecialTitle('g', 'u', 't')).rejects.toThrow('设置专属头衔失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle handleFriendRequest error', async () => {
+      mockNapLinkInstance.handleFriendRequest.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.handleFriendRequest('f', true)).rejects.toThrow('处理好友申请失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle handleGroupRequest error', async () => {
+      mockNapLinkInstance.handleGroupRequest.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.handleGroupRequest('g', 'add', true)).rejects.toThrow('处理加群申请失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should handle sendLike error', async () => {
+      mockNapLinkInstance.sendLike.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.sendLike('u', 1)).rejects.toThrow('点赞失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+
+    it('should validate sendLike times', async () => {
+      await expect(adapter.sendLike('u', 0)).rejects.toThrow('点赞次数必须在1-10之间')
+      await expect(adapter.sendLike('u', 11)).rejects.toThrow('点赞次数必须在1-10之间')
+    })
+
+    it('should handle getGroupHonorInfo error', async () => {
+      mockNapLinkInstance.getGroupHonorInfo.mockRejectedValue(new Error('upstream'))
+      await expect(adapter.getGroupHonorInfo('g')).rejects.toThrow('获取群荣誉信息失败: upstream')
+      await expect(adapter.getGroupHonorInfo('g')).rejects.toThrow('获取群荣誉信息失败: upstream')
+      expect(mockLogger.error).toHaveBeenCalled()
+    })
+  })
+
+  describe('API Fallbacks', () => {
+    // Map of method name to expected callApi name and args
+    const fallbacks: Record<string, [string, any]> = {
+      getGroupShutList: ['get_group_shut_list', { group_id: 'g' }],
+      sendPrivateForwardMessage: ['send_private_forward_msg', { u: 1 }],
+      forwardFriendSingleMsg: ['forward_friend_single_msg', { user_id: 'u', message_id: 'm' }],
+      forwardGroupSingleMsg: ['forward_group_single_msg', { group_id: 'g', message_id: 'm' }],
+      sendForwardMsg: ['send_forward_msg', { f: 1 }],
+      sendGroupNotice: ['_send_group_notice', { n: 1 }],
+      getGroupNotice: ['_get_group_notice', { group_id: 'g' }],
+      // delGroupNotice requires notice_id cast to number
+      // setOnlineStatus, setDiyOnlineStatus have simpler args
+      sendArkShare: ['send_ark_share', { a: 1 }],
+      sendGroupArkShare: ['send_group_ark_share', { group_id: 'g' }],
+      getMiniAppArk: ['get_mini_app_ark', { m: 1 }],
+      getAiCharacters: ['get_ai_characters', { group_id: 'g', chat_type: 1 }],
+      getAiRecord: ['get_ai_record', { group_id: 'g', character: 'c', text: 't' }],
+      sendGroupAiRecord: ['send_group_ai_record', { group_id: 'g', character: 'c', text: 't' }],
+      setGroupSign: ['set_group_sign', { group_id: 'g' }],
+      sendGroupSign: ['send_group_sign', { group_id: 'g' }],
+      getClientkey: ['get_clientkey', undefined], // no args
+      clickInlineKeyboardButton: ['click_inline_keyboard_button', { b: 1 }]
+    }
+
+    it('should fallback to callApi when method missing', async () => {
+      // Temporarily remove methods from api
+      const api: any = mockNapLinkInstance.api
+      const backup: any = {}
+      for (const k of Object.keys(fallbacks)) {
+        backup[k] = api[k]
+        api[k] = undefined
+      }
+
+      // Test each
+      for (const [method, [apiName, args]] of Object.entries(fallbacks)) {
+        try {
+          // Construct args based on method signature
+          // This is a bit hacky, we try to pass reasonable args
+          // If method matches key in fallbacks map
+          if (method === 'getGroupShutList' || method === 'getGroupNotice' || method === 'sendGroupArkShare' || method === 'setGroupSign' || method === 'sendGroupSign') {
+            await (adapter as any)[method]('g')
+          } else if (method === 'forwardFriendSingleMsg') {
+            await (adapter as any)[method]('u', 'm')
+          } else if (method === 'forwardGroupSingleMsg') {
+            await (adapter as any)[method]('g', 'm')
+          } else if (method === 'getAiCharacters') {
+            await (adapter as any)[method]('g') // chatType default 1
+          } else if (method === 'getAiRecord' || method === 'sendGroupAiRecord') {
+            await (adapter as any)[method]('g', 'c', 't')
+          } else if (method === 'getClientkey') {
+            await (adapter as any)[method]()
+          } else {
+            // Params object
+            await (adapter as any)[method](args)
+          }
+
+          if (args) {
+            expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith(apiName, expect.objectContaining(args))
+          } else {
+            expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith(apiName)
+          }
+        } catch (e) {
+          throw new Error(`Fallback test failed for ${method}: ${e}`)
+        }
+      }
+
+      // Restore
+      Object.assign(api, backup)
+    })
+
+    it('should fallback for delGroupNotice', async () => {
+      mockNapLinkInstance.api.delGroupNotice = undefined
+      await adapter.delGroupNotice('g', '123')
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_del_group_notice', { group_id: 'g', notice_id: 123 })
+      mockNapLinkInstance.api.delGroupNotice = vi.fn()
+    })
+
+    it('should fallback for setOnlineStatus', async () => {
+      mockNapLinkInstance.api.setOnlineStatus = undefined
+      await adapter.setOnlineStatus(1, 2, 3)
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_online_status', { status: 1, ext_status: 2, battery_status: 3 })
+      mockNapLinkInstance.api.setOnlineStatus = vi.fn()
+    })
+
+    it('should fallback for setDiyOnlineStatus', async () => {
+      mockNapLinkInstance.api.setDiyOnlineStatus = undefined
+      await adapter.setDiyOnlineStatus(1, 'w', 2)
+      expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_diy_online_status', { face_id: 1, wording: 'w', face_type: 2 })
+      mockNapLinkInstance.api.setDiyOnlineStatus = vi.fn()
+    })
+  })
 })
