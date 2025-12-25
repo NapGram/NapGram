@@ -272,12 +272,26 @@ describe('convert', () => {
   })
 
   it('customEmoji returns existing normal size', async () => {
-    // Mock existsSync
-    // fsMocks.existsSync is mocked to false in beforeEach.
-    // Override for this test.
     fsMocks.existsSync.mockImplementation((p: string) => p === '/cache/e_exist.png')
-
     const res = await convert.customEmoji('e_exist', async () => Buffer.from(''), false)
     expect(res).toBe('/cache/e_exist.png')
+  })
+
+  it('customEmoji returns existing normal size GIF', async () => {
+    fsMocks.existsSync.mockImplementation((p: string) => p === '/cache/e_exist_gif.gif')
+    const res = await convert.customEmoji('e_exist_gif', async () => Buffer.from(''), false)
+    expect(res).toBe('/cache/e_exist_gif.gif')
+  })
+
+  it('customEmoji returns existing small size GIF', async () => {
+    fsMocks.existsSync.mockImplementation((p: string) => p === '/cache/e_small_gif@50.gif')
+    const res = await convert.customEmoji('e_small_gif', async () => Buffer.from(''), true)
+    expect(res).toBe('/cache/e_small_gif@50.gif')
+  })
+
+  it('tgs2gif throws on direct file conversion failure', async () => {
+    vi.mocked(tgsMocks.tgsToGif).mockRejectedValueOnce(new Error('Direct fail'))
+    // Input is string path ending in .tgs
+    await expect(convert.tgs2gif('key', async () => '/path/to.tgs')).rejects.toThrow('Direct fail')
   })
 })
