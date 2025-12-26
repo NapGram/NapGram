@@ -301,7 +301,7 @@ export class MediaFeature {
       const mime = type?.mime || 'image/jpeg'
 
       // 简单的格式检查 (Jimp 支持的格式)
-      if (!['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/gif'].includes(mime)) {
+      if (!['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/gif', 'image/webp'].includes(mime)) {
         logger.warn(`Unsupported/Unnecessary image format for compression: ${mime}`)
         return buffer
       }

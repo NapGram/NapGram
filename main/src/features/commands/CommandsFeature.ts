@@ -444,6 +444,7 @@ export class CommandsFeature {
    * 注册命令
    */
   registerCommand(command: Command) {
+    process.stdout.write(`[DEBUG] registerCommand: ${command.name}\n`)
     this.registry.register(command)
   }
 
