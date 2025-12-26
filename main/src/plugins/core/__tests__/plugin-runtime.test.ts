@@ -278,10 +278,10 @@ describe('PluginRuntime Core', () => {
 
   test('should handle reload plugin failure when runtime is not active', async () => {
     const result = await pluginRuntime.reloadPlugin('test-plugin', { newConfig: true })
-    expect(result).toEqual({ 
-      id: 'test-plugin', 
-      success: false, 
-      error: 'PluginRuntime is not running' 
+    expect(result).toEqual({
+      id: 'test-plugin',
+      success: false,
+      error: 'PluginRuntime is not running'
     })
   })
 
@@ -309,10 +309,10 @@ describe('PluginRuntime Core', () => {
 
     // Try to reload a non-existent plugin
     const result = await pluginRuntime.reloadPlugin('non-existent-plugin')
-    expect(result).toEqual({ 
-      id: 'non-existent-plugin', 
-      success: false, 
-      error: 'Plugin not loaded: non-existent-plugin' 
+    expect(result).toEqual({
+      id: 'non-existent-plugin',
+      success: false,
+      error: 'Plugin not loaded: non-existent-plugin'
     })
   })
 
@@ -495,10 +495,65 @@ describe('PluginRuntime Core', () => {
   test('should set APIs correctly', () => {
     const newApis = { message: { send: vi.fn() } }
     pluginRuntime.setApis(newApis)
-    
+
     // This is a bit tricky to test since setApis is a private method in PluginRuntime
     // But it should at least not throw
     expect(() => pluginRuntime.setApis(newApis)).not.toThrow()
+  })
+
+  test('should handle plugin ID mismatch (line 290)', async () => {
+    const specs = [{
+      id: 'spec-id',
+      module: './mismatch-plugin',
+      enabled: true,
+      config: {}
+    }]
+
+    vi.spyOn(pluginRuntime['loader'], 'load').mockResolvedValue({
+      plugin: { id: 'plugin-id', install: vi.fn() } as any,
+      type: 'native' as const
+    })
+
+    vi.spyOn(pluginRuntime['lifecycleManager'], 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
+
+    await pluginRuntime.start(specs)
+    const instance = pluginRuntime.getPlugin('spec-id')
+    expect(instance?.plugin.id).toBe('spec-id')
+  })
+
+  test('should handle non-Error object in start failure (line 166)', async () => {
+    const specs = [{
+      id: 'fail-plugin',
+      module: './fail-plugin',
+      enabled: true,
+      config: {}
+    }]
+
+    vi.spyOn(pluginRuntime['loader'], 'load').mockRejectedValue('string error')
+    vi.spyOn(pluginRuntime['lifecycleManager'], 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
+
+    const report = await pluginRuntime.start(specs)
+    expect(report.failed[0].error).toBe('string error')
+  })
+
+  test('should handle missing config in spec (line 302, 312)', async () => {
+    const specs = [{
+      id: 'no-config-plugin',
+      module: './no-config-plugin',
+      enabled: true
+      // config is missing
+    }] as any
+
+    vi.spyOn(pluginRuntime['loader'], 'load').mockResolvedValue({
+      plugin: { id: 'no-config-plugin', install: vi.fn() } as any,
+      type: 'native' as const
+    })
+
+    vi.spyOn(pluginRuntime['lifecycleManager'], 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
+
+    await pluginRuntime.start(specs)
+    const instance = pluginRuntime.getPlugin('no-config-plugin')
+    expect(instance?.config).toEqual({})
   })
 })
 
@@ -514,7 +569,7 @@ describe('Global Runtime', () => {
   test('should create and return global runtime instance', () => {
     const runtime1 = getGlobalRuntime()
     const runtime2 = getGlobalRuntime()
-    
+
     expect(runtime1).toBe(runtime2) // Should return the same instance
   })
 
@@ -522,7 +577,7 @@ describe('Global Runtime', () => {
     const apis = { message: {}, instance: {} }
     const runtime1 = getGlobalRuntime({ apis })
     const runtime2 = getGlobalRuntime({ apis: { user: {} } }) // This config should be ignored
-    
-    expect(runtime1).toBe(runtime2) 
+
+    expect(runtime1).toBe(runtime2)
   })
 })
