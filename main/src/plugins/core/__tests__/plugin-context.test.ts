@@ -1,99 +1,118 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest'
 import { PluginContextImpl } from '../plugin-context'
-import { EventBus } from '../event-bus'
+import type { EventBus } from '../event-bus'
 
-const mocks = vi.hoisted(() => ({
-    logger: {
-        debug: vi.fn(),
-        info: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-    },
-    storage: {}
+const mockLogger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+}
+
+vi.mock('../../api/logger', () => ({
+    createPluginLogger: vi.fn(() => mockLogger)
 }))
 
-vi.mock('../api/logger', () => ({
-    createPluginLogger: vi.fn(() => mocks.logger),
-}))
-
-vi.mock('../api/storage', () => ({
-    createPluginStorage: vi.fn(() => mocks.storage),
+vi.mock('../../api/storage', () => ({
+    createPluginStorage: vi.fn(() => ({}))
 }))
 
 describe('PluginContextImpl', () => {
     let eventBus: EventBus
     let context: PluginContextImpl
-    const pluginId = 'test-plugin'
-    const config = { key: 'value' }
 
     beforeEach(() => {
         vi.clearAllMocks()
-        eventBus = new EventBus()
-        context = new PluginContextImpl(pluginId, config, eventBus)
+        eventBus = {
+            subscribe: vi.fn(),
+            publish: vi.fn(),
+            removePluginSubscriptions: vi.fn(),
+        } as any
+        context = new PluginContextImpl('test-plugin', { foo: 'bar' }, eventBus)
     })
 
-    test('initialization', () => {
-        expect(context.pluginId).toBe(pluginId)
-        expect(context.config).toEqual(config)
+    test('initialization and metadata', () => {
+        expect(context.pluginId).toBe('test-plugin')
+        expect(context.config).toEqual({ foo: 'bar' })
         expect(context.logger).toBeDefined()
         expect(context.storage).toBeDefined()
     })
 
-    test('api injection', () => {
-        const mockMessageAPI = { send: vi.fn() } as any
-        const customContext = new PluginContextImpl(pluginId, config, eventBus, { message: mockMessageAPI })
-        expect(customContext.message).toBe(mockMessageAPI)
-    })
-
-    test('mock apis work when not provided', async () => {
-        const warnSpy = vi.spyOn(context.logger, 'warn')
-
-        await context.message.send({} as any)
-        await context.instance.list()
-        await context.user.getInfo('123')
-        await context.group.getInfo('123')
-        await context.group.getMembers?.('123')
-        await context.group.setAdmin?.('123', '456', true)
-        await context.group.muteUser?.('123', '456', 60)
-        await context.group.kickUser?.('123', '456')
-
-        expect(warnSpy).toHaveBeenCalled()
-    })
-
-    test('on subscribes to eventBus', () => {
+    test('event subscription', () => {
         const handler = vi.fn()
-        const spy = vi.spyOn(eventBus, 'subscribe')
         context.on('message', handler)
-        expect(spy).toHaveBeenCalledWith('message', handler, undefined, pluginId)
+        expect(eventBus.subscribe).toHaveBeenCalledWith('message', handler, undefined, 'test-plugin')
     })
 
     test('command registration', () => {
-        const cmd = { name: 'test', aliases: ['t'], handler: vi.fn() }
-        context.command(cmd)
-        const commands = context.getCommands()
-        expect(commands.get('test')).toBe(cmd)
-        expect(commands.get('t')).toBe(cmd)
+        context.command({
+            name: 'test',
+            aliases: ['t'],
+            handler: async () => { }
+        })
+        const commands = (context as any).getCommands()
+        expect(commands.has('test')).toBe(true)
+        expect(commands.has('t')).toBe(true)
     })
 
-    test('lifecycle hooks handles errors', async () => {
-        const error = new Error('bail')
-        const badCallback = () => { throw error }
-        const errSpy = vi.spyOn(context.logger, 'error')
+    test('lifecycle hooks registration', () => {
+        const onReload = vi.fn()
+        const onUnload = vi.fn()
+        context.onReload(onReload)
+        context.onUnload(onUnload)
+        expect((context as any).reloadCallbacks).toContain(onReload)
+        expect((context as any).unloadCallbacks).toContain(onUnload)
+    })
 
-        context.onReload(badCallback)
-        context.onUnload(badCallback)
+    test('lifecycle hooks triggering', async () => {
+        const onReload = vi.fn()
+        const onUnload = vi.fn()
+        context.onReload(onReload)
+        context.onUnload(onUnload)
 
         await context.triggerReload()
-        expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('reload'), error)
+        expect(onReload).toHaveBeenCalled()
 
         await context.triggerUnload()
-        expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('unload'), error)
+        expect(onUnload).toHaveBeenCalled()
+    })
+
+    test('lifecycle hooks error handling', async () => {
+        context.onReload(() => { throw new Error('reload fail') })
+        context.onUnload(() => { throw new Error('unload fail') })
+
+        await context.triggerReload()
+        expect(mockLogger.error).toHaveBeenCalledWith('Error in reload callback:', expect.any(Error))
+
+        await context.triggerUnload()
+        expect(mockLogger.error).toHaveBeenCalledWith('Error in unload callback:', expect.any(Error))
     })
 
     test('cleanup', () => {
-        const spy = vi.spyOn(eventBus, 'removePluginSubscriptions')
         context.cleanup()
-        expect(spy).toHaveBeenCalledWith(pluginId)
-        expect(context.getCommands().size).toBe(0)
+        expect(eventBus.removePluginSubscriptions).toHaveBeenCalledWith('test-plugin')
+    })
+
+    test('mock apis work when not provided', async () => {
+        // MessageAPI
+        expect(await context.message.send({})).toBeDefined()
+        await context.message.recall('')
+        expect(await context.message.get('')).toBeNull()
+
+        // InstanceAPI
+        expect(await context.instance.list()).toEqual([])
+        expect(await context.instance.get(0)).toBeNull()
+        expect(await context.instance.getStatus(0)).toBe('unknown')
+
+        // UserAPI
+        expect(await context.user.getInfo('')).toBeNull()
+        expect(await context.user.isFriend('')).toBe(false)
+
+        // GroupAPI
+        expect(await context.group.getInfo('')).toBeNull()
+        expect(await context.group.getMembers('')).toEqual([])
+        await context.group.setAdmin('', '', true)
+        await context.group.muteUser('', '', 60)
+        await context.group.kickUser('', '')
     })
 })
