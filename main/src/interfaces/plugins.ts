@@ -2,8 +2,10 @@ import type { FastifyInstance } from 'fastify'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
+import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import env from '../domain/models/env'
+import { getGlobalRuntime } from '../plugins/core/plugin-runtime'
 import { getPluginVersions, installFromMarketplace, rollbackPlugin, uninstallPlugin, upgradePlugin } from '../plugins/installer'
 import { PluginRuntime } from '../plugins/runtime'
 import {
@@ -17,6 +19,70 @@ import { getLogger } from '../shared/logger'
 import { ApiResponse } from '../shared/utils/api-response'
 
 const logger = getLogger('PluginAdmin')
+
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await fs.access(p)
+    return true
+  }
+  catch {
+    return false
+  }
+}
+
+function resolvePluginRootFromModule(modulePath: string): string {
+  const dir = path.dirname(modulePath)
+  return path.basename(dir) === 'dist' ? path.dirname(dir) : dir
+}
+
+async function readPackageMeta(rootDir: string): Promise<{ name?: string, description?: string, homepage?: string } | null> {
+  const pkgPath = path.join(rootDir, 'package.json')
+  if (!await pathExists(pkgPath))
+    return null
+  try {
+    const raw = await fs.readFile(pkgPath, 'utf8')
+    const pkg = JSON.parse(raw)
+    return {
+      name: typeof pkg?.name === 'string' ? pkg.name : undefined,
+      description: typeof pkg?.description === 'string' ? pkg.description : undefined,
+      homepage: typeof pkg?.homepage === 'string' ? pkg.homepage : undefined,
+    }
+  }
+  catch {
+    return null
+  }
+}
+
+async function loadPluginDefaultConfig(rootDir: string): Promise<any | null> {
+  const candidates = [
+    path.join(rootDir, 'dist', 'config.js'),
+    path.join(rootDir, 'dist', 'config.mjs'),
+    path.join(rootDir, 'config.js'),
+    path.join(rootDir, 'config.mjs'),
+    path.join(rootDir, 'config.json'),
+  ]
+
+  for (const candidate of candidates) {
+    if (!await pathExists(candidate))
+      continue
+    try {
+      if (candidate.endsWith('.json')) {
+        const raw = await fs.readFile(candidate, 'utf8')
+        return JSON.parse(raw)
+      }
+      const mod = await import(pathToFileURL(candidate).href)
+      if (mod?.defaultConfig)
+        return mod.defaultConfig
+      if (mod?.default)
+        return mod.default
+    }
+    catch (error) {
+      logger.warn({ error, candidate }, 'Failed to load plugin default config')
+    }
+  }
+
+  return null
+}
 
 function logPluginAdminHit(request: any, meta?: Record<string, any>) {
   logger.info({
@@ -172,6 +238,8 @@ export default async function (fastify: FastifyInstance) {
     const report = PluginRuntime.getLastReport()
     const failed = new Map(report.failed.map((f: any) => [f.id, f.error] as const))
     const loaded = new Set(report.loaded)
+    const runtime = getGlobalRuntime()
+    const runtimeActive = runtime.isActive()
 
     const plugins = await Promise.all(config.plugins.map(async (p) => {
       let absolute: string | null = null
@@ -181,12 +249,26 @@ export default async function (fastify: FastifyInstance) {
       catch {
         absolute = null
       }
+      const rootDir = absolute ? resolvePluginRootFromModule(absolute) : null
+      const runtimePlugin = runtimeActive ? runtime.getPlugin(p.id) : undefined
+      const runtimeMeta = runtimePlugin?.plugin
+      const pkgMeta = rootDir ? await readPackageMeta(rootDir) : null
+      const defaultConfig = runtimeMeta?.defaultConfig
+        ?? ((p.config == null && rootDir) ? await loadPluginDefaultConfig(rootDir) : null)
+      const description = runtimeMeta?.description || pkgMeta?.description
+      const name = runtimeMeta?.name || pkgMeta?.name
+      const homepage = runtimeMeta?.homepage || pkgMeta?.homepage
+
       return {
         ...p,
         absolute,
         exists: await moduleExistsAbsolute(absolute || p.module),
         loaded: loaded.has(p.id),
         error: failed.get(p.id) || null,
+        name,
+        description,
+        homepage,
+        defaultConfig,
       }
     }))
 
