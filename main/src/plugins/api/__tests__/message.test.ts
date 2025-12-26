@@ -45,7 +45,7 @@ describe('MessageAPIImpl', () => {
         })
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     const result = await messageAPI.send({
@@ -67,7 +67,7 @@ describe('MessageAPIImpl', () => {
         })
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     const result = await messageAPI.send({
@@ -90,7 +90,7 @@ describe('MessageAPIImpl', () => {
         })
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     await expect(messageAPI.recall({
@@ -110,7 +110,7 @@ describe('MessageAPIImpl', () => {
         })
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     const result = await messageAPI.get({
@@ -168,7 +168,7 @@ describe('MessageAPIImpl', () => {
         sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq123' })
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     // Test valid QQ channelId
@@ -201,7 +201,7 @@ describe('MessageAPIImpl', () => {
         sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq123' })
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     const result = await messageAPI.send({
@@ -219,7 +219,7 @@ describe('MessageAPIImpl', () => {
         recallMessage: vi.fn().mockResolvedValue(undefined)
       }
     })
-    
+
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     await expect(messageAPI.recall({
@@ -439,6 +439,26 @@ describe('MessageAPIImpl', () => {
     })).resolves.toBeNull()
   })
 
+  test('should map segments in segmentsToText (including nulls and numeric names)', async () => {
+    const sendMessage = vi.fn().mockResolvedValue({ id: 888 })
+    messageAPI = new MessageAPIImpl(() => ({
+      tgBot: { getChat: vi.fn().mockResolvedValue({ sendMessage }) },
+    }))
+
+    await messageAPI.send({
+      instanceId: 1,
+      channelId: 'tg:100',
+      content: [
+        { type: 'text', data: { text: 'T' } },
+        { type: 'at', data: { userName: 12345 as any } }, // numeric name edge case
+        null as any,
+        { type: 'at', data: {} },
+      ],
+    })
+
+    expect(sendMessage).toHaveBeenCalledWith('T@12345@', expect.any(Object))
+  })
+
   test('should reject get when QQ client is missing', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
@@ -486,13 +506,51 @@ describe('MessageAPIImpl', () => {
     expect(result?.segments[2].type).toBe('at')
     expect(result?.segments[3].type).toBe('raw')
   })
+
+  test('should handle Telegram channelId variants and video/audio/file segments', async () => {
+    const sendMessage = vi.fn().mockResolvedValue({ id: 555 })
+    messageAPI = new MessageAPIImpl(() => ({
+      tgBot: { getChat: vi.fn().mockResolvedValue({ sendMessage }) },
+    }))
+
+    // telegram: prefix
+    await messageAPI.send({
+      instanceId: 1,
+      channelId: 'telegram:100',
+      content: [
+        { type: 'video', data: { file: 'v.mp4' } },
+        { type: 'audio', data: { url: 'http://a' } },
+        { type: 'file', data: { file: 'f.bin', name: 'n' } },
+      ],
+    })
+
+    expect(sendMessage).toHaveBeenCalled()
+  })
+
+  test('should handle QQ private channelId and different segment types', async () => {
+    const sendMessage = vi.fn().mockResolvedValue({ messageId: 'qq777' })
+    messageAPI = new MessageAPIImpl(() => ({
+      qqClient: { uin: '1', sendMessage },
+    }))
+
+    await messageAPI.send({
+      instanceId: 1,
+      channelId: 'qq:private:888',
+      content: [
+        { type: 'image', data: { url: 'http://i' } },
+        { type: 'video', data: { url: 'http://v' } },
+      ],
+    })
+
+    expect(sendMessage).toHaveBeenCalled()
+  })
 })
 
 describe('createMessageAPI', () => {
   test('should create message API instance', () => {
     const api = MessageAPIImpl.prototype.constructor
     const messageAPI = new MessageAPIImpl()
-    
+
     expect(messageAPI).toBeDefined()
     expect(messageAPI.send).toBeDefined()
     expect(messageAPI.recall).toBeDefined()
@@ -502,7 +560,7 @@ describe('createMessageAPI', () => {
   test('should create message API with instance resolver', () => {
     const instanceResolver = vi.fn()
     const messageAPI = new MessageAPIImpl(instanceResolver)
-    
+
     expect(messageAPI).toBeDefined()
   })
 })

@@ -204,7 +204,7 @@ describe('Telegram client', () => {
     envMock.PROXY_IP = undefined
     envMock.PROXY_PORT = undefined
     fsMocks.existsSync.mockReturnValue(true)
-    ;(Telegram as any).existedBots = {}
+      ; (Telegram as any).existedBots = {}
   })
 
   it('creates a new bot and imports session', async () => {
@@ -231,7 +231,7 @@ describe('Telegram client', () => {
 
   it('connects existing session and reuses cached bot', async () => {
     const cached = { cached: true }
-    ;(Telegram as any).existedBots = { 5: cached }
+      ; (Telegram as any).existedBots = { 5: cached }
 
     const result = await Telegram.connect(5)
 
@@ -440,5 +440,22 @@ describe('Telegram client', () => {
     mtcuteNodeMocks.disconnect.mockRejectedValueOnce(new Error('disconnect fail'))
 
     await expect(bot.disconnect()).rejects.toThrow('disconnect fail')
+  })
+
+  it('covers edge cases in downloadMediaToTempFile (lines 251-265)', async () => {
+    const bot = await Telegram.connect(18)
+
+    // Case: media is Message with media
+    const msg = new Message({ media: { id: 'm', fileName: 'msg.png' } })
+    const path1 = await bot.downloadMediaToTempFile(msg, { returnType: 'path' })
+    expect(path1).toContain('msg.png')
+
+    // Case: options.ext without dot
+    const url1 = await bot.downloadMediaToTempFile({ id: 'x' }, { ext: 'jpg' })
+    expect(url1).toContain('.jpg')
+
+    // Case: media is object with fileName
+    const url2 = await bot.downloadMediaToTempFile({ fileName: 'obj.txt' })
+    expect(url2).toContain('obj.txt')
   })
 })
