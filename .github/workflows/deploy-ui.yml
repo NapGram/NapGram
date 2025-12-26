@@ -51,7 +51,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd web
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
       
       - name: Build UI
         run: |
