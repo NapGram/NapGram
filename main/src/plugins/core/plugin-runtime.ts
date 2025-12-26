@@ -50,6 +50,14 @@ export interface RuntimeReport {
   loadedPlugins?: Array<{
     id: string
     context: any
+    plugin?: {
+      id: string
+      name: string
+      version: string
+      description?: string
+      homepage?: string
+      defaultConfig?: any
+    }
   }>
 
   /** 加载失败的插件 */
@@ -178,6 +186,14 @@ export class PluginRuntime {
       report.loadedPlugins = instances.map(inst => ({
         id: inst.id,
         context: inst.context,
+        plugin: {
+          id: inst.plugin.id,
+          name: inst.plugin.name,
+          version: inst.plugin.version,
+          description: inst.plugin.description,
+          homepage: inst.plugin.homepage,
+          defaultConfig: (inst.plugin as any)?.defaultConfig,
+        },
       }))
 
       this.isRunning = true
