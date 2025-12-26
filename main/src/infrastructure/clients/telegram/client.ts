@@ -41,11 +41,11 @@ export default class Telegram {
     const proxyTransport
       = env.PROXY_IP && env.PROXY_PORT
         ? new HttpProxyTcpTransport({
-            host: env.PROXY_IP,
-            port: env.PROXY_PORT,
-            user: env.PROXY_USERNAME,
-            password: env.PROXY_PASSWORD,
-          })
+          host: env.PROXY_IP,
+          port: env.PROXY_PORT,
+          user: env.PROXY_USERNAME,
+          password: env.PROXY_PASSWORD,
+        })
         : undefined
 
     this.client = new TelegramClient({
@@ -248,7 +248,8 @@ export default class Telegram {
     options?: { prefix?: string, filename?: string, ext?: string, returnType?: 'url' | 'path' },
   ): Promise<string> {
     const prefix = options?.prefix || 'tg'
-    const nameFromMedia = typeof (media as any)?.fileName === 'string' ? (media as any).fileName : undefined
+    const mediaObj = media instanceof Message && (media as any).media ? (media as any).media : media
+    const nameFromMedia = typeof (mediaObj as any)?.fileName === 'string' ? (mediaObj as any).fileName : undefined
     const baseName = options?.filename || nameFromMedia
     const rawName = baseName
       ? `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}-${baseName}`

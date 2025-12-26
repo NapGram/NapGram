@@ -79,7 +79,7 @@ describe('PluginLifecycleManager', () => {
       ...mockPlugin,
       install: vi.fn().mockRejectedValue(new Error('Install failed')),
     }
-    
+
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'failing-plugin',
@@ -90,7 +90,7 @@ describe('PluginLifecycleManager', () => {
     }
 
     const result = await lifecycleManager.install(pluginInstance)
-    
+
     expect(result.success).toBe(false)
     expect(result.error).toBeInstanceOf(Error)
     expect(pluginInstance.state).toBe(PluginState.Error)
@@ -136,7 +136,7 @@ describe('PluginLifecycleManager', () => {
       ...createMockPluginContext(),
       triggerUnload: vi.fn().mockRejectedValue(new Error('Unload failed')),
     }
-    
+
     const pluginInstance: PluginInstance = {
       id: 'failing-plugin',
       plugin: { ...mockPlugin, uninstall: vi.fn() },
@@ -146,7 +146,7 @@ describe('PluginLifecycleManager', () => {
     }
 
     const result = await lifecycleManager.uninstall(pluginInstance)
-    
+
     expect(result.success).toBe(false)
     expect(result.error).toBeInstanceOf(Error)
     expect(pluginInstance.state).toBe(PluginState.Error)
@@ -205,7 +205,7 @@ describe('PluginLifecycleManager', () => {
       ...createMockPluginContext(),
       triggerReload: vi.fn().mockRejectedValue(new Error('Reload failed')),
     }
-    
+
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
       plugin: { ...mockPlugin, reload: vi.fn() },
@@ -223,7 +223,7 @@ describe('PluginLifecycleManager', () => {
   test('should install all plugins', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = createMockPluginContext()
-    
+
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
@@ -252,13 +252,13 @@ describe('PluginLifecycleManager', () => {
   test('should handle installAll with some failures', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = createMockPluginContext()
-    
+
     const failingPlugin = {
       ...mockPlugin,
       id: 'plugin-2',
       install: vi.fn().mockRejectedValue(new Error('Install failed')),
     }
-    
+
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
@@ -288,7 +288,7 @@ describe('PluginLifecycleManager', () => {
   test('should uninstall all plugins', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = createMockPluginContext()
-    
+
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
@@ -320,7 +320,7 @@ describe('PluginLifecycleManager', () => {
       ...createMockPluginContext(),
       triggerUnload: vi.fn().mockRejectedValue(new Error('Unload failed')),
     }
-    
+
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
@@ -345,6 +345,44 @@ describe('PluginLifecycleManager', () => {
     expect(result.failed[0].id).toBe('plugin-2')
     expect(pluginInstances[0].state).toBe(PluginState.Uninstalled)
     expect(pluginInstances[1].state).toBe(PluginState.Error)
+  })
+
+  test('should update config during reload with custom reload hook (line 202)', async () => {
+    const pluginContext = createMockPluginContext()
+    const pluginInstance: PluginInstance = {
+      id: 'test-plugin',
+      plugin: { ...mockPlugin, reload: vi.fn().mockResolvedValue(undefined) },
+      context: pluginContext,
+      config: { old: true },
+      state: PluginState.Installed,
+    }
+
+    const newConfig = { new: true }
+    await lifecycleManager.reload(pluginInstance, newConfig)
+
+    expect(pluginInstance.config).toEqual(newConfig)
+    expect((pluginInstance.context as any).config).toEqual(newConfig)
+  })
+
+  test('should update config during reload via uninstall/install (line 190)', async () => {
+    const pluginContext = createMockPluginContext()
+    const pluginInstance: PluginInstance = {
+      id: 'test-plugin',
+      plugin: { ...mockPlugin, reload: undefined },
+      context: pluginContext,
+      config: { old: true },
+      state: PluginState.Installed,
+    }
+
+    // Ensure uninstall/install succeed
+    vi.spyOn(lifecycleManager, 'uninstall').mockResolvedValue({ success: true, duration: 1 })
+    vi.spyOn(lifecycleManager, 'install').mockResolvedValue({ success: true, duration: 1 })
+
+    const newConfig = { new: true }
+    await lifecycleManager.reload(pluginInstance, newConfig)
+
+    expect(pluginInstance.config).toEqual(newConfig)
+    expect((pluginInstance.context as any).config).toEqual(newConfig)
   })
 
   test('should report health and stats', () => {
@@ -381,5 +419,33 @@ describe('PluginLifecycleManager', () => {
       error: 1,
       uninstalled: 1,
     })
+  })
+
+  test('should reload plugin without newConfig', async () => {
+    const pluginContext = createMockPluginContext()
+    const pluginInstance: PluginInstance = {
+      id: 'test-plugin',
+      plugin: { ...mockPlugin, reload: vi.fn() },
+      context: pluginContext,
+      config: { old: true },
+      state: PluginState.Installed,
+    }
+
+    await lifecycleManager.reload(pluginInstance)
+    expect(pluginInstance.config).toEqual({ old: true })
+  })
+
+  test('should uninstall plugin without uninstall hook', async () => {
+    const pluginContext = createMockPluginContext()
+    const pluginInstance: PluginInstance = {
+      id: 'test-plugin',
+      plugin: { ...mockPlugin, uninstall: undefined },
+      context: pluginContext,
+      config: {},
+      state: PluginState.Installed,
+    }
+
+    const result = await lifecycleManager.uninstall(pluginInstance)
+    expect(result.success).toBe(true)
   })
 })
