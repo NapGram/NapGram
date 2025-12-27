@@ -242,7 +242,6 @@ async function downloadToFile(url: string, filePath: string): Promise<{ sha256: 
   let bytes = 0
 
   try {
-    // @ts-expect-error - Node's fetch body supports async iteration
     for await (const chunk of res.body) {
       const buf = Buffer.from(chunk as any)
       bytes += buf.length

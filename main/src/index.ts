@@ -3,7 +3,7 @@ import db from './domain/models/db'
 import env from './domain/models/env'
 import Instance from './domain/models/Instance'
 import posthog from './domain/models/posthog'
-import api from './interfaces'
+import api, { registerWebRoutes } from './interfaces'
 import { PluginRuntime } from './plugins/runtime'
 import { getLogger } from './shared/logger';
 
@@ -69,13 +69,13 @@ import { getLogger } from './shared/logger';
     posthog.capture('UncaughtException', { error })
   })
 
-  api.startListening()
-
   const instanceEntries = await db.instance.findMany()
   const targets = instanceEntries.length ? instanceEntries.map(it => it.id) : [0]
 
   // 先启动插件运行时（在 Instance 之前，确保插件命令可被 CommandsFeature 发现）
-  await PluginRuntime.start({ defaultInstances: targets })
+  await PluginRuntime.start({ defaultInstances: targets, webRoutes: registerWebRoutes })
+
+  api.startListening()
 
   // 再启动实例（包括 FeatureManager 中的 CommandsFeature）
   await Promise.all(targets.map(id => Instance.start(id)))

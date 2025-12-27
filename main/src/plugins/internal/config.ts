@@ -4,17 +4,33 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import YAML from 'yaml'
-import env from '../../domain/models/env'
-import { getLogger } from '../../shared/logger'
-import builtinPingPong from '../../../../packages/plugin-ping-pong/src/index'
-import builtinQQInteraction from '../../../../packages/plugin-qq-interaction/src/index'
-import builtinRefresh from '../../../../packages/plugin-refresh/src/index'
+import builtinQqNapcatAdapter from '../../../../packages/plugin-adapter-qq-napcat/src/index'
+import builtinTelegramAdapter from '../../../../packages/plugin-adapter-telegram-mtcute/src/index'
+import builtinAdminAuth from '../../../../packages/plugin-admin-auth/src/index'
+import builtinAdminDatabase from '../../../../packages/plugin-admin-database/src/index'
+import builtinAdminInstances from '../../../../packages/plugin-admin-instances/src/index'
+import builtinAdminLogs from '../../../../packages/plugin-admin-logs/src/index'
+import builtinAdminMessages from '../../../../packages/plugin-admin-messages/src/index'
+import builtinAdminPairs from '../../../../packages/plugin-admin-pairs/src/index'
+import builtinAdminPlugins from '../../../../packages/plugin-admin-plugins/src/index'
+import builtinAdminSettings from '../../../../packages/plugin-admin-settings/src/index'
+import builtinCommands from '../../../../packages/plugin-commands/src/index'
 import builtinFlags from '../../../../packages/plugin-flags/src/index'
-import builtinRequestManagement from '../../../../packages/plugin-request-management/src/index'
+import builtinForward from '../../../../packages/plugin-forward/src/index'
 import builtinGroupManagement from '../../../../packages/plugin-group-management/src/index'
 import builtinMedia from '../../../../packages/plugin-media/src/index'
+import builtinMonitoring from '../../../../packages/plugin-monitoring/src/index'
+import builtinPingPong from '../../../../packages/plugin-ping-pong/src/index'
+import builtinQQInteraction from '../../../../packages/plugin-qq-interaction/src/index'
 import builtinRecall from '../../../../packages/plugin-recall/src/index'
-import builtinForward from '../../../../packages/plugin-forward/src/index'
+import builtinRefresh from '../../../../packages/plugin-refresh/src/index'
+import builtinRequestHandler from '../../../../packages/plugin-request-handler/src/index'
+import builtinRequestManagement from '../../../../packages/plugin-request-management/src/index'
+import builtinStatistics from '../../../../packages/plugin-statistics/src/index'
+import builtinWebAssets from '../../../../packages/plugin-web-assets/src/index'
+import builtinWebConsole from '../../../../packages/plugin-web-console/src/index'
+import env from '../../domain/models/env'
+import { getLogger } from '../../shared/logger'
 import { readBoolEnv, readStringEnv } from './env'
 import { getManagedPluginsConfigPath } from './store'
 
@@ -363,10 +379,28 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
   try {
     const builtinPlugins: Array<PluginSpec> = [
       {
+        id: 'adapter-qq-napcat',
+        module: '@builtin/adapter-qq-napcat',
+        enabled: true,
+        load: async () => builtinQqNapcatAdapter,
+      },
+      {
+        id: 'adapter-telegram-mtcute',
+        module: '@builtin/adapter-telegram-mtcute',
+        enabled: true,
+        load: async () => builtinTelegramAdapter,
+      },
+      {
         id: 'ping-pong',
         module: '@builtin/ping-pong',
         enabled: true,
         load: async () => builtinPingPong,
+      },
+      {
+        id: 'commands',
+        module: '@builtin/commands',
+        enabled: true,
+        load: async () => builtinCommands,
       },
       {
         id: 'qq-interaction',
@@ -385,6 +419,12 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         module: '@builtin/flags',
         enabled: true,
         load: async () => builtinFlags,
+      },
+      {
+        id: 'request-handler',
+        module: '@builtin/request-handler',
+        enabled: true,
+        load: async () => builtinRequestHandler,
       },
       {
         id: 'request-management',
@@ -415,6 +455,78 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         module: '@builtin/forward',
         enabled: true,
         load: async () => builtinForward,
+      },
+      {
+        id: 'monitoring',
+        module: '@builtin/monitoring',
+        enabled: true,
+        load: async () => builtinMonitoring,
+      },
+      {
+        id: 'statistics',
+        module: '@builtin/statistics',
+        enabled: true,
+        load: async () => builtinStatistics,
+      },
+      {
+        id: 'admin-auth',
+        module: '@builtin/admin-auth',
+        enabled: true,
+        load: async () => builtinAdminAuth,
+      },
+      {
+        id: 'admin-instances',
+        module: '@builtin/admin-instances',
+        enabled: true,
+        load: async () => builtinAdminInstances,
+      },
+      {
+        id: 'admin-pairs',
+        module: '@builtin/admin-pairs',
+        enabled: true,
+        load: async () => builtinAdminPairs,
+      },
+      {
+        id: 'admin-messages',
+        module: '@builtin/admin-messages',
+        enabled: true,
+        load: async () => builtinAdminMessages,
+      },
+      {
+        id: 'admin-logs',
+        module: '@builtin/admin-logs',
+        enabled: true,
+        load: async () => builtinAdminLogs,
+      },
+      {
+        id: 'admin-settings',
+        module: '@builtin/admin-settings',
+        enabled: true,
+        load: async () => builtinAdminSettings,
+      },
+      {
+        id: 'admin-plugins',
+        module: '@builtin/admin-plugins',
+        enabled: true,
+        load: async () => builtinAdminPlugins,
+      },
+      {
+        id: 'admin-database',
+        module: '@builtin/admin-database',
+        enabled: true,
+        load: async () => builtinAdminDatabase,
+      },
+      {
+        id: 'web-assets',
+        module: '@builtin/web-assets',
+        enabled: true,
+        load: async () => builtinWebAssets,
+      },
+      {
+        id: 'web-console',
+        module: '@builtin/web-console',
+        enabled: true,
+        load: async () => builtinWebConsole,
       },
     ]
 

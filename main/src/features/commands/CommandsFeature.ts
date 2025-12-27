@@ -214,7 +214,7 @@ export class CommandsFeature {
 
   /**
    * 注册命令
-  */
+   */
   registerCommand(command: Command) {
     logger.debug(`registerCommand: ${command.name}`)
     this.registry.register(command)

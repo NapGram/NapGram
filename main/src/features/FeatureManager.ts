@@ -1,9 +1,9 @@
 import type Instance from '../domain/models/Instance'
 import type { IQQClient } from '../infrastructure/clients/qq'
 import type Telegram from '../infrastructure/clients/telegram/client'
+import type { ForwardFeature } from './forward/ForwardFeature'
 import { getLogger } from '../shared/logger'
 import { CommandsFeature } from './commands/CommandsFeature'
-import type { ForwardFeature } from './forward/ForwardFeature'
 import { MediaFeature } from './MediaFeature'
 import { RecallFeature } from './RecallFeature'
 
@@ -41,10 +41,17 @@ export class FeatureManager {
       logger.debug('✓ MessageConverter instance set')
 
       logger.info('CommandsFeature 正在初始化...')
-      this.commands = new CommandsFeature(this.instance, this.tgBot, this.qqClient)
-      this.instance.commandsFeature = this.commands
-      this.features.set('commands', this.commands)
-      logger.info('CommandsFeature ✓ 初始化完成')
+      if (this.instance.commandsFeature) {
+        this.commands = this.instance.commandsFeature
+        this.features.set('commands', this.commands)
+        logger.info('CommandsFeature ✓ 已由插件注入')
+      }
+      else {
+        this.commands = new CommandsFeature(this.instance, this.tgBot, this.qqClient)
+        this.instance.commandsFeature = this.commands
+        this.features.set('commands', this.commands)
+        logger.info('CommandsFeature ✓ 初始化完成')
+      }
 
       if (this.instance.forwardFeature) {
         this.forward = this.instance.forwardFeature

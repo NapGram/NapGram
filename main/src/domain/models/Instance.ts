@@ -1,12 +1,13 @@
-import type { IQQClient } from '../../infrastructure/clients/qq'
 import type { CommandsFeature } from '../../features/commands/CommandsFeature'
 import type { ForwardFeature } from '../../features/forward/ForwardFeature'
 import type { MediaFeature } from '../../features/MediaFeature'
 import type { RecallFeature } from '../../features/RecallFeature'
+import type { IQQClient } from '../../infrastructure/clients/qq'
+import type Telegram from '../../infrastructure/clients/telegram/client'
 import type { AppLogger } from '../../shared/logger'
 import { FeatureManager } from '../../features'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
-import Telegram from '../../infrastructure/clients/telegram/client'
+import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 import { getEventPublisher } from '../../plugins/core/event-publisher'
 import { getLogger } from '../../shared/logger'
 import db from './db'
@@ -79,14 +80,21 @@ export default class Instance {
       this.log.debug('TG Bot 正在登录')
       const token = botToken ?? env.TG_BOT_TOKEN
       if (this.botSessionId) {
-        this.tgBot = await Telegram.connect(this._botSessionId, 'NapGram', token)
+        this.tgBot = await telegramClientFactory.connect({
+          type: 'mtcute',
+          sessionId: this._botSessionId,
+          botToken: token,
+          appName: 'NapGram',
+        })
       }
       else {
         if (!token) {
           throw new Error('botToken 未指定')
         }
-        this.tgBot = await Telegram.create({
-          botAuthToken: token,
+        this.tgBot = await telegramClientFactory.create({
+          type: 'mtcute',
+          botToken: token,
+          appName: 'NapGram',
         })
         this.botSessionId = this.tgBot.sessionId
       }
@@ -158,6 +166,7 @@ export default class Instance {
             userId,
             userName,
             comment: typeof e?.comment === 'string' ? e.comment : undefined,
+            subType,
             timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
             approve: async () => {
               if (typeof (qqClient as any).handleGroupRequest !== 'function') {

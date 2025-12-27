@@ -19,7 +19,6 @@ export class HelpCommandHandler {
       if (name !== command.name)
         continue
 
-
       processedCommands.add(command.name)
 
       let line = `${this.context.registry.prefix}${command.name}`
