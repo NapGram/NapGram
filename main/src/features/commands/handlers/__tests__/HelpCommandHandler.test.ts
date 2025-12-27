@@ -247,15 +247,15 @@ describe('helpCommandHandler', () => {
 
       mockContext.registry.getAll = vi.fn().mockReturnValue(
         new Map([
-          ['test1', sharedCommand],      // First entry - will be processed
-          ['another', {                   // Different command
+          ['test1', sharedCommand], // First entry - will be processed
+          ['another', { // Different command
             name: 'another',
             description: 'Another command',
             handler: vi.fn(),
             aliases: [],
             adminOnly: false,
           }],
-          ['test1-shouldskip', sharedCommand],  // Same command object, should hit line 22
+          ['test1-shouldskip', sharedCommand], // Same command object, should hit line 22
         ]),
       )
 
@@ -267,7 +267,7 @@ describe('helpCommandHandler', () => {
       const test1Count = (callArg.match(/\/test1[^-]/g) || []).length
       const anotherCount = (callArg.match(/\/another/g) || []).length
 
-      expect(test1Count).toBe(1)  // Only once despite appearing twice in registry
+      expect(test1Count).toBe(1) // Only once despite appearing twice in registry
       expect(anotherCount).toBe(1)
     })
 

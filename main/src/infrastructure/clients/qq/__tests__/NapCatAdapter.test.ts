@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { EventEmitter } from 'node:events'
+import { NapLink } from '@naplink/naplink'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NapCatAdapter } from '../NapCatAdapter'
+import { napCatForwardMultiple } from '../napcatConvert'
 
 // Mock dependencies
-const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapCatForwardMultiple } = vi.hoisted(() => {
+const { mockNapLinkInstance, mockLogger, mockMessageConverter } = vi.hoisted(() => {
   const mockNapLink = {
     on: vi.fn(),
     connect: vi.fn(),
@@ -123,58 +124,48 @@ const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapCatForward
       sendGroupSign: vi.fn(),
       getClientkey: vi.fn(),
       clickInlineKeyboardButton: vi.fn(),
-    }
+    },
   }
 
   const mockLog = {
     info: vi.fn(),
     warn: vi.fn(),
-    error: vi.fn()
+    error: vi.fn(),
   }
 
   const mockMsgConv = {
     fromNapCat: vi.fn(),
-    toNapCat: vi.fn()
+    toNapCat: vi.fn(),
   }
-
-  const mockNapCatFwd = vi.fn()
 
   return {
     mockNapLinkInstance: mockNapLink,
     mockLogger: mockLog,
     mockMessageConverter: mockMsgConv,
-    mockNapCatForwardMultiple: mockNapCatFwd
   }
 })
 
 vi.mock('@naplink/naplink', () => {
   return {
-    NapLink: vi.fn(function () { return mockNapLinkInstance })
+    NapLink: vi.fn(function () {
+      return mockNapLinkInstance
+    }),
   }
 })
 
 vi.mock('../../../../shared/logger', () => ({
-  getLogger: vi.fn(() => mockLogger)
+  getLogger: vi.fn(() => mockLogger),
 }))
-
 
 vi.mock('../../../../domain/message/converter', () => ({
-  messageConverter: mockMessageConverter
+  messageConverter: mockMessageConverter,
 }))
 
-vi.mock('../napcatConvert', () => ({
-  napCatForwardMultiple: mockNapCatForwardMultiple // Use hoisted variable
-}))
-
-import { messageConverter } from '../../../../domain/message/converter'
-import { napCatForwardMultiple } from '../napcatConvert'
-import { NapLink } from '@naplink/naplink'
-
-describe('NapCatAdapter', () => {
+describe('napCatAdapter', () => {
   let adapter: NapCatAdapter
   const createParams = {
     wsUrl: 'ws://localhost:3000',
-    reconnect: true
+    reconnect: true,
   }
 
   const waitTick = () => new Promise(resolve => setTimeout(resolve, 10))
@@ -184,7 +175,8 @@ describe('NapCatAdapter', () => {
     // Find the call to .on(event, handler)
     const calls = mockNapLinkInstance.on.mock.calls
     const handler = calls.find((c: any) => c[0] === event)?.[1]
-    if (handler) handler(...args)
+    if (handler)
+      handler(...args)
   }
 
   beforeEach(() => {
@@ -304,13 +296,13 @@ describe('NapCatAdapter', () => {
     expect(await adapter.isOnline()).toBe(false)
   })
 
-  describe('Message Events', () => {
+  describe('message Events', () => {
     it('should handle incoming message', async () => {
       const onMessage = vi.fn()
       adapter.on('message', onMessage)
 
       const rawMsg = {
-        message: [{ type: 'text', data: { text: 'hello' } }]
+        message: [{ type: 'text', data: { text: 'hello' } }],
       }
       mockMessageConverter.fromNapCat.mockReturnValue({ id: 'msg1', content: 'hello' })
 
@@ -330,8 +322,8 @@ describe('NapCatAdapter', () => {
           { type: 'file', data: { file_id: '/file.doc' } },
           { type: 'video', data: { file: 'path/clean.mp4' } }, // already clean
           { type: 'image', data: null },
-          { type: 'file', data: { file: '/tmp/nested/file.bin' } }
-        ]
+          { type: 'file', data: { file: '/tmp/nested/file.bin' } },
+        ],
       }
       triggerClientEvent('message', rawMsg)
       await waitTick()
@@ -351,15 +343,21 @@ describe('NapCatAdapter', () => {
     })
   })
 
-  describe('Notice Events', () => {
+  describe('notice Events', () => {
     it('should handle group recall', () => {
       const onRecall = vi.fn()
       adapter.on('recall', onRecall)
       triggerClientEvent('notice.group_recall', {
-        message_id: 100, group_id: 200, operator_id: 300, time: 1234567890
+        message_id: 100,
+        group_id: 200,
+        operator_id: 300,
+        time: 1234567890,
       })
       expect(onRecall).toHaveBeenCalledWith({
-        messageId: '100', chatId: '200', operatorId: '300', timestamp: 1234567890000
+        messageId: '100',
+        chatId: '200',
+        operatorId: '300',
+        timestamp: 1234567890000,
       })
     })
 
@@ -367,10 +365,15 @@ describe('NapCatAdapter', () => {
       const onRecall = vi.fn()
       adapter.on('recall', onRecall)
       triggerClientEvent('notice.friend_recall', {
-        message_id: 101, user_id: 400, time: 1234567890
+        message_id: 101,
+        user_id: 400,
+        time: 1234567890,
       })
       expect(onRecall).toHaveBeenCalledWith({
-        messageId: '101', chatId: '400', operatorId: '400', timestamp: 1234567890000
+        messageId: '101',
+        chatId: '400',
+        operatorId: '400',
+        timestamp: 1234567890000,
       })
     })
 
@@ -407,13 +410,16 @@ describe('NapCatAdapter', () => {
     })
   })
 
-  describe('Request Events', () => {
+  describe('request Events', () => {
     it('should handle friend request', () => {
       const onRequest = vi.fn()
       adapter.on('request.friend', onRequest)
       triggerClientEvent('request.friend', { flag: 'f1', user_id: 33, comment: 'hi', time: 123 })
       expect(onRequest).toHaveBeenCalledWith({
-        flag: 'f1', userId: '33', comment: 'hi', timestamp: 123000
+        flag: 'f1',
+        userId: '33',
+        comment: 'hi',
+        timestamp: 123000,
       })
     })
 
@@ -422,12 +428,17 @@ describe('NapCatAdapter', () => {
       adapter.on('request.group', onRequest)
       triggerClientEvent('request.group', { flag: 'g1', group_id: 44, user_id: 55, sub_type: 'add', comment: 'join', time: 456 })
       expect(onRequest).toHaveBeenCalledWith({
-        flag: 'g1', groupId: '44', userId: '55', subType: 'add', comment: 'join', timestamp: 456000
+        flag: 'g1',
+        groupId: '44',
+        userId: '55',
+        subType: 'add',
+        comment: 'join',
+        timestamp: 456000,
       })
     })
   })
 
-  describe('Message Operations', () => {
+  describe('message Operations', () => {
     it('should send group message with conversion', async () => {
       const msg: any = { chat: { type: 'group' }, content: 'hello' }
       mockMessageConverter.toNapCat.mockResolvedValue(['converted'])
@@ -437,7 +448,8 @@ describe('NapCatAdapter', () => {
 
       expect(mockMessageConverter.toNapCat).toHaveBeenCalledWith(msg)
       expect(mockNapLinkInstance.sendMessage).toHaveBeenCalledWith({
-        group_id: 100, message: ['converted']
+        group_id: 100,
+        message: ['converted'],
       })
       expect(receipt).toEqual({ messageId: '12345', timestamp: expect.any(Number), success: true })
     })
@@ -450,7 +462,8 @@ describe('NapCatAdapter', () => {
 
       expect(mockMessageConverter.toNapCat).not.toHaveBeenCalled()
       expect(mockNapLinkInstance.sendMessage).toHaveBeenCalledWith({
-        user_id: 200, message: ['pre']
+        user_id: 200,
+        message: ['pre'],
       })
       expect(receipt).toEqual({ messageId: '67890', timestamp: expect.any(Number), success: true })
     })
@@ -495,19 +508,33 @@ describe('NapCatAdapter', () => {
 
     it('should get forward message with hydration', async () => {
       const nodes = [
-        { message: [{ type: 'image', data: { file: 'img.jpg' } }] },
-        { message: null } // should handle empty/null
+        {
+          message: [{ type: 'image', data: { file: 'img.jpg' } }],
+          sender: { card: 'A', nickname: 'A', user_id: 1 },
+          message_id: 1,
+          time: 1,
+          raw_message: 'x',
+          message_type: 'group',
+          group_id: 100,
+        },
+        {
+          message: null, // should handle empty/null
+          sender: { card: '', nickname: 'B', user_id: 2 },
+          message_id: 2,
+          time: 2,
+          raw_message: 'y',
+          message_type: 'private',
+        },
       ]
       mockNapLinkInstance.getForwardMessage.mockResolvedValue({ messages: nodes })
-      napCatForwardMultiple.mockReturnValue(['convertedNode'])
+      const expected = napCatForwardMultiple(nodes as any)
 
       const res = await adapter.getForwardMsg('888')
 
       // normalizeMediaIds and hydrateMessage should be called
       // normalizeMediaIds modifies 'message' in place, hard to check directly unless we check hydrate call arg
       expect(mockNapLinkInstance.hydrateMessage).toHaveBeenCalled()
-      expect(napCatForwardMultiple).toHaveBeenCalledWith(nodes)
-      expect(res).toEqual(['convertedNode'])
+      expect(res).toEqual(expected)
     })
 
     it('should get file', async () => {
@@ -520,10 +547,10 @@ describe('NapCatAdapter', () => {
     })
   })
 
-  describe('Info & API Methods', () => {
+  describe('info & API Methods', () => {
     it('should get friend list', async () => {
       mockNapLinkInstance.getFriendList.mockResolvedValue([
-        { user_id: 1, nickname: 'n1', remark: 'r1' }
+        { user_id: 1, nickname: 'n1', remark: 'r1' },
       ])
       const list = await adapter.getFriendList()
       expect(list).toEqual([{ id: '1', name: 'n1' }])
@@ -531,7 +558,7 @@ describe('NapCatAdapter', () => {
 
     it('should get group list', async () => {
       mockNapLinkInstance.getGroupList.mockResolvedValue([
-        { group_id: 10, group_name: 'g1' }
+        { group_id: 10, group_name: 'g1' },
       ])
       const list = await adapter.getGroupList()
       expect(list).toEqual([{ id: '10', type: 'group', name: 'g1' }])
@@ -539,7 +566,7 @@ describe('NapCatAdapter', () => {
 
     it('should get group member list', async () => {
       mockNapLinkInstance.getGroupMemberList.mockResolvedValue([
-        { user_id: 2, card: 'c2', nickname: 'n2' }
+        { user_id: 2, card: 'c2', nickname: 'n2' },
       ])
       const list = await adapter.getGroupMemberList('10')
       expect(mockNapLinkInstance.getGroupMemberList).toHaveBeenCalledWith('10')
@@ -629,27 +656,92 @@ describe('NapCatAdapter', () => {
     })
     it('should delegate all API methods', async () => {
       const methods = [
-        'getStrangerInfo', 'getVersionInfo', 'hydrateMedia', 'getImage', 'getRecord',
-        'sendPrivateMessage', 'sendGroupMessage', 'setEssenceMessage', 'deleteEssenceMessage',
-        'getEssenceMessageList', 'markMessageAsRead', 'getGroupAtAllRemain', 'getGroupSystemMsg',
-        'setGroupLeave', 'setGroupAnonymousBan', 'uploadGroupFile', 'uploadPrivateFile',
-        'setGroupPortrait', 'getGroupFileSystemInfo', 'getGroupRootFiles', 'getGroupFilesByFolder',
-        'getGroupFileUrl', 'deleteGroupFile', 'createGroupFileFolder', 'deleteGroupFolder',
-        'downloadFile', 'uploadFileStream', 'getUploadStreamStatus', 'sendGroupPoke',
-        'sendFriendPoke', 'sendPoke', 'markGroupMsgAsRead', 'markPrivateMsgAsRead',
-        'markAllMsgAsRead', 'getGroupMsgHistory', 'getFriendMsgHistory', 'getRecentContact',
-        'downloadFileStreamToFile', 'downloadFileImageStreamToFile', 'downloadFileRecordStreamToFile',
-        'cleanStreamTempFile', 'getOnlineClients', 'getRobotUinRange', 'canSendImage',
-        'canSendRecord', 'getCookies', 'getCsrfToken', 'getCredentials', 'setInputStatus',
-        'ocrImage', 'translateEn2zh', 'checkUrlSafely', 'handleQuickOperation', 'getModelShow',
-        'setModelShow', 'getPacketStatus', 'getRkeyEx', 'getRkeyServer', 'getRkey',
-        'setFriendRemark', 'deleteFriend', 'getUnidirectionalFriendList', 'setGroupRemark',
-        'getGroupInfoEx', 'getGroupDetailInfo', 'getGroupIgnoredNotifies', 'getGroupShutList',
-        'sendPrivateForwardMessage', 'forwardFriendSingleMsg', 'forwardGroupSingleMsg',
-        'sendForwardMsg', 'sendGroupNotice', 'getGroupNotice', 'delGroupNotice', 'setOnlineStatus',
-        'setDiyOnlineStatus', 'sendArkShare', 'sendGroupArkShare', 'getMiniAppArk',
-        'getAiCharacters', 'getAiRecord', 'sendGroupAiRecord', 'setGroupSign', 'sendGroupSign',
-        'getClientkey', 'clickInlineKeyboardButton'
+        'getStrangerInfo',
+        'getVersionInfo',
+        'hydrateMedia',
+        'getImage',
+        'getRecord',
+        'sendPrivateMessage',
+        'sendGroupMessage',
+        'setEssenceMessage',
+        'deleteEssenceMessage',
+        'getEssenceMessageList',
+        'markMessageAsRead',
+        'getGroupAtAllRemain',
+        'getGroupSystemMsg',
+        'setGroupLeave',
+        'setGroupAnonymousBan',
+        'uploadGroupFile',
+        'uploadPrivateFile',
+        'setGroupPortrait',
+        'getGroupFileSystemInfo',
+        'getGroupRootFiles',
+        'getGroupFilesByFolder',
+        'getGroupFileUrl',
+        'deleteGroupFile',
+        'createGroupFileFolder',
+        'deleteGroupFolder',
+        'downloadFile',
+        'uploadFileStream',
+        'getUploadStreamStatus',
+        'sendGroupPoke',
+        'sendFriendPoke',
+        'sendPoke',
+        'markGroupMsgAsRead',
+        'markPrivateMsgAsRead',
+        'markAllMsgAsRead',
+        'getGroupMsgHistory',
+        'getFriendMsgHistory',
+        'getRecentContact',
+        'downloadFileStreamToFile',
+        'downloadFileImageStreamToFile',
+        'downloadFileRecordStreamToFile',
+        'cleanStreamTempFile',
+        'getOnlineClients',
+        'getRobotUinRange',
+        'canSendImage',
+        'canSendRecord',
+        'getCookies',
+        'getCsrfToken',
+        'getCredentials',
+        'setInputStatus',
+        'ocrImage',
+        'translateEn2zh',
+        'checkUrlSafely',
+        'handleQuickOperation',
+        'getModelShow',
+        'setModelShow',
+        'getPacketStatus',
+        'getRkeyEx',
+        'getRkeyServer',
+        'getRkey',
+        'setFriendRemark',
+        'deleteFriend',
+        'getUnidirectionalFriendList',
+        'setGroupRemark',
+        'getGroupInfoEx',
+        'getGroupDetailInfo',
+        'getGroupIgnoredNotifies',
+        'getGroupShutList',
+        'sendPrivateForwardMessage',
+        'forwardFriendSingleMsg',
+        'forwardGroupSingleMsg',
+        'sendForwardMsg',
+        'sendGroupNotice',
+        'getGroupNotice',
+        'delGroupNotice',
+        'setOnlineStatus',
+        'setDiyOnlineStatus',
+        'sendArkShare',
+        'sendGroupArkShare',
+        'getMiniAppArk',
+        'getAiCharacters',
+        'getAiRecord',
+        'sendGroupAiRecord',
+        'setGroupSign',
+        'sendGroupSign',
+        'getClientkey',
+        'clickInlineKeyboardButton',
       ]
 
       for (const method of methods) {
@@ -669,7 +761,7 @@ describe('NapCatAdapter', () => {
     })
   })
 
-  describe('Wrapper Error Handling', () => {
+  describe('wrapper Error Handling', () => {
     it('should handle banUser error', async () => {
       mockNapLinkInstance.setGroupBan.mockRejectedValue(new Error('fail'))
       await expect(adapter.banUser('g', 'u', 100)).rejects.toThrow('fail')
@@ -749,7 +841,7 @@ describe('NapCatAdapter', () => {
     })
   })
 
-  describe('API Fallbacks', () => {
+  describe('aPI Fallbacks', () => {
     // Map of method name to expected callApi name and args
     const fallbacks: Record<string, [string, any]> = {
       getGroupShutList: ['get_group_shut_list', { group_id: 'g' }],
@@ -770,7 +862,7 @@ describe('NapCatAdapter', () => {
       setGroupSign: ['set_group_sign', { group_id: 'g' }],
       sendGroupSign: ['send_group_sign', { group_id: 'g' }],
       getClientkey: ['get_clientkey', undefined], // no args
-      clickInlineKeyboardButton: ['click_inline_keyboard_button', { b: 1 }]
+      clickInlineKeyboardButton: ['click_inline_keyboard_button', { b: 1 }],
     }
 
     it('should fallback to callApi when method missing', async () => {
@@ -790,27 +882,35 @@ describe('NapCatAdapter', () => {
           // If method matches key in fallbacks map
           if (method === 'getGroupShutList' || method === 'getGroupNotice' || method === 'sendGroupArkShare' || method === 'setGroupSign' || method === 'sendGroupSign') {
             await (adapter as any)[method]('g')
-          } else if (method === 'forwardFriendSingleMsg') {
+          }
+          else if (method === 'forwardFriendSingleMsg') {
             await (adapter as any)[method]('u', 'm')
-          } else if (method === 'forwardGroupSingleMsg') {
+          }
+          else if (method === 'forwardGroupSingleMsg') {
             await (adapter as any)[method]('g', 'm')
-          } else if (method === 'getAiCharacters') {
+          }
+          else if (method === 'getAiCharacters') {
             await (adapter as any)[method]('g') // chatType default 1
-          } else if (method === 'getAiRecord' || method === 'sendGroupAiRecord') {
+          }
+          else if (method === 'getAiRecord' || method === 'sendGroupAiRecord') {
             await (adapter as any)[method]('g', 'c', 't')
-          } else if (method === 'getClientkey') {
+          }
+          else if (method === 'getClientkey') {
             await (adapter as any)[method]()
-          } else {
+          }
+          else {
             // Params object
             await (adapter as any)[method](args)
           }
 
           if (args) {
             expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith(apiName, expect.objectContaining(args))
-          } else {
+          }
+          else {
             expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith(apiName)
           }
-        } catch (e) {
+        }
+        catch (e) {
           throw new Error(`Fallback test failed for ${method}: ${e}`)
         }
       }
@@ -1105,7 +1205,7 @@ describe('NapCatAdapter', () => {
     })
   })
 
-  describe('Edge Cases', () => {
+  describe('edge Cases', () => {
     it('should handle getGroupMemberInfo error', async () => {
       mockNapLinkInstance.getGroupMemberInfo.mockRejectedValueOnce(new Error('Not found'))
       const result = await adapter.getGroupMemberInfo('g123', 'u456')
@@ -1117,7 +1217,5 @@ describe('NapCatAdapter', () => {
       const result = await adapter.getUserInfo('u123')
       expect(result).toBeNull()
     })
-
-
   })
 })

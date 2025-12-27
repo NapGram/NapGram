@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { JsonCardConverter } from '../JsonCardConverter'
 
-describe('JsonCardConverter', () => {
+describe('jsonCardConverter', () => {
   const converter = new JsonCardConverter()
 
   it('returns null for invalid json', () => {
@@ -23,7 +23,7 @@ describe('JsonCardConverter', () => {
           name: 'Place',
           address: 'Addr',
         },
-        detail_1: {
+        'detail_1': {
           title: 'Title',
           desc: 'Desc',
           url: 'm.q.qq.com/abc',

@@ -1,6 +1,7 @@
+import { Buffer } from 'node:buffer'
+import { execFile } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { execFile } from 'node:child_process'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import env from '../../../../domain/models/env'
 import silk from '../../../../shared/utils/encoding/silk'

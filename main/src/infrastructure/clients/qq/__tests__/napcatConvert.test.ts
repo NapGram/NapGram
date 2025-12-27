@@ -24,7 +24,7 @@ describe('napCatForwardMultiple', () => {
       time: 1234567890,
       message_id: 1001,
       raw_message: 'raw',
-      message: [{ type: 'text', data: { text: 'hello' } }]
+      message: [{ type: 'text', data: { text: 'hello' } }],
     }]
 
     const result = napCatForwardMultiple(messages)
@@ -37,7 +37,7 @@ describe('napCatForwardMultiple', () => {
       user_id: 123,
       seq: 1001,
       raw_message: 'raw',
-      message: [{ type: 'text', text: 'hello' }]
+      message: [{ type: 'text', text: 'hello' }],
     })
   })
 
@@ -48,7 +48,7 @@ describe('napCatForwardMultiple', () => {
       time: 1234567890,
       message_id: 1002,
       raw_message: 'raw',
-      message: { type: 'text', data: { text: 'single' } } // Object not array
+      message: { type: 'text', data: { text: 'single' } }, // Object not array
     }]
 
     const result = napCatForwardMultiple(messages)
@@ -61,12 +61,15 @@ describe('napCatForwardMultiple', () => {
 
   it('should filter out null message elements', () => {
     const messages: any = [{
-      message_type: 'group', sender: baseSender, time: 0, message_id: 1,
+      message_type: 'group',
+      sender: baseSender,
+      time: 0,
+      message_id: 1,
       message: [
         null,
         { type: 'text', data: { text: 'ok' } },
-        undefined
-      ]
+        undefined,
+      ],
     }]
 
     const result = napCatForwardMultiple(messages)
@@ -76,8 +79,11 @@ describe('napCatForwardMultiple', () => {
 
   describe('segment type conversion', () => {
     const makeMsg = (segment: any) => [{
-      message_type: 'group', sender: baseSender, time: 0, message_id: 1,
-      message: [segment]
+      message_type: 'group',
+      sender: baseSender,
+      time: 0,
+      message_id: 1,
+      message: [segment],
     }]
 
     it('should convert face', () => {
@@ -143,7 +149,7 @@ describe('napCatForwardMultiple', () => {
 
     it('should handle common types (image, json, etc) with direct mapping', () => {
       const types = ['image', 'record', 'json', 'markdown', 'sface']
-      types.forEach(type => {
+      types.forEach((type) => {
         const res = napCatForwardMultiple(makeMsg({ type, data: { foo: 'bar' } }) as any)
         expect(res[0].message[0]).toMatchObject({ type, foo: 'bar', asface: false })
       })
@@ -164,10 +170,10 @@ describe('napCatForwardMultiple', () => {
 
     it('should handle null data in convert (internal check)', () => {
       // napCatReceiveToMessageElem check !data
-      // Pass null explicitly to makeMsg helper? 
+      // Pass null explicitly to makeMsg helper?
       // But napCatForwardMultiple filters nulls from array first.
-      // We can force a null passing if we hack the array after filter? 
-      // Or just call internal function if exported? 
+      // We can force a null passing if we hack the array after filter?
+      // Or just call internal function if exported?
       // Since not exported, we rely on types that might pass filter but fail internal check?
       // Actually lines 15-16 filter: elem != null.
       // So passed elem is not null.
@@ -178,8 +184,11 @@ describe('napCatForwardMultiple', () => {
       // But 'message' elements are objects.
       // Wait, if I pass `false` as an element?
       const messages: any = [{
-        message_type: 'group', sender: baseSender, time: 0, message_id: 1,
-        message: [false] // truthy filter? No, false != null is true.
+        message_type: 'group',
+        sender: baseSender,
+        time: 0,
+        message_id: 1,
+        message: [false], // truthy filter? No, false != null is true.
       }]
       const result = napCatForwardMultiple(messages)
       // false is passed to napCatReceiveToMessageElem(data)
@@ -281,6 +290,5 @@ describe('napCatForwardMultiple', () => {
         expect(res[0].message[0]).toMatchObject({ type: 'unknown_gen', foo: 'bar' })
       })
     })
-
   }) // end segment type conversion
 })

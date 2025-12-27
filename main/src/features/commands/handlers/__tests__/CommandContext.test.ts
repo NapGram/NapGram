@@ -20,7 +20,7 @@ function createMessage(platform: 'telegram' | 'qq' = 'telegram'): UnifiedMessage
   }
 }
 
-describe('CommandContext', () => {
+describe('commandContext', () => {
   let qqClient: any
   let replyTG: any
   let extractThreadId: any

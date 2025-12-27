@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { TextSegmentConverter } from '../TextSegmentConverter'
 
-describe('TextSegmentConverter', () => {
+describe('textSegmentConverter', () => {
   const converter = new TextSegmentConverter()
 
   describe('convertText', () => {
@@ -72,10 +72,10 @@ describe('TextSegmentConverter', () => {
     })
 
     it('should fallback to JSON.stringify(segment.data) if text/content missing', () => {
-        const data = {}
-        const segment = { data: { key: 'value' } }
-        const result = converter.convertMarkdown(data, segment)
-        expect(result.data.text).toBe('{"key":"value"}')
+      const data = {}
+      const segment = { data: { key: 'value' } }
+      const result = converter.convertMarkdown(data, segment)
+      expect(result.data.text).toBe('{"key":"value"}')
     })
   })
 })

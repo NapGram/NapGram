@@ -106,7 +106,7 @@ beforeEach(() => {
   })
 })
 
-describe('ForwardFeature', () => {
+describe('forwardFeature', () => {
   it('throws when forward map is missing', () => {
     const tgBot = createTgBot()
     const qqClient = createQQClient()
@@ -158,7 +158,7 @@ describe('ForwardFeature', () => {
   })
 
   it('rejects mode updates from non-admin users', async () => {
-    const { feature, tgBot } = createFeature()
+    const { feature } = createFeature()
     const isAdminSpy = vi.spyOn(MessageUtils, 'isAdmin').mockReturnValue(false)
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
 
@@ -176,7 +176,7 @@ describe('ForwardFeature', () => {
   })
 
   it('validates mode command arguments', async () => {
-    const { feature, tgBot } = createFeature()
+    const { feature } = createFeature()
     const isAdminSpy = vi.spyOn(MessageUtils, 'isAdmin').mockReturnValue(true)
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
 
@@ -194,7 +194,7 @@ describe('ForwardFeature', () => {
   })
 
   it('reports missing forward pair for mode changes', async () => {
-    const { feature, forwardMap, tgBot } = createFeature()
+    const { feature, forwardMap } = createFeature()
     const isAdminSpy = vi.spyOn(MessageUtils, 'isAdmin').mockReturnValue(true)
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
     forwardMap.findByTG.mockReturnValue(null)
@@ -213,7 +213,7 @@ describe('ForwardFeature', () => {
   })
 
   it('updates nickname mode successfully', async () => {
-    const { feature, forwardMap, tgBot } = createFeature()
+    const { feature, forwardMap } = createFeature()
     const isAdminSpy = vi.spyOn(MessageUtils, 'isAdmin').mockReturnValue(true)
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
     const pair = createPair({ nicknameMode: '00' })
@@ -239,7 +239,7 @@ describe('ForwardFeature', () => {
   })
 
   it('handles mode update failures', async () => {
-    const { feature, forwardMap, tgBot } = createFeature()
+    const { feature, forwardMap } = createFeature()
     const isAdminSpy = vi.spyOn(MessageUtils, 'isAdmin').mockReturnValue(true)
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
     forwardMap.findByTG.mockReturnValue(createPair())
@@ -259,7 +259,7 @@ describe('ForwardFeature', () => {
   })
 
   it('skips poke forwarding when QQ->TG is disabled', async () => {
-    const { feature, forwardMap, tgBot } = createFeature()
+    const { feature, forwardMap } = createFeature()
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
     forwardMap.findByQQ.mockReturnValue(createPair({ forwardMode: '00' }))
 
@@ -271,7 +271,7 @@ describe('ForwardFeature', () => {
   })
 
   it('forwards poke events with resolved names', async () => {
-    const { feature, forwardMap, qqClient, tgBot } = createFeature()
+    const { feature, forwardMap, qqClient } = createFeature()
     const replySpy = vi.spyOn(MessageUtils, 'replyTG').mockResolvedValue(undefined)
     forwardMap.findByQQ.mockReturnValue(createPair({ tgThreadId: 9 }))
     qqClient.getGroupMemberInfo

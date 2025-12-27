@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MediaSender } from '../MediaSender'
 import env from '../../../../domain/models/env'
+import { MediaSender } from '../MediaSender'
 
 describe('mediaSender', () => {
   const fileNormalizer = {
@@ -325,7 +325,8 @@ describe('mediaSender', () => {
       expect(firstInputsSnapshot?.[0].ttlSeconds).toBe(10)
       expect(secondInputsSnapshot?.[0].ttlSeconds).toBeUndefined()
       expect(result).toEqual({ id: 10 })
-    } finally {
+    }
+    finally {
       env.TG_MEDIA_TTL_SECONDS = originalTtl
     }
   })
@@ -409,7 +410,7 @@ describe('mediaSender', () => {
     richHeaderBuilder.applyRichHeader.mockReturnValue({ text: 'msg', params: {} })
 
     // Test all RPS values
-    for (const [value, expected] of [[1, '✋ 布'], [2, '✌️ 剪刀'], [3, '✊ 石头']]) {
+    for (const [value] of [[1, '✋ 布'], [2, '✌️ 剪刀'], [3, '✊ 石头']]) {
       const content = { type: 'dice', data: { emoji: '🪨', value } }
       await sender.sendDiceToTG(chat as any, content as any, undefined, undefined, '')
     }

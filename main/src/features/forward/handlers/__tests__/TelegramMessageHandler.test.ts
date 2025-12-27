@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { TelegramMessageHandler } from '../TelegramMessageHandler'
 import { messageConverter } from '../../../../domain/message'
-import Instance from '../../../../domain/models/Instance'
 import db from '../../../../domain/models/db'
+import Instance from '../../../../domain/models/Instance'
+import { TelegramMessageHandler } from '../TelegramMessageHandler'
 
 const publishMessage = vi.fn()
 
@@ -68,7 +68,7 @@ describe('telegramMessageHandler', () => {
       date: new Date(),
       chat: { id: 100 },
       sender: { id: 10, displayName: 'Alice' },
-      raw: { replyTo: { replyToTopId: 789 } }
+      raw: { replyTo: { replyToTopId: 789 } },
     }
     const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100' }
 
@@ -79,8 +79,8 @@ describe('telegramMessageHandler', () => {
         getChat: vi.fn().mockResolvedValue({
           sendMessage: vi.fn().mockResolvedValue({ id: 999 }),
           deleteMessages: vi.fn().mockResolvedValue(undefined),
-        })
-      }
+        }),
+      },
     }
       ; (Instance.instances as any).push(mockInstance)
 
@@ -121,7 +121,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -143,7 +143,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -162,7 +162,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'video', data: { file: 'vid' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
@@ -182,7 +182,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'image', data: { file: 'img' } }, { type: 'text', data: { text: 'caption' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'image', data: { file: 'img' } }, { type: 'text', data: { text: 'caption' } }])
@@ -200,14 +200,14 @@ describe('telegramMessageHandler', () => {
       seq: 555,
       time: 12345,
       senderUin: '999',
-      qqRoomId: '888'
+      qqRoomId: '888',
     })
     const unified = {
       id: '1',
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Reply' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Reply' } }])
@@ -223,7 +223,7 @@ describe('telegramMessageHandler', () => {
       text: '/help',
       date: new Date(),
       chat: { id: 100 },
-      raw: {}
+      raw: {},
     }
     const pair = { instanceId: 999, qqRoomId: '888', tgChatId: '100' } // ID 999 not in instances
 
@@ -246,7 +246,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -268,7 +268,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -290,7 +290,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -313,7 +313,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'video', data: { file: 'vid' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
@@ -353,7 +353,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -368,15 +368,15 @@ describe('telegramMessageHandler', () => {
         getChat: vi.fn().mockResolvedValue({
           sendMessage: vi.fn().mockResolvedValue({ id: 999 }),
           deleteMessages: vi.fn().mockResolvedValue(undefined),
-        })
-      }
+        }),
+      },
     };
     (Instance.instances as any).push(mockInstance)
 
     await handler.handleTGMessage(tgMsg, pair)
 
     expect(publishMessage).toHaveBeenCalled()
-    // The second call might be from this test. 
+    // The second call might be from this test.
     // Wait, previous tests might have called it. We should use .toHaveBeenLastCalledWith or get the last call.
     const calls = publishMessage.mock.calls
     const event = calls[calls.length - 1][0]
@@ -403,7 +403,7 @@ describe('telegramMessageHandler', () => {
       chat: { id: 100 },
       date: new Date(),
       sender: { id: 10 },
-      raw: { replyTo: { replyToTopId: 999 } } // Mock threadId source
+      raw: { replyTo: { replyToTopId: 999 } }, // Mock threadId source
     }
     const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100' }
     const unified = {
@@ -411,7 +411,7 @@ describe('telegramMessageHandler', () => {
       sender: { name: 'Alice' },
       content: [{ type: 'text', data: { text: 'Hello' } }],
       chat: { id: '888' },
-      timestamp: Date.now()
+      timestamp: Date.now(),
     }
     messageConverter.fromTelegram.mockReturnValueOnce(unified)
     messageConverter.toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
@@ -437,7 +437,7 @@ describe('telegramMessageHandler', () => {
     // If it's not mocked, it uses real logic?
     // Wait, check top of test file.
     // It is NOT mocked in `vi.mock(...)` calls in the snippet I saw.
-    // So it uses real one. 
+    // So it uses real one.
     // And I provided `raw: { replyTo: { replyToTopId: 999 } }`.
     // ThreadIdExtractor likely extracts 999.
 
