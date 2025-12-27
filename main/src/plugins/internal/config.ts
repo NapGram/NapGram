@@ -10,6 +10,7 @@ import builtinPingPong from '../../../../packages/plugin-ping-pong/src/index'
 import builtinQQInteraction from '../../../../packages/plugin-qq-interaction/src/index'
 import builtinRefresh from '../../../../packages/plugin-refresh/src/index'
 import builtinFlags from '../../../../packages/plugin-flags/src/index'
+import builtinRequestManagement from '../../../../packages/plugin-request-management/src/index'
 import { readBoolEnv, readStringEnv } from './env'
 import { getManagedPluginsConfigPath } from './store'
 
@@ -380,6 +381,12 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         module: '@builtin/flags',
         enabled: true,
         load: async () => builtinFlags,
+      },
+      {
+        id: 'request-management',
+        module: '@builtin/request-management',
+        enabled: true,
+        load: async () => builtinRequestManagement,
       },
     ]
 
