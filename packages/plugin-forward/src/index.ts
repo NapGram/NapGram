@@ -1,4 +1,4 @@
-import type { NapGramPlugin, PluginContext, InstanceStatusEvent } from './types/napgram.js';
+import type { NapGramPlugin, PluginContext, InstanceStatusEvent } from '@napgram/sdk';
 import Instance from '../../../main/src/domain/models/Instance';
 import { ForwardFeature } from '../../../main/src/features/forward/ForwardFeature';
 

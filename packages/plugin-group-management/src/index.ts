@@ -1,4 +1,4 @@
-import type { NapGramPlugin, PluginContext, MessageEvent, QQClientAPI } from './types/napgram.js';
+import type { NapGramPlugin, PluginContext, MessageEvent, QQClientAPI, ReplySegment } from '@napgram/sdk';
 
 const DEFAULT_BAN_DURATION = 30 * 60;
 const MAX_BAN_DURATION = 30 * 86400;
@@ -45,10 +45,10 @@ const extractReplySenderId = (event: MessageEvent): string | null => {
         }
     }
     const segments = Array.isArray(event.message?.segments) ? event.message.segments : [];
-    const replySegment = segments.find((seg: any) => seg && seg.type === 'reply');
-    const replyData = replySegment?.data || {};
-    if (replyData.senderId) return String(replyData.senderId);
-    if (replyData.userId) return String(replyData.userId);
+    const replySegment = segments.find((seg): seg is ReplySegment => !!seg && seg.type === 'reply');
+    const replyData = replySegment?.data;
+    if (replyData?.senderId) return String(replyData.senderId);
+    if (replyData?.userId) return String(replyData.userId);
     return null;
 };
 

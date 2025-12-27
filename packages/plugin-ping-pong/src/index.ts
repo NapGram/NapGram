@@ -1,4 +1,4 @@
-import type { MessageEvent, NapGramPlugin, PluginContext } from './types/napgram.js';
+import type { MessageEvent, NapGramPlugin, PluginContext } from '@napgram/sdk';
 
 const plugin: NapGramPlugin = {
     id: 'ping-pong',
