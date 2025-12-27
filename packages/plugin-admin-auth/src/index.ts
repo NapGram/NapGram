@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import auth from '../../../main/src/interfaces/auth';
+import { authRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-auth',
@@ -11,7 +11,7 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin auth API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(auth);
+            app.register(authRoutes);
         });
     },
 };

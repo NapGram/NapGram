@@ -1,8 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import db from '../domain/models/db'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
-import { ApiResponse } from '../shared/utils/api-response'
+import { ApiResponse, authMiddleware, db } from '@napgram/runtime-kit'
 
 /**
  * 实例管理 API
@@ -186,7 +184,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'create_instance',
@@ -284,7 +282,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'update_instance',
@@ -335,7 +333,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'delete_instance',

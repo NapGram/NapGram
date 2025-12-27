@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import messages from '../../../main/src/interfaces/messages';
+import { messagesRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-messages',
@@ -11,7 +11,7 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin messages API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(messages);
+            app.register(messagesRoutes);
         });
     },
 };

@@ -1,8 +1,10 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import qqAvatar from '../../../main/src/interfaces/qqAvatar';
-import telegramAvatar from '../../../main/src/interfaces/telegramAvatar';
-import richHeader from '../../../main/src/interfaces/richHeader';
-import tempFile from '../../../main/src/interfaces/tempFile';
+import {
+    qqAvatarRoutes,
+    richHeaderRoutes,
+    telegramAvatarRoutes,
+    tempFileRoutes,
+} from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'web-assets',
@@ -14,10 +16,10 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Web assets plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(telegramAvatar);
-            app.register(qqAvatar);
-            app.register(richHeader);
-            app.register(tempFile);
+            app.register(telegramAvatarRoutes);
+            app.register(qqAvatarRoutes);
+            app.register(richHeaderRoutes);
+            app.register(tempFileRoutes);
         });
     },
 };

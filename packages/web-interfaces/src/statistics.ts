@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify'
-import db from '../domain/models/db'
-import Instance from '../domain/models/Instance'
-
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
-import { PluginRuntime } from '../plugins/runtime'
+import {
+  authMiddleware,
+  db,
+  Instance,
+  PluginRuntime,
+} from '@napgram/runtime-kit'
 /**
  * 统计分析 API
  */

@@ -1,9 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import fs from 'node:fs'
 import path from 'node:path'
-import { ErrorResponses } from '../shared/utils/fastify'
-import { getMimeType } from '../shared/utils/mime'
-import { TEMP_PATH } from '../shared/utils/temp'
+import { ErrorResponses, getMimeType, TEMP_PATH } from '@napgram/runtime-kit'
 
 export default async function (fastify: FastifyInstance) {
   fastify.get('/temp/:filename', async (request: any, reply: any) => {

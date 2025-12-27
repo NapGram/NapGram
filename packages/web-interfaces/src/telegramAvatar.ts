@@ -1,14 +1,17 @@
 import type { FastifyInstance } from 'fastify'
-import type Telegram from '../infrastructure/clients/telegram/client'
+import type { TelegramClient } from '@napgram/runtime-kit'
 import fs from 'node:fs'
-import Instance from '../domain/models/Instance'
-import { getLogger } from '../shared/logger'
-import convert from '../shared/utils/convert'
-import { ErrorResponses, registerDualRoute } from '../shared/utils/fastify'
+import {
+  convert,
+  ErrorResponses,
+  getLogger,
+  Instance,
+  registerDualRoute,
+} from '@napgram/runtime-kit'
 
 const log = getLogger('telegramAvatar')
 
-async function getUserAvatarPath(tgBot: Telegram, userId: string) {
+async function getUserAvatarPath(tgBot: TelegramClient, userId: string) {
   try {
     const buffer = await tgBot.downloadProfilePhoto(Number(userId))
     if (!buffer)

@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import pairs from '../../../main/src/interfaces/pairs';
+import { pairsRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-pairs',
@@ -11,7 +11,7 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin pairs API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(pairs);
+            app.register(pairsRoutes);
         });
     },
 };
