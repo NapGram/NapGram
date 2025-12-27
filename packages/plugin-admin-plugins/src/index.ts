@@ -1,6 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import plugins from '../../../main/src/interfaces/plugins';
-import marketplaces from '../../../main/src/interfaces/marketplaces';
+import { marketplacesRoutes, pluginsRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-plugins',
@@ -12,8 +11,8 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin plugins API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(plugins);
-            app.register(marketplaces);
+            app.register(pluginsRoutes);
+            app.register(marketplacesRoutes);
         });
     },
 };

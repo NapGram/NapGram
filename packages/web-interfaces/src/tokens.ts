@@ -1,9 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import db from '../domain/models/db'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
-import { TokenManager } from '../infrastructure/auth/TokenManager'
-import { ApiResponse } from '../shared/utils/api-response'
+import { ApiResponse, authMiddleware, db, TokenManager } from '@napgram/runtime-kit'
 
 function maskToken(token: string) {
   if (!token)

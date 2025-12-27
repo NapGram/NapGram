@@ -1,7 +1,7 @@
 {
-    "name": "@napgram/plugin-admin-settings",
+    "name": "@napgram/plugin-admin-suite",
     "version": "1.0.0",
-    "description": "NapGram admin settings API routes",
+    "description": "NapGram admin API bundle plugin",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "type": "module",
@@ -19,8 +19,7 @@
     "keywords": [
         "napgram",
         "plugin",
-        "admin",
-        "settings"
+        "admin"
     ],
     "author": "NapGram Team",
     "license": "MIT",

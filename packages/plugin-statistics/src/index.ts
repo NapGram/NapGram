@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import statisticsRoutes from '../../../main/src/interfaces/statistics';
+import { statisticsRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'statistics',

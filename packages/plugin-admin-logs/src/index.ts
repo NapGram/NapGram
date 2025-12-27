@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import logs from '../../../main/src/interfaces/logs';
+import { logsRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-logs',
@@ -11,7 +11,7 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin logs API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(logs);
+            app.register(logsRoutes);
         });
     },
 };

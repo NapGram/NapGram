@@ -4,20 +4,23 @@ import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
-import env from '../domain/models/env'
-import { getGlobalRuntime } from '../plugins/core/plugin-runtime'
-import { getPluginVersions, installFromMarketplace, rollbackPlugin, uninstallPlugin, upgradePlugin } from '../plugins/installer'
-import { PluginRuntime } from '../plugins/runtime'
 import {
+  ApiResponse,
+  env,
+  getGlobalRuntime,
+  getLogger,
+  getPluginVersions,
+  installFromMarketplace,
   normalizeModuleSpecifierForPluginsConfig,
   patchPluginConfig,
+  PluginRuntime,
   readPluginsConfig,
   removePluginConfig,
+  rollbackPlugin,
+  uninstallPlugin,
+  upgradePlugin,
   upsertPluginConfig,
-} from '../plugins/store'
-import { getLogger } from '../shared/logger'
-import { ApiResponse } from '../shared/utils/api-response'
-
+} from '@napgram/runtime-kit'
 const logger = getLogger('PluginAdmin')
 
 async function pathExists(p: string): Promise<boolean> {
@@ -108,7 +111,7 @@ export default async function (fastify: FastifyInstance) {
     if (direct && token && token === direct)
       return
 
-    const { authMiddleware } = await import('../infrastructure/auth/authMiddleware')
+    const { authMiddleware } = await import('@napgram/runtime-kit')
     await authMiddleware(request, reply)
   }
 

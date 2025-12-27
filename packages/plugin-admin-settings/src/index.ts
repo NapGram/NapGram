@@ -1,6 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import settings from '../../../main/src/interfaces/settings';
-import tokens from '../../../main/src/interfaces/tokens';
+import { settingsRoutes, tokensRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-settings',
@@ -12,8 +11,8 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin settings API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(settings);
-            app.register(tokens);
+            app.register(settingsRoutes);
+            app.register(tokensRoutes);
         });
     },
 };

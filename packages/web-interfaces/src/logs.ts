@@ -2,8 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import env from '../domain/models/env'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
+import { authMiddleware, env } from '@napgram/runtime-kit'
 
 /**
  * 系统日志 API

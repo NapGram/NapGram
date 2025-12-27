@@ -1,11 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import db from '../domain/models/db'
-import Instance from '../domain/models/Instance'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
-import { groupInfoCache } from '../infrastructure/services/CacheManager'
-import { getLogger } from '../shared/logger'
-import { ApiResponse } from '../shared/utils/api-response'
+import { ApiResponse, authMiddleware, db, getLogger, groupInfoCache, Instance } from '@napgram/runtime-kit'
 
 const log = getLogger('PairsApi')
 
@@ -323,7 +318,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'create_pair',
@@ -424,7 +419,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'update_pair',
@@ -495,7 +490,7 @@ export default async function (fastify: FastifyInstance) {
       const pair = await db.forwardPair.delete({ where: { id: pairId } })
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'delete_pair',

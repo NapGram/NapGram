@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import database from '../../../main/src/interfaces/database';
+import { databaseRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'admin-database',
@@ -11,7 +11,7 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Admin database API plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(database);
+            app.register(databaseRoutes);
         });
     },
 };

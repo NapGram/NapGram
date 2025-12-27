@@ -1,8 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import process from 'node:process'
 import { z } from 'zod'
-import { AuthService } from '../infrastructure/auth'
-import { ApiResponse } from '../shared/utils/api-response'
+import { ApiResponse, AuthService } from '@napgram/runtime-kit'
 
 /**
  * 认证 API 路由
@@ -141,7 +140,7 @@ export default async function (fastify: FastifyInstance) {
    */
   fastify.get('/api/auth/me', {
     preHandler: async (request, reply) => {
-      const { authMiddleware } = await import('../infrastructure/auth/authMiddleware')
+      const { authMiddleware } = await import('@napgram/runtime-kit')
       await authMiddleware(request, reply)
     },
   }, async (request) => {
@@ -155,7 +154,7 @@ export default async function (fastify: FastifyInstance) {
     }
 
     if (auth.userId) {
-      const db = (await import('../domain/models/db')).default
+      const { db } = await import('@napgram/runtime-kit')
       const user = await db.adminUser.findUnique({
         where: { id: auth.userId },
         select: {
@@ -182,7 +181,7 @@ export default async function (fastify: FastifyInstance) {
    */
   fastify.post('/api/auth/users', {
     preHandler: async (request, reply) => {
-      const { authMiddleware } = await import('../infrastructure/auth/authMiddleware')
+      const { authMiddleware } = await import('@napgram/runtime-kit')
       await authMiddleware(request, reply)
     },
   }, async (request, reply) => {
@@ -226,7 +225,7 @@ export default async function (fastify: FastifyInstance) {
    */
   fastify.post('/api/auth/change-password', {
     preHandler: async (request, reply) => {
-      const { authMiddleware } = await import('../infrastructure/auth/authMiddleware')
+      const { authMiddleware } = await import('@napgram/runtime-kit')
       await authMiddleware(request, reply)
     },
   }, async (request, reply) => {

@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { Buffer } from 'node:buffer'
-import { getLogger } from '../shared/logger'
-import { ErrorResponses, registerDualRoute } from '../shared/utils/fastify'
+import { ErrorResponses, getLogger, registerDualRoute } from '@napgram/runtime-kit'
 
 const logger = getLogger('QQAvatar')
 

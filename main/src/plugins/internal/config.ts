@@ -14,6 +14,7 @@ import builtinAdminMessages from '../../../../packages/plugin-admin-messages/src
 import builtinAdminPairs from '../../../../packages/plugin-admin-pairs/src/index'
 import builtinAdminPlugins from '../../../../packages/plugin-admin-plugins/src/index'
 import builtinAdminSettings from '../../../../packages/plugin-admin-settings/src/index'
+import builtinAdminSuite from '../../../../packages/plugin-admin-suite/src/index'
 import builtinCommands from '../../../../packages/plugin-commands/src/index'
 import builtinFlags from '../../../../packages/plugin-flags/src/index'
 import builtinForward from '../../../../packages/plugin-forward/src/index'
@@ -471,50 +472,56 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
       {
         id: 'admin-auth',
         module: '@builtin/admin-auth',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminAuth,
       },
       {
         id: 'admin-instances',
         module: '@builtin/admin-instances',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminInstances,
       },
       {
         id: 'admin-pairs',
         module: '@builtin/admin-pairs',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminPairs,
       },
       {
         id: 'admin-messages',
         module: '@builtin/admin-messages',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminMessages,
       },
       {
         id: 'admin-logs',
         module: '@builtin/admin-logs',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminLogs,
       },
       {
         id: 'admin-settings',
         module: '@builtin/admin-settings',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminSettings,
       },
       {
         id: 'admin-plugins',
         module: '@builtin/admin-plugins',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminPlugins,
       },
       {
         id: 'admin-database',
         module: '@builtin/admin-database',
-        enabled: true,
+        enabled: false,
         load: async () => builtinAdminDatabase,
+      },
+      {
+        id: 'admin-suite',
+        module: '@builtin/admin-suite',
+        enabled: true,
+        load: async () => builtinAdminSuite,
       },
       {
         id: 'web-assets',

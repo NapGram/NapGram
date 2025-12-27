@@ -2,8 +2,15 @@ import type { FastifyInstance } from 'fastify'
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { z } from 'zod'
-import { readMarketplaceCache, readMarketplaces, refreshMarketplaceIndex, removeMarketplaceIndex, upsertMarketplaceIndex, writeMarketplaces } from '../plugins/marketplace'
-import { ApiResponse } from '../shared/utils/api-response'
+import {
+  ApiResponse,
+  readMarketplaceCache,
+  readMarketplaces,
+  refreshMarketplaceIndex,
+  removeMarketplaceIndex,
+  upsertMarketplaceIndex,
+  writeMarketplaces,
+} from '@napgram/runtime-kit'
 
 /**
  * Marketplace (index) Admin API
@@ -22,7 +29,7 @@ export default async function (fastify: FastifyInstance) {
     if (direct && token && token === direct)
       return
 
-    const { authMiddleware } = await import('../infrastructure/auth/authMiddleware')
+    const { authMiddleware } = await import('@napgram/runtime-kit')
     await authMiddleware(request, reply)
   }
 

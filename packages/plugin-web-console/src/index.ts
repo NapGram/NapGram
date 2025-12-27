@@ -1,5 +1,5 @@
 import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
-import ui from '../../../main/src/interfaces/ui';
+import { uiRoutes } from '@napgram/web-interfaces';
 
 const plugin: NapGramPlugin = {
     id: 'web-console',
@@ -11,7 +11,7 @@ const plugin: NapGramPlugin = {
     install: async (ctx: PluginContext) => {
         ctx.logger.info('Web console plugin installed');
         ctx.web.registerRoutes((app: any) => {
-            app.register(ui);
+            app.register(uiRoutes);
         });
     },
 };

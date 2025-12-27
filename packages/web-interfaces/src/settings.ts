@@ -2,8 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
-import env from '../domain/models/env'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
+import { authMiddleware, env } from '@napgram/runtime-kit'
 
 /**
  * 系统配置 API
@@ -97,7 +96,7 @@ export default async function (fastify: FastifyInstance) {
       await fs.writeFile(configFile, JSON.stringify(newConfig, null, 2), 'utf-8')
 
       // 审计日志
-      const { AuthService } = await import('../infrastructure/auth')
+      const { AuthService } = await import('@napgram/runtime-kit')
       await AuthService.logAudit(
         auth.userId,
         'update_settings',
