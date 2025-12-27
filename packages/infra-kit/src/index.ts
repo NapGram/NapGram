@@ -1,9 +1,24 @@
+export { configureInfraKit } from './deps'
+export type { InfraLogger, LoggerFactory } from './deps'
+
 export {
+  type CacheConfig,
+  CacheManager,
   configCache,
   groupInfoCache,
   mediaCache,
-  performanceMonitor,
   userInfoCache,
-} from '../../../main/src/infrastructure'
+} from './CacheManager'
 
-export type { IQQClient } from '../../../main/src/infrastructure/clients/qq'
+export {
+  type MessageHandler,
+  MessageQueue,
+  type QueueConfig,
+} from './MessageQueue'
+
+export {
+  type PerformanceMetrics,
+  PerformanceMonitor,
+  performanceMonitor,
+  type PerformanceStats,
+} from './PerformanceMonitor'
