@@ -11,7 +11,7 @@ vi.mock('../../../../domain/models/db', () => ({
   },
 }))
 
-describe('ForwardMapper', () => {
+describe('forwardMapper', () => {
   let mapper: ForwardMapper
 
   beforeEach(() => {
@@ -47,7 +47,7 @@ describe('ForwardMapper', () => {
         data: expect.objectContaining({
           seq: 200,
           tgMsgId: 100,
-        })
+        }),
       }))
     })
 
@@ -94,7 +94,7 @@ describe('ForwardMapper', () => {
       await mapper.saveMessage(qqMsg, tgMsg, 1, BigInt(1000), BigInt(2000))
       const db = (await import('../../../../domain/models/db')).default
       expect(db.message.create).toHaveBeenCalledWith(expect.objectContaining({
-        data: expect.objectContaining({ seq: 0 })
+        data: expect.objectContaining({ seq: 0 }),
       }))
     })
   })
@@ -107,7 +107,7 @@ describe('ForwardMapper', () => {
       const result = await mapper.findTgMsgId(1, BigInt(1000), '123')
       expect(result).toBe(999)
       expect(db.message.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({ seq: 123 })
+        where: expect.objectContaining({ seq: 123 }),
       }))
     })
 

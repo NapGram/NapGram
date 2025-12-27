@@ -37,6 +37,7 @@ const eventPublisherMocks = vi.hoisted(() => ({
   publishFriendRequest: vi.fn(),
   publishGroupRequest: vi.fn(),
   publishNotice: vi.fn(),
+  publishInstanceStatus: vi.fn(),
 }))
 
 const forwardMapMocks = vi.hoisted(() => ({
@@ -101,7 +102,7 @@ vi.mock('../ForwardMap', () => ({
 }))
 
 vi.mock('../../../features', () => ({
-  FeatureManager: vi.fn(function FeatureManagerMock() {
+  FeatureManager: vi.fn(function () {
     return {
       initialize: featureManagerMocks.initialize,
     }
@@ -112,20 +113,20 @@ vi.mock('../../../infrastructure/clients/qq', () => ({
   qqClientFactory: qqMocks.factory,
 }))
 
-vi.mock('../../../infrastructure/clients/telegram/client', () => ({
-  default: {
+vi.mock('../../../infrastructure/clients/telegram', () => ({
+  telegramClientFactory: {
     connect: telegramMocks.connect,
     create: telegramMocks.create,
   },
 }))
 
 vi.mock('../../../shared/services/NotificationService', () => ({
-  NotificationService: vi.fn(function NotificationServiceMock() {
+  NotificationService: vi.fn(function () {
     return notificationMocks
   }),
 }))
 
-describe('Instance', () => {
+describe('instance', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     Instance.instances.length = 0
@@ -177,7 +178,12 @@ describe('Instance', () => {
 
     const instance = await Instance.start(1, 'token')
 
-    expect(telegramMocks.connect).toHaveBeenCalledWith(55, 'NapGram', 'token')
+    expect(telegramMocks.connect).toHaveBeenCalledWith({
+      type: 'mtcute',
+      sessionId: 55,
+      botToken: 'token',
+      appName: 'NapGram',
+    })
     expect(telegramMocks.create).not.toHaveBeenCalled()
     expect(qqMocks.factory.create).toHaveBeenCalledWith({
       type: 'napcat',
@@ -317,7 +323,7 @@ describe('Instance', () => {
     expect(calls).toEqual(expect.arrayContaining([
       expect.objectContaining({ noticeType: 'group-member-increase', groupId: '100', userId: '200' }),
       expect.objectContaining({ noticeType: 'group-member-decrease', groupId: '100', userId: '200' }),
-      expect.objectContaining({ noticeType: 'friend-add', userId: '300' })
+      expect.objectContaining({ noticeType: 'friend-add', userId: '300' }),
     ]))
   })
 
@@ -328,7 +334,11 @@ describe('Instance', () => {
     const instance = await Instance.createNew('newtoken')
 
     expect(dbMocks.instance.create).toHaveBeenCalled()
-    expect(telegramMocks.create).toHaveBeenCalledWith({ botAuthToken: 'newtoken' })
+    expect(telegramMocks.create).toHaveBeenCalledWith({
+      type: 'mtcute',
+      botToken: 'newtoken',
+      appName: 'NapGram',
+    })
     expect(instance.id).toBe(999)
   })
 
@@ -363,14 +373,14 @@ describe('Instance', () => {
 
   it('handles missing handleFriendRequest/handleGroupRequest methods', async () => {
     // Remove the mocked methods from client
-    const client = await qqMocks.factory.create({})
+    await qqMocks.factory.create({})
     // Wait, factory returns the hoisted `client` object. I modify it.
     const originalFriend = qqMocks.client.handleFriendRequest
     const originalGroup = qqMocks.client.handleGroupRequest
 
-      // Set to undefined
-      ; (qqMocks.client as any).handleFriendRequest = undefined
-      ; (qqMocks.client as any).handleGroupRequest = undefined
+    // Set to undefined
+    ;(qqMocks.client as any).handleFriendRequest = undefined
+    ;(qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')
@@ -397,7 +407,9 @@ describe('Instance', () => {
   it('handles plugin bridge init failure', async () => {
     const error = new Error('Bus Init Failed')
     // Mock getEventPublisher to throw ONCE
-    vi.mocked(getEventPublisher).mockImplementationOnce(() => { throw error })
+    vi.mocked(getEventPublisher).mockImplementationOnce(() => {
+      throw error
+    })
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(9, 'token')
@@ -414,7 +426,7 @@ describe('Instance', () => {
     notificationMocks.notifyDisconnection.mockRejectedValueOnce(notifyError)
     notificationMocks.notifyReconnection.mockRejectedValueOnce(notifyError)
 
-    const instance = await Instance.start(10, 'token')
+    await Instance.start(10, 'token')
 
     const lostHandler = qqMocks.handlers.get('connection:lost')
     await lostHandler({})

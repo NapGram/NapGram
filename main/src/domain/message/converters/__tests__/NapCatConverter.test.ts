@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { NapCatConverter } from '../NapCatConverter'
 
-describe('NapCatConverter', () => {
+describe('napCatConverter', () => {
   it('converts napcat segments and uses sender card', () => {
     const converter = new NapCatConverter()
     const longJson = 'x'.repeat(510)
@@ -97,7 +97,6 @@ describe('NapCatConverter', () => {
     expect(result.chat).toEqual({ id: '999', type: 'private', name: undefined })
   })
 
-
   it('handles empty text for truncation', () => {
     const converter = new NapCatConverter()
     // Mock access to private method via any
@@ -117,7 +116,7 @@ describe('NapCatConverter', () => {
     const converter = new NapCatConverter()
     // Mock jsonCardConverter attached to instance
     const mockJsonConverter = {
-      convertJsonCard: () => ({ type: 'json_card', data: {} })
+      convertJsonCard: () => ({ type: 'json_card', data: {} }),
     };
     (converter as any).jsonCardConverter = mockJsonConverter
 
@@ -125,7 +124,7 @@ describe('NapCatConverter', () => {
       message_id: 3,
       time: 123,
       user_id: 1,
-      message: [{ type: 'json', data: { data: '{}' } }]
+      message: [{ type: 'json', data: { data: '{}' } }],
     }
     const result = converter.fromNapCat(napCatMsg)
     // Should return the converted object directly (line 128)
@@ -136,7 +135,7 @@ describe('NapCatConverter', () => {
     const converter = new NapCatConverter()
     // Mock textConverter to return array
     const mockTextConverter = {
-      convertText: () => [{ type: 'text', data: { text: 'a' } }, { type: 'text', data: { text: 'b' } }]
+      convertText: () => [{ type: 'text', data: { text: 'a' } }, { type: 'text', data: { text: 'b' } }],
     };
     (converter as any).textConverter = mockTextConverter
 
@@ -144,7 +143,7 @@ describe('NapCatConverter', () => {
       message_id: 4,
       time: 123,
       user_id: 1,
-      message: [{ type: 'text', data: { text: 'split' } }]
+      message: [{ type: 'text', data: { text: 'split' } }],
     }
     const result = converter.fromNapCat(napCatMsg)
     // Should flatten the array (line 30)

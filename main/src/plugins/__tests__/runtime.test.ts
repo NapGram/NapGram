@@ -1,41 +1,43 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { PluginRuntime } from '../runtime'
-import { EventBus } from '../core/event-bus'
-import * as config from '../internal/config'
-import * as coreRuntime from '../core/plugin-runtime'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Instance from '../../domain/models/Instance'
+import { EventBus } from '../core/event-bus'
+import * as coreRuntime from '../core/plugin-runtime'
+import * as config from '../internal/config'
+import { PluginRuntime } from '../runtime'
 
 vi.mock('../../domain/models/Instance', () => ({
   default: {
-    instances: []
-  }
+    instances: [],
+  },
 }))
 
-const createRuntimeStub = () => ({
-  start: vi.fn().mockResolvedValue({
-    enabled: true,
-    loaded: [],
-    failed: [],
-    stats: { total: 0, native: 0, installed: 0, error: 0 },
-  }),
-  stop: vi.fn().mockResolvedValue(undefined),
-  reload: vi.fn().mockResolvedValue({
-    enabled: true,
-    loaded: [],
-    failed: [],
-    stats: { total: 0, native: 0, installed: 0, error: 0 },
-  }),
-  reloadPlugin: vi.fn().mockResolvedValue({ id: 'test-plugin', success: true }),
-  getLastReport: vi.fn().mockReturnValue({
-    enabled: true,
-    loaded: [],
-    failed: [],
-    stats: { total: 0, native: 0, installed: 0, error: 0 },
-  }),
-  getEventBus: vi.fn().mockReturnValue(new EventBus()),
-})
+function createRuntimeStub() {
+  return {
+    start: vi.fn().mockResolvedValue({
+      enabled: true,
+      loaded: [],
+      failed: [],
+      stats: { total: 0, native: 0, installed: 0, error: 0 },
+    }),
+    stop: vi.fn().mockResolvedValue(undefined),
+    reload: vi.fn().mockResolvedValue({
+      enabled: true,
+      loaded: [],
+      failed: [],
+      stats: { total: 0, native: 0, installed: 0, error: 0 },
+    }),
+    reloadPlugin: vi.fn().mockResolvedValue({ id: 'test-plugin', success: true }),
+    getLastReport: vi.fn().mockReturnValue({
+      enabled: true,
+      loaded: [],
+      failed: [],
+      stats: { total: 0, native: 0, installed: 0, error: 0 },
+    }),
+    getEventBus: vi.fn().mockReturnValue(new EventBus()),
+  }
+}
 
-describe('PluginRuntime', () => {
+describe('pluginRuntime', () => {
   beforeEach(() => {
     coreRuntime.resetGlobalRuntime()
     vi.clearAllMocks()
@@ -46,11 +48,11 @@ describe('PluginRuntime', () => {
     coreRuntime.resetGlobalRuntime()
   })
 
-  test('should initialize properly', () => {
+  it('should initialize properly', () => {
     expect(() => PluginRuntime.start()).toBeDefined()
   })
 
-  test('should configure APIs properly', async () => {
+  it('should configure APIs properly', async () => {
     const runtimeStub = createRuntimeStub()
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
     vi.spyOn(config, 'loadPluginSpecs').mockResolvedValue([])
@@ -61,10 +63,10 @@ describe('PluginRuntime', () => {
       featureManager: {
         commands: {
           reloadCommands: vi.fn(),
-        }
-      }
+        },
+      },
     }
-    
+
     // Mock Instance.instances
     vi.mocked(Instance.instances).push(mockInstance as any)
 
@@ -73,7 +75,7 @@ describe('PluginRuntime', () => {
     expect(config.loadPluginSpecs).toHaveBeenCalled()
   })
 
-  test('should resolve instances through API helpers', async () => {
+  it('should resolve instances through API helpers', async () => {
     const runtimeStub = createRuntimeStub()
     let capturedApis: any
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockImplementation((options?: any) => {
@@ -94,7 +96,7 @@ describe('PluginRuntime', () => {
     await expect(capturedApis.user.isFriend({ instanceId: 1, userId: 'qq:u:123' })).resolves.toBe(false)
   })
 
-  test('should start and stop correctly', async () => {
+  it('should start and stop correctly', async () => {
     const runtimeStub = createRuntimeStub()
     const getRuntimeSpy = vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
     const loadSpecsSpy = vi.spyOn(config, 'loadPluginSpecs').mockResolvedValue([
@@ -123,7 +125,7 @@ describe('PluginRuntime', () => {
     expect(runtimeStub.reload).toHaveBeenCalled()
   })
 
-  test('should reload commands for instances and continue on failures', async () => {
+  it('should reload commands for instances and continue on failures', async () => {
     const runtimeStub = createRuntimeStub()
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
     vi.spyOn(config, 'loadPluginSpecs').mockResolvedValue([])
@@ -142,7 +144,7 @@ describe('PluginRuntime', () => {
     expect(reloadFail).toHaveBeenCalled()
   })
 
-  test('should surface start failures', async () => {
+  it('should surface start failures', async () => {
     const runtimeStub = createRuntimeStub()
     runtimeStub.start.mockRejectedValue(new Error('start fail'))
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
@@ -151,7 +153,7 @@ describe('PluginRuntime', () => {
     await expect(PluginRuntime.start()).rejects.toThrow('start fail')
   })
 
-  test('should surface stop failures', async () => {
+  it('should surface stop failures', async () => {
     const runtimeStub = createRuntimeStub()
     runtimeStub.stop.mockRejectedValue(new Error('stop fail'))
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
@@ -159,7 +161,7 @@ describe('PluginRuntime', () => {
     await expect(PluginRuntime.stop()).rejects.toThrow('stop fail')
   })
 
-  test('should surface reload failures', async () => {
+  it('should surface reload failures', async () => {
     const runtimeStub = createRuntimeStub()
     runtimeStub.reload.mockRejectedValue(new Error('reload fail'))
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
@@ -168,7 +170,7 @@ describe('PluginRuntime', () => {
     await expect(PluginRuntime.reload()).rejects.toThrow('reload fail')
   })
 
-  test('should handle plugin reload correctly', async () => {
+  it('should handle plugin reload correctly', async () => {
     const runtimeStub = createRuntimeStub()
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
     const loadSpecsSpy = vi.spyOn(config, 'loadPluginSpecs').mockResolvedValue([
@@ -204,7 +206,7 @@ describe('PluginRuntime', () => {
     await expect(PluginRuntime.reloadPlugin('non-existent')).rejects.toThrow('Plugin spec not found: non-existent')
   })
 
-  test('should get last report', () => {
+  it('should get last report', () => {
     const runtimeStub = createRuntimeStub()
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
 
@@ -216,7 +218,7 @@ describe('PluginRuntime', () => {
     expect(report).toHaveProperty('stats')
   })
 
-  test('should get event bus', () => {
+  it('should get event bus', () => {
     const runtimeStub = createRuntimeStub()
     vi.spyOn(coreRuntime, 'getGlobalRuntime').mockReturnValue(runtimeStub as any)
 

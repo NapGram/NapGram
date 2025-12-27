@@ -1,14 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { TelegramConverter } from '../TelegramConverter'
 
-const createEntity = (type: 'mention' | 'text_mention', offset: number, length: number, params?: any) => ({
-  offset,
-  length,
-  params: params || {},
-  is: (query: string) => query === type,
-})
+function createEntity(type: 'mention' | 'text_mention', offset: number, length: number, params?: any) {
+  return {
+    offset,
+    length,
+    params: params || {},
+    is: (query: string) => query === type,
+  }
+}
 
-describe('TelegramConverter', () => {
+describe('telegramConverter', () => {
   it('converts reply and mention entities', () => {
     const converter = new TelegramConverter()
     const tgMsg: any = {
@@ -142,19 +144,19 @@ describe('TelegramConverter', () => {
     const videoRes = tc.fromTelegram(videoMsg)
     expect(videoRes.content[0]).toEqual({
       type: 'video',
-      data: { file: videoMsg.media, duration: 10 }
+      data: { file: videoMsg.media, duration: 10 },
     })
 
     const voiceRes = tc.fromTelegram(voiceMsg)
     expect(voiceRes.content[0]).toEqual({
       type: 'audio',
-      data: { file: voiceMsg.media, duration: 5 }
+      data: { file: voiceMsg.media, duration: 5 },
     })
 
     const audioRes = tc.fromTelegram(audioMsg)
     expect(audioRes.content[0]).toEqual({
       type: 'audio',
-      data: { file: audioMsg.media, duration: 100 }
+      data: { file: audioMsg.media, duration: 100 },
     })
   })
 
@@ -166,7 +168,7 @@ describe('TelegramConverter', () => {
       replyToMessage: {
         id: 7,
         // sender missing
-        text: 'hello'
+        text: 'hello',
       },
       sender: undefined, // unknown sender
       chat: { id: 1, type: 'group' },
@@ -182,8 +184,8 @@ describe('TelegramConverter', () => {
         messageId: '7',
         senderId: '', // should default to empty string
         senderName: 'Unknown',
-        text: 'hello'
-      }
+        text: 'hello',
+      },
     })
     // Should not have text content
     expect(res.content.length).toBe(1)
@@ -205,7 +207,7 @@ describe('TelegramConverter', () => {
     expect(res.content).toEqual([
       { type: 'text', data: { text: 'Hello ' } },
       { type: 'at', data: { userId: 'user', userName: 'user' } },
-      { type: 'text', data: { text: ' world' } }
+      { type: 'text', data: { text: ' world' } },
     ])
 
     // Edge case: Entity at start
@@ -219,7 +221,7 @@ describe('TelegramConverter', () => {
     const resStart = converter.fromTelegram(msgStart)
     expect(resStart.content).toEqual([
       { type: 'at', data: { userId: 'user', userName: 'user' } },
-      { type: 'text', data: { text: ' hi' } }
+      { type: 'text', data: { text: ' hi' } },
     ])
   })
   it('converts plain text without entities', () => {

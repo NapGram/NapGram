@@ -10,7 +10,7 @@ vi.mock('../../../shared/logger', () => ({
   getLogger: vi.fn(() => loggerMocks),
 }))
 
-describe('InstanceAPI', () => {
+describe('instanceAPI', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

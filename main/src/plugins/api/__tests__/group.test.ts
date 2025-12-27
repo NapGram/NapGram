@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GroupAPIImpl } from '../../api/group'
 
 // Mock logger
@@ -11,27 +11,27 @@ vi.mock('../../../shared/logger', () => ({
   })),
 }))
 
-describe('GroupAPIImpl', () => {
+describe('groupAPIImpl', () => {
   let groupAPI: GroupAPIImpl
 
   beforeEach(() => {
     groupAPI = new GroupAPIImpl()
   })
 
-  test('should initialize correctly', () => {
+  it('should initialize correctly', () => {
     expect(groupAPI).toBeInstanceOf(GroupAPIImpl)
   })
 
-  test('should get group info', async () => {
+  it('should get group info', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       // Mock instance with necessary properties
     })
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).getQQGroupInfo = vi.fn().mockResolvedValue({
-        groupId: 'qq:group:123456',
-        groupName: 'Test Group',
-      })
+    ; (groupAPI as any).getQQGroupInfo = vi.fn().mockResolvedValue({
+      groupId: 'qq:group:123456',
+      groupName: 'Test Group',
+    })
 
     await expect(groupAPI.getInfo({
       instanceId: 1,
@@ -42,15 +42,15 @@ describe('GroupAPIImpl', () => {
     })
   })
 
-  test('should get group members', async () => {
+  it('should get group members', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       // Mock instance with necessary properties
     })
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).getQQGroupMembers = vi.fn().mockResolvedValue([
-        { userId: 'qq:user:1', userName: 'User1', role: 'member' },
-      ])
+    ; (groupAPI as any).getQQGroupMembers = vi.fn().mockResolvedValue([
+      { userId: 'qq:user:1', userName: 'User1', role: 'member' },
+    ])
 
     const members = await groupAPI.getMembers({
       instanceId: 1,
@@ -61,7 +61,7 @@ describe('GroupAPIImpl', () => {
     expect(members).toHaveLength(1)
   })
 
-  test('should return empty members for qq by default', async () => {
+  it('should return empty members for qq by default', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
@@ -72,13 +72,13 @@ describe('GroupAPIImpl', () => {
     })).resolves.toEqual([])
   })
 
-  test('should get tg group members', async () => {
+  it('should get tg group members', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).getTGGroupMembers = vi.fn().mockResolvedValue([
-        { userId: 'tg:user:1', userName: 'User1', role: 'member' },
-      ])
+    ; (groupAPI as any).getTGGroupMembers = vi.fn().mockResolvedValue([
+      { userId: 'tg:user:1', userName: 'User1', role: 'member' },
+    ])
 
     const members = await groupAPI.getMembers({
       instanceId: 1,
@@ -88,7 +88,7 @@ describe('GroupAPIImpl', () => {
     expect(members).toHaveLength(1)
   })
 
-  test('should return empty members for tg by default', async () => {
+  it('should return empty members for tg by default', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
@@ -99,11 +99,11 @@ describe('GroupAPIImpl', () => {
     })).resolves.toEqual([])
   })
 
-  test('should set admin', async () => {
+  it('should set admin', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).setQQAdmin = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).setQQAdmin = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.setAdmin({
       instanceId: 1,
@@ -113,11 +113,11 @@ describe('GroupAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should mute user', async () => {
+  it('should mute user', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).muteQQUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).muteQQUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.muteUser({
       instanceId: 1,
@@ -127,11 +127,11 @@ describe('GroupAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should kick user', async () => {
+  it('should kick user', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).kickQQUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).kickQQUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.kickUser({
       instanceId: 1,
@@ -140,11 +140,11 @@ describe('GroupAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should set admin for tg group', async () => {
+  it('should set admin for tg group', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).setTGAdmin = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).setTGAdmin = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.setAdmin({
       instanceId: 1,
@@ -154,11 +154,11 @@ describe('GroupAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should mute user for tg group', async () => {
+  it('should mute user for tg group', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).muteTGUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).muteTGUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.muteUser({
       instanceId: 1,
@@ -168,11 +168,11 @@ describe('GroupAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should kick user for tg group', async () => {
+  it('should kick user for tg group', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).kickTGUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).kickTGUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.kickUser({
       instanceId: 1,
@@ -181,7 +181,7 @@ describe('GroupAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should handle missing instance resolver', async () => {
+  it('should handle missing instance resolver', async () => {
     await expect(groupAPI.getInfo({
       instanceId: 1,
       groupId: 'qq:group:123456',
@@ -213,7 +213,7 @@ describe('GroupAPIImpl', () => {
     })).rejects.toThrow('Instance resolver not configured (Phase 4)')
   })
 
-  test('should handle missing instance', async () => {
+  it('should handle missing instance', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue(null)
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
 
@@ -248,7 +248,7 @@ describe('GroupAPIImpl', () => {
     })).rejects.toThrow('Instance 1 not found')
   })
 
-  test('should parse group ID correctly', () => {
+  it('should parse group ID correctly', () => {
     // The parseGroupId method is private, but we can test the expected behavior
     // by ensuring the public methods handle the parsing correctly
     const mockInstanceResolver = vi.fn().mockReturnValue({})
@@ -266,7 +266,7 @@ describe('GroupAPIImpl', () => {
     })).not.toThrow()
   })
 
-  test('should throw for invalid group ID format', async () => {
+  it('should throw for invalid group ID format', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
 
@@ -276,7 +276,7 @@ describe('GroupAPIImpl', () => {
     })).rejects.toThrow('Invalid groupId format')
   })
 
-  test('should throw for invalid user ID format', async () => {
+  it('should throw for invalid user ID format', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
 
@@ -288,7 +288,7 @@ describe('GroupAPIImpl', () => {
     })).rejects.toThrow('Invalid userId format')
   })
 
-  test('should throw for unknown platform in group id', async () => {
+  it('should throw for unknown platform in group id', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
 
@@ -303,7 +303,7 @@ describe('GroupAPIImpl', () => {
     })).rejects.toThrow('Unknown platform')
   })
 
-  test('should throw when group and user platforms differ', async () => {
+  it('should throw when group and user platforms differ', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
 
@@ -328,7 +328,7 @@ describe('GroupAPIImpl', () => {
     })).rejects.toThrow('Group and user must be on the same platform')
   })
 
-  test('should throw for unknown platform in setAdmin, muteUser, kickUser', async () => {
+  it('should throw for unknown platform in setAdmin, muteUser, kickUser', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
 
@@ -355,7 +355,7 @@ describe('GroupAPIImpl', () => {
 })
 
 describe('createGroupAPI', () => {
-  test('should create group API instance', () => {
+  it('should create group API instance', () => {
     const groupAPI = new GroupAPIImpl()
 
     expect(groupAPI).toBeDefined()
@@ -366,7 +366,7 @@ describe('createGroupAPI', () => {
     expect(groupAPI.kickUser).toBeDefined()
   })
 
-  test('should create group API with instance resolver', () => {
+  it('should create group API with instance resolver', () => {
     const instanceResolver = vi.fn()
     const groupAPI = new GroupAPIImpl(instanceResolver)
 
