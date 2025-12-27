@@ -1,11 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import Html from '@kitajs/html'
-import env from '../domain/models/env'
-import Instance from '../domain/models/Instance'
-import posthog from '../domain/models/posthog'
-import { getLogger } from '../shared/logger'
-
-import { formatDate } from '../shared/utils/date'
+import { env, formatDate, getLogger, Instance, posthog } from '@napgram/runtime-kit'
 
 const logger = getLogger('Rich Header')
 void Html // Keep Html in scope for JSX factory

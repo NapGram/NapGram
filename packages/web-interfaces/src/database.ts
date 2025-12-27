@@ -1,10 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import db from '../domain/models/db'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
-import log from '../shared/logger'
+import { authMiddleware, db, getLogger } from '@napgram/runtime-kit'
 
-const logger = log('database')
+const logger = getLogger('database')
 
 function normalizeBigInt(value: any): any {
   if (typeof value === 'bigint')

@@ -3,9 +3,7 @@ import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import env from '../domain/models/env'
-import { ErrorResponses } from '../shared/utils/fastify'
-import { getMimeType } from '../shared/utils/mime'
+import { env, ErrorResponses, getMimeType } from '@napgram/runtime-kit'
 
 export default async function (fastify: FastifyInstance) {
   if (env.UI_PROXY) {

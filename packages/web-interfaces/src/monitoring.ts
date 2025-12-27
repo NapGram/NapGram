@@ -5,13 +5,13 @@ import {
   mediaCache,
   performanceMonitor,
   userInfoCache,
-} from '../infrastructure'
+} from '@napgram/infra-kit'
 
 /**
  * 监控和统计 API
  * 提供实时性能指标和缓存统计
  */
-export function setupMonitoring(app: FastifyInstance) {
+export default function setupMonitoring(app: FastifyInstance) {
   /**
    * GET /api/monitor/performance
    * 获取性能统计数据

@@ -1,10 +1,13 @@
 import type { FastifyInstance } from 'fastify'
-import db from '../domain/models/db'
-import { authMiddleware } from '../infrastructure/auth/authMiddleware'
-import { getLogger } from '../shared/logger'
-import { TTLCache } from '../shared/utils/cache'
-import { ErrorResponses } from '../shared/utils/fastify'
-import processNestedForward from '../shared/utils/processNestedForward'
+import {
+  authMiddleware,
+  db,
+  ErrorResponses,
+  getLogger,
+  Instance,
+  processNestedForward,
+  TTLCache,
+} from '@napgram/runtime-kit'
 
 const forwardCache = new TTLCache<string, any>(60000) // 1 minute TTL
 const logger = getLogger('MessagesApi')
@@ -139,7 +142,7 @@ export default async function (fastify: FastifyInstance) {
     if (!data)
       return null
 
-    const instances = (await import('../domain/models/Instance')).default.instances
+    const instances = Instance.instances
     let client: any
 
     // Try to find the correct instance/client
