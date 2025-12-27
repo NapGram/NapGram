@@ -7,7 +7,7 @@ import type {
   Sender,
   UnifiedMessage,
 } from './message'
-import type { ForwardMessage } from './types'
+import type { ForwardMessage } from './types/index'
 
 
 export interface FriendRequestEvent {

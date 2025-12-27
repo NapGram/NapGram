@@ -1,4 +1,4 @@
-import type { ForwardMessage } from './types'
+import type { ForwardMessage } from './types/index'
 import type { Receive, WSSendReturn } from './types/onebot-types'
 import { getQQClientDependencies, resolveLoggerFactory } from './deps'
 
