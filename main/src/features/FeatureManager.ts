@@ -28,7 +28,10 @@ export class FeatureManager {
   async initialize() {
     try {
       logger.info('MediaFeature 正在初始化...')
-      this.media = new MediaFeature(this.instance, this.tgBot, this.qqClient)
+      this.media = this.instance.mediaFeature ?? new MediaFeature(this.instance, this.tgBot, this.qqClient)
+      if (!this.instance.mediaFeature) {
+        this.instance.mediaFeature = this.media
+      }
       this.features.set('media', this.media)
       logger.info('MediaFeature ✓ 初始化完成')
 
@@ -39,16 +42,24 @@ export class FeatureManager {
 
       logger.info('CommandsFeature 正在初始化...')
       this.commands = new CommandsFeature(this.instance, this.tgBot, this.qqClient)
+      this.instance.commandsFeature = this.commands
       this.features.set('commands', this.commands)
       logger.info('CommandsFeature ✓ 初始化完成')
 
       logger.info('ForwardFeature 正在初始化...')
-      this.forward = new ForwardFeature(this.instance, this.tgBot, this.qqClient, this.media, this.commands)
+      this.forward = this.instance.forwardFeature
+        ?? new ForwardFeature(this.instance, this.tgBot, this.qqClient, this.media, this.commands)
+      if (!this.instance.forwardFeature) {
+        this.instance.forwardFeature = this.forward
+      }
       this.features.set('forward', this.forward)
       logger.info('ForwardFeature ✓ 初始化完成')
 
       logger.info('RecallFeature 正在初始化...')
-      this.recall = new RecallFeature(this.instance, this.tgBot, this.qqClient)
+      this.recall = this.instance.recallFeature ?? new RecallFeature(this.instance, this.tgBot, this.qqClient)
+      if (!this.instance.recallFeature) {
+        this.instance.recallFeature = this.recall
+      }
       this.features.set('recall', this.recall)
       logger.info('RecallFeature ✓ 初始化完成')
 

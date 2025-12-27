@@ -1,4 +1,8 @@
 import type { IQQClient } from '../../infrastructure/clients/qq'
+import type { CommandsFeature } from '../../features/commands/CommandsFeature'
+import type { ForwardFeature } from '../../features/forward/ForwardFeature'
+import type { MediaFeature } from '../../features/MediaFeature'
+import type { RecallFeature } from '../../features/RecallFeature'
 import type { AppLogger } from '../../shared/logger'
 import { FeatureManager } from '../../features'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
@@ -27,6 +31,10 @@ export default class Instance {
   public tgBot!: Telegram
   public qqClient?: IQQClient
   public forwardPairs!: ForwardMap
+  public mediaFeature?: MediaFeature
+  public recallFeature?: RecallFeature
+  public commandsFeature?: CommandsFeature
+  public forwardFeature?: ForwardFeature
   private featureManager?: FeatureManager
   public isInit = false
   private initPromise?: Promise<void>
@@ -101,6 +109,7 @@ export default class Instance {
       // 插件系统：桥接 QQ 侧事件到插件 EventBus
       try {
         const eventPublisher = getEventPublisher()
+        eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
         const instanceId = this.id
         const qqClient = this.qqClient;
 
@@ -242,6 +251,12 @@ export default class Instance {
         this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient)
         await this.featureManager.initialize()
         this.log.info('FeatureManager ✓ 初始化完成')
+        try {
+          getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
+        }
+        catch (error) {
+          this.log.warn('Failed to publish instance running status:', error)
+        }
 
         // 初始化掉线通知服务
         if (env.ENABLE_OFFLINE_NOTIFICATION) {

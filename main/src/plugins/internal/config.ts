@@ -12,6 +12,8 @@ import builtinRefresh from '../../../../packages/plugin-refresh/src/index'
 import builtinFlags from '../../../../packages/plugin-flags/src/index'
 import builtinRequestManagement from '../../../../packages/plugin-request-management/src/index'
 import builtinGroupManagement from '../../../../packages/plugin-group-management/src/index'
+import builtinMedia from '../../../../packages/plugin-media/src/index'
+import builtinRecall from '../../../../packages/plugin-recall/src/index'
 import { readBoolEnv, readStringEnv } from './env'
 import { getManagedPluginsConfigPath } from './store'
 
@@ -394,6 +396,18 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         module: '@builtin/group-management',
         enabled: true,
         load: async () => builtinGroupManagement,
+      },
+      {
+        id: 'media',
+        module: '@builtin/media',
+        enabled: true,
+        load: async () => builtinMedia,
+      },
+      {
+        id: 'recall',
+        module: '@builtin/recall',
+        enabled: true,
+        load: async () => builtinRecall,
       },
     ]
 
