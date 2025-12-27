@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Buffer } from 'node:buffer'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TelegramSession from '../TelegramSession'
 
 const envMock = vi.hoisted(() => ({
@@ -33,7 +33,7 @@ vi.mock('../../../shared/logger', () => ({
   getLogger: vi.fn(() => loggerMocks),
 }))
 
-describe('TelegramSession', () => {
+describe('telegramSession', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

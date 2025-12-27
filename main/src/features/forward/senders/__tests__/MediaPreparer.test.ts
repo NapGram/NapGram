@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
-import { ForwardMediaPreparer } from '../MediaPreparer'
-import silk from '../../../../shared/utils/encoding/silk'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import env from '../../../../domain/models/env'
+import silk from '../../../../shared/utils/encoding/silk'
+import { ForwardMediaPreparer } from '../MediaPreparer'
 
 vi.mock('../../../../shared/utils/encoding/silk', () => ({
   default: {
@@ -20,7 +21,7 @@ vi.mock('../../../../domain/models/env', () => ({
   },
 }))
 
-describe('ForwardMediaPreparer', () => {
+describe('forwardMediaPreparer', () => {
   const mockInstance = {
     tgBot: {
       downloadMedia: vi.fn(),
@@ -44,7 +45,7 @@ describe('ForwardMediaPreparer', () => {
   it('prepareMediaForQQ skip sticker', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
     const msg: any = {
-      content: [{ type: 'image', data: { isSticker: true, file: 'sticker' } }]
+      content: [{ type: 'image', data: { isSticker: true, file: 'sticker' } }],
     }
     await preparer.prepareMediaForQQ(msg)
     expect(msg.content[0].data.file).toBe('sticker')
@@ -55,8 +56,8 @@ describe('ForwardMediaPreparer', () => {
     const msg: any = {
       content: [
         { type: 'image', data: { file: 'img.jpg' } },
-        { type: 'video', data: { file: 'vid.mp4' } }
-      ]
+        { type: 'video', data: { file: 'vid.mp4' } },
+      ],
     }
     vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/file')
     vi.spyOn(preparer, 'ensureFilePath').mockResolvedValue('http://example.com/file')
@@ -68,7 +69,7 @@ describe('ForwardMediaPreparer', () => {
   it('prepareMediaForQQ handles audio with silk encoding', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
     const msg: any = {
-      content: [{ type: 'audio', data: { file: 'aud.ogg' } }]
+      content: [{ type: 'audio', data: { file: 'aud.ogg' } }],
     }
     vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/aud.ogg')
     vi.spyOn(preparer, 'ensureFilePath')
@@ -84,7 +85,7 @@ describe('ForwardMediaPreparer', () => {
   it('prepareMediaForQQ falls back to file when silk encode fails', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
     const msg: any = {
-      content: [{ type: 'audio', data: { file: 'aud.ogg' } }]
+      content: [{ type: 'audio', data: { file: 'aud.ogg' } }],
     }
     vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/aud.ogg')
     vi.spyOn(preparer, 'ensureFilePath').mockResolvedValue('path/to/aud.ogg')
@@ -118,7 +119,7 @@ describe('ForwardMediaPreparer', () => {
   it('prepareMediaForQQ converts failing media to text', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
     const msg: any = {
-      content: [{ type: 'image', data: { file: 'img.jpg' } }]
+      content: [{ type: 'image', data: { file: 'img.jpg' } }],
     }
     vi.spyOn(preparer, 'ensureBufferOrPath').mockRejectedValueOnce(new Error('boom'))
 
@@ -139,7 +140,7 @@ describe('ForwardMediaPreparer', () => {
 
   it('waitFileStable should check file size stability', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
-    const statSpy = vi.spyOn(fs.promises, 'stat')
+    vi.spyOn(fs.promises, 'stat')
       .mockResolvedValueOnce({ size: 10 } as any)
       .mockResolvedValueOnce({ size: 10 } as any)
 

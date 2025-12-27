@@ -1,12 +1,14 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest'
-import * as config from '../config'
 import fs from 'node:fs/promises'
-import path from 'node:path'
-import YAML from 'yaml'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import * as config from '../config'
 
 vi.mock('node:fs/promises')
 vi.mock('../../../domain/models/env', () => ({
-  default: { DATA_DIR: '/app/data', LOG_FILE: '/app/data/logs/napgram.log' }
+  default: {
+    DATA_DIR: '/app/data',
+    CACHE_DIR: '/app/data/cache',
+    LOG_FILE: '/app/data/logs/napgram.log',
+  },
 }))
 vi.mock('../../shared/logger', () => ({
   getLogger: vi.fn(() => ({
@@ -18,7 +20,7 @@ vi.mock('../../shared/logger', () => ({
 }))
 
 vi.mock('../../../../packages/plugin-ping-pong/src/index', () => ({
-  default: { id: 'ping-pong' }
+  default: { id: 'ping-pong' },
 }))
 
 describe('config', () => {
@@ -34,10 +36,10 @@ describe('config', () => {
     delete process.env.PLUGINS_DEBUG_SESSIONS
 
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.realpath).mockImplementation(async (p) => p)
+    vi.mocked(fs.realpath).mockImplementation(async p => p)
   })
 
-  test('resolve env basics', () => {
+  it('resolve env basics', () => {
     expect(config.resolvePluginsEnabled()).toBe(false)
     process.env.PLUGINS_ENABLED = 'true'
     expect(config.resolvePluginsEnabled()).toBe(true)
@@ -61,12 +63,12 @@ describe('config', () => {
     expect(config.resolveDebugSessions()).toBe(true)
   })
 
-  test('loadPluginSpecs from config file variations', async () => {
+  it('loadPluginSpecs from config file variations', async () => {
     const jsonConfig = JSON.stringify({
       plugins: [
         { id: 'ts-p', module: './p.ts' },
-        { id: 'invalid-p', module: '' }
-      ]
+        { id: 'invalid-p', module: '' },
+      ],
     })
     vi.mocked(fs.readFile).mockResolvedValueOnce(jsonConfig)
     vi.mocked(fs.readdir).mockResolvedValue([])
@@ -80,19 +82,23 @@ describe('config', () => {
     expect(specs.find(s => s.id === 'ts-p')).toBeDefined()
   })
 
-  test('loadPluginSpecs local directory scanning with fallbacks', async () => {
+  it('loadPluginSpecs local directory scanning with fallbacks', async () => {
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => false, isDirectory: () => true, name: 'mjs-plugin' }
+      { isFile: () => false, isDirectory: () => true, name: 'mjs-plugin' },
     ] as any)
 
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json')) return undefined
-      if (p.includes('index.mjs')) return undefined
-      if (p === '/app/data/plugins/local' || p === '/app/data/plugins' || p === '/app/data') return undefined
-      throw new Error('no file: ' + p)
+      if (p.includes('package.json'))
+        return undefined
+      if (p.includes('index.mjs'))
+        return undefined
+      if (p === '/app/data/plugins/local' || p === '/app/data/plugins' || p === '/app/data')
+        return undefined
+      throw new Error(`no file: ${p}`)
     })
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json')) return JSON.stringify({ name: 'mjs-plugin' })
+      if (p.includes('package.json'))
+        return JSON.stringify({ name: 'mjs-plugin' })
       return ''
     })
 
@@ -100,34 +106,41 @@ describe('config', () => {
     expect(specs.find(s => s.id === 'mjs-plugin')).toBeDefined()
 
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => false, isDirectory: () => true, name: 'js-plugin' }
+      { isFile: () => false, isDirectory: () => true, name: 'js-plugin' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json')) return undefined
-      if (p.includes('index.mjs')) throw new Error('no mjs')
-      if (p.includes('index.js')) return undefined
-      if (p === '/app/data/plugins/local' || p === '/app/data/plugins' || p === '/app/data') return undefined
-      throw new Error('no file: ' + p)
+      if (p.includes('package.json'))
+        return undefined
+      if (p.includes('index.mjs'))
+        throw new Error('no mjs')
+      if (p.includes('index.js'))
+        return undefined
+      if (p === '/app/data/plugins/local' || p === '/app/data/plugins' || p === '/app/data')
+        return undefined
+      throw new Error(`no file: ${p}`)
     })
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json')) return JSON.stringify({ name: '@scope/js-plugin' })
+      if (p.includes('package.json'))
+        return JSON.stringify({ name: '@scope/js-plugin' })
       return ''
     })
     specs = await config.loadPluginSpecs()
     expect(specs.find(s => s.id === 'js-plugin')).toBeDefined()
   })
 
-  test('loadPluginSpecs priority and overrides', async () => {
+  it('loadPluginSpecs priority and overrides', async () => {
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) return JSON.stringify({
-        plugins: [{ id: 'dup', module: '/app/data/config-dup.js' }]
-      })
+      if (p.includes('config.json')) {
+        return JSON.stringify({
+          plugins: [{ id: 'dup', module: '/app/data/config-dup.js' }],
+        })
+      }
       return JSON.stringify({ name: 'dup' })
     })
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
 
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => true, isDirectory: () => false, name: 'dup.js' }
+      { isFile: () => true, isDirectory: () => false, name: 'dup.js' },
     ] as any)
 
     const specs = await config.loadPluginSpecs()
@@ -136,9 +149,9 @@ describe('config', () => {
     expect(match?.module).toBe('/app/data/config-dup.js')
   })
 
-  test('builtin plugin override', async () => {
+  it('builtin plugin override', async () => {
     vi.mocked(fs.readFile).mockResolvedValueOnce(JSON.stringify({
-      plugins: [{ id: 'ping-pong', module: '/app/data/my-ping.js' }]
+      plugins: [{ id: 'ping-pong', module: '/app/data/my-ping.js' }],
     }))
     vi.mocked(fs.readdir).mockResolvedValue([])
 
@@ -147,45 +160,49 @@ describe('config', () => {
     expect(ping?.module).toBe('/app/data/my-ping.js')
   })
 
-  test('error handling and edge cases', async () => {
+  it('error handling and edge cases', async () => {
     vi.mocked(fs.readdir).mockRejectedValue(new Error('readdir failed'))
     await config.loadPluginSpecs()
 
     vi.mocked(fs.realpath).mockImplementation(async (p) => {
-      if (p.includes('evil')) return '/etc/passwd'
+      if (p.includes('evil'))
+        return '/etc/passwd'
       return p
     })
     process.env.PLUGINS_CONFIG_PATH = '/app/data/evil.json'
     await config.loadPluginSpecs()
 
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => true, isDirectory: () => false, name: 'fail.js' }
+      { isFile: () => true, isDirectory: () => false, name: 'fail.js' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('fail.js')) throw new Error('access fail')
+      if (p.includes('fail.js'))
+        throw new Error('access fail')
       return undefined
     })
     await config.loadPluginSpecs()
   })
 
-  test('loadPluginSpecs package.json parse error', async () => {
+  it('loadPluginSpecs package.json parse error', async () => {
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => false, isDirectory: () => true, name: 'bad-pkg' }
+      { isFile: () => false, isDirectory: () => true, name: 'bad-pkg' },
     ] as any)
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json')) return 'invalid json'
+      if (p.includes('package.json'))
+        return 'invalid json'
       return ''
     })
     await config.loadPluginSpecs()
   })
 
-  test('loadPluginSpecs directory skip scenarios', async () => {
+  it('loadPluginSpecs directory skip scenarios', async () => {
     // No entry file (line 308-309)
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => false, isDirectory: () => true, name: 'no-entry-dir' }
+      { isFile: () => false, isDirectory: () => true, name: 'no-entry-dir' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json')) return undefined
+      if (p.includes('package.json'))
+        return undefined
       throw new Error('no entry')
     })
     vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ name: 'no-entry' }))
@@ -193,11 +210,13 @@ describe('config', () => {
 
     // Entry file does not exist (line 337)
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => false, isDirectory: () => true, name: 'missing-entry-dir' }
+      { isFile: () => false, isDirectory: () => true, name: 'missing-entry-dir' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json')) return undefined
-      if (p.includes('main.js')) throw new Error('not found')
+      if (p.includes('package.json'))
+        return undefined
+      if (p.includes('main.js'))
+        throw new Error('not found')
       return undefined
     })
     vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({ name: 'missing-entry', main: 'main.js' }))
@@ -205,10 +224,11 @@ describe('config', () => {
 
     // No package.json found (line 345)
     vi.mocked(fs.readdir).mockResolvedValueOnce([
-      { isFile: () => false, isDirectory: () => true, name: 'no-pkg-dir' }
+      { isFile: () => false, isDirectory: () => true, name: 'no-pkg-dir' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json')) throw new Error('no pkg')
+      if (p.includes('package.json'))
+        throw new Error('no pkg')
       return undefined
     })
     await config.loadPluginSpecs()

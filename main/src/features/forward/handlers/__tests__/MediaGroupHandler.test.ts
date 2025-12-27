@@ -190,7 +190,6 @@ describe('mediaGroupHandler', () => {
     expect(result).toBe(true)
   })
 
-
   it('destroys handler and clears timers', async () => {
     const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
 

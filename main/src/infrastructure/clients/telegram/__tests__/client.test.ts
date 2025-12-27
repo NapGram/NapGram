@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Buffer } from 'node:buffer'
+import { Message } from '@mtcute/core'
+
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import Telegram from '../client'
+import TelegramChat from '../chat'
 
 const envMock = vi.hoisted(() => ({
   DATA_DIR: '/data',
@@ -60,9 +64,6 @@ const sessionMocks = vi.hoisted(() => ({
   save: vi.fn(),
 }))
 
-const chatMocks = vi.hoisted(() => ({
-  constructorArgs: [] as any[],
-}))
 
 vi.mock('node:fs', () => ({
   default: {
@@ -160,13 +161,6 @@ const sessionClass = vi.hoisted(() => ({
   },
 }))
 
-const chatClass = vi.hoisted(() => ({
-  TelegramChatMock: class TelegramChatMock {
-    constructor(...args: any[]) {
-      chatMocks.constructorArgs.push(args)
-    }
-  },
-}))
 
 vi.mock('@mtcute/dispatcher', () => ({
   Dispatcher: {
@@ -187,24 +181,16 @@ vi.mock('../../../../domain/models/TelegramSession', () => ({
   default: sessionClass.TelegramSessionMock,
 }))
 
-vi.mock('../chat', () => ({
-  default: chatClass.TelegramChatMock,
-}))
-
-import Telegram from '../client'
-import { Message } from '@mtcute/core'
-
-describe('Telegram client', () => {
+describe('telegram client', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mtcuteNodeMocks.createdOptions.length = 0
     mtcuteNodeMocks.transportOptions.length = 0
-    chatMocks.constructorArgs.length = 0
     sessionMocks.mockSessionString = undefined
     envMock.PROXY_IP = undefined
     envMock.PROXY_PORT = undefined
     fsMocks.existsSync.mockReturnValue(true)
-      ; (Telegram as any).existedBots = {}
+    ; (Telegram as any).existedBots = {}
   })
 
   it('creates a new bot and imports session', async () => {
@@ -351,8 +337,8 @@ describe('Telegram client', () => {
 
     const chat = await bot.getChat(123)
 
-    expect(chat).toBeInstanceOf(chatClass.TelegramChatMock)
-    expect(chatMocks.constructorArgs[0]).toEqual([bot, bot.client, chatObj])
+    expect(chat).toBeInstanceOf(TelegramChat)
+    expect(chat.chat).toBe(chatObj)
   })
 
   it('downloads profile photo or returns null', async () => {
