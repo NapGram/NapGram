@@ -211,6 +211,12 @@ describe('CommandsFeature', () => {
             }),
         }))
 
+        vi.doMock('../services/ThreadIdExtractor', () => ({
+            ThreadIdExtractor: vi.fn().mockImplementation(function () {
+                this.extractFromRaw = vi.fn().mockReturnValue(undefined)
+            }),
+        }))
+
         // Import module under test dynamically
         const mod = await import('../CommandsFeature')
         CommandsFeature = mod.CommandsFeature
@@ -251,7 +257,7 @@ describe('CommandsFeature', () => {
 
     it('reloads commands', async () => {
         const registry = (commandsFeature as any).registry
-        ;(commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
+            ; (commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
         await commandsFeature.reloadCommands()
         expect(registry.clear).toHaveBeenCalled()
         expect(registry.register).toHaveBeenCalled()
@@ -272,12 +278,13 @@ describe('CommandsFeature', () => {
         expect(Array.from(mentioned).sort()).toEqual(['fourthbot', 'mybot', 'otherbot', 'thirdbot'])
     })
 
-    it('extracts thread id from args or raw metadata', () => {
+    it('extracts thread id from args or raw metadata', async () => {
         const msgWithRaw: any = { metadata: { raw: { replyTo: { replyToTopId: 99 } } } }
 
         const fromArgs = (commandsFeature as any).extractThreadId(msgWithRaw, ['cmd', '123'])
         expect(fromArgs).toBe(123)
 
+        const { ThreadIdExtractor } = await import('../services/ThreadIdExtractor')
         vi.mocked(ThreadIdExtractor).mockImplementationOnce(function () {
             this.extractFromRaw = vi.fn().mockReturnValue(456)
         } as any)
@@ -372,6 +379,7 @@ describe('CommandsFeature', () => {
             const deleteMessages = vi.fn().mockResolvedValue(undefined)
             mockTgBot.getChat.mockResolvedValue({ sendMessage, deleteMessages })
 
+            const { ThreadIdExtractor } = await import('../services/ThreadIdExtractor')
             vi.mocked(ThreadIdExtractor).mockImplementationOnce(function () {
                 this.extractFromRaw = vi.fn().mockReturnValue(888)
             } as any)
