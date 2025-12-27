@@ -1,4 +1,4 @@
-import type { NapGramPlugin, PluginContext, MessageEvent } from './types/napgram.js';
+import type { NapGramPlugin, PluginContext, MessageEvent } from '@napgram/sdk';
 import db from '../../../main/src/domain/models/db';
 
 const plugin: NapGramPlugin = {

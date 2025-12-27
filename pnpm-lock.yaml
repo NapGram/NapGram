@@ -67,6 +67,12 @@ importers:
       '@mtcute/node':
         specifier: ^0.27.4
         version: 0.27.4(ws@8.18.3)
+      '@napgram/qq-client':
+        specifier: workspace:*
+        version: link:../packages/qq-client
+      '@napgram/telegram-client':
+        specifier: workspace:*
+        version: link:../packages/telegram-client
       '@naplink/naplink':
         specifier: ^0.0.3
         version: 0.0.3
@@ -153,8 +159,199 @@ importers:
         specifier: ^4.0.16
         version: 4.0.16(@types/node@25.0.3)(jiti@2.6.1)(jsdom@16.7.0(canvas@2.11.2(encoding@0.1.13)))(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/plugin-adapter-qq-napcat:
+    dependencies:
+      '@napgram/qq-client':
+        specifier: workspace:*
+        version: link:../qq-client
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-adapter-telegram-mtcute:
+    dependencies:
+      '@napgram/telegram-client':
+        specifier: workspace:*
+        version: link:../telegram-client
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-auth:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-database:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-instances:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-logs:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-messages:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-pairs:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-plugins:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-admin-settings:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-commands:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/plugin-flags:
     devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-forward:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-group-management:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-media:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-monitoring:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
@@ -164,6 +361,9 @@ importers:
 
   packages/plugin-ping-pong:
     devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
@@ -173,6 +373,21 @@ importers:
 
   packages/plugin-qq-interaction:
     devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-recall:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
       '@types/node':
         specifier: ^25.0.3
         version: 25.0.3
@@ -181,6 +396,101 @@ importers:
         version: 5.9.3
 
   packages/plugin-refresh:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-request-handler:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-request-management:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-statistics:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-web-assets:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/plugin-web-console:
+    devDependencies:
+      '@napgram/sdk':
+        specifier: workspace:*
+        version: link:../../external/sdk/packages/sdk
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/qq-client:
+    dependencies:
+      '@naplink/naplink':
+        specifier: ^0.0.3
+        version: 0.0.3
+    devDependencies:
+      '@types/node':
+        specifier: ^25.0.3
+        version: 25.0.3
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/telegram-client:
+    dependencies:
+      '@mtcute/core':
+        specifier: ^0.27.4
+        version: 0.27.4
+      '@mtcute/dispatcher':
+        specifier: ^0.27.4
+        version: 0.27.4
+      '@mtcute/node':
+        specifier: ^0.27.4
+        version: 0.27.4(ws@8.18.3)
     devDependencies:
       '@types/node':
         specifier: ^25.0.3
