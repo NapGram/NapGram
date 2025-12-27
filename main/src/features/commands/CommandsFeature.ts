@@ -17,7 +17,6 @@ import { GroupManagementCommandHandler } from './handlers/GroupManagementCommand
 import { HelpCommandHandler } from './handlers/HelpCommandHandler'
 import { InfoCommandHandler } from './handlers/InfoCommandHandler'
 import { RecallCommandHandler } from './handlers/RecallCommandHandler'
-import { RequestManagementCommandHandler } from './handlers/RequestManagementCommandHandler'
 import { StatusCommandHandler } from './handlers/StatusCommandHandler'
 import { UnbindCommandHandler } from './handlers/UnbindCommandHandler'
 import { CommandRegistry } from './services/CommandRegistry'
@@ -53,7 +52,6 @@ export class CommandsFeature {
   private readonly infoHandler: InfoCommandHandler
   private readonly groupManagementHandler: GroupManagementCommandHandler
   private readonly advancedGroupManagementHandler: AdvancedGroupManagementCommandHandler
-  private readonly requestManagementHandler: RequestManagementCommandHandler
 
   constructor(
     private readonly instance: Instance,
@@ -86,7 +84,6 @@ export class CommandsFeature {
     this.infoHandler = new InfoCommandHandler(this.commandContext)
     this.groupManagementHandler = new GroupManagementCommandHandler(this.commandContext)
     this.advancedGroupManagementHandler = new AdvancedGroupManagementCommandHandler(this.commandContext)
-    this.requestManagementHandler = new RequestManagementCommandHandler(this.commandContext)
 
     // 异步注册命令（包括从插件加载）
     this.registerDefaultCommands().catch((err) => {
@@ -310,67 +307,9 @@ export class CommandsFeature {
       adminOnly: true,
     })
 
-    // ============ Phase 3: 请求管理命令 ============
-
-    this.registerCommand({
-      name: 'pending',
-      aliases: ['待处理'],
-      description: '查看待处理的好友/加群申请',
-      usage: '/pending [friend|group]',
-      handler: (msg, args) => this.requestManagementHandler.execute(msg, args, 'pending'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'approve',
-      aliases: ['同意', '通过'],
-      description: '批准好友/加群申请',
-      usage: '/approve <flag>',
-      handler: (msg, args) => this.requestManagementHandler.execute(msg, args, 'approve'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'reject',
-      aliases: ['拒绝'],
-      description: '拒绝好友/加群申请',
-      usage: '/reject <flag> [理由]',
-      handler: (msg, args) => this.requestManagementHandler.execute(msg, args, 'reject'),
-      adminOnly: true,
-    })
-
     // ============ Phase 3: QQ交互增强 ============
     // Note: QQ 交互命令现在完全由 plugin-qq-interaction 提供
     // 它们只会在插件启用时可用
-
-    // ============ Phase 4: 请求统计与批量操作 ============
-
-    this.registerCommand({
-      name: 'reqstats',
-      aliases: ['请求统计', '统计'],
-      description: '查看请求统计数据',
-      usage: '/reqstats [today|week|month|all]',
-      handler: (msg, args) => this.requestManagementHandler.execute(msg, args, 'reqstats'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'approveall',
-      aliases: ['批量批准'],
-      description: '批量批准待处理请求',
-      usage: '/approveall [friend|group]',
-      handler: (msg, args) => this.requestManagementHandler.execute(msg, args, 'approveall'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'rejectall',
-      aliases: ['批量拒绝'],
-      description: '批量拒绝待处理请求',
-      usage: '/rejectall [friend|group] [reason]',
-      handler: (msg, args) => this.requestManagementHandler.execute(msg, args, 'rejectall'),
-      adminOnly: true,
-    })
 
     logger.debug(`Registered ${this.registry.getUniqueCommandCount()} commands (${this.registry.getAll().size} including aliases)`)
   }
