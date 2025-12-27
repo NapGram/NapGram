@@ -60,8 +60,6 @@ vi.mock('../handlers/BindCommandHandler', () => ({ BindCommandHandler: vi.fn().m
 vi.mock('../handlers/UnbindCommandHandler', () => ({ UnbindCommandHandler: vi.fn().mockImplementation(function () { return mockHandler }) }))
 vi.mock('../handlers/RecallCommandHandler', () => ({ RecallCommandHandler: vi.fn().mockImplementation(function () { return mockHandler }) }))
 vi.mock('../handlers/ForwardControlCommandHandler', () => ({ ForwardControlCommandHandler: vi.fn().mockImplementation(function () { return mockHandler }) }))
-vi.mock('../handlers/GroupManagementCommandHandler', () => ({ GroupManagementCommandHandler: vi.fn().mockImplementation(function () { return mockHandler }) }))
-vi.mock('../handlers/AdvancedGroupManagementCommandHandler', () => ({ AdvancedGroupManagementCommandHandler: vi.fn().mockImplementation(function () { return mockHandler }) }))
 
 vi.mock('../../domain/message/converter.ts', () => {
     console.log('DEBUG: messageConverter mock factory called')
@@ -180,8 +178,6 @@ describe('CommandsFeature', () => {
         vi.doMock('../handlers/UnbindCommandHandler', () => ({ UnbindCommandHandler: handlerMock }))
         vi.doMock('../handlers/RecallCommandHandler', () => ({ RecallCommandHandler: handlerMock }))
         vi.doMock('../handlers/ForwardControlCommandHandler', () => ({ ForwardControlCommandHandler: handlerMock }))
-        vi.doMock('../handlers/GroupManagementCommandHandler', () => ({ GroupManagementCommandHandler: handlerMock }))
-        vi.doMock('../handlers/AdvancedGroupManagementCommandHandler', () => ({ AdvancedGroupManagementCommandHandler: handlerMock }))
 
         vi.doMock('../../../domain/message/converter', () => {
             return {

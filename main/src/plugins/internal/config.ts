@@ -11,6 +11,7 @@ import builtinQQInteraction from '../../../../packages/plugin-qq-interaction/src
 import builtinRefresh from '../../../../packages/plugin-refresh/src/index'
 import builtinFlags from '../../../../packages/plugin-flags/src/index'
 import builtinRequestManagement from '../../../../packages/plugin-request-management/src/index'
+import builtinGroupManagement from '../../../../packages/plugin-group-management/src/index'
 import { readBoolEnv, readStringEnv } from './env'
 import { getManagedPluginsConfigPath } from './store'
 
@@ -387,6 +388,12 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         module: '@builtin/request-management',
         enabled: true,
         load: async () => builtinRequestManagement,
+      },
+      {
+        id: 'group-management',
+        module: '@builtin/group-management',
+        enabled: true,
+        load: async () => builtinGroupManagement,
       },
     ]
 

@@ -9,11 +9,9 @@ import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '../../domain/message/converter'
 import { getEventPublisher } from '../../plugins/core/event-publisher'
 import { getLogger } from '../../shared/logger'
-import { AdvancedGroupManagementCommandHandler } from './handlers/AdvancedGroupManagementCommandHandler'
 import { BindCommandHandler } from './handlers/BindCommandHandler'
 import { CommandContext } from './handlers/CommandContext'
 import { ForwardControlCommandHandler } from './handlers/ForwardControlCommandHandler'
-import { GroupManagementCommandHandler } from './handlers/GroupManagementCommandHandler'
 import { HelpCommandHandler } from './handlers/HelpCommandHandler'
 import { InfoCommandHandler } from './handlers/InfoCommandHandler'
 import { RecallCommandHandler } from './handlers/RecallCommandHandler'
@@ -50,8 +48,6 @@ export class CommandsFeature {
   private readonly recallHandler: RecallCommandHandler
   private readonly forwardControlHandler: ForwardControlCommandHandler
   private readonly infoHandler: InfoCommandHandler
-  private readonly groupManagementHandler: GroupManagementCommandHandler
-  private readonly advancedGroupManagementHandler: AdvancedGroupManagementCommandHandler
 
   constructor(
     private readonly instance: Instance,
@@ -82,8 +78,6 @@ export class CommandsFeature {
     this.recallHandler = new RecallCommandHandler(this.commandContext)
     this.forwardControlHandler = new ForwardControlCommandHandler(this.commandContext)
     this.infoHandler = new InfoCommandHandler(this.commandContext)
-    this.groupManagementHandler = new GroupManagementCommandHandler(this.commandContext)
-    this.advancedGroupManagementHandler = new AdvancedGroupManagementCommandHandler(this.commandContext)
 
     // 异步注册命令（包括从插件加载）
     this.registerDefaultCommands().catch((err) => {
@@ -209,103 +203,7 @@ export class CommandsFeature {
       handler: (msg, args) => this.infoHandler.execute(msg, args),
     })
 
-    // 群组管理命令（新实现）
-    this.registerCommand({
-      name: 'ban',
-      aliases: ['mute', '禁言'],
-      description: '禁言群成员',
-      usage: '/ban <QQ号/回复消息> [时长: 1m/30m/1h/1d]',
-      handler: (msg, args) => this.groupManagementHandler.execute(msg, args, 'ban'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'unban',
-      description: '解除群成员禁言',
-      usage: '/unban <QQ号/回复消息>',
-      handler: (msg, args) => this.groupManagementHandler.execute(msg, args, 'unban'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'kick',
-      description: '踢出群成员',
-      usage: '/kick <QQ号/回复消息>',
-      handler: (msg, args) => this.groupManagementHandler.execute(msg, args, 'kick'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: 'card',
-      description: '设置群成员名片',
-      usage: '/card <QQ号/回复消息> <新名片>',
-      handler: (msg, args) => this.groupManagementHandler.execute(msg, args, 'card'),
-      adminOnly: true,
-    })
-
-    // ============ Phase 2: 高级群组管理命令 ============
-
-    // 全员禁言
-    this.registerCommand({
-      name: 'muteall',
-      aliases: ['全员禁言'],
-      description: '开启或关闭全员禁言（仅群主）',
-      usage: '/muteall [on|off|开|关]',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, 'muteall'),
-      adminOnly: true,
-    })
-
-    // 解除全员禁言（独立命令）
-    this.registerCommand({
-      name: 'unmuteall',
-      description: '关闭全员禁言（仅群主）',
-      usage: '/unmuteall',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, 'unmuteall'),
-      adminOnly: true,
-    })
-
-    // 设置管理员
-    this.registerCommand({
-      name: 'admin',
-      description: '设置或取消群管理员（仅群主）',
-      usage: '/admin <QQ号> <on|off> 或回复消息 /admin <on|off>',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, 'admin'),
-      adminOnly: true,
-    })
-
-    // 修改群名
-    this.registerCommand({
-      name: 'groupname',
-      description: '修改群名称',
-      usage: '/groupname <新群名>',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, 'groupname'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: '改群名',
-      description: '修改群名称',
-      usage: '/改群名 <新群名>',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, '改群名'),
-      adminOnly: true,
-    })
-
-    // 设置专属头衔
-    this.registerCommand({
-      name: 'title',
-      description: '设置群成员专属头衔（仅群主）',
-      usage: '/title <QQ号> <头衔> 或回复消息 /title <头衔>',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, 'title'),
-      adminOnly: true,
-    })
-
-    this.registerCommand({
-      name: '头衔',
-      description: '设置群成员专属头衔（仅群主）',
-      usage: '/头衔 <QQ号> <头衔> 或回复消息 /头衔 <头衔>',
-      handler: (msg, args) => this.advancedGroupManagementHandler.execute(msg, args, '头衔'),
-      adminOnly: true,
-    })
+    // 群组管理命令由 plugin-group-management 提供
 
     // ============ Phase 3: QQ交互增强 ============
     // Note: QQ 交互命令现在完全由 plugin-qq-interaction 提供
