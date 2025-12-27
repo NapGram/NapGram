@@ -251,6 +251,10 @@ PublishScripts/
 !packages/plugin-group-management/**
 !packages/plugin-request-management/
 !packages/plugin-request-management/**
+!packages/plugin-media/
+!packages/plugin-media/**
+!packages/plugin-recall/
+!packages/plugin-recall/**
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
