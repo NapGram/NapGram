@@ -21,10 +21,11 @@ const plugin: NapGramPlugin = {
             const media = instance.mediaFeature;
             const commands = instance.commandsFeature;
             instance.forwardFeature = new ForwardFeature(instance, instance.tgBot, instance.qqClient, media, commands);
+            instance.featureManager?.registerFeature?.('forward', instance.forwardFeature);
         };
 
         const handleStatus = async (event: InstanceStatusEvent) => {
-            if (event.status !== 'running') return;
+            if (event.status !== 'starting' && event.status !== 'running') return;
             const instance = Instance.instances.find(i => i.id === event.instanceId);
             if (!instance) return;
             attach(instance);
