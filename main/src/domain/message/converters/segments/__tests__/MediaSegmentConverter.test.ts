@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { MediaSegmentConverter } from '../MediaSegmentConverter'
 
-describe('MediaSegmentConverter', () => {
+describe('mediaSegmentConverter', () => {
   const converter = new MediaSegmentConverter()
 
   describe('convertImage', () => {
@@ -87,7 +87,7 @@ describe('MediaSegmentConverter', () => {
     })
 
     it('should fallback to data.file when url is missing in line 32', () => {
-      // Line 31-32 logic: 
+      // Line 31-32 logic:
       // 1. url = undefined (lines 22)
       // 2. test(url || '') -> test('') -> false
       // 3. url = data.url || data.file
@@ -114,7 +114,7 @@ describe('MediaSegmentConverter', () => {
     })
 
     it('should handle empty extracted url from rawMessage', () => {
-      // If regex matches but group capture is empty? 
+      // If regex matches but group capture is empty?
       // Regex /url=([^,\]]+)/ guarantees at least one char if matched.
       // But what if rawMessage is just '[CQ:video]'? No match.
       const data = { url: 'data' }
@@ -140,7 +140,7 @@ describe('MediaSegmentConverter', () => {
     it('should handle empty string url', () => {
       const result = converter.convertVideo({ url: '' })
       expect(result.data.url).toBeUndefined() // or '' if data.url is ''?
-      // data.url is '', data.file undefined. line 22 url is ''. 
+      // data.url is '', data.file undefined. line 22 url is ''.
       // line 31 test(''), true? no. false. enter block.
       // line 32 url = '' || undefined -> undefined? NO. '' || undefined is undefined?
       // '' || undefined is undefined.
@@ -212,7 +212,6 @@ describe('MediaSegmentConverter', () => {
       const result = converter.convertFile(data, raw)
       expect(result.data.url).toBe('default')
     })
-
 
     it('should decode entities in raw url', () => {
       const data = { file: 'local' }

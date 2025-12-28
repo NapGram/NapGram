@@ -14,7 +14,7 @@ vi.mock('../plugin-runtime', () => ({
   getGlobalRuntime: vi.fn(),
 }))
 
-describe('EventPublisher', () => {
+describe('eventPublisher', () => {
   const publishSync = vi.fn()
   const eventBus = { publishSync }
 
@@ -133,6 +133,7 @@ describe('EventPublisher', () => {
       groupId: 'g1',
       userId: 'u2',
       userName: 'Bob',
+      subType: 'invite',
       timestamp: 2000,
       approve: vi.fn(),
       reject: vi.fn(),
@@ -141,6 +142,7 @@ describe('EventPublisher', () => {
     expect(publishSync).toHaveBeenCalledWith('group-request', expect.objectContaining({
       groupId: 'g1',
       userId: 'u2',
+      subType: 'invite',
     }))
   })
 

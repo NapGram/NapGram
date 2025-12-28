@@ -1,6 +1,6 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest'
-import { PluginLifecycleManager, PluginState } from '../../core/lifecycle'
 import type { PluginInstance } from '../../core/lifecycle'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { PluginLifecycleManager, PluginState } from '../../core/lifecycle'
 
 // Mock plugin for testing
 const mockPlugin = {
@@ -29,7 +29,7 @@ function createMockPluginContext() {
   }
 }
 
-describe('PluginLifecycleManager', () => {
+describe('pluginLifecycleManager', () => {
   let lifecycleManager: PluginLifecycleManager
 
   beforeEach(() => {
@@ -37,11 +37,11 @@ describe('PluginLifecycleManager', () => {
     vi.clearAllMocks()
   })
 
-  test('should initialize', () => {
+  it('should initialize', () => {
     expect(lifecycleManager).toBeInstanceOf(PluginLifecycleManager)
   })
 
-  test('should install plugin correctly', async () => {
+  it('should install plugin correctly', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -57,7 +57,7 @@ describe('PluginLifecycleManager', () => {
     expect(mockPlugin.install).toHaveBeenCalled()
   })
 
-  test('should fail install when already installed', async () => {
+  it('should fail install when already installed', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -74,7 +74,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstance.state).toBe(PluginState.Error)
   })
 
-  test('should handle install failure', async () => {
+  it('should handle install failure', async () => {
     const failingPlugin = {
       ...mockPlugin,
       install: vi.fn().mockRejectedValue(new Error('Install failed')),
@@ -97,7 +97,7 @@ describe('PluginLifecycleManager', () => {
     expect(failingPlugin.install).toHaveBeenCalled()
   })
 
-  test('should uninstall plugin correctly', async () => {
+  it('should uninstall plugin correctly', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -113,7 +113,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginContext.triggerUnload).toHaveBeenCalled()
   })
 
-  test('should return early when plugin is already uninstalled', async () => {
+  it('should return early when plugin is already uninstalled', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -131,7 +131,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginContext.triggerUnload).not.toHaveBeenCalled()
   })
 
-  test('should handle uninstall failure', async () => {
+  it('should handle uninstall failure', async () => {
     const pluginContext = {
       ...createMockPluginContext(),
       triggerUnload: vi.fn().mockRejectedValue(new Error('Unload failed')),
@@ -152,7 +152,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstance.state).toBe(PluginState.Error)
   })
 
-  test('should reload plugin correctly', async () => {
+  it('should reload plugin correctly', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -169,7 +169,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginContext.triggerReload).toHaveBeenCalled()
   })
 
-  test('should reload plugin via uninstall/install when no reload hook', async () => {
+  it('should reload plugin via uninstall/install when no reload hook', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -200,7 +200,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstance.state).toBe(PluginState.Uninitialized)
   })
 
-  test('should handle reload failure', async () => {
+  it('should handle reload failure', async () => {
     const pluginContext = {
       ...createMockPluginContext(),
       triggerReload: vi.fn().mockRejectedValue(new Error('Reload failed')),
@@ -220,7 +220,7 @@ describe('PluginLifecycleManager', () => {
     expect(result.error).toBeInstanceOf(Error)
   })
 
-  test('should install all plugins', async () => {
+  it('should install all plugins', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = createMockPluginContext()
 
@@ -238,7 +238,7 @@ describe('PluginLifecycleManager', () => {
         context: pluginContext2,
         config: {},
         state: PluginState.Uninitialized,
-      }
+      },
     ]
 
     const result = await lifecycleManager.installAll(pluginInstances)
@@ -249,7 +249,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstances[1].state).toBe(PluginState.Installed)
   })
 
-  test('should handle installAll with some failures', async () => {
+  it('should handle installAll with some failures', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = createMockPluginContext()
 
@@ -273,7 +273,7 @@ describe('PluginLifecycleManager', () => {
         context: pluginContext2,
         config: {},
         state: PluginState.Uninitialized,
-      }
+      },
     ]
 
     const result = await lifecycleManager.installAll(pluginInstances)
@@ -285,7 +285,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstances[1].state).toBe(PluginState.Error)
   })
 
-  test('should uninstall all plugins', async () => {
+  it('should uninstall all plugins', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = createMockPluginContext()
 
@@ -303,7 +303,7 @@ describe('PluginLifecycleManager', () => {
         context: pluginContext2,
         config: {},
         state: PluginState.Installed,
-      }
+      },
     ]
 
     const result = await lifecycleManager.uninstallAll(pluginInstances)
@@ -314,7 +314,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstances[1].state).toBe(PluginState.Uninstalled)
   })
 
-  test('should handle uninstallAll with some failures', async () => {
+  it('should handle uninstallAll with some failures', async () => {
     const pluginContext1 = createMockPluginContext()
     const pluginContext2 = {
       ...createMockPluginContext(),
@@ -335,7 +335,7 @@ describe('PluginLifecycleManager', () => {
         context: pluginContext2,
         config: {},
         state: PluginState.Installed,
-      }
+      },
     ]
 
     const result = await lifecycleManager.uninstallAll(pluginInstances)
@@ -347,7 +347,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstances[1].state).toBe(PluginState.Error)
   })
 
-  test('should update config during reload with custom reload hook (line 202)', async () => {
+  it('should update config during reload with custom reload hook (line 202)', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -364,7 +364,7 @@ describe('PluginLifecycleManager', () => {
     expect((pluginInstance.context as any).config).toEqual(newConfig)
   })
 
-  test('should update config during reload via uninstall/install (line 190)', async () => {
+  it('should update config during reload via uninstall/install (line 190)', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -385,7 +385,7 @@ describe('PluginLifecycleManager', () => {
     expect((pluginInstance.context as any).config).toEqual(newConfig)
   })
 
-  test('should report health and stats', () => {
+  it('should report health and stats', () => {
     const healthyInstance: PluginInstance = {
       id: 'healthy',
       plugin: mockPlugin,
@@ -421,7 +421,7 @@ describe('PluginLifecycleManager', () => {
     })
   })
 
-  test('should reload plugin without newConfig', async () => {
+  it('should reload plugin without newConfig', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
@@ -435,7 +435,7 @@ describe('PluginLifecycleManager', () => {
     expect(pluginInstance.config).toEqual({ old: true })
   })
 
-  test('should uninstall plugin without uninstall hook', async () => {
+  it('should uninstall plugin without uninstall hook', async () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',

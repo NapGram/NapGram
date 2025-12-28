@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageAPIImpl } from '../../api/message'
 
 // Mock logger
@@ -11,18 +11,18 @@ vi.mock('../../../shared/logger', () => ({
   })),
 }))
 
-describe('MessageAPIImpl', () => {
+describe('messageAPIImpl', () => {
   let messageAPI: MessageAPIImpl
 
   beforeEach(() => {
     messageAPI = new MessageAPIImpl()
   })
 
-  test('should initialize correctly', () => {
+  it('should initialize correctly', () => {
     expect(messageAPI).toBeInstanceOf(MessageAPIImpl)
   })
 
-  test('should validate send parameters', async () => {
+  it('should validate send parameters', async () => {
     const invalidParams = [
       // Missing channelId
       { instanceId: 1, content: 'test' },
@@ -37,13 +37,13 @@ describe('MessageAPIImpl', () => {
     }
   })
 
-  test('should send message with text content', async () => {
+  it('should send message with text content', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       tgBot: {
         getChat: vi.fn().mockReturnValue({
-          sendMessage: vi.fn().mockResolvedValue({ id: '123' })
-        })
-      }
+          sendMessage: vi.fn().mockResolvedValue({ id: '123' }),
+        }),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -59,13 +59,13 @@ describe('MessageAPIImpl', () => {
     expect(typeof result.timestamp).toBe('number')
   })
 
-  test('should send message with segments', async () => {
+  it('should send message with segments', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       tgBot: {
         getChat: vi.fn().mockReturnValue({
-          sendMessage: vi.fn().mockResolvedValue({ id: '123' })
-        })
-      }
+          sendMessage: vi.fn().mockResolvedValue({ id: '123' }),
+        }),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -82,13 +82,13 @@ describe('MessageAPIImpl', () => {
     expect(result).toBeDefined()
   })
 
-  test('should recall message', async () => {
+  it('should recall message', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       tgBot: {
         getChat: vi.fn().mockReturnValue({
-          deleteMessages: vi.fn().mockResolvedValue(undefined)
-        })
-      }
+          deleteMessages: vi.fn().mockResolvedValue(undefined),
+        }),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -99,16 +99,16 @@ describe('MessageAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should get message', async () => {
+  it('should get message', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       qqClient: {
         getMessage: vi.fn().mockResolvedValue({
           content: [{ type: 'text', data: { text: 'Hello' } }],
           chat: { id: '123' },
           sender: { id: '456', name: 'test' },
-          timestamp: '123456'
-        })
-      }
+          timestamp: '123456',
+        }),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -121,7 +121,7 @@ describe('MessageAPIImpl', () => {
     expect(result).toBeDefined()
   })
 
-  test('should handle missing instance resolver', async () => {
+  it('should handle missing instance resolver', async () => {
     await expect(messageAPI.send({
       instanceId: 1,
       channelId: 'tg:123',
@@ -139,7 +139,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('Instance resolver not configured (Phase 4)')
   })
 
-  test('should handle missing instance', async () => {
+  it('should handle missing instance', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue(null)
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
@@ -160,13 +160,13 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('Instance 1 not found')
   })
 
-  test('should parse channelId correctly', async () => {
+  it('should parse channelId correctly', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       qqClient: {
         uin: '123456',
         nickname: 'TestBot',
-        sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq123' })
-      }
+        sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq123' }),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -193,13 +193,13 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow()
   })
 
-  test('should handle QQ client for sending', async () => {
+  it('should handle QQ client for sending', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       qqClient: {
         uin: '123456',
         nickname: 'TestBot',
-        sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq123' })
-      }
+        sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq123' }),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -213,11 +213,11 @@ describe('MessageAPIImpl', () => {
     expect(result).toBeDefined()
   })
 
-  test('should handle QQ client for recall', async () => {
+  it('should handle QQ client for recall', async () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({
       qqClient: {
-        recallMessage: vi.fn().mockResolvedValue(undefined)
-      }
+        recallMessage: vi.fn().mockResolvedValue(undefined),
+      },
     })
 
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
@@ -228,21 +228,21 @@ describe('MessageAPIImpl', () => {
     })).resolves.toBeUndefined()
   })
 
-  test('should reject empty channelId in sendViaInstance', async () => {
+  it('should reject empty channelId in sendViaInstance', async () => {
     await expect((messageAPI as any).sendViaInstance({}, {
       channelId: ' ',
       segments: [],
     })).rejects.toThrow('channelId is required')
   })
 
-  test('should reject QQ channelId without id in sendViaInstance', async () => {
+  it('should reject QQ channelId without id in sendViaInstance', async () => {
     await expect((messageAPI as any).sendViaInstance({}, {
       channelId: 'qq:group:',
       segments: [],
     })).rejects.toThrow('Invalid channelId')
   })
 
-  test('should reject empty messageId in recall', async () => {
+  it('should reject empty messageId in recall', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.recall({
@@ -251,7 +251,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('messageId is required')
   })
 
-  test('should recall legacy QQ messageId without prefix', async () => {
+  it('should recall legacy QQ messageId without prefix', async () => {
     const recallMessage = vi.fn().mockResolvedValue(undefined)
     messageAPI = new MessageAPIImpl(() => ({
       qqClient: { recallMessage },
@@ -265,7 +265,7 @@ describe('MessageAPIImpl', () => {
     expect(recallMessage).toHaveBeenCalledWith('987654')
   })
 
-  test('should build TG text from segments and ignore empty replyTo', async () => {
+  it('should build TG text from segments and ignore empty replyTo', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ id: 111 })
     messageAPI = new MessageAPIImpl(() => ({
       tgBot: {
@@ -290,7 +290,7 @@ describe('MessageAPIImpl', () => {
     expect(sendMessage).toHaveBeenCalledWith('Hello@Alice@', {})
   })
 
-  test('should set replyTo for numeric TG replyTo', async () => {
+  it('should set replyTo for numeric TG replyTo', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ id: 222 })
     messageAPI = new MessageAPIImpl(() => ({
       tgBot: {
@@ -308,7 +308,7 @@ describe('MessageAPIImpl', () => {
     expect(sendMessage).toHaveBeenCalledWith('hi', { replyTo: 123 })
   })
 
-  test('should reject replyTo platform mismatch for TG send', async () => {
+  it('should reject replyTo platform mismatch for TG send', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ id: 333 })
     messageAPI = new MessageAPIImpl(() => ({
       tgBot: {
@@ -324,7 +324,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('replyTo platform mismatch')
   })
 
-  test('should keep replyTo messageId when chatId mismatches and include threadId', async () => {
+  it('should keep replyTo messageId when chatId mismatches and include threadId', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ id: 444 })
     messageAPI = new MessageAPIImpl(() => ({
       tgBot: {
@@ -343,7 +343,7 @@ describe('MessageAPIImpl', () => {
     expect(sendMessage).toHaveBeenCalledWith('hi', { replyTo: 456, messageThreadId: 77 })
   })
 
-  test('should reject when TG bot is missing', async () => {
+  it('should reject when TG bot is missing', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.send({
@@ -353,7 +353,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('Telegram bot not available on instance')
   })
 
-  test('should reject when QQ client is missing for send', async () => {
+  it('should reject when QQ client is missing for send', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.send({
@@ -363,7 +363,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('QQ client not available on instance')
   })
 
-  test('should convert plugin segments for QQ send', async () => {
+  it('should convert plugin segments for QQ send', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ messageId: 'qq123' })
     const qqClient = {
       uin: '123456',
@@ -391,7 +391,7 @@ describe('MessageAPIImpl', () => {
     expect(sendMessage).toHaveBeenCalled()
   })
 
-  test('should prepend reply segment for QQ replyTo', async () => {
+  it('should prepend reply segment for QQ replyTo', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ messageId: 'qq456' })
     const qqClient = {
       uin: '123456',
@@ -412,7 +412,7 @@ describe('MessageAPIImpl', () => {
     expect(sentMessage.content[0].data.messageId).toBe('123')
   })
 
-  test('should reject recall when QQ client is missing', async () => {
+  it('should reject recall when QQ client is missing', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.recall({
@@ -421,7 +421,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('QQ client not available on instance')
   })
 
-  test('should reject recall when TG bot is missing', async () => {
+  it('should reject recall when TG bot is missing', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.recall({
@@ -430,7 +430,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('Telegram bot not available on instance')
   })
 
-  test('should return null for TG message get', async () => {
+  it('should return null for TG message get', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.get({
@@ -439,7 +439,7 @@ describe('MessageAPIImpl', () => {
     })).resolves.toBeNull()
   })
 
-  test('should map segments in segmentsToText (including nulls and numeric names)', async () => {
+  it('should map segments in segmentsToText (including nulls and numeric names)', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ id: 888 })
     messageAPI = new MessageAPIImpl(() => ({
       tgBot: { getChat: vi.fn().mockResolvedValue({ sendMessage }) },
@@ -459,7 +459,7 @@ describe('MessageAPIImpl', () => {
     expect(sendMessage).toHaveBeenCalledWith('T@12345@', expect.any(Object))
   })
 
-  test('should reject get when QQ client is missing', async () => {
+  it('should reject get when QQ client is missing', async () => {
     messageAPI = new MessageAPIImpl(() => ({}))
 
     await expect(messageAPI.get({
@@ -468,7 +468,7 @@ describe('MessageAPIImpl', () => {
     })).rejects.toThrow('QQ client not available on instance')
   })
 
-  test('should return null when QQ message is missing', async () => {
+  it('should return null when QQ message is missing', async () => {
     messageAPI = new MessageAPIImpl(() => ({
       qqClient: { getMessage: vi.fn().mockResolvedValue(null) },
     }))
@@ -479,7 +479,7 @@ describe('MessageAPIImpl', () => {
     })).resolves.toBeNull()
   })
 
-  test('should map QQ message segments', async () => {
+  it('should map QQ message segments', async () => {
     messageAPI = new MessageAPIImpl(() => ({
       qqClient: {
         getMessage: vi.fn().mockResolvedValue({
@@ -507,7 +507,7 @@ describe('MessageAPIImpl', () => {
     expect(result?.segments[3].type).toBe('raw')
   })
 
-  test('should handle Telegram channelId variants and video/audio/file segments', async () => {
+  it('should handle Telegram channelId variants and video/audio/file segments', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ id: 555 })
     messageAPI = new MessageAPIImpl(() => ({
       tgBot: { getChat: vi.fn().mockResolvedValue({ sendMessage }) },
@@ -527,7 +527,7 @@ describe('MessageAPIImpl', () => {
     expect(sendMessage).toHaveBeenCalled()
   })
 
-  test('should handle QQ private channelId and different segment types', async () => {
+  it('should handle QQ private channelId and different segment types', async () => {
     const sendMessage = vi.fn().mockResolvedValue({ messageId: 'qq777' })
     messageAPI = new MessageAPIImpl(() => ({
       qqClient: { uin: '1', sendMessage },
@@ -547,8 +547,7 @@ describe('MessageAPIImpl', () => {
 })
 
 describe('createMessageAPI', () => {
-  test('should create message API instance', () => {
-    const api = MessageAPIImpl.prototype.constructor
+  it('should create message API instance', () => {
     const messageAPI = new MessageAPIImpl()
 
     expect(messageAPI).toBeDefined()
@@ -557,7 +556,7 @@ describe('createMessageAPI', () => {
     expect(messageAPI.get).toBeDefined()
   })
 
-  test('should create message API with instance resolver', () => {
+  it('should create message API with instance resolver', () => {
     const instanceResolver = vi.fn()
     const messageAPI = new MessageAPIImpl(instanceResolver)
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { DurationParser } from '../duration-parser'
 
 describe('durationParser', () => {
@@ -70,20 +70,20 @@ describe('durationParser', () => {
       const originalMatch = String.prototype.match
       let callCount = 0
 
-      String.prototype.match = function (this: string, regex: RegExp) {
+      const matchSpy = vi.spyOn(String.prototype, 'match').mockImplementation(function (this: string, regex: RegExp) {
         callCount++
         if (callCount === 1 && this.trim() === '1x') {
           // First call: return a fake match that passes validation
           return ['1x', '1', 'x'] as any
         }
         return originalMatch.call(this, regex)
-      }
+      })
 
       try {
         expect(() => DurationParser.parse('1x')).toThrow('未知的时间单位: x')
       }
       finally {
-        String.prototype.match = originalMatch
+        matchSpy.mockRestore()
       }
     })
   })

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Buffer } from 'node:buffer'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { UnifiedConverter } from '../UnifiedConverter'
 
 const fsMocks = vi.hoisted(() => ({
@@ -55,7 +55,7 @@ vi.mock('../../../models/env', () => ({
   default: envMock,
 }))
 
-describe('UnifiedConverter', () => {
+describe('unifiedConverter', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
@@ -210,7 +210,7 @@ describe('UnifiedConverter', () => {
     })
     expect(stickerRes[0]).toEqual({
       type: 'image',
-      data: { file: 'http://sticker' }
+      data: { file: 'http://sticker' },
     })
   })
 
@@ -228,7 +228,7 @@ describe('UnifiedConverter', () => {
   })
 
   it('handles saveBufferToTemp error and returns undefined? No, it returns undefined implicitly on catch', async () => {
-    // If catch block is hit, function returns undefined (void) but type is Promise<string>. 
+    // If catch block is hit, function returns undefined (void) but type is Promise<string>.
     // This might be a bug in implementation or implied.
     // Let's check implementation: catch(e) { logger.warn... } - no return.
     // So it returns undefined.
