@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Buffer } from 'node:buffer'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageConverter } from '../converter'
 
 const fsMocks = vi.hoisted(() => ({
@@ -71,7 +71,7 @@ vi.mock('../../models/env', () => ({
   default: envMock,
 }))
 
-describe('MessageConverter', () => {
+describe('messageConverter', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.restoreAllMocks()
@@ -556,7 +556,7 @@ describe('MessageConverter', () => {
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x1f, 0x8b, 0x08]),
+          file: Buffer.from([0x1F, 0x8B, 0x08]),
           isSticker: true,
         },
       },
@@ -575,7 +575,7 @@ describe('MessageConverter', () => {
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x1f, 0x8b, 0x08]),
+          file: Buffer.from([0x1F, 0x8B, 0x08]),
           isSticker: true,
         },
       },

@@ -1,230 +1,229 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import fs from 'node:fs'
-import path from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('logger', () => {
-    const mockStdoutWrite = vi.fn(() => true)
+  const mockStdoutWrite = vi.fn(() => true)
 
-    beforeEach(() => {
-        vi.resetModules()
-        vi.clearAllMocks()
+  beforeEach(() => {
+    vi.resetModules()
+    vi.clearAllMocks()
 
-        // Define the mock for node:process
-        // We need to keep other process properties mostly intact or at least the ones used
-        // But since we can't easily spread the real process in a factory (it's not pure), 
-        // we'll mock what's needed. logger.ts only uses process.env.TZ and process.stdout.write.
-        // And imported env.ts uses process.env for other things.
-        // Ideally we should proxy the real process.
+    // Define the mock for node:process
+    // We need to keep other process properties mostly intact or at least the ones used
+    // But since we can't easily spread the real process in a factory (it's not pure),
+    // we'll mock what's needed. logger.ts only uses process.env.TZ and process.stdout.write.
+    // And imported env.ts uses process.env for other things.
+    // Ideally we should proxy the real process.
 
-        // BETTER APPROACH: Spy on the actual imported process object AFTER import?
-        // No, because logger captures it at module level? No, it imports it.
+    // BETTER APPROACH: Spy on the actual imported process object AFTER import?
+    // No, because logger captures it at module level? No, it imports it.
 
-        // Let's try mocking node:process with a proxy
-        vi.doMock('node:process', () => {
-            // We can't use 'process' global here easily if strict mode?
-            // Actually we can just return the global process but with mocked stdout
-            return {
-                default: {
-                    ...process,
-                    stdout: {
-                        ...process.stdout,
-                        write: mockStdoutWrite
-                    },
-                    env: { ...process.env, TZ: 'Asia/Shanghai' } // Ensure TZ is consistent
-                }
-            }
-        })
-
-        vi.doMock('../../domain/models/env', () => ({
-            default: {
-                LOG_LEVEL: 'info',
-                LOG_FILE_LEVEL: 'debug',
-                LOG_FILE: '/tmp/napgram/test-logs/app.log',
-                TZ: 'Asia/Shanghai'
-            }
-        }))
+    // Let's try mocking node:process with a proxy
+    vi.doMock('node:process', () => {
+      // We can't use 'process' global here easily if strict mode?
+      // Actually we can just return the global process but with mocked stdout
+      return {
+        default: {
+          ...process,
+          stdout: {
+            ...process.stdout,
+            write: mockStdoutWrite,
+          },
+          env: { ...process.env, TZ: 'Asia/Shanghai' }, // Ensure TZ is consistent
+        },
+      }
     })
 
-    afterEach(() => {
-        vi.restoreAllMocks()
-    })
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'info',
+        LOG_FILE_LEVEL: 'debug',
+        LOG_FILE: '/tmp/napgram/test-logs/app.log',
+        TZ: 'Asia/Shanghai',
+      },
+    }))
+  })
 
-    it('should normalize invalid log levels to info and log correctly', async () => {
-        vi.doMock('../../domain/models/env', () => ({
-            default: {
-                LOG_LEVEL: 'invalid-level',
-                LOG_FILE_LEVEL: 'debug',
-                LOG_FILE: '/tmp/napgram/test-logs/app.log',
-                TZ: 'Asia/Shanghai'
-            }
-        }))
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
-        const mkdirSyncSpy = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined)
-        vi.spyOn(fs, 'existsSync').mockReturnValue(false)
-        vi.spyOn(fs, 'createWriteStream').mockReturnValue({ write: vi.fn(), end: vi.fn() } as any)
+  it('should normalize invalid log levels to info and log correctly', async () => {
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'invalid-level',
+        LOG_FILE_LEVEL: 'debug',
+        LOG_FILE: '/tmp/napgram/test-logs/app.log',
+        TZ: 'Asia/Shanghai',
+      },
+    }))
 
-        const { getLogger } = await import('../logger')
-        const logger = getLogger('TestNormalize')
-        logger.info('test message')
+    const mkdirSyncSpy = vi.spyOn(fs, 'mkdirSync').mockImplementation(() => undefined)
+    vi.spyOn(fs, 'existsSync').mockReturnValue(false)
+    vi.spyOn(fs, 'createWriteStream').mockReturnValue({ write: vi.fn(), end: vi.fn() } as any)
 
-        expect(mockStdoutWrite).toHaveBeenCalled()
-        expect(mkdirSyncSpy).toHaveBeenCalled()
-    })
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('TestNormalize')
+    logger.info('test message')
 
-    it('should handle log rotation', async () => {
-        vi.useFakeTimers()
-        const mockStream = { write: vi.fn(), end: vi.fn() }
-        vi.spyOn(fs, 'createWriteStream').mockReturnValue(mockStream as any)
-        vi.spyOn(fs, 'existsSync').mockReturnValue(true)
+    expect(mockStdoutWrite).toHaveBeenCalled()
+    expect(mkdirSyncSpy).toHaveBeenCalled()
+  })
 
-        // Day 1
-        const day1 = new Date('2023-01-01T12:00:00Z')
-        vi.setSystemTime(day1)
+  it('should handle log rotation', async () => {
+    vi.useFakeTimers()
+    const mockStream = { write: vi.fn(), end: vi.fn() }
+    vi.spyOn(fs, 'createWriteStream').mockReturnValue(mockStream as any)
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true)
 
-        // We import logger AFTER setting time so initial date matches
-        const loggerModule = await import('../logger')
-        const logger = loggerModule.getLogger('RotationTest')
-        logger.info('msg 1')
+    // Day 1
+    const day1 = new Date('2023-01-01T12:00:00Z')
+    vi.setSystemTime(day1)
 
-        // Day 2 (Simulate rotation)
-        const day2 = new Date('2023-01-02T12:00:00Z')
-        vi.setSystemTime(day2)
+    // We import logger AFTER setting time so initial date matches
+    const loggerModule = await import('../logger')
+    const logger = loggerModule.getLogger('RotationTest')
+    logger.info('msg 1')
 
-        // Log again, should trigger rotation
-        logger.info('msg 2')
+    // Day 2 (Simulate rotation)
+    const day2 = new Date('2023-01-02T12:00:00Z')
+    vi.setSystemTime(day2)
 
-        expect(mockStream.end).toHaveBeenCalled()
-        expect(fs.createWriteStream).toHaveBeenCalledTimes(2)
+    // Log again, should trigger rotation
+    logger.info('msg 2')
 
-        vi.useRealTimers()
-    })
+    expect(mockStream.end).toHaveBeenCalled()
+    expect(fs.createWriteStream).toHaveBeenCalledTimes(2)
 
-    it('should handle setConsoleLogLevel and thresholds', async () => {
-        const { getLogger, setConsoleLogLevel } = await import('../logger')
+    vi.useRealTimers()
+  })
 
-        setConsoleLogLevel('error')
-        const logger = getLogger('ThresholdTest')
+  it('should handle setConsoleLogLevel and thresholds', async () => {
+    const { getLogger, setConsoleLogLevel } = await import('../logger')
 
-        logger.info('should not show')
-        expect(mockStdoutWrite).not.toHaveBeenCalled()
+    setConsoleLogLevel('error')
+    const logger = getLogger('ThresholdTest')
 
-        logger.error('should show')
-        expect(mockStdoutWrite).toHaveBeenCalledTimes(1)
+    logger.info('should not show')
+    expect(mockStdoutWrite).not.toHaveBeenCalled()
 
-        setConsoleLogLevel('debug')
-        logger.debug('should show now')
-        expect(mockStdoutWrite).toHaveBeenCalledTimes(2)
-    })
+    logger.error('should show')
+    expect(mockStdoutWrite).toHaveBeenCalledTimes(1)
 
-    it('should respect file log threshold', async () => {
-        vi.doMock('../../domain/models/env', () => ({
-            default: {
-                LOG_LEVEL: 'info',
-                LOG_FILE_LEVEL: 'error',
-                LOG_FILE: '/tmp/test.log'
-            }
-        }))
+    setConsoleLogLevel('debug')
+    logger.debug('should show now')
+    expect(mockStdoutWrite).toHaveBeenCalledTimes(2)
+  })
 
-        const mockStream = { write: vi.fn(), end: vi.fn() }
-        vi.spyOn(fs, 'createWriteStream').mockReturnValue(mockStream as any)
-        vi.spyOn(fs, 'existsSync').mockReturnValue(true)
+  it('should respect file log threshold', async () => {
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'info',
+        LOG_FILE_LEVEL: 'error',
+        LOG_FILE: '/tmp/test.log',
+      },
+    }))
 
-        const { getLogger } = await import('../logger')
-        const logger = getLogger('FileThreshold')
+    const mockStream = { write: vi.fn(), end: vi.fn() }
+    vi.spyOn(fs, 'createWriteStream').mockReturnValue(mockStream as any)
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true)
 
-        logger.info('skip file')
-        expect(mockStream.write).not.toHaveBeenCalled()
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('FileThreshold')
 
-        logger.error('write file')
-        expect(mockStream.write).toHaveBeenCalled()
-    })
+    logger.info('skip file')
+    expect(mockStream.write).not.toHaveBeenCalled()
 
-    it('should cover all log levels', async () => {
-        vi.doMock('../../domain/models/env', () => ({
-            default: {
-                LOG_LEVEL: 'trace',
-                LOG_FILE_LEVEL: 'off',
-                LOG_FILE: '/tmp/test.log'
-            }
-        }))
-        vi.spyOn(fs, 'createWriteStream').mockReturnValue({ write: vi.fn(), end: vi.fn() } as any)
+    logger.error('write file')
+    expect(mockStream.write).toHaveBeenCalled()
+  })
 
-        const { getLogger } = await import('../logger')
-        const logger = getLogger('AllLevels')
+  it('should cover all log levels', async () => {
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'trace',
+        LOG_FILE_LEVEL: 'off',
+        LOG_FILE: '/tmp/test.log',
+      },
+    }))
+    vi.spyOn(fs, 'createWriteStream').mockReturnValue({ write: vi.fn(), end: vi.fn() } as any)
 
-        logger.trace('trace')
-        logger.debug('debug')
-        logger.info('info')
-        logger.warn('warn')
-        logger.error('error')
-        logger.fatal('fatal')
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('AllLevels')
 
-        expect(mockStdoutWrite).toHaveBeenCalledTimes(6)
-    })
+    logger.trace('trace')
+    logger.debug('debug')
+    logger.info('info')
+    logger.warn('warn')
+    logger.error('error')
+    logger.fatal('fatal')
 
-    it('should handle fallback match for colors', async () => {
-        const { getLogger } = await import('../logger')
-        const logger = getLogger('CheckColors')
+    expect(mockStdoutWrite).toHaveBeenCalledTimes(6)
+  })
 
-        logger.info('test color')
-        expect(mockStdoutWrite).toHaveBeenCalled()
+  it('should handle fallback match for colors', async () => {
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('CheckColors')
 
-        // Test prefix match
-        const pluginLogger = getLogger('Instance-1')
-        pluginLogger.info('plugin')
-        expect(mockStdoutWrite).toHaveBeenCalledTimes(2)
+    logger.info('test color')
+    expect(mockStdoutWrite).toHaveBeenCalled()
 
-        // Test direct match (covers line 170)
-        const mainLogger = getLogger('Main')
-        mainLogger.info('main')
-        expect(mockStdoutWrite).toHaveBeenCalledTimes(3)
-    })
+    // Test prefix match
+    const pluginLogger = getLogger('Instance-1')
+    pluginLogger.info('plugin')
+    expect(mockStdoutWrite).toHaveBeenCalledTimes(2)
 
-    it('should handle non-string args and empty messages (lines 75, 226)', async () => {
-        const { getLogger } = await import('../logger')
-        const logger = getLogger('ArgTest')
+    // Test direct match (covers line 170)
+    const mainLogger = getLogger('Main')
+    mainLogger.info('main')
+    expect(mockStdoutWrite).toHaveBeenCalledTimes(3)
+  })
 
-        // Cover line 75: typeof arg === 'string' ? ... : inspect(...)
-        logger.info({ foo: 'bar' }, 123, ['array'])
-        expect(mockStdoutWrite).toHaveBeenCalled()
+  it('should handle non-string args and empty messages (lines 75, 226)', async () => {
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('ArgTest')
 
-        // Cover line 226: message ? ... : prefix (empty message)
-        // Note: formatArgs returns empty array if no args? No, it maps args.
-        // If we pass no args to info(), args is []. formatArgs returns []. join is "".
-        logger.info()
-        expect(mockStdoutWrite).toHaveBeenCalled()
-    })
+    // Cover line 75: typeof arg === 'string' ? ... : inspect(...)
+    logger.info({ foo: 'bar' }, 123, ['array'])
+    expect(mockStdoutWrite).toHaveBeenCalled()
 
-    it('should handle undefined TZ (line 34)', async () => {
-        vi.resetModules()
-        vi.doMock('node:process', () => ({
-            default: {
-                ...process,
-                stdout: { ...process.stdout, write: mockStdoutWrite },
-                env: { ...process.env, TZ: undefined } // Force undefined TZ
-            }
-        }))
+    // Cover line 226: message ? ... : prefix (empty message)
+    // Note: formatArgs returns empty array if no args? No, it maps args.
+    // If we pass no args to info(), args is []. formatArgs returns []. join is "".
+    logger.info()
+    expect(mockStdoutWrite).toHaveBeenCalled()
+  })
 
-        // Re-import to trigger top-level const tz initialization
-        await import('../logger')
-        // If no error thrown, it passed the fallback check
-    })
+  it('should handle undefined TZ (line 34)', async () => {
+    vi.resetModules()
+    vi.doMock('node:process', () => ({
+      default: {
+        ...process,
+        stdout: { ...process.stdout, write: mockStdoutWrite },
+        env: { ...process.env, TZ: undefined }, // Force undefined TZ
+      },
+    }))
 
-    it('should handle undefined/empty LOG_LEVEL (line 23)', async () => {
-        vi.resetModules()
-        vi.doMock('../../domain/models/env', () => ({
-            default: {
-                LOG_LEVEL: '', // Empty string to trigger (level || '')
-                LOG_FILE_LEVEL: undefined, // Undefined to trigger fallback
-                LOG_FILE: '/tmp/test.log',
-                TZ: 'Asia/Shanghai'
-            }
-        }))
+    // Re-import to trigger top-level const tz initialization
+    await import('../logger')
+    // If no error thrown, it passed the fallback check
+  })
 
-        const { getLogger } = await import('../logger')
-        const logger = getLogger('FallbackTest')
-        logger.info('test')
-        // Should default to 'info' and work
-        expect(mockStdoutWrite).toHaveBeenCalled()
-    })
+  it('should handle undefined/empty LOG_LEVEL (line 23)', async () => {
+    vi.resetModules()
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: '', // Empty string to trigger (level || '')
+        LOG_FILE_LEVEL: undefined, // Undefined to trigger fallback
+        LOG_FILE: '/tmp/test.log',
+        TZ: 'Asia/Shanghai',
+      },
+    }))
+
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('FallbackTest')
+    logger.info('test')
+    // Should default to 'info' and work
+    expect(mockStdoutWrite).toHaveBeenCalled()
+  })
 })

@@ -22,25 +22,27 @@ vi.mock('../../../shared/logger', () => ({
   getLogger: vi.fn(() => loggerMocks),
 }))
 
-const makePair = (overrides: Partial<any> = {}) => ({
-  id: 1,
-  qqRoomId: BigInt(100),
-  tgChatId: BigInt(200),
-  tgThreadId: null,
-  flags: 0,
-  instanceId: 1,
-  apiKey: 'key',
-  ignoreRegex: null,
-  ignoreSenders: null,
-  forwardMode: null,
-  nicknameMode: null,
-  commandReplyMode: null,
-  commandReplyFilter: null,
-  commandReplyList: null,
-  ...overrides,
-})
+function makePair(overrides: Partial<any> = {}) {
+  return {
+    id: 1,
+    qqRoomId: BigInt(100),
+    tgChatId: BigInt(200),
+    tgThreadId: null,
+    flags: 0,
+    instanceId: 1,
+    apiKey: 'key',
+    ignoreRegex: null,
+    ignoreSenders: null,
+    forwardMode: null,
+    nicknameMode: null,
+    commandReplyMode: null,
+    commandReplyFilter: null,
+    commandReplyList: null,
+    ...overrides,
+  }
+}
 
-describe('ForwardMap', () => {
+describe('forwardMap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })

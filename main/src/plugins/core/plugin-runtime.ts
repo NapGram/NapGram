@@ -33,6 +33,7 @@ export interface RuntimeConfig {
     instance?: any
     user?: any
     group?: any
+    web?: any
   }
 }
 

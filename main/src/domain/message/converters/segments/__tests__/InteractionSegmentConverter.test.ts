@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { InteractionSegmentConverter } from '../InteractionSegmentConverter'
 
-describe('InteractionSegmentConverter', () => {
+describe('interactionSegmentConverter', () => {
   const converter = new InteractionSegmentConverter()
 
   describe('convertAt', () => {
@@ -69,7 +69,7 @@ describe('InteractionSegmentConverter', () => {
 
     it('should fallback to qface mapping if faceText is not string', () => {
       // id 14 is commonly associated with a specific face, let's assume qface has it.
-      // We rely on the real qface import here. 
+      // We rely on the real qface import here.
       // If qface[14] is undefined in real code, text is undefined.
       // Let's use a known ID if possible or just check the logic path.
       // The code: (qface as Record<number, string>)[faceId]

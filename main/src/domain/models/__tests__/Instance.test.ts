@@ -29,14 +29,15 @@ const loggerMocks = vi.hoisted(() => ({
   error: vi.fn(),
 }))
 
-const posthogMocks = vi.hoisted(() => ({
-  capture: vi.fn(),
+const sentryMocks = vi.hoisted(() => ({
+  captureException: vi.fn(),
 }))
 
 const eventPublisherMocks = vi.hoisted(() => ({
   publishFriendRequest: vi.fn(),
   publishGroupRequest: vi.fn(),
   publishNotice: vi.fn(),
+  publishInstanceStatus: vi.fn(),
 }))
 
 const forwardMapMocks = vi.hoisted(() => ({
@@ -50,11 +51,6 @@ const featureManagerMocks = vi.hoisted(() => ({
 const telegramMocks = vi.hoisted(() => ({
   connect: vi.fn(),
   create: vi.fn(),
-}))
-
-const notificationMocks = vi.hoisted(() => ({
-  notifyDisconnection: vi.fn(),
-  notifyReconnection: vi.fn(),
 }))
 
 const qqMocks = vi.hoisted(() => {
@@ -86,8 +82,8 @@ vi.mock('../../../shared/logger', () => ({
   getLogger: vi.fn(() => loggerMocks),
 }))
 
-vi.mock('../posthog', () => ({
-  default: posthogMocks,
+vi.mock('../sentry', () => ({
+  default: sentryMocks,
 }))
 
 vi.mock('../../../plugins/core/event-publisher', () => ({
@@ -100,7 +96,7 @@ vi.mock('../ForwardMap', () => ({
   },
 }))
 
-vi.mock('../../../features', () => ({
+vi.mock('../../../features/FeatureManager', () => ({
   FeatureManager: vi.fn(function FeatureManagerMock() {
     return {
       initialize: featureManagerMocks.initialize,
@@ -112,20 +108,14 @@ vi.mock('../../../infrastructure/clients/qq', () => ({
   qqClientFactory: qqMocks.factory,
 }))
 
-vi.mock('../../../infrastructure/clients/telegram/client', () => ({
-  default: {
+vi.mock('../../../infrastructure/clients/telegram', () => ({
+  telegramClientFactory: {
     connect: telegramMocks.connect,
     create: telegramMocks.create,
   },
 }))
 
-vi.mock('../../../shared/services/NotificationService', () => ({
-  NotificationService: vi.fn(function NotificationServiceMock() {
-    return notificationMocks
-  }),
-}))
-
-describe('Instance', () => {
+describe('instance', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     Instance.instances.length = 0
@@ -144,8 +134,6 @@ describe('Instance', () => {
     forwardMapMocks.load.mockResolvedValue({ map: true })
     dbMocks.instance.create.mockResolvedValue({ id: 0 })
     dbMocks.instance.update.mockResolvedValue({})
-    notificationMocks.notifyDisconnection.mockResolvedValue(undefined)
-    notificationMocks.notifyReconnection.mockResolvedValue(undefined)
   })
 
   it('creates instance zero record when missing', async () => {
@@ -177,7 +165,12 @@ describe('Instance', () => {
 
     const instance = await Instance.start(1, 'token')
 
-    expect(telegramMocks.connect).toHaveBeenCalledWith(55, 'NapGram', 'token')
+    expect(telegramMocks.connect).toHaveBeenCalledWith({
+      type: 'mtcute',
+      sessionId: 55,
+      botToken: 'token',
+      appName: 'NapGram',
+    })
     expect(telegramMocks.create).not.toHaveBeenCalled()
     expect(qqMocks.factory.create).toHaveBeenCalledWith({
       type: 'napcat',
@@ -226,22 +219,18 @@ describe('Instance', () => {
     const lostHandler = qqMocks.handlers.get('connection:lost')
     await lostHandler({ reason: 'offline' })
     expect(instance.isSetup).toBe(false)
-    expect(notificationMocks.notifyDisconnection).toHaveBeenCalledWith(
-      qqMocks.client,
-      instance.tgBot,
-      envMock.ADMIN_QQ,
-      envMock.ADMIN_TG,
-    )
+    const lostNotice = eventPublisherMocks.publishNotice.mock.calls
+      .map(call => call[0])
+      .find(call => call.noticeType === 'connection-lost')
+    expect(lostNotice).toEqual(expect.objectContaining({ noticeType: 'connection-lost' }))
 
     const restoreHandler = qqMocks.handlers.get('connection:restored')
     await restoreHandler({ reason: 'back' })
     expect(instance.isSetup).toBe(true)
-    expect(notificationMocks.notifyReconnection).toHaveBeenCalledWith(
-      qqMocks.client,
-      instance.tgBot,
-      envMock.ADMIN_QQ,
-      envMock.ADMIN_TG,
-    )
+    const restoreNotice = eventPublisherMocks.publishNotice.mock.calls
+      .map(call => call[0])
+      .find(call => call.noticeType === 'connection-restored')
+    expect(restoreNotice).toEqual(expect.objectContaining({ noticeType: 'connection-restored' }))
   })
 
   it('reports init failure when bot token missing', async () => {
@@ -251,7 +240,9 @@ describe('Instance', () => {
     await expect((instance as any).init()).rejects.toThrow('botToken 未指定')
     await Promise.resolve()
 
-    expect(posthogMocks.capture).toHaveBeenCalledWith('初始化失败', expect.any(Object))
+    expect(sentryMocks.captureException).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
+      stage: 'instance-init',
+    }))
   })
 
   it('updates instance fields via setters', () => {
@@ -317,7 +308,7 @@ describe('Instance', () => {
     expect(calls).toEqual(expect.arrayContaining([
       expect.objectContaining({ noticeType: 'group-member-increase', groupId: '100', userId: '200' }),
       expect.objectContaining({ noticeType: 'group-member-decrease', groupId: '100', userId: '200' }),
-      expect.objectContaining({ noticeType: 'friend-add', userId: '300' })
+      expect.objectContaining({ noticeType: 'friend-add', userId: '300' }),
     ]))
   })
 
@@ -328,7 +319,11 @@ describe('Instance', () => {
     const instance = await Instance.createNew('newtoken')
 
     expect(dbMocks.instance.create).toHaveBeenCalled()
-    expect(telegramMocks.create).toHaveBeenCalledWith({ botAuthToken: 'newtoken' })
+    expect(telegramMocks.create).toHaveBeenCalledWith({
+      type: 'mtcute',
+      botToken: 'newtoken',
+      appName: 'NapGram',
+    })
     expect(instance.id).toBe(999)
   })
 
@@ -363,14 +358,14 @@ describe('Instance', () => {
 
   it('handles missing handleFriendRequest/handleGroupRequest methods', async () => {
     // Remove the mocked methods from client
-    const client = await qqMocks.factory.create({})
+    await qqMocks.factory.create({})
     // Wait, factory returns the hoisted `client` object. I modify it.
     const originalFriend = qqMocks.client.handleFriendRequest
     const originalGroup = qqMocks.client.handleGroupRequest
 
-      // Set to undefined
-      ; (qqMocks.client as any).handleFriendRequest = undefined
-      ; (qqMocks.client as any).handleGroupRequest = undefined
+    // Set to undefined
+    ;(qqMocks.client as any).handleFriendRequest = undefined
+    ;(qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')
@@ -397,7 +392,9 @@ describe('Instance', () => {
   it('handles plugin bridge init failure', async () => {
     const error = new Error('Bus Init Failed')
     // Mock getEventPublisher to throw ONCE
-    vi.mocked(getEventPublisher).mockImplementationOnce(() => { throw error })
+    vi.mocked(getEventPublisher).mockImplementationOnce(() => {
+      throw error
+    })
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(9, 'token')
@@ -405,24 +402,6 @@ describe('Instance', () => {
     // Should warn but not fail instance start
     expect(loggerMocks.warn).toHaveBeenCalledWith('Plugin event bridge init failed:', error)
     expect(Instance.instances).toHaveLength(1)
-  })
-
-  it('handles notification service failures', async () => {
-    envMock.ENABLE_OFFLINE_NOTIFICATION = true
-    dbMocks.instance.findFirst.mockResolvedValue({ isSetup: true })
-    const notifyError = new Error('Notify Failed')
-    notificationMocks.notifyDisconnection.mockRejectedValueOnce(notifyError)
-    notificationMocks.notifyReconnection.mockRejectedValueOnce(notifyError)
-
-    const instance = await Instance.start(10, 'token')
-
-    const lostHandler = qqMocks.handlers.get('connection:lost')
-    await lostHandler({})
-    expect(loggerMocks.error).toHaveBeenCalledWith(notifyError, 'Failed to send disconnection notification:')
-
-    const restoreHandler = qqMocks.handlers.get('connection:restored')
-    await restoreHandler({})
-    expect(loggerMocks.error).toHaveBeenCalledWith(notifyError, 'Failed to send reconnection notification:')
   })
 
   it('reuses existing init promise', async () => {

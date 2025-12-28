@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import { writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { TEMP_PATH, createTempFile } from '../temp'
+import { createTempFile, TEMP_PATH } from '../temp'
 
 describe('temp utils', () => {
   it('creates a temp path under TEMP_PATH', async () => {

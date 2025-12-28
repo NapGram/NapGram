@@ -1,62 +1,69 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import silk from '../silk'
-import { decode, encode } from 'silk-wasm'
+import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
-import { file } from '../../temp'
 import fsP from 'node:fs/promises'
+import { decode, encode } from 'silk-wasm'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { file } from '../../temp'
+import silk from '../silk'
 
 vi.mock('silk-wasm', () => ({
-    decode: vi.fn(),
-    encode: vi.fn()
+  decode: vi.fn(),
+  encode: vi.fn(),
 }))
 
 vi.mock('node:child_process', () => ({
-    execFile: vi.fn()
+  execFile: vi.fn(),
 }))
 
 vi.mock('../../temp', () => ({
-    file: vi.fn()
+  file: vi.fn(),
 }))
 
 vi.mock('node:fs/promises', () => ({
-    default: {
-        writeFile: vi.fn(),
-        readFile: vi.fn()
-    }
+  default: {
+    writeFile: vi.fn(),
+    readFile: vi.fn(),
+  },
 }))
 
 describe('silk utility', () => {
-    beforeEach(() => {
-        vi.resetAllMocks()
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('should decode silk to ogg', async () => {
+    vi.mocked(decode).mockResolvedValue({ data: new Uint8Array(10), duration: 1 } as any)
+    const cleanup = vi.fn()
+    vi.mocked(file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
+    vi.mocked(execFile).mockImplementation((_cmd, _args, cb: any) => {
+      cb(null)
+      return {} as any
     })
 
-    it('should decode silk to ogg', async () => {
-        vi.mocked(decode).mockResolvedValue({ data: new Uint8Array(10), duration: 1 } as any)
-        const cleanup = vi.fn()
-        vi.mocked(file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
-        vi.mocked(execFile).mockImplementation((_cmd, _args, cb: any) => { cb(null); return {} as any })
+    await silk.decode(Buffer.from('silk'), 'out.ogg')
 
-        await silk.decode(Buffer.from('silk'), 'out.ogg')
+    expect(decode).toHaveBeenCalled()
+    expect(fsP.writeFile).toHaveBeenCalledWith('/tmp/pcm', expect.any(Buffer))
+    expect(execFile).toHaveBeenCalledWith('ffmpeg', expect.any(Array), expect.any(Function))
+    expect(cleanup).toHaveBeenCalled()
+  })
 
-        expect(decode).toHaveBeenCalled()
-        expect(fsP.writeFile).toHaveBeenCalledWith('/tmp/pcm', expect.any(Buffer))
-        expect(execFile).toHaveBeenCalledWith('ffmpeg', expect.any(Array), expect.any(Function))
-        expect(cleanup).toHaveBeenCalled()
+  it('should encode audio to silk', async () => {
+    const cleanup = vi.fn()
+    vi.mocked(file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
+    vi.mocked(execFile).mockImplementation((_cmd, _args, cb: any) => {
+      cb(null)
+      return {} as any
     })
+    vi.mocked(fsP.readFile).mockResolvedValue(Buffer.from('pcm'))
+    vi.mocked(encode).mockResolvedValue({ data: new Uint8Array(10) } as any)
 
-    it('should encode audio to silk', async () => {
-        const cleanup = vi.fn()
-        vi.mocked(file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
-        vi.mocked(execFile).mockImplementation((_cmd, _args, cb: any) => { cb(null); return {} as any })
-        vi.mocked(fsP.readFile).mockResolvedValue(Buffer.from('pcm'))
-        vi.mocked(encode).mockResolvedValue({ data: new Uint8Array(10) } as any)
+    const res = await silk.encode('in.mp3')
 
-        const res = await silk.encode('in.mp3')
-
-        expect(execFile).toHaveBeenCalled() // ffmpeg to pcm
-        expect(fsP.readFile).toHaveBeenCalledWith('/tmp/pcm')
-        expect(encode).toHaveBeenCalled()
-        expect(res).toBeInstanceOf(Buffer)
-        expect(cleanup).toHaveBeenCalled()
-    })
+    expect(execFile).toHaveBeenCalled() // ffmpeg to pcm
+    expect(fsP.readFile).toHaveBeenCalledWith('/tmp/pcm')
+    expect(encode).toHaveBeenCalled()
+    expect(res).toBeInstanceOf(Buffer)
+    expect(cleanup).toHaveBeenCalled()
+  })
 })
