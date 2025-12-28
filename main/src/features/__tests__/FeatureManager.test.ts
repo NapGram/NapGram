@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FeatureManager } from '../FeatureManager'
-import { messageConverter } from '../domain/message'
-vi.mock('../domain/message', () => ({
+import { messageConverter } from '../../domain/message'
+vi.mock('../../domain/message', () => ({
   messageConverter: {
     setInstance: vi.fn(),
   },

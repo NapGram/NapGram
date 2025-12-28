@@ -4,4 +4,5 @@ export {
   Instance,
   MediaFeature,
   RecallFeature,
+  ThreadIdExtractor,
 } from './runtime'
