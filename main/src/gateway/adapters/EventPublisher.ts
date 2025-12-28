@@ -7,7 +7,7 @@ import type { UnifiedMessage } from '../../domain/message'
 import type { ForwardPairRecord } from '../../domain/models/ForwardMap'
 import type { MessageCreatedEvent, Segment } from '../protocol/events'
 import type { GatewayServer } from '../server/GatewayServer'
-import { ThreadIdExtractor } from '../../features/commands/services/ThreadIdExtractor'
+import { ThreadIdExtractor } from '@napgram/feature-kit'
 import { getLogger } from '../../shared/logger'
 
 const logger = getLogger('EventPublisher')
