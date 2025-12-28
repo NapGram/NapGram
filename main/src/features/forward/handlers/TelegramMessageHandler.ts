@@ -6,9 +6,8 @@ import type { MediaGroupHandler } from './MediaGroupHandler'
 import { messageConverter } from '../../../domain/message'
 import db from '../../../domain/models/db'
 import { getLogger } from '../../../shared/logger'
-import { ThreadIdExtractor } from '../../commands/services/ThreadIdExtractor'
 
-const logger = getLogger('TelegramMessageHandler')
+const logger = getLogger('ForwardFeature')
 
 /**
  * Handles Telegram->QQ message forwarding
@@ -25,30 +24,6 @@ export class TelegramMessageHandler {
 
   async handleTGMessage(tgMsg: Message, pair: any): Promise<void> {
     try {
-      const rawText = tgMsg.text || ''
-      logger.info('[Forward][TG->QQ] incoming', {
-        id: tgMsg.id,
-        chatId: tgMsg.chat.id,
-        text: rawText.slice(0, 100),
-      })
-
-      // 跳过命令消息，避免转发到 QQ
-      const trimmedText = rawText.trim()
-      if (trimmedText.startsWith('/')) {
-        logger.debug({ text: rawText }, `[Forward] Skipping command message`)
-        return
-      }
-
-      // Use ThreadIdExtractor to get threadId from raw message or wrapper
-      const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg)
-
-      logger.info('[Forward][TG->QQ] resolved', {
-        tgMsgId: tgMsg.id,
-        tgChatId: tgMsg.chat.id,
-        threadId,
-        qqRoomId: pair.qqRoomId,
-      })
-
       // Check if this is a Media Group message
       const isMediaGroup = await this.mediaGroupHandler.handleMediaGroup(tgMsg, pair)
       if (isMediaGroup) {

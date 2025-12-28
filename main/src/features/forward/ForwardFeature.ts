@@ -37,6 +37,13 @@ export class ForwardFeature {
   private tgMessageHandler: TelegramMessageHandler
   private mediaPreparer: ForwardMediaPreparer
   private handleTgMessage = async (tgMsg: Message) => {
+    const rawText = tgMsg.text || ''
+    logger.info('[Forward][TG->QQ] incoming', {
+      id: tgMsg.id,
+      chatId: tgMsg.chat.id,
+      text: rawText.slice(0, 100),
+    })
+
     const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg)
 
     const pair = this.forwardMap.findByTG(
@@ -49,6 +56,13 @@ export class ForwardFeature {
       return
     }
 
+    logger.info('[Forward][TG->QQ] resolved', {
+      tgMsgId: tgMsg.id,
+      tgChatId: tgMsg.chat.id,
+      threadId,
+      qqRoomId: pair.qqRoomId,
+    })
+
     await this.publishTgPluginEvent(tgMsg, pair, threadId)
 
     // Publish gateway event (doesn't affect forwarding)
@@ -58,6 +72,11 @@ export class ForwardFeature {
     }
     catch (e) {
       logger.debug(e, '[Gateway] publishMessageCreated (TG) failed')
+    }
+
+    if (rawText.trim().startsWith('/')) {
+      logger.debug({ text: rawText }, '[Forward] Skipping command message')
+      return
     }
 
     // Check forward mode (TG -> QQ is index 1)

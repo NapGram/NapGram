@@ -49,23 +49,6 @@ describe('telegramMessageHandler', () => {
     )
   })
 
-  it('skips forwarding command messages', async () => {
-    const tgMsg: any = {
-      id: 1,
-      text: '/help',
-      date: new Date(),
-      chat: { id: 100 },
-      sender: { id: 10, displayName: 'Alice' },
-      raw: { replyTo: { replyToTopId: 789 } },
-    }
-    const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100' }
-
-    await handler.handleTGMessage(tgMsg, pair)
-
-    expect(messageConverter.fromTelegram).not.toHaveBeenCalled()
-    expect(qqClient.sendMessage).not.toHaveBeenCalled()
-  })
-
   it('handles media group messages by skipping further processing', async () => {
     mediaGroupHandler.handleMediaGroup.mockResolvedValueOnce(true)
     const tgMsg: any = { id: 1, text: '', chat: { id: 100 }, date: new Date() }
