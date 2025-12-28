@@ -494,6 +494,13 @@ export class CommandsFeature {
       if (!chatId)
         return false
 
+      logger.info('[Commands] TG message', {
+        id: tgMsg.id,
+        chatId,
+        senderId,
+        text: text.slice(0, 200),
+      })
+
       const senderName = tgMsg.sender.displayName || `${senderId}`
       const parts = text.slice(this.registry.prefix.length).split(/\s+/)
 
