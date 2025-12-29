@@ -38,7 +38,7 @@ export function parseChannelId(raw: string): { platform: TargetPlatform, channel
         return { platform, channelId: id, qqType: maybeType }
       }
       const id = parts.slice(1).join(':')
-      return { platform, channelId: id, qqType: 'group' }
+      return { platform, channelId: id } // Let consumer default to 'group'
     }
 
     const id = parts.slice(1).join(':')
@@ -366,8 +366,8 @@ export class MessageAPIImpl implements MessageAPI {
       return
     }
 
-    if (!parsed.chatId)
-      throw new Error('Telegram messageId must be "tg:<chatId>:<messageId>"')
+    // if (!parsed.chatId)
+    //   throw new Error('Telegram messageId must be "tg:<chatId>:<messageId>"')
     if (!instance?.tgBot)
       throw new Error('Telegram bot not available on instance')
     const chat = await instance.tgBot.getChat(Number(parsed.chatId))

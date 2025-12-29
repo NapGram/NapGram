@@ -123,7 +123,7 @@ export default class Instance {
           if (!requestId)
             return
           const userId = String(e?.userId ?? '')
-          const userName = String(e?.userName ?? userId ?? 'Unknown')
+          const userName = String(e?.userName || userId || 'Unknown')
           eventPublisher.publishFriendRequest({
             instanceId,
             platform: 'qq',
@@ -153,7 +153,7 @@ export default class Instance {
             return
           const groupId = String(e?.groupId ?? '')
           const userId = String(e?.userId ?? '')
-          const userName = String(e?.userName ?? userId ?? 'Unknown')
+          const userName = String(e?.userName || userId || 'Unknown')
           const subType = (e?.subType === 'invite' ? 'invite' : 'add') as 'add' | 'invite'
           eventPublisher.publishGroupRequest({
             instanceId,

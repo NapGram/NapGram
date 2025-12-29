@@ -870,4 +870,52 @@ describe('Message Conversion Coverage', () => {
     expect(result?.segments[2].type).toBe('at')
     expect(result?.segments[2].data.userId).toBe('')
   })
+
+  it('covers sendViaInstance edge cases (replyTo empty, qqType default)', async () => {
+    // 1. replyTo is whitespace -> parses to empty messageId -> line 341 skipped
+    const sendMessage = vi.fn().mockResolvedValue({ messageId: '123' })
+    const qqClient = {
+      uin: '123',
+      sendMessage,
+    }
+    const mockInstanceResolver = vi.fn().mockReturnValue({ qqClient })
+    messageAPI = new MessageAPIImpl(mockInstanceResolver)
+
+    const params = {
+      instanceId: 1,
+      channelId: 'qq:123',
+      content: 'test',
+      replyTo: ' '
+    }
+    await messageAPI.send(params as any)
+
+    // verify sendViaInstance logic:
+    // parseChannelId('qq:123') returns { platform: 'qq', channelId: '123' } (no qqType)
+    // fallback to 'group' at line 349
+    // replyTo ' ' returns { messageId: '' }. line 341 check fails. segments not modified.
+
+    expect(sendMessage).toHaveBeenCalledWith('123', expect.objectContaining({
+      chat: { id: '123', type: 'group' }, // default used
+      content: expect.arrayContaining([expect.objectContaining({ type: 'text' })])
+    }))
+  })
+
+  it('covers getViaInstance with empty content', async () => {
+    const mockInstanceResolver = vi.fn().mockReturnValue({
+      qqClient: {
+        getMessage: vi.fn().mockResolvedValue({
+          chat: { id: '123' },
+          sender: { id: '456' },
+          content: undefined, // trigger || []
+          timestamp: 123456
+        })
+      }
+    })
+    messageAPI = new MessageAPIImpl(mockInstanceResolver)
+
+    const res = await messageAPI.get({ instanceId: 1, messageId: 'qq:msg_empty' })
+    expect(res).toBeDefined()
+    expect(res?.text).toBe('')
+    expect(res?.segments).toEqual([])
+  })
 })
