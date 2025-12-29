@@ -89,17 +89,17 @@ export class PerformanceMonitor {
   printStats() {
     const stats = this.getStats()
 
-    logger.info('=== Performance Statistics ===')
-    logger.info(`Uptime: ${(stats.uptime / 1000 / 60).toFixed(2)} minutes`)
-    logger.info(`Total Messages: ${stats.totalMessages}`)
-    logger.info(`Messages/sec: ${stats.messagesPerSecond.toFixed(2)}`)
-    logger.info(`Avg Latency: ${stats.avgLatency.toFixed(2)}ms`)
-    logger.info(`P95 Latency: ${stats.p95Latency.toFixed(2)}ms`)
-    logger.info(`P99 Latency: ${stats.p99Latency.toFixed(2)}ms`)
-    logger.info(`Error Rate: ${(stats.errorRate * 100).toFixed(2)}%`)
-    logger.info(`Cache Hit Rate: ${(stats.cacheHitRate * 100).toFixed(2)}%`)
-    logger.info(`Memory Usage: ${stats.memoryUsageMB.toFixed(2)}MB`)
-    logger.info('==============================')
+    logger.debug('=== Performance Statistics ===')
+    logger.debug(`Uptime: ${(stats.uptime / 1000 / 60).toFixed(2)} minutes`)
+    logger.debug(`Total Messages: ${stats.totalMessages}`)
+    logger.debug(`Messages/sec: ${stats.messagesPerSecond.toFixed(2)}`)
+    logger.debug(`Avg Latency: ${stats.avgLatency.toFixed(2)}ms`)
+    logger.debug(`P95 Latency: ${stats.p95Latency.toFixed(2)}ms`)
+    logger.debug(`P99 Latency: ${stats.p99Latency.toFixed(2)}ms`)
+    logger.debug(`Error Rate: ${(stats.errorRate * 100).toFixed(2)}%`)
+    logger.debug(`Cache Hit Rate: ${(stats.cacheHitRate * 100).toFixed(2)}%`)
+    logger.debug(`Memory Usage: ${stats.memoryUsageMB.toFixed(2)}MB`)
+    logger.debug('==============================')
   }
 
   reset() {
