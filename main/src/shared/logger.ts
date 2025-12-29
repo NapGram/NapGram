@@ -80,7 +80,7 @@ if (fileLoggingEnabled) {
   }
 }
 
-function rotateIfNeeded() {
+export function rotateIfNeeded() {
   if (!fileLoggingEnabled || !fileStream)
     return
   const today = dateFormatter.format(new Date())
