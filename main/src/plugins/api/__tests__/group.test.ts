@@ -28,10 +28,10 @@ describe('groupAPIImpl', () => {
     })
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).getQQGroupInfo = vi.fn().mockResolvedValue({
-        groupId: 'qq:group:123456',
-        groupName: 'Test Group',
-      })
+    ; (groupAPI as any).getQQGroupInfo = vi.fn().mockResolvedValue({
+      groupId: 'qq:group:123456',
+      groupName: 'Test Group',
+    })
 
     await expect(groupAPI.getInfo({
       instanceId: 1,
@@ -48,9 +48,9 @@ describe('groupAPIImpl', () => {
     })
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).getQQGroupMembers = vi.fn().mockResolvedValue([
-        { userId: 'qq:user:1', userName: 'User1', role: 'member' },
-      ])
+    ; (groupAPI as any).getQQGroupMembers = vi.fn().mockResolvedValue([
+      { userId: 'qq:user:1', userName: 'User1', role: 'member' },
+    ])
 
     const members = await groupAPI.getMembers({
       instanceId: 1,
@@ -76,9 +76,9 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).getTGGroupMembers = vi.fn().mockResolvedValue([
-        { userId: 'tg:user:1', userName: 'User1', role: 'member' },
-      ])
+    ; (groupAPI as any).getTGGroupMembers = vi.fn().mockResolvedValue([
+      { userId: 'tg:user:1', userName: 'User1', role: 'member' },
+    ])
 
     const members = await groupAPI.getMembers({
       instanceId: 1,
@@ -103,7 +103,7 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).setQQAdmin = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).setQQAdmin = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.setAdmin({
       instanceId: 1,
@@ -117,7 +117,7 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).muteQQUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).muteQQUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.muteUser({
       instanceId: 1,
@@ -131,7 +131,7 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).kickQQUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).kickQQUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.kickUser({
       instanceId: 1,
@@ -144,7 +144,7 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).setTGAdmin = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).setTGAdmin = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.setAdmin({
       instanceId: 1,
@@ -158,7 +158,7 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).muteTGUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).muteTGUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.muteUser({
       instanceId: 1,
@@ -172,7 +172,7 @@ describe('groupAPIImpl', () => {
     const mockInstanceResolver = vi.fn().mockReturnValue({})
 
     groupAPI = new GroupAPIImpl(mockInstanceResolver)
-      ; (groupAPI as any).kickTGUser = vi.fn().mockResolvedValue(undefined)
+    ; (groupAPI as any).kickTGUser = vi.fn().mockResolvedValue(undefined)
 
     await expect(groupAPI.kickUser({
       instanceId: 1,
@@ -403,7 +403,7 @@ describe('groupAPIImpl private methods coverage', () => {
       instanceId: 1,
       groupId: 'qq:group:123',
       userId: 'qq:user:456',
-      enable: true
+      enable: true,
     })).resolves.toBeUndefined()
   })
 
@@ -412,7 +412,7 @@ describe('groupAPIImpl private methods coverage', () => {
       instanceId: 1,
       groupId: 'qq:group:123',
       userId: 'qq:user:456',
-      duration: 60
+      duration: 60,
     })).resolves.toBeUndefined()
   })
 
@@ -444,7 +444,7 @@ describe('groupAPIImpl private methods coverage', () => {
       instanceId: 1,
       groupId: 'tg:group:123',
       userId: 'tg:user:456',
-      enable: true
+      enable: true,
     })).resolves.toBeUndefined()
   })
 
@@ -453,7 +453,7 @@ describe('groupAPIImpl private methods coverage', () => {
       instanceId: 1,
       groupId: 'tg:group:123',
       userId: 'tg:user:456',
-      duration: 60
+      duration: 60,
     })).resolves.toBeUndefined()
   })
 

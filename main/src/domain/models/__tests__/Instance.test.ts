@@ -363,7 +363,7 @@ describe('instance', () => {
 
       // Set to undefined
       ; (qqMocks.client as any).handleFriendRequest = undefined
-      ; (qqMocks.client as any).handleGroupRequest = undefined
+    ; (qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')
@@ -511,7 +511,7 @@ describe('instance', () => {
     featureManagerMocks.initialize.mockRejectedValueOnce(error)
 
     dbMocks.instance.findFirst.mockResolvedValue({})
-    // Should pass but maybe log error? 
+    // Should pass but maybe log error?
     // In Instance.ts: await this.featureManager.initialize() is NOT wrapped in try/catch inside init()
     // except the whole init IIFE... wait.
     // The IIFE catches errors at the end.
@@ -542,7 +542,7 @@ describe('instance', () => {
     expect(instance.isSetup).toBe(false)
     expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
       noticeType: 'connection-lost',
-      timestamp: 123456
+      timestamp: 123456,
     }))
 
     // Test connection:restored
@@ -554,7 +554,7 @@ describe('instance', () => {
     expect(instance.isSetup).toBe(true)
     expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
       noticeType: 'connection-restored',
-      timestamp: 654321
+      timestamp: 654321,
     }))
   })
 
@@ -570,7 +570,7 @@ describe('instance', () => {
     instance.owner = 999
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
       data: { owner: 999 },
-      where: { id: 18 }
+      where: { id: 18 },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith(999)
@@ -579,7 +579,7 @@ describe('instance', () => {
     loggerMocks.trace.mockClear()
     instance.isSetup = false
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { isSetup: false }
+      data: { isSetup: false },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith(false)
@@ -588,7 +588,7 @@ describe('instance', () => {
     loggerMocks.trace.mockClear()
     instance.workMode = 'b' as any
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { workMode: 'b' }
+      data: { workMode: 'b' },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith('b')
@@ -597,7 +597,7 @@ describe('instance', () => {
     loggerMocks.trace.mockClear()
     instance.botSessionId = 555
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { botSessionId: 555 }
+      data: { botSessionId: 555 },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith(555)
@@ -606,7 +606,7 @@ describe('instance', () => {
     loggerMocks.trace.mockClear()
     instance.qqBotId = 777
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { qqBotId: 777 }
+      data: { qqBotId: 777 },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith(777)
@@ -616,7 +616,7 @@ describe('instance', () => {
     loggerMocks.trace.mockClear()
     instance.flags = 888
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { flags: 888 }
+      data: { flags: 888 },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith(888)
@@ -632,7 +632,7 @@ describe('instance', () => {
     await groupHandler({
       flag: 'g_def',
       groupId: 'g1',
-      userId: 'u1'
+      userId: 'u1',
       // subType missing, comment missing
     })
 
@@ -662,7 +662,7 @@ describe('instance', () => {
       flag: 'f_exp',
       userId: 'u_exp',
       comment: 'friend comment',
-      timestamp: 1001
+      timestamp: 1001,
     })
     const fCalls = eventPublisherMocks.publishFriendRequest.mock.calls
     const lastF = fCalls[fCalls.length - 1][0]
@@ -672,7 +672,7 @@ describe('instance', () => {
     // request.friend fallback logic: userName missing -> takes userId
     await friendHandler({
       flag: 'f_fb',
-      userId: 'u_fb'
+      userId: 'u_fb',
       // no userName
     })
     const lastF2 = fCalls[fCalls.length - 1][0]
@@ -686,7 +686,7 @@ describe('instance', () => {
       userId: 'u_g_exp',
       subType: 'invite',
       comment: 'group comment',
-      timestamp: 2002
+      timestamp: 2002,
     })
     const gCalls = eventPublisherMocks.publishGroupRequest.mock.calls
     const lastG = gCalls[gCalls.length - 1][0]
@@ -698,7 +698,7 @@ describe('instance', () => {
     await groupHandler({
       flag: 'g_fb',
       groupId: 'g_2',
-      userId: 'u_g_fb'
+      userId: 'u_g_fb',
     })
     const lastG2 = gCalls[gCalls.length - 1][0]
     expect(lastG2.userName).toBe('u_g_fb')
@@ -716,7 +716,7 @@ describe('instance', () => {
     instance.qqBotId = 111
 
     expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { qqBotId: 111 }
+      data: { qqBotId: 111 },
     }))
     await flushPromises()
     expect(loggerMocks.trace).toHaveBeenCalledWith(111)
