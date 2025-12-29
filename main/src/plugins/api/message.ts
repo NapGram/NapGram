@@ -21,7 +21,7 @@ const logger = getLogger('MessageAPI')
 type TargetPlatform = 'qq' | 'tg'
 type QqChannelType = 'group' | 'private'
 
-function parseChannelId(raw: string): { platform: TargetPlatform, channelId: string, qqType?: QqChannelType } {
+export function parseChannelId(raw: string): { platform: TargetPlatform, channelId: string, qqType?: QqChannelType } {
   const input = String(raw || '').trim()
   if (!input)
     throw new Error('channelId is required')
@@ -49,7 +49,7 @@ function parseChannelId(raw: string): { platform: TargetPlatform, channelId: str
   throw new Error('channelId must be prefixed with "qq:" or "tg:" (e.g. "qq:group:123" / "tg:-100123")')
 }
 
-function parseMessageId(raw: string): { platform: TargetPlatform, chatId?: string, messageId: string } {
+export function parseMessageId(raw: string): { platform: TargetPlatform, chatId?: string, messageId: string } {
   const input = String(raw || '').trim()
   if (!input)
     throw new Error('messageId is required')
@@ -69,7 +69,7 @@ function parseMessageId(raw: string): { platform: TargetPlatform, chatId?: strin
   return { platform: 'qq', messageId: input }
 }
 
-function parseReplyToForPlatform(replyToRaw: string, platform: TargetPlatform): { chatId?: string, messageId: string } {
+export function parseReplyToForPlatform(replyToRaw: string, platform: TargetPlatform): { chatId?: string, messageId: string } {
   const replyTo = String(replyToRaw || '').trim()
   if (!replyTo)
     return { messageId: '' }
@@ -85,7 +85,7 @@ function parseReplyToForPlatform(replyToRaw: string, platform: TargetPlatform): 
   return { chatId: parsed.chatId, messageId: parsed.messageId }
 }
 
-function segmentsToText(segments: MessageSegment[]): string {
+export function segmentsToText(segments: MessageSegment[]): string {
   return (segments || [])
     .map((seg) => {
       if (!seg)
@@ -100,7 +100,7 @@ function segmentsToText(segments: MessageSegment[]): string {
     .join('')
 }
 
-function pluginSegmentsToUnifiedContents(segments: MessageSegment[]): MessageContent[] {
+export function pluginSegmentsToUnifiedContents(segments: MessageSegment[]): MessageContent[] {
   const out: MessageContent[] = []
   for (const seg of segments || []) {
     if (!seg)
