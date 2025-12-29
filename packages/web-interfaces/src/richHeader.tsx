@@ -1,3 +1,5 @@
+/** @jsx Html.createElement */
+/** @jsxFrag Html.Fragment */
 import type { FastifyInstance } from 'fastify'
 import Html from '@kitajs/html'
 import { env, formatDate, getLogger, Instance, sentry } from '@napgram/runtime-kit'

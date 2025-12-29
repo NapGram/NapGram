@@ -27,6 +27,8 @@ services:
       LISTEN_PORT: "8080"
       # 对外访问的 Web 地址（用于生成链接、跨服务回调等）
       WEB_ENDPOINT: "http://localhost:8080"
+      # 富头像/预览链接的版本号（用于强制刷新缓存）
+      RICH_HEADER_VERSION: "2"
       # 管理后台访问 Token（请设置为强随机字符串）
       ADMIN_TOKEN: "replace_me"
 

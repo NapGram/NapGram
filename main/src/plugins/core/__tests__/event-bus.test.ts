@@ -154,4 +154,36 @@ describe('eventBus', () => {
     expect(eventBus.getEventTypes()).toContain('message')
     expect(eventBus.getEventTypes()).toContain('notice')
   })
+
+  it('should clean up empty subscription set after unsubscribe', () => {
+    // Test coverage for lines 161-169 (unsubscribe loop and cleanup)
+    const handler = vi.fn()
+    const sub1 = eventBus.subscribe('message', handler)
+    const sub2 = eventBus.subscribe('message', handler)
+
+    expect(eventBus.getSubscriptionCount('message')).toBe(2)
+
+    // Unsubscribe one
+    sub1.unsubscribe()
+    expect(eventBus.getSubscriptionCount('message')).toBe(1)
+
+    // Unsubscribe the last one - this should clean up the empty Set (line 169-170)
+    sub2.unsubscribe()
+    expect(eventBus.getSubscriptionCount('message')).toBe(0)
+    expect(eventBus.getEventTypes()).not.toContain('message')
+  })
+
+  it('should handle error without pluginId context', async () => {
+    // Test coverage for line 254 (context without pluginId)
+    const handler = vi.fn(() => {
+      throw new Error('test error')
+    })
+
+    // Subscribe without pluginId
+    eventBus.subscribe('message', handler)
+
+    await eventBus.publish('message', { id: '1' } as any)
+
+    expect(eventBus.getStats().errors).toBe(1)
+  })
 })

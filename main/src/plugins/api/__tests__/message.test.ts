@@ -544,6 +544,139 @@ describe('messageAPIImpl', () => {
 
     expect(sendMessage).toHaveBeenCalled()
   })
+
+  // Additional tests for Phase 3: Branch coverage improvement
+  describe('parseChannelId edge cases', () => {
+    it('should handle null and undefined channelId', async () => {
+      messageAPI = new MessageAPIImpl(() => ({}))
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: null as any,
+        content: 'test',
+      })).rejects.toThrow('channelId is required')
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: undefined as any,
+        content: 'test',
+      })).rejects.toThrow('channelId is required')
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: '   ',
+        content: 'test',
+      })).rejects.toThrow('channelId is required')
+    })
+
+    it('should reject channelId without proper prefix', async () => {
+      messageAPI = new MessageAPIImpl(() => ({}))
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: 'invalid-format',
+        content: 'test',
+      })).rejects.toThrow('channelId must be prefixed')
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: '12345',
+        content: 'test',
+      })).rejects.toThrow('channelId must be prefixed')
+    })
+
+    it('should handle telegram prefix variant', async () => {
+      const sendMessage = vi.fn().mockResolvedValue({ id: 999 })
+      messageAPI = new MessageAPIImpl(() => ({
+        tgBot: { getChat: vi.fn().mockResolvedValue({ sendMessage }) },
+      }))
+
+      await messageAPI.send({
+        instanceId: 1,
+        channelId: 'telegram:12345',
+        content: 'test',
+      })
+
+      expect(sendMessage).toHaveBeenCalled()
+    })
+
+    it('should handle QQ group without explicit type', async () => {
+      const sendMessage = vi.fn().mockResolvedValue({ messageId: 'qq999' })
+      messageAPI = new MessageAPIImpl(() => ({
+        qqClient: { uin: '1', sendMessage },
+      }))
+
+      await messageAPI.send({
+        instanceId: 1,
+        channelId: 'qq:888888',
+        content: 'test',
+      })
+
+      expect(sendMessage).toHaveBeenCalled()
+    })
+  })
+
+  describe('parseMessageId edge cases', () => {
+    it('should handle null and undefined messageId in recall', async () => {
+      messageAPI = new MessageAPIImpl(() => ({}))
+
+      await expect(messageAPI.recall({
+        instanceId: 1,
+        messageId: null as any,
+      })).rejects.toThrow('messageId is required')
+
+      await expect(messageAPI.recall({
+        instanceId: 1,
+        messageId: undefined as any,
+      })).rejects.toThrow('messageId is required')
+
+      await expect(messageAPI.recall({
+        instanceId: 1,
+        messageId: '   ',
+      })).rejects.toThrow('messageId is required')
+    })
+
+    it('should handle telegram messageId with only 2 parts (invalid)', async () => {
+      messageAPI = new MessageAPIImpl(() => ({
+        tgBot: {},
+      }))
+
+      await expect(messageAPI.recall({
+        instanceId: 1,
+        messageId: 'tg:123',
+      })).rejects.toThrow('Telegram messageId must be')
+    })
+
+    it('should handle telegram prefix variant in messageId', async () => {
+      messageAPI = new MessageAPIImpl(() => ({
+        tgBot: {
+          getChat: vi.fn().mockResolvedValue({
+            deleteMessages: vi.fn().mockResolvedValue(undefined),
+          }),
+        },
+      }))
+
+      await messageAPI.recall({
+        instanceId: 1,
+        messageId: 'telegram:100:456',
+      })
+
+      // Should succeed without error
+    })
+
+    it('should handle legacy unprefixed QQ messageId', async () => {
+      messageAPI = new MessageAPIImpl(() => ({
+        qqClient: { recallMessage: vi.fn().mockResolvedValue(undefined) },
+      }))
+
+      await messageAPI.recall({
+        instanceId: 1,
+        messageId: '123456789',
+      })
+
+      // Should assume QQ platform
+    })
+  })
 })
 
 describe('createMessageAPI', () => {

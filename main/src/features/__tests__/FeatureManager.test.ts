@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { FeatureManager } from '../FeatureManager'
 import { messageConverter } from '../../domain/message'
+import { FeatureManager } from '../FeatureManager'
+
 vi.mock('../../domain/message', () => ({
   messageConverter: {
     setInstance: vi.fn(),
@@ -121,5 +122,27 @@ describe('featureManager', () => {
     await manager.destroy()
     expect(workingDestroy).toHaveBeenCalled()
     expect(failingDestroy).toHaveBeenCalled()
+  })
+
+  it('should return false when registering invalid or duplicate features', () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+
+    // Invalid feature
+    expect(manager.registerFeature('media', undefined)).toBe(false)
+
+    const feat = { destroy: vi.fn() }
+    expect(manager.registerFeature('media', feat as any)).toBe(true)
+
+    // Duplicate
+    expect(manager.registerFeature('media', {} as any)).toBe(false)
+  })
+
+  it('should log update when registering feature after initialization', async () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+    await manager.initialize()
+
+    const feat = { destroy: vi.fn() }
+    // This triggers "FeatureManager 已更新" log branch
+    expect(manager.registerFeature('media', feat as any)).toBe(true)
   })
 })

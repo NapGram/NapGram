@@ -263,15 +263,17 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
     }
   }
 
-  const defaultDir = path.join(dataDir, 'plugins', 'local')
-  const pluginsDir = readStringEnv(['PLUGINS_DIR']) || defaultDir
-  if (pluginsDir && await exists(pluginsDir)) {
-    try {
-      const absDir = await resolvePathUnderDataDir(pluginsDir)
-      logger.debug({ absDir }, 'Scanning local plugins directory')
-      const entries = await fs.readdir(absDir, { withFileTypes: true })
+  async function loadLocalPluginSpecs() {
+    const defaultDir = path.join(dataDir, 'plugins')
+    const pluginsDir = readStringEnv(['PLUGINS_DIR']) || defaultDir
 
-      // 加载文件（单文件插件）
+    if (!await exists(pluginsDir))
+      return
+
+    try {
+      const entries = await fs.readdir(pluginsDir, { withFileTypes: true })
+
+      // 1. 加载文件
       const files = entries
         .filter(e => e.isFile())
         .map(e => e.name)
@@ -281,17 +283,10 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
 
       for (const filename of files) {
         try {
-          const modulePath = path.join(absDir, filename)
+          const modulePath = path.join(pluginsDir, filename)
           const id = sanitizeId(inferIdFromPath(modulePath))
-
-          // 如果该插件已在配置文件中定义（无论启用与否），则跳过自动发现
-          // 检查 ID 或 模块路径是否匹配
-          if (specsById.has(id) || hasSpec(s => s.module === modulePath)) {
-            logger.debug({ id }, 'Plugin already configured via config file, skipping auto-discovery')
+          if (specsById.has(id) || hasSpec(s => s.module === modulePath))
             continue
-          }
-
-          logger.debug({ id, modulePath }, 'Found local file plugin')
           addSpec({
             id,
             module: modulePath,
@@ -304,7 +299,7 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         }
       }
 
-      // 加载目录（package 插件）
+      // 2. 加载目录
       const dirs = entries
         .filter(e => e.isDirectory())
         .map(e => e.name)
@@ -312,18 +307,12 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
         .sort((a, b) => a.localeCompare(b))
 
       for (const dirname of dirs) {
-        const dirPath = path.join(absDir, dirname)
+        const dirPath = path.join(pluginsDir, dirname)
         const pkgPath = path.join(dirPath, 'package.json')
 
-        logger.debug({ dirname, dirPath }, 'Checking directory for plugin')
-
-        // 检查是否有 package.json
         if (await exists(pkgPath)) {
           try {
-            const pkgRaw = await fs.readFile(pkgPath, 'utf8')
-            const pkg = JSON.parse(pkgRaw)
-
-            // 默认寻找 index.mjs -> index.js -> package.json[main]
+            const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'))
             let mainFile = pkg.main
             if (!mainFile) {
               if (await exists(path.join(dirPath, 'index.mjs')))
@@ -331,28 +320,16 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
               else if (await exists(path.join(dirPath, 'index.js')))
                 mainFile = 'index.js'
             }
-
-            if (!mainFile) {
-              logger.debug({ dirname }, 'Skip directory plugin: No entry file (main/index.mjs/index.js) found')
+            if (!mainFile)
               continue
-            }
 
             const modulePath = path.join(dirPath, mainFile)
-
             if (await exists(modulePath)) {
-              // 提取 ID 时，如果 package.json 有 name，则优先使用其最后一部分
               const pkgName = typeof pkg.name === 'string' ? pkg.name : ''
               const rawId = pkgName.split('/').pop() || dirname
               const id = sanitizeId(rawId)
-
-              // 如果该插件已在配置文件中定义（无论启用与否），则跳过自动发现
-              // 检查 ID 或 模块路径（入口文件或目录）是否匹配
-              if (specsById.has(id) || hasSpec(s => s.module === modulePath || s.module === dirPath)) {
-                logger.debug({ id }, 'Plugin already configured via config file, skipping auto-discovery')
+              if (specsById.has(id) || hasSpec(s => s.module === modulePath || s.module === dirPath))
                 continue
-              }
-
-              logger.debug({ id, modulePath, pkgName }, 'Found local directory plugin')
               addSpec({
                 id,
                 module: modulePath,
@@ -360,23 +337,19 @@ export async function loadPluginSpecs(): Promise<PluginSpec[]> {
                 load: () => loadModule(modulePath),
               }, 'local')
             }
-            else {
-              logger.debug({ dirname, modulePath }, 'Skip directory plugin: Entry file does not exist')
-            }
           }
           catch (err: any) {
             logger.warn({ dir: dirname, error: err.message }, 'Failed to load directory plugin')
           }
         }
-        else {
-          logger.debug({ dirname }, 'Skip directory: No package.json found')
-        }
       }
     }
     catch (error: any) {
-      logger.error({ pluginsDir, dataDir, error: error.message }, 'Failed to scan PLUGINS_DIR')
+      logger.error({ pluginsDir, error: error.message }, 'Failed to scan pluginsDir')
     }
   }
+
+  await loadLocalPluginSpecs()
 
   // 加载内置插件（低优先级：仅当外部未提供同名 id）
   try {

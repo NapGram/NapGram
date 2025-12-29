@@ -226,4 +226,92 @@ describe('logger', () => {
     // Should default to 'info' and work
     expect(mockStdoutWrite).toHaveBeenCalled()
   })
+
+  it('should handle file logging initialization errors (lines 63, 78-79)', async () => {
+    vi.resetModules()
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'info',
+        LOG_FILE_LEVEL: 'debug',
+        LOG_FILE: '/readonly/path/app.log',
+      },
+    }))
+
+    // Mock mkdirSync to throw error
+    vi.spyOn(fs, 'existsSync').mockReturnValue(false)
+    vi.spyOn(fs, 'mkdirSync').mockImplementation(() => {
+      throw new Error('Permission denied')
+    })
+
+    // This should trigger line 63: fileLoggingEnabled = false
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('ErrorTest')
+    logger.info('test')
+
+    // Should still log to console despite file logging failure
+    expect(mockStdoutWrite).toHaveBeenCalled()
+  })
+
+  it('should handle file stream creation errors (lines 78-79)', async () => {
+    vi.resetModules()
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'info',
+        LOG_FILE_LEVEL: 'debug',
+        LOG_FILE: '/readonly/test.log',
+      },
+    }))
+
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true)
+    vi.spyOn(fs, 'createWriteStream').mockImplementation(() => {
+      throw new Error('Cannot create stream')
+    })
+
+    // This should trigger lines 78-79: catch block setting fileLoggingEnabled = false
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('StreamErrorTest')
+    logger.info('test')
+
+    expect(mockStdoutWrite).toHaveBeenCalled()
+  })
+
+  it('should handle rotation failure gracefully (lines 85, 95-96, 265)', async () => {
+    vi.useFakeTimers()
+
+    // Mock a successful initial stream
+    const mockStream1 = { write: vi.fn(), end: vi.fn() }
+    let createCallCount = 0
+
+    vi.spyOn(fs, 'createWriteStream').mockImplementation((_path) => {
+      createCallCount++
+      if (createCallCount === 1) {
+        return mockStream1 as any
+      }
+      throw new Error('Disk full')
+    })
+
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true)
+
+    const day1 = new Date('2023-01-01T10:00:00Z')
+    vi.setSystemTime(day1)
+
+    const { getLogger } = await import('../logger')
+    const logger = getLogger('RotationTest')
+    logger.info('message on day 1')
+    expect(mockStream1.write).toHaveBeenCalled()
+
+    mockStream1.write.mockClear()
+    mockStdoutWrite.mockClear()
+
+    const day2 = new Date('2023-01-02T10:00:00Z')
+    vi.setSystemTime(day2)
+
+    logger.info('message on day 2')
+
+    expect(mockStream1.end).toHaveBeenCalled()
+    expect(mockStdoutWrite).toHaveBeenCalled()
+    expect(mockStream1.write).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
+  })
 })

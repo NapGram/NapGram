@@ -97,7 +97,7 @@ vi.mock('../ForwardMap', () => ({
 }))
 
 vi.mock('../../../features/FeatureManager', () => ({
-  FeatureManager: vi.fn(function FeatureManagerMock() {
+  FeatureManager: vi.fn(() => {
     return {
       initialize: featureManagerMocks.initialize,
     }
@@ -363,9 +363,9 @@ describe('instance', () => {
     const originalFriend = qqMocks.client.handleFriendRequest
     const originalGroup = qqMocks.client.handleGroupRequest
 
-    // Set to undefined
-    ;(qqMocks.client as any).handleFriendRequest = undefined
-    ;(qqMocks.client as any).handleGroupRequest = undefined
+      // Set to undefined
+      ; (qqMocks.client as any).handleFriendRequest = undefined
+    ; (qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')
@@ -426,5 +426,50 @@ describe('instance', () => {
     await expect((instance as any).init('token')).rejects.toThrow('NapCat WebSocket 地址未配置')
     // Reset env
     envMock.NAPCAT_WS_URL = 'ws://napcat'
+  })
+  it('handles instance status publish failure', async () => {
+    // Mock publishInstanceStatus to throw ONCE (for the 'running' status)
+    const error = new Error('Status Pub Failed')
+    eventPublisherMocks.publishInstanceStatus
+      .mockReturnValueOnce(Promise.resolve()) // starting
+      .mockImplementationOnce(() => { throw error }) // running
+
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    await Instance.start(13, 'token')
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish instance running status:', error)
+  })
+
+  it('handles connection lost/restored events and errors', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    const instance = await Instance.start(14, 'token')
+
+    // Reset mocks to track specific calls
+    loggerMocks.warn.mockClear()
+
+    const lostHandler = qqMocks.handlers.get('connection:lost')
+    const restoreHandler = qqMocks.handlers.get('connection:restored')
+
+    // Test connection lost success
+    await lostHandler({})
+    expect(instance.isSetup).toBe(false)
+
+    // Test connection lost failure
+    eventPublisherMocks.publishNotice.mockImplementationOnce(() => {
+      throw new Error('Notice Failed')
+    })
+    await lostHandler({})
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-lost notice:', expect.any(Error))
+
+    // Test connection restored success
+    await restoreHandler({})
+    expect(instance.isSetup).toBe(true)
+
+    // Test connection restored failure
+    eventPublisherMocks.publishNotice.mockImplementationOnce(() => {
+      throw new Error('Notice Failed 2')
+    })
+    await restoreHandler({})
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-restored notice:', expect.any(Error))
   })
 })

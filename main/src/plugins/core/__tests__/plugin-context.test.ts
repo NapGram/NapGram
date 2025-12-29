@@ -55,6 +55,15 @@ describe('pluginContextImpl', () => {
     expect(commands.has('t')).toBe(true)
   })
 
+  it('command registration without aliases', () => {
+    context.command({
+      name: 'noalias',
+      handler: async () => { },
+    })
+    const commands = (context as any).getCommands()
+    expect(commands.has('noalias')).toBe(true)
+  })
+
   it('lifecycle hooks registration', () => {
     const onReload = vi.fn()
     const onUnload = vi.fn()
@@ -97,6 +106,41 @@ describe('pluginContextImpl', () => {
     expect(eventBus.removePluginSubscriptions).toHaveBeenCalledWith('test-plugin')
   })
 
+  it('should inject all provided APIs', () => {
+    const messageAPI = { send: vi.fn(), recall: vi.fn(), get: vi.fn() } as any
+    const instanceAPI = { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() } as any
+    const userAPI = { getInfo: vi.fn(), isFriend: vi.fn() } as any
+    const groupAPI = { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() } as any
+    const webAPI = { registerRoutes: vi.fn() } as any
+
+    const ctx = new PluginContextImpl('test-plugin-with-apis', {}, eventBus, {
+      message: messageAPI,
+      instance: instanceAPI,
+      user: userAPI,
+      group: groupAPI,
+      web: webAPI,
+    })
+
+    expect(ctx.message).toBeDefined()
+    expect(ctx.instance).toBeDefined()
+    expect(ctx.user).toBeDefined()
+    expect(ctx.group).toBeDefined()
+    expect(ctx.web).toBeDefined()
+  })
+
+  it('should wrap web API to auto-inject pluginId', () => {
+    const webAPI = { registerRoutes: vi.fn() } as any
+
+    const ctx = new PluginContextImpl('test-web-plugin', {}, eventBus, {
+      web: webAPI,
+    })
+
+    const mockRegister = vi.fn()
+    ctx.web.registerRoutes(mockRegister)
+
+    expect(webAPI.registerRoutes).toHaveBeenCalledWith(mockRegister, 'test-web-plugin')
+  })
+
   it('mock apis work when not provided', async () => {
     // MessageAPI
     expect(await context.message.send({})).toBeDefined()
@@ -118,5 +162,9 @@ describe('pluginContextImpl', () => {
     await context.group.setAdmin('', '', true)
     await context.group.muteUser('', '', 60)
     await context.group.kickUser('', '')
+
+    // WebAPI
+    context.web.registerRoutes(vi.fn())
+    expect(mockLogger.warn).toHaveBeenCalledWith('WebAPI not yet integrated (Phase 3)')
   })
 })

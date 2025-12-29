@@ -97,4 +97,69 @@ describe('telegramSession', () => {
     })
     expect(session.sessionString).toBe('session-value')
   })
+
+  it('uses default DC ID and server address when env vars are missing', async () => {
+    // Temporarily mock env values to undefined
+    const originalDcid = envMock.TG_INITIAL_DCID
+    const originalServer = envMock.TG_INITIAL_SERVER
+    // @ts-expect-error: mock env value
+    envMock.TG_INITIAL_DCID = undefined
+    // @ts-expect-error: mock env value
+    envMock.TG_INITIAL_SERVER = undefined
+
+    dbMocks.session.create.mockResolvedValue({ id: 50 })
+    const session = new TelegramSession()
+    await session.load()
+
+    expect(dbMocks.session.create).toHaveBeenCalledWith({
+      data: {
+        dcId: 2,
+        serverAddress: '149.154.167.50',
+      },
+    })
+
+    // Restore
+    envMock.TG_INITIAL_DCID = originalDcid
+    envMock.TG_INITIAL_SERVER = originalServer
+  })
+
+  it('does not save session if dbId is missing', async () => {
+    const session = new TelegramSession()
+    // dbId is undefined since we didn't call load()
+    await session.save('s')
+    expect(dbMocks.session.upsert).not.toHaveBeenCalled()
+  })
+
+  it('handles existing dbEntry but missing/null authKey', async () => {
+    dbMocks.session.findFirst.mockResolvedValue({
+      id: 10,
+      authKey: null, // null authKey
+    })
+    const session = new TelegramSession(10)
+    await session.load()
+    expect(session.sessionString).toBeUndefined()
+  })
+
+  it('uses default values in save upsert when env vars are missing', async () => {
+    const originalDcid = envMock.TG_INITIAL_DCID
+    const originalServer = envMock.TG_INITIAL_SERVER
+    // @ts-expect-error: mock env value
+    envMock.TG_INITIAL_DCID = undefined
+    // @ts-expect-error: mock env value
+    envMock.TG_INITIAL_SERVER = undefined
+
+    const session = new TelegramSession(11)
+    await session.save('s')
+
+    expect(dbMocks.session.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      create: expect.objectContaining({
+        dcId: 2,
+        serverAddress: '149.154.167.50',
+      }),
+    }))
+
+    // Restore
+    envMock.TG_INITIAL_DCID = originalDcid
+    envMock.TG_INITIAL_SERVER = originalServer
+  })
 })

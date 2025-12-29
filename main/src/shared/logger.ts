@@ -259,6 +259,11 @@ function logToFile(logger: string, level: LogLevel, args: unknown[]) {
   if (fileThreshold >= levelId.off || levelId[level] < fileThreshold)
     return
   rotateIfNeeded()
+
+  // Recheck after rotation - rotateIfNeeded() may have disabled file logging or nulled fileStream
+  if (!fileLoggingEnabled || !fileStream)
+    return
+
   const payload = {
     time: timeFormatter.format(new Date()).replace(' ', 'T'),
     level,

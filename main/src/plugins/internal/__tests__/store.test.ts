@@ -200,6 +200,28 @@ describe('store.ts', () => {
 
       expect(result.config.plugins[0].enabled).toBe(false)
     })
+
+    it('should handle legacy migration errors gracefully', async () => {
+      const legacyPath = path.join(mockPluginsDir, 'plugins.yml')
+
+      vi.mocked(fs.access).mockImplementation(async (p) => {
+        if (p === mockConfigPath)
+          throw new Error('File not found')
+        if (p === legacyPath)
+          return undefined
+        throw new Error('File not found')
+      })
+
+      // Make legacy file read fail
+      vi.mocked(fs.readFile).mockRejectedValue(new Error('Permission denied'))
+      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
+
+      const result = await store.readPluginsConfig()
+
+      // Should fall back to empty config
+      expect(result.exists).toBe(false)
+      expect(result.config.plugins).toEqual([])
+    })
   })
 
   describe('normalizeModuleSpecifierForPluginsConfig', () => {

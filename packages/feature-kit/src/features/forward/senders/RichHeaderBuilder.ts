@@ -16,7 +16,7 @@ export class RichHeaderBuilder {
     if (messageHeader) {
       url.searchParams.set('hash', md5Hex(messageHeader).substring(0, 10))
     }
-    url.searchParams.set('v', '2')
+    url.searchParams.set('v', env.RICH_HEADER_VERSION || '2')
     return url.toString()
   }
 

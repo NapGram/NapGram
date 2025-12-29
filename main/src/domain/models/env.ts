@@ -60,6 +60,7 @@ const configParsed = z.object({
   UI_PATH: z.preprocess(emptyStringToUndefined, z.string().optional()),
   UI_PROXY: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
   WEB_ENDPOINT: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
+  RICH_HEADER_VERSION: z.preprocess(emptyStringToUndefined, z.string().optional()),
   INTERNAL_WEB_ENDPOINT: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
 
   ERROR_REPORTING: z.string().default('1').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
