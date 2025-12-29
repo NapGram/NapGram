@@ -314,4 +314,22 @@ describe('logger', () => {
 
     vi.useRealTimers()
   })
+  it('should return early in rotateIfNeeded when logging disabled (line 85)', async () => {
+    vi.resetModules()
+    vi.doMock('../../domain/models/env', () => ({
+      default: {
+        LOG_LEVEL: 'info',
+        LOG_FILE_LEVEL: 'off', // Disabled
+        LOG_FILE: '/tmp/test.log',
+      },
+    }))
+
+    const { rotateIfNeeded } = await import('../logger')
+    // Reset any mocks to ensure we catch if it tries to do anything
+    const createStreamSpy = vi.spyOn(fs, 'createWriteStream')
+
+    rotateIfNeeded()
+
+    expect(createStreamSpy).not.toHaveBeenCalled()
+  })
 })

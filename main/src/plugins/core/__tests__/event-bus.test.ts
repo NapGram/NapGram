@@ -173,6 +173,28 @@ describe('eventBus', () => {
     expect(eventBus.getEventTypes()).not.toContain('message')
   })
 
+  it('should unsubscribe specific subscription when multiple exist', () => {
+    // Test coverage for line 161 (loop iteration finding specific ID)
+    const handler = vi.fn()
+    const sub1 = eventBus.subscribe('message', handler)
+    const sub2 = eventBus.subscribe('message', handler)
+    const sub3 = eventBus.subscribe('message', handler)
+
+    expect(eventBus.getSubscriptionCount('message')).toBe(3)
+
+    // Unsubscribe middle one - ensures loop visits sub1 (no match) then sub2 (match)
+    sub2.unsubscribe()
+    expect(eventBus.getSubscriptionCount('message')).toBe(2)
+
+    // Unsubscribe last one
+    sub3.unsubscribe()
+    expect(eventBus.getSubscriptionCount('message')).toBe(1)
+
+    // Unsubscribe first one
+    sub1.unsubscribe()
+    expect(eventBus.getSubscriptionCount('message')).toBe(0)
+  })
+
   it('should handle error without pluginId context', async () => {
     // Test coverage for line 254 (context without pluginId)
     const handler = vi.fn(() => {

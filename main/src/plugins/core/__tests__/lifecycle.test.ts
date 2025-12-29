@@ -458,4 +458,50 @@ describe('pluginLifecycleManager', () => {
     expect(uninstallResult.succeeded).toHaveLength(0)
     expect(uninstallResult.failed).toHaveLength(0)
   })
+
+  it('should reload plugin via uninstall/install without new config (line 190)', async () => {
+    const pluginContext = createMockPluginContext()
+    const pluginInstance: PluginInstance = {
+      id: 'test-plugin-no-config-reload',
+      plugin: { ...mockPlugin, reload: undefined },
+      context: pluginContext,
+      config: { existing: true },
+      state: PluginState.Installed,
+    }
+
+    vi.spyOn(lifecycleManager, 'uninstall').mockResolvedValue({ success: true, duration: 1 })
+    vi.spyOn(lifecycleManager, 'install').mockResolvedValue({ success: true, duration: 1 })
+
+    // Call reload without newConfig
+    await lifecycleManager.reload(pluginInstance)
+
+    // Config should remain unchanged
+    expect(pluginInstance.config).toEqual({ existing: true })
+    // Verify uninstall/install cycle happen
+    expect(lifecycleManager.uninstall).toHaveBeenCalled()
+    expect(lifecycleManager.install).toHaveBeenCalled()
+  })
+
+  it('should handle installAll/uninstallAll with malformed results (lines 241, 276)', async () => {
+    const pluginContext = createMockPluginContext()
+    const pluginInstance = {
+      id: 'p1',
+      plugin: mockPlugin,
+      context: pluginContext,
+      config: {},
+      state: PluginState.Uninitialized
+    } as PluginInstance
+
+    // Mock install to return success: false but no error (should trigger implicit else)
+    vi.spyOn(lifecycleManager, 'install').mockResolvedValue({ success: false, duration: 0 } as any)
+    const installRes = await lifecycleManager.installAll([pluginInstance])
+    expect(installRes.succeeded).toHaveLength(0)
+    expect(installRes.failed).toHaveLength(0)
+
+    // Mock uninstall to return success: false but no error
+    vi.spyOn(lifecycleManager, 'uninstall').mockResolvedValue({ success: false, duration: 0 } as any)
+    const uninstallRes = await lifecycleManager.uninstallAll([pluginInstance])
+    expect(uninstallRes.succeeded).toHaveLength(0)
+    expect(uninstallRes.failed).toHaveLength(0)
+  })
 })

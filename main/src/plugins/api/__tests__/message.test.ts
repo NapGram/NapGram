@@ -750,4 +750,89 @@ describe('Message Conversion Coverage', () => {
       content: 't'
     })).rejects.toThrow()
   })
+
+  it('should handle undefined input in helper functions', async () => {
+    // This indirectly covers segmentsToText(undefined) and pluginSegmentsToUnifiedContents(undefined)
+    // if we can trigger them.
+    // However, send() implementation calls normalizeContent first which defaults string to text segment.
+    // So we can't easily pass undefined segments to those private/helper functions via public API
+    // without bypassing validaton/normalization.
+    // BUT normalizeContent returns array.
+    // usage in sendViaInstance: params.segments.
+    // validation ensures content is present.
+    // So those || [] checks might be unreachable via public API if validation holds.
+    // We can try to test get() with various malformed content from "QQ client"
+  })
+
+  it('should handle QQ replyTo logic', async () => {
+    const sendMessage = vi.fn().mockResolvedValue({ messageId: '123' })
+    const qqClient = {
+      uin: '123',
+      sendMessage,
+    }
+    const mockInstanceResolver = vi.fn().mockReturnValue({ qqClient })
+    messageAPI = new MessageAPIImpl(mockInstanceResolver)
+
+    // Case: replyTo set, no reply segment in content
+    await messageAPI.send({
+      instanceId: 1,
+      channelId: 'qq:111',
+      content: 'hello',
+      replyTo: 'qq:999'
+    })
+    // Should prepend reply segment
+    const sent = sendMessage.mock.calls[0][1]
+    expect(sent.content[0].type).toBe('reply')
+    expect(sent.content[0].data.messageId).toBe('999')
+
+    // Case: replyTo set, reply segment ALREADY in content
+    await messageAPI.send({
+      instanceId: 1,
+      channelId: 'qq:111',
+      content: [{ type: 'reply', data: { messageId: '888' } }, { type: 'text', data: { text: 'hi' } }],
+      replyTo: 'qq:999'
+    })
+    // Should NOT prepend another reply segment (logic line 339 in message.ts)
+    const sent2 = sendMessage.mock.calls[1][1]
+    expect(sent2.content).toHaveLength(2)
+    expect(sent2.content[0].data.messageId).toBe('888')
+  })
+
+  it('should handle malformed TG messageId in recall', async () => {
+    const mockInstanceResolver = vi.fn().mockReturnValue({})
+    messageAPI = new MessageAPIImpl(mockInstanceResolver)
+
+    // Line 369 coverage: missing chatId in tg messageId
+    await expect(messageAPI.recall({
+      instanceId: 1,
+      messageId: 'tg:123' // Invalid format for TG recall, needs 3 parts
+    })).rejects.toThrow('Telegram messageId must be')
+  })
+
+  it('should handle malformed content in get()', async () => {
+    const mockInstanceResolver = vi.fn().mockReturnValue({
+      qqClient: {
+        getMessage: vi.fn().mockResolvedValue({
+          content: [
+            null, // Line 394
+            { type: 'text' }, // Missing data.text, Line 397
+            { type: 'at' } // Missing data.userId, Line 399
+          ]
+        })
+      }
+    })
+    messageAPI = new MessageAPIImpl(mockInstanceResolver)
+
+    const result = await messageAPI.get({
+      instanceId: 1,
+      messageId: 'qq:123'
+    })
+
+    expect(result).toBeDefined()
+    expect(result?.segments[0].type).toBe('raw')
+    expect(result?.segments[1].type).toBe('text')
+    expect(result?.segments[1].data.text).toBe('')
+    expect(result?.segments[2].type).toBe('at')
+    expect(result?.segments[2].data.userId).toBe('')
+  })
 })

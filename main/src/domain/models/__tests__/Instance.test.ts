@@ -470,4 +470,59 @@ describe('instance', () => {
     await restoreHandler({})
     expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-restored notice:', expect.any(Error))
   })
+
+  it('handles events with missing fields', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    await Instance.start(15, 'token')
+
+    const friendHandler = qqMocks.handlers.get('request.friend')
+    // Missing userId, should fallback to empty string and then Unknown for name
+    await friendHandler({ flag: 'f_empty' })
+    const friendCalls = eventPublisherMocks.publishFriendRequest.mock.calls
+    const lastFriendCall = friendCalls[friendCalls.length - 1][0]
+    expect(lastFriendCall.userId).toBe('')
+    expect(lastFriendCall.userName).toBe('')
+
+    const groupHandler = qqMocks.handlers.get('request.group')
+    // Missing groupId, should fallback
+    await groupHandler({ flag: 'g_empty', userId: 'u1' })
+    const groupCalls = eventPublisherMocks.publishGroupRequest.mock.calls
+    const lastGroupCall = groupCalls[groupCalls.length - 1][0]
+    expect(lastGroupCall.groupId).toBe('')
+    expect(lastGroupCall.userName).toBe('u1')
+
+    const groupIncrease = qqMocks.handlers.get('group.increase')
+    await groupIncrease(undefined, {}) // undefined group, empty member
+    const noticeCalls = eventPublisherMocks.publishNotice.mock.calls
+    const lastNotice = noticeCalls[noticeCalls.length - 1][0]
+    expect(lastNotice.groupId).toBe('undefined') // String(undefined) -> 'undefined'
+    expect(lastNotice.userId).toBe('')
+
+    const recallHandler = qqMocks.handlers.get('recall')
+    await recallHandler({}) // Missing chatId/operatorId
+    // noticeType logic: '' === '' is true -> 'friend-recall'
+    const recallCalls = eventPublisherMocks.publishNotice.mock.calls
+    const lastRecall = recallCalls[recallCalls.length - 1][0]
+    expect(lastRecall.noticeType).toBe('group-recall')
+  })
+
+  it('handles FeatureManager initialization failure', async () => {
+    const error = new Error('Feature Init Failed')
+    featureManagerMocks.initialize.mockRejectedValueOnce(error)
+
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    // Should pass but maybe log error? 
+    // In Instance.ts: await this.featureManager.initialize() is NOT wrapped in try/catch inside init()
+    // except the whole init IIFE... wait.
+    // The IIFE catches errors at the end.
+
+    // Instance.start calls init(), which returns initPromise.
+    // Init promise catch block logs '初始化失败'
+    // But initPromise itself rejects, so start() throws
+
+    await expect(Instance.start(16, 'token')).rejects.toThrow('Feature Init Failed')
+
+    // Check that the internal catch block also logged the error
+    expect(loggerMocks.error).toHaveBeenCalledWith('初始化失败', error)
+  })
 })
