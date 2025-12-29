@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
-describe('Domain Message Coverage', () => {
-    it('should be true', () => {
-        expect(true).toBe(true)
-    })
+describe('domain Message Coverage', () => {
+  it('should be true', () => {
+    expect(true).toBe(true)
+  })
 })

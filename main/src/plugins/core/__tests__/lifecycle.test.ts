@@ -489,7 +489,7 @@ describe('pluginLifecycleManager', () => {
       plugin: mockPlugin,
       context: pluginContext,
       config: {},
-      state: PluginState.Uninitialized
+      state: PluginState.Uninitialized,
     } as PluginInstance
 
     // Mock install to return success: false but no error (should trigger implicit else)

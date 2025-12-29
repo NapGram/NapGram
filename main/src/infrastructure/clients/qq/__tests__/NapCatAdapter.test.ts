@@ -1,4 +1,3 @@
-import { NapLink } from '@naplink/naplink'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NapCatAdapter } from '../NapCatAdapter'
 import { napCatForwardMultiple } from '../napcatConvert'
