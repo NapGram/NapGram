@@ -690,7 +690,7 @@ describe('createMessageAPI', () => {
   })
 })
 
-describe('Message Conversion Coverage', () => {
+describe('message Conversion Coverage', () => {
   let messageAPI: MessageAPIImpl
 
   it('should convert all segment types to unified content in QQ send', async () => {
@@ -715,7 +715,7 @@ describe('Message Conversion Coverage', () => {
         { type: 'audio', data: { url: 'u' } },
         { type: 'file', data: { url: 'u' } },
         { type: 'unknown', data: {} } as any, // Default case
-      ]
+      ],
     })
 
     const unified = sendMessage.mock.calls[0][1]
@@ -726,7 +726,7 @@ describe('Message Conversion Coverage', () => {
   it('should handle missing replyTo for platform check', async () => {
     // parseReplyToForPlatform early return
     const mockInstanceResolver = vi.fn().mockReturnValue({
-      tgBot: { getChat: vi.fn().mockReturnValue({ sendMessage: vi.fn().mockResolvedValue({}) }) }
+      tgBot: { getChat: vi.fn().mockReturnValue({ sendMessage: vi.fn().mockResolvedValue({}) }) },
     })
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
@@ -735,7 +735,7 @@ describe('Message Conversion Coverage', () => {
       instanceId: 1,
       channelId: 'tg:123',
       content: 'test',
-      replyTo: ''
+      replyTo: '',
     })
   })
 
@@ -747,7 +747,7 @@ describe('Message Conversion Coverage', () => {
     await expect(messageAPI.send({
       instanceId: 1,
       channelId: undefined as any,
-      content: 't'
+      content: 't',
     })).rejects.toThrow()
   })
 
@@ -758,7 +758,7 @@ describe('Message Conversion Coverage', () => {
       pluginSegmentsToUnifiedContents,
       parseReplyToForPlatform,
       parseChannelId,
-      parseMessageId
+      parseMessageId,
     } = await import('../message')
 
     // segmentsToText
@@ -813,7 +813,7 @@ describe('Message Conversion Coverage', () => {
       instanceId: 1,
       channelId: 'qq:111',
       content: 'hello',
-      replyTo: 'qq:999'
+      replyTo: 'qq:999',
     })
     // Should prepend reply segment
     const sent = sendMessage.mock.calls[0][1]
@@ -825,7 +825,7 @@ describe('Message Conversion Coverage', () => {
       instanceId: 1,
       channelId: 'qq:111',
       content: [{ type: 'reply', data: { messageId: '888' } }, { type: 'text', data: { text: 'hi' } }],
-      replyTo: 'qq:999'
+      replyTo: 'qq:999',
     })
     // Should NOT prepend another reply segment (logic line 339 in message.ts)
     const sent2 = sendMessage.mock.calls[1][1]
@@ -840,7 +840,7 @@ describe('Message Conversion Coverage', () => {
     // Line 369 coverage: missing chatId in tg messageId
     await expect(messageAPI.recall({
       instanceId: 1,
-      messageId: 'tg:123' // Invalid format for TG recall, needs 3 parts
+      messageId: 'tg:123', // Invalid format for TG recall, needs 3 parts
     })).rejects.toThrow('Telegram messageId must be')
   })
 
@@ -851,16 +851,16 @@ describe('Message Conversion Coverage', () => {
           content: [
             null, // Line 394
             { type: 'text' }, // Missing data.text, Line 397
-            { type: 'at' } // Missing data.userId, Line 399
-          ]
-        })
-      }
+            { type: 'at' }, // Missing data.userId, Line 399
+          ],
+        }),
+      },
     })
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 
     const result = await messageAPI.get({
       instanceId: 1,
-      messageId: 'qq:123'
+      messageId: 'qq:123',
     })
 
     expect(result).toBeDefined()
@@ -885,7 +885,7 @@ describe('Message Conversion Coverage', () => {
       instanceId: 1,
       channelId: 'qq:123',
       content: 'test',
-      replyTo: ' '
+      replyTo: ' ',
     }
     await messageAPI.send(params as any)
 
@@ -896,7 +896,7 @@ describe('Message Conversion Coverage', () => {
 
     expect(sendMessage).toHaveBeenCalledWith('123', expect.objectContaining({
       chat: { id: '123', type: 'group' }, // default used
-      content: expect.arrayContaining([expect.objectContaining({ type: 'text' })])
+      content: expect.arrayContaining([expect.objectContaining({ type: 'text' })]),
     }))
   })
 
@@ -907,9 +907,9 @@ describe('Message Conversion Coverage', () => {
           chat: { id: '123' },
           sender: { id: '456' },
           content: undefined, // trigger || []
-          timestamp: 123456
-        })
-      }
+          timestamp: 123456,
+        }),
+      },
     })
     messageAPI = new MessageAPIImpl(mockInstanceResolver)
 

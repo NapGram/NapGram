@@ -1126,8 +1126,8 @@ describe('additional edge cases and helper functions', () => {
     vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({
       plugins: [
         { id: 'dup', module: './p1.js' },
-        { id: 'dup', module: './p2.js' }
-      ]
+        { id: 'dup', module: './p2.js' },
+      ],
     }))
 
     const specs = await config.loadPluginSpecs()
@@ -1144,14 +1144,19 @@ describe('additional edge cases and helper functions', () => {
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
       const pathStr = String(p)
-      if (pathStr.includes('package.json')) return undefined
-      if (pathStr.includes('index.mjs')) throw new Error('no mjs')
-      if (pathStr.includes('index.js')) return undefined
-      if (pathStr.endsWith('plugins')) return undefined
+      if (pathStr.includes('package.json'))
+        return undefined
+      if (pathStr.includes('index.mjs'))
+        throw new Error('no mjs')
+      if (pathStr.includes('index.js'))
+        return undefined
+      if (pathStr.endsWith('plugins'))
+        return undefined
       throw new Error('not found')
     })
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (String(p).includes('package.json')) return JSON.stringify({})
+      if (String(p).includes('package.json'))
+        return JSON.stringify({})
       return ''
     })
 
@@ -1172,7 +1177,8 @@ describe('additional edge cases and helper functions', () => {
       throw new Error('not found')
     })
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (String(p).includes('package.json')) return JSON.stringify({ name: 'dir-plugin' })
+      if (String(p).includes('package.json'))
+        return JSON.stringify({ name: 'dir-plugin' })
       return ''
     })
 
@@ -1182,7 +1188,10 @@ describe('additional edge cases and helper functions', () => {
 
     // Hit line 337
     // Cover line 337
-    try { await spec?.load() } catch { }
+    try {
+      await spec?.load()
+    }
+    catch { }
   })
 
   it('should skip local plugin if already present in config', async () => {
@@ -1191,7 +1200,7 @@ describe('additional edge cases and helper functions', () => {
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
-          plugins: [{ id: 'my-plugin', module: '/app/data/my-plugin.js' }]
+          plugins: [{ id: 'my-plugin', module: '/app/data/my-plugin.js' }],
         })
       }
       return ''
@@ -1212,7 +1221,7 @@ describe('additional edge cases and helper functions', () => {
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
-          plugins: [{ id: 'ping-pong', module: './custom-ping.js' }]
+          plugins: [{ id: 'ping-pong', module: './custom-ping.js' }],
         })
       }
       return ''
@@ -1223,7 +1232,7 @@ describe('additional edge cases and helper functions', () => {
 
     // Hit line 213 (origin === 'builtin' check in addSpec)
     const call = loggerMock.info.mock.calls.find(c =>
-      c[1] === 'Builtin plugin skipped (overridden by user plugin)'
+      c[1] === 'Builtin plugin skipped (overridden by user plugin)',
     )
     expect(call).toBeDefined()
   })
@@ -1241,7 +1250,8 @@ describe('additional edge cases and helper functions', () => {
     ] as any)
     vi.mocked(fs.access).mockResolvedValue(undefined)
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (String(p).includes('package.json')) return 'invalid json'
+      if (String(p).includes('package.json'))
+        return 'invalid json'
       return ''
     })
     await config.loadPluginSpecs()
@@ -1264,7 +1274,8 @@ describe('additional edge cases and helper functions', () => {
 
     try {
       await config.loadPluginSpecs()
-    } finally {
+    }
+    finally {
       spy.mockRestore()
     }
 
@@ -1276,7 +1287,7 @@ describe('additional edge cases and helper functions', () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/evil.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
     vi.mocked(fs.readFile).mockResolvedValue(JSON.stringify({
-      plugins: [{ id: 'evil', module: '/etc/passwd' }]
+      plugins: [{ id: 'evil', module: '/etc/passwd' }],
     }))
 
     const specs = await config.loadPluginSpecs()
@@ -1289,10 +1300,11 @@ describe('additional edge cases and helper functions', () => {
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
-          plugins: [{ id: 'dir-plugin', module: '/app/data/plugins/dir-plugin/index.js' }]
+          plugins: [{ id: 'dir-plugin', module: '/app/data/plugins/dir-plugin/index.js' }],
         })
       }
-      if (String(p).includes('package.json')) return JSON.stringify({ name: 'dir-plugin' })
+      if (String(p).includes('package.json'))
+        return JSON.stringify({ name: 'dir-plugin' })
       return ''
     })
     vi.mocked(fs.readdir).mockResolvedValueOnce([
@@ -1312,7 +1324,7 @@ describe('additional edge cases and helper functions', () => {
     vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
-          plugins: [{ id: 'my-plugin', module: './config-mod.js' }]
+          plugins: [{ id: 'my-plugin', module: './config-mod.js' }],
         })
       }
       return ''
@@ -1322,7 +1334,7 @@ describe('additional edge cases and helper functions', () => {
     ] as any)
 
     await config.loadPluginSpecs()
-    // Local found it first? No, config is processed first in loadPluginSpecs. 
+    // Local found it first? No, config is processed first in loadPluginSpecs.
     // Wait, the order in loadPluginSpecs: 1. config, 2. local, 3. builtin.
     // So config is already there when local is found. Local has lower priority (2 < 3).
     // To hit "overridden by higher priority", we need to add a lower priority first and then a higher one?
@@ -1349,7 +1361,8 @@ describe('additional edge cases and helper functions', () => {
 
     try {
       await pluginSpec!.load()
-    } catch (e) {
+    }
+    catch {
       // Expected
     }
   })
@@ -1373,7 +1386,7 @@ describe('additional edge cases and helper functions', () => {
 
   it('should skip directory plugin with no main file', async () => {
     const entries = [
-      { name: 'no-main-plugin', isDirectory: () => true, isFile: () => false }
+      { name: 'no-main-plugin', isDirectory: () => true, isFile: () => false },
     ]
     vi.mocked(fs.readdir).mockResolvedValue(entries as any)
     vi.mocked(fs.access).mockResolvedValue(undefined) // pkg exists
@@ -1384,7 +1397,8 @@ describe('additional edge cases and helper functions', () => {
     // Mock index files not existing
     vi.mocked(fs.access)
       .mockImplementation(async (p) => {
-        if (String(p).endsWith('package.json')) return undefined
+        if (String(p).endsWith('package.json'))
+          return undefined
         throw new Error('No index')
       })
 
