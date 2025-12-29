@@ -752,16 +752,51 @@ describe('Message Conversion Coverage', () => {
   })
 
   it('should handle undefined input in helper functions', async () => {
-    // This indirectly covers segmentsToText(undefined) and pluginSegmentsToUnifiedContents(undefined)
-    // if we can trigger them.
-    // However, send() implementation calls normalizeContent first which defaults string to text segment.
-    // So we can't easily pass undefined segments to those private/helper functions via public API
-    // without bypassing validaton/normalization.
-    // BUT normalizeContent returns array.
-    // usage in sendViaInstance: params.segments.
-    // validation ensures content is present.
-    // So those || [] checks might be unreachable via public API if validation holds.
-    // We can try to test get() with various malformed content from "QQ client"
+    // Import exported helpers dynamically or use the ones available if we change import
+    const {
+      segmentsToText,
+      pluginSegmentsToUnifiedContents,
+      parseReplyToForPlatform,
+      parseChannelId,
+      parseMessageId
+    } = await import('../message')
+
+    // segmentsToText
+    expect(segmentsToText(undefined as any)).toBe('')
+    expect(segmentsToText([null as any])).toBe('')
+    expect(segmentsToText([{ type: 'text' } as any])).toBe('') // Missing data.text
+    expect(segmentsToText([{ type: 'at' } as any])).toBe('@') // Missing data.userName
+    expect(segmentsToText([{ type: 'image' } as any])).toBe('') // Unknown type for text conversion
+
+    // pluginSegmentsToUnifiedContents
+    expect(pluginSegmentsToUnifiedContents(undefined as any)).toEqual([])
+    expect(pluginSegmentsToUnifiedContents([null as any])).toEqual([])
+
+    const malformed = [
+      { type: 'text' }, // Missing data
+      { type: 'at' },
+      { type: 'reply' },
+    ] as any
+    const unified = pluginSegmentsToUnifiedContents(malformed)
+    expect(unified[0].data.text).toBe('')
+    expect(unified[1].data.userId).toBe('')
+    expect(unified[2].data.messageId).toBe('')
+
+    // Default case
+    expect(pluginSegmentsToUnifiedContents([{ type: 'unknown' } as any])[0].type).toBe('text')
+
+    // parseReplyToForPlatform
+    expect(parseReplyToForPlatform(undefined as any, 'qq')).toEqual({ messageId: '' })
+    expect(() => parseReplyToForPlatform('qq:123', 'tg')).toThrow('replyTo platform mismatch')
+
+    // parseChannelId
+    expect(() => parseChannelId('')).toThrow('channelId is required')
+    expect(() => parseChannelId('qq:group:')).toThrow('Invalid channelId') // Empty id part
+    expect(() => parseChannelId('tg:')).toThrow() // Empty parts
+
+    // parseMessageId
+    expect(() => parseMessageId('')).toThrow('messageId is required')
+    expect(() => parseMessageId('tg:123')).toThrow('must be "tg:<chatId>:<messageId>"')
   })
 
   it('should handle QQ replyTo logic', async () => {

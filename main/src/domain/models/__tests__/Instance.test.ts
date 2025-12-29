@@ -525,4 +525,130 @@ describe('instance', () => {
     // Check that the internal catch block also logged the error
     expect(loggerMocks.error).toHaveBeenCalledWith('初始化失败', error)
   })
+
+  it('handles connection listeners and feature manager correctly', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    const instance = await Instance.start(17, 'token')
+
+    // Verify FeatureManager init
+    expect(featureManagerMocks.initialize).toHaveBeenCalled()
+
+    // Test connection:lost
+    const lostHandler = qqMocks.handlers.get('connection:lost')
+    expect(lostHandler).toBeDefined()
+    await lostHandler({ timestamp: 123456 })
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith('NapCat connection lost:', expect.anything())
+    expect(instance.isSetup).toBe(false)
+    expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
+      noticeType: 'connection-lost',
+      timestamp: 123456
+    }))
+
+    // Test connection:restored
+    const restoreHandler = qqMocks.handlers.get('connection:restored')
+    expect(restoreHandler).toBeDefined()
+    await restoreHandler({ timestamp: 654321 })
+
+    expect(loggerMocks.info).toHaveBeenCalledWith('NapCat connection restored:', expect.anything())
+    expect(instance.isSetup).toBe(true)
+    expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
+      noticeType: 'connection-restored',
+      timestamp: 654321
+    }))
+  })
+
+  it('updates setters and logs trace (floating promises)', async () => {
+    // Mock qqBot structure to ensure _qq property is set during load()
+    dbMocks.instance.findFirst.mockResolvedValue({ qqBot: { id: 0 } })
+    const instance = await Instance.start(18, 'token')
+
+    // Helper to wait for floating promises
+    const flushPromises = () => new Promise(resolve => setImmediate(resolve))
+
+    // owner
+    instance.owner = 999
+    expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { owner: 999 },
+      where: { id: 18 }
+    }))
+    await flushPromises()
+    expect(loggerMocks.trace).toHaveBeenCalledWith(999)
+
+    // isSetup
+    loggerMocks.trace.mockClear()
+    instance.isSetup = false
+    expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { isSetup: false }
+    }))
+    await flushPromises()
+    expect(loggerMocks.trace).toHaveBeenCalledWith(false)
+
+    // workMode
+    loggerMocks.trace.mockClear()
+    instance.workMode = 'b' as any
+    expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { workMode: 'b' }
+    }))
+    await flushPromises()
+    expect(loggerMocks.trace).toHaveBeenCalledWith('b')
+
+    // botSessionId
+    loggerMocks.trace.mockClear()
+    instance.botSessionId = 555
+    expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { botSessionId: 555 }
+    }))
+    await flushPromises()
+    expect(loggerMocks.trace).toHaveBeenCalledWith(555)
+
+    // qqBotId
+    loggerMocks.trace.mockClear()
+    instance.qqBotId = 777
+    expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { qqBotId: 777 }
+    }))
+    await flushPromises()
+    expect(loggerMocks.trace).toHaveBeenCalledWith(777)
+    expect(instance.qqBotId).toBe(777)
+
+    // flags
+    loggerMocks.trace.mockClear()
+    instance.flags = 888
+    expect(dbMocks.instance.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { flags: 888 }
+    }))
+    await flushPromises()
+    expect(loggerMocks.trace).toHaveBeenCalledWith(888)
+    expect(instance.flags).toBe(888)
+  })
+
+  it('handles group request defaults', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    await Instance.start(19, 'token')
+    const groupHandler = qqMocks.handlers.get('request.group')
+
+    // Missing subType (should default to 'add') and comment (undefined)
+    await groupHandler({
+      flag: 'g_def',
+      groupId: 'g1',
+      userId: 'u1'
+      // subType missing, comment missing
+    })
+
+    const calls = eventPublisherMocks.publishGroupRequest.mock.calls
+    const lastCall = calls[calls.length - 1][0]
+    expect(lastCall.subType).toBe('add')
+    expect(lastCall.comment).toBeUndefined()
+  })
+
+  it('handles friend increase missing id', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    await Instance.start(20, 'token')
+    const handler = qqMocks.handlers.get('friend.increase')
+    await handler({}) // missing id
+    const calls = eventPublisherMocks.publishNotice.mock.calls
+    const last = calls[calls.length - 1][0]
+    expect(last.userId).toBe('')
+  })
 })
