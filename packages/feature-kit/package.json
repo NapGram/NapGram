@@ -3,12 +3,13 @@
     "version": "1.0.0",
     "description": "Feature wiring helpers for NapGram",
     "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
+    "types": "./src/index.ts",
     "type": "module",
     "exports": {
         ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
+            "types": "./src/index.ts",
+            "import": "./src/index.ts",
+            "default": "./dist/index.js"
         },
         "./package.json": "./package.json"
     },
@@ -22,6 +23,14 @@
     ],
     "author": "NapGram Team",
     "license": "MIT",
+    "dependencies": {
+        "@mtcute/core": "^0.27.4",
+        "@mtcute/markdown-parser": "^0.27.4",
+        "@mtcute/node": "^0.27.4",
+        "file-type": "^21.2.0",
+        "image-js": "^1.3.0",
+        "@napgram/message-kit": "workspace:*"
+    },
     "devDependencies": {
         "@types/node": "^25.0.3",
         "typescript": "^5.9.3"

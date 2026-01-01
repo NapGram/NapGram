@@ -69,9 +69,9 @@ describe('userAPI', () => {
 
     it('handles success log when userInfo found', async () => {
       const resolver = vi.fn().mockReturnValue({})
-      const api = new UserAPIImpl(resolver)
+      const api = new UserAPIImpl(resolver);
       // Mock internal getQQUserInfo
-      api.getQQUserInfo = vi.fn().mockResolvedValue({ id: '1', nickname: 'Test' })
+      (api as any).getQQUserInfo = vi.fn().mockResolvedValue({ id: '1', nickname: 'Test' })
       await api.getInfo({ instanceId: 1, userId: 'qq:u:1' })
       // Should log debug (lines 62-63)
     })

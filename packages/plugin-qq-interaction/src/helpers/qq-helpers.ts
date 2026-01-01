@@ -325,7 +325,7 @@ export async function getGroupHonor(
         const baseUrl = process.env.WEB_ENDPOINT || 'https://posts.link';
         // 调试 key
         if (!apiKey) {
-            event.logger.warn(`[Honor] No apiKey found for pair. Links will fallback to /richHeader/qq/...`);
+            event.logger?.warn(`[Honor] No apiKey found for pair. Links will fallback to /richHeader/qq/...`);
         }
 
         // 如果能获取到 apiKey，则使用主程序的 RichHeader 逻辑

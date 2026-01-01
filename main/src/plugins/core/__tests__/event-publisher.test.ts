@@ -75,7 +75,7 @@ describe('eventPublisher', () => {
       platform: 'qq',
       channelId: '88',
       channelType: 'group',
-      sender: { userId: '1', userName: 'User', role: 'member' },
+      sender: { userId: '1', userName: 'User', role: 'member' } as any,
       message: { id: 'm2', text: 'hi', segments: [], timestamp: 123 },
       raw: {},
       reply: vi.fn(),
