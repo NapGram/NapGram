@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import fsP from 'node:fs/promises'
 import path from 'node:path'
 import { fileTypeFromBuffer } from 'file-type'
-import { Image as ImageJS } from 'image-js'
+import { decode, write, Image as ImageJS } from 'image-js'
 import env from '../../domain/models/env'
 import { getLogger } from '../logger'
 import convertWithFfmpeg from './encoding/convertWithFfmpeg'
@@ -39,8 +39,8 @@ const convert = {
   png: (key: string, webpData: () => Promise<Buffer | Uint8Array | string>) =>
     cachedConvert(`${key}.png`, async (convertedPath) => {
       const buffer = Buffer.from(await webpData())
-      const image = await Image.load(buffer)
-      await image.save(convertedPath)
+      const image = decode(buffer)
+      await write(convertedPath, image)
     }),
   video2gif: (key: string, webmData: () => Promise<Buffer | Uint8Array | string>, webm = false) =>
     cachedConvert(`${key}.gif`, async (convertedPath) => {
@@ -118,8 +118,8 @@ const convert = {
   webp: (key: string, imageData: () => Promise<Buffer | Uint8Array | string>) =>
     cachedConvert(`${key}.png`, async (convertedPath) => {
       const buffer = Buffer.from(await imageData())
-      const image = await ImageJS.load(buffer)
-      await image.save(convertedPath)
+      const image = decode(buffer)
+      await write(convertedPath, image)
     }),
   webm: (key: string, filePath: string) =>
     cachedConvert(`${key}.webm`, async (convertedPath) => {
@@ -166,16 +166,20 @@ const convert = {
       return pathPngOrig || pathGifOrig
     if (pathPngOrig) {
       return await cachedConvert(`${key}@50.png`, async (convertedPath) => { // 缩小到50x50px
-        const image = await ImageJS.load(pathPngOrig)
-        await image.resize({ width: 50 }).save(convertedPath)
+        const buffer = await fsP.readFile(pathPngOrig)
+        const image = decode(buffer)
+        image.resize({ width: 50 })
+        await write(convertedPath, image)
       })
     }
     else {
       return await cachedConvert(`${key}@50.gif`, async (convertedPath) => { // 如果已经存在PNG版本，直接缩小PNG
-        const image = await ImageJS.load(pathGifOrig)
+        const buffer = await fsP.readFile(pathGifOrig)
+        const image = decode(buffer)
         // Image-JS handles frames if it's a GIF (limited support), but simple resize might just stick to first frame or fail.
         // Assuming single frame resize for standard emoji usage or accept limitation.
-        await image.resize({ width: 50 }).save(convertedPath)
+        image.resize({ width: 50 })
+        await write(convertedPath, image)
       })
     }
   },

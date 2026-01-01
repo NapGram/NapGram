@@ -6,7 +6,7 @@ import type Telegram from '../../../../main/src/infrastructure/clients/telegram/
 import { Buffer } from 'node:buffer'
 import fsP from 'node:fs/promises'
 import { fileTypeFromBuffer } from 'file-type'
-import { Image as ImageJS } from 'image-js'
+import { decode, encode, Image as ImageJS } from 'image-js'
 import { getLogger } from '../../../../main/src/shared/logger'
 import { file as createTempFile } from '../../../../main/src/shared/utils/temp'
 
@@ -307,7 +307,7 @@ export class MediaFeature {
       }
 
       // 使用 Image-JS 读取图片
-      const image = await ImageJS.load(buffer)
+      const image = decode(buffer)
 
       // 计算压缩目标
       let quality = 80
@@ -341,13 +341,26 @@ export class MediaFeature {
       // Logic above filters to jpeg/png/bmp/tiff.
 
       // 第一次尝试
-      compressedBuffer = Buffer.from(image.toBuffer({ format, quality }))
+      if (format === 'jpeg') {
+        compressedBuffer = Buffer.from(encode(image, { format: 'jpeg', encoderOptions: { quality } }))
+      }
+      else {
+        compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
+      }
 
       // 如果还是太大，继续降低质量 (Only effective for JPEG usually, PNG quality affects compression speed not much size lossy)
       while (compressedBuffer.length > maxSize && quality > 20) {
         quality -= 20
         logger.debug(`Image still too large (${compressedBuffer.length}), trying quality ${quality}`)
-        compressedBuffer = Buffer.from(image.toBuffer({ format, quality }))
+        if (format === 'jpeg') {
+          compressedBuffer = Buffer.from(encode(image, { format: 'jpeg', encoderOptions: { quality } }))
+        }
+        else {
+          // PNG compression loop is mostly futile for quality param, but structure kept.
+          compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
+          // Force break for PNG as reducing "quality" var doesn't help much if we don't change png params, and we want to avoid infinite loop if size doesn't ensure.
+          if (format === 'png') break
+        }
       }
 
       if (compressedBuffer.length > maxSize) {

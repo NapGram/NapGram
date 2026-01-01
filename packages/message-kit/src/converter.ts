@@ -6,7 +6,7 @@ import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileTypeFromBuffer } from 'file-type'
-import { Image as ImageJS } from 'image-js'
+import { decode, encode, Image as ImageJS } from 'image-js'
 import { getLogger } from '../../../main/src/shared/logger'
 import convert from '../../../main/src/shared/utils/convert'
 import env from '../../../main/src/domain/models/env'
@@ -364,8 +364,8 @@ export class MessageConverter {
                   }
                   else {
                     // 静态贴纸：转成 png，避免 WEBP 直接当 jpg 触发 QQ 富媒体失败
-                    const image = await ImageJS.load(file)
-                    targetBuffer = Buffer.from(image.toBuffer({ format: 'png' }))
+                    const image = decode(file)
+                    targetBuffer = Buffer.from(encode(image, { format: 'png' }))
                     targetExt = '.png'
                   }
                 }
