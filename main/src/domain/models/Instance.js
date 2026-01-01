@@ -1,0 +1,378 @@
+import { FeatureManager } from '../../features/FeatureManager';
+import { qqClientFactory } from '../../infrastructure/clients/qq';
+import { telegramClientFactory } from '../../infrastructure/clients/telegram';
+import { getEventPublisher } from '../../plugins/core/event-publisher';
+import { getLogger } from '../../shared/logger';
+import db from './db';
+import env from './env';
+import ForwardMap from './ForwardMap';
+import sentry from './sentry';
+export default class Instance {
+    id;
+    static instances = [];
+    _owner = 0;
+    _isSetup = false;
+    _workMode = '';
+    _botSessionId = 0;
+    _qq;
+    _flags;
+    log;
+    tgBot;
+    qqClient;
+    forwardPairs;
+    mediaFeature;
+    recallFeature;
+    commandsFeature;
+    forwardFeature;
+    featureManager;
+    isInit = false;
+    initPromise;
+    eventPublisher;
+    constructor(id) {
+        this.id = id;
+        this.log = getLogger(`Instance - ${this.id}`);
+    }
+    async load() {
+        const dbEntry = await db.instance.findFirst({
+            where: { id: this.id },
+            include: { qqBot: true },
+        });
+        if (!dbEntry) {
+            if (this.id === 0) {
+                // 创建零号实例
+                await db.instance.create({
+                    data: { id: 0 },
+                });
+                return;
+            }
+            else {
+                throw new Error('Instance not found');
+            }
+        }
+        this._owner = Number(dbEntry.owner);
+        this._qq = dbEntry.qqBot;
+        this._botSessionId = dbEntry.botSessionId;
+        this._isSetup = dbEntry.isSetup;
+        this._workMode = dbEntry.workMode;
+        this._flags = dbEntry.flags;
+    }
+    async init(botToken) {
+        if (this.initPromise)
+            return this.initPromise;
+        this.initPromise = (async () => {
+            this.log.debug('TG Bot 正在登录');
+            const token = botToken ?? env.TG_BOT_TOKEN;
+            if (this.botSessionId) {
+                this.tgBot = await telegramClientFactory.connect({
+                    type: 'mtcute',
+                    sessionId: this._botSessionId,
+                    botToken: token,
+                    appName: 'NapGram',
+                });
+            }
+            else {
+                if (!token) {
+                    throw new Error('botToken 未指定');
+                }
+                this.tgBot = await telegramClientFactory.create({
+                    type: 'mtcute',
+                    botToken: token,
+                    appName: 'NapGram',
+                });
+                this.botSessionId = this.tgBot.sessionId;
+            }
+            this.log.info('TG Bot ✓ 登录完成');
+            const wsUrl = this._qq?.wsUrl || env.NAPCAT_WS_URL;
+            if (!wsUrl) {
+                throw new Error('NapCat WebSocket 地址未配置 (qqBot.wsUrl 或 NAPCAT_WS_URL)');
+            }
+            this.log.debug('NapCat 客户端 正在初始化');
+            this.qqClient = await qqClientFactory.create({
+                type: 'napcat',
+                wsUrl,
+                reconnect: true,
+            });
+            await this.qqClient.login();
+            this.log.info('NapCat 客户端 ✓ 初始化完成');
+            // 插件系统：桥接 QQ 侧事件到插件 EventBus
+            try {
+                const eventPublisher = getEventPublisher();
+                eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' });
+                const instanceId = this.id;
+                const qqClient = this.qqClient;
+                qqClient.on('request.friend', async (e) => {
+                    const requestId = String(e?.flag ?? '');
+                    if (!requestId)
+                        return;
+                    const userId = String(e?.userId ?? '');
+                    const userName = String(e?.userName || userId || 'Unknown');
+                    eventPublisher.publishFriendRequest({
+                        instanceId,
+                        platform: 'qq',
+                        requestId,
+                        userId,
+                        userName,
+                        comment: typeof e?.comment === 'string' ? e.comment : undefined,
+                        timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
+                        approve: async () => {
+                            if (typeof qqClient.handleFriendRequest !== 'function') {
+                                throw new TypeError('QQ client does not support handleFriendRequest()');
+                            }
+                            await qqClient.handleFriendRequest(requestId, true);
+                        },
+                        reject: async (reason) => {
+                            if (typeof qqClient.handleFriendRequest !== 'function') {
+                                throw new TypeError('QQ client does not support handleFriendRequest()');
+                            }
+                            await qqClient.handleFriendRequest(requestId, false, reason);
+                        },
+                    });
+                });
+                qqClient.on('request.group', async (e) => {
+                    const requestId = String(e?.flag ?? '');
+                    if (!requestId)
+                        return;
+                    const groupId = String(e?.groupId ?? '');
+                    const userId = String(e?.userId ?? '');
+                    const userName = String(e?.userName || userId || 'Unknown');
+                    const subType = (e?.subType === 'invite' ? 'invite' : 'add');
+                    eventPublisher.publishGroupRequest({
+                        instanceId,
+                        platform: 'qq',
+                        requestId,
+                        groupId,
+                        userId,
+                        userName,
+                        comment: typeof e?.comment === 'string' ? e.comment : undefined,
+                        subType,
+                        timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
+                        approve: async () => {
+                            if (typeof qqClient.handleGroupRequest !== 'function') {
+                                throw new TypeError('QQ client does not support handleGroupRequest()');
+                            }
+                            await qqClient.handleGroupRequest(requestId, subType, true);
+                        },
+                        reject: async (reason) => {
+                            if (typeof qqClient.handleGroupRequest !== 'function') {
+                                throw new TypeError('QQ client does not support handleGroupRequest()');
+                            }
+                            await qqClient.handleGroupRequest(requestId, subType, false, reason);
+                        },
+                    });
+                });
+                qqClient.on('group.increase', (groupId, member) => {
+                    eventPublisher.publishNotice({
+                        instanceId,
+                        platform: 'qq',
+                        noticeType: 'group-member-increase',
+                        groupId: String(groupId),
+                        userId: String(member?.id ?? ''),
+                        timestamp: Date.now(),
+                        raw: { groupId, member },
+                    });
+                });
+                qqClient.on('group.decrease', (groupId, uin) => {
+                    eventPublisher.publishNotice({
+                        instanceId,
+                        platform: 'qq',
+                        noticeType: 'group-member-decrease',
+                        groupId: String(groupId),
+                        userId: String(uin),
+                        timestamp: Date.now(),
+                        raw: { groupId, uin },
+                    });
+                });
+                qqClient.on('friend.increase', (friend) => {
+                    eventPublisher.publishNotice({
+                        instanceId,
+                        platform: 'qq',
+                        noticeType: 'friend-add',
+                        userId: String(friend?.id ?? ''),
+                        timestamp: Date.now(),
+                        raw: friend,
+                    });
+                });
+                qqClient.on('recall', (evt) => {
+                    const chatId = String(evt?.chatId ?? '');
+                    const operatorId = String(evt?.operatorId ?? '');
+                    const noticeType = chatId && operatorId && chatId === operatorId ? 'friend-recall' : 'group-recall';
+                    eventPublisher.publishNotice({
+                        instanceId,
+                        platform: 'qq',
+                        noticeType,
+                        groupId: noticeType === 'group-recall' ? chatId : undefined,
+                        userId: noticeType === 'friend-recall' ? chatId : undefined,
+                        operatorId: operatorId || undefined,
+                        timestamp: typeof evt?.timestamp === 'number' ? evt.timestamp : Date.now(),
+                        raw: evt,
+                    });
+                });
+                qqClient.on('poke', (chatId, operatorId, targetId) => {
+                    eventPublisher.publishNotice({
+                        instanceId,
+                        platform: 'qq',
+                        noticeType: 'other',
+                        groupId: String(chatId),
+                        userId: String(targetId),
+                        operatorId: String(operatorId),
+                        timestamp: Date.now(),
+                        raw: { type: 'poke', chatId, operatorId, targetId },
+                    });
+                });
+            }
+            catch (error) {
+                this.log.warn('Plugin event bridge init failed:', error);
+            }
+            // 仅 NapCat 链路，使用轻量转发表
+            this.forwardPairs = await ForwardMap.load(this.id);
+            // 初始化新架构的功能管理器
+            // if (this.qqClient) { // Redundant check, login() succeeded above
+            this.log.debug('FeatureManager 正在初始化');
+            this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient);
+            await this.featureManager.initialize();
+            this.log.info('FeatureManager ✓ 初始化完成');
+            try {
+                getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' });
+            }
+            catch (error) {
+                this.log.warn('Failed to publish instance running status:', error);
+            }
+            // 监听掉线/恢复事件，交给插件侧处理通知
+            this.qqClient.on('connection:lost', async (event) => {
+                this.log.warn('NapCat connection lost:', event);
+                this.isSetup = false;
+                try {
+                    getEventPublisher().publishNotice({
+                        instanceId: this.id,
+                        platform: 'qq',
+                        noticeType: 'connection-lost',
+                        timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
+                        raw: event,
+                    });
+                }
+                catch (error) {
+                    this.log.warn('Failed to publish connection-lost notice:', error);
+                }
+            });
+            this.qqClient.on('connection:restored', async (event) => {
+                this.log.info('NapCat connection restored:', event);
+                this.isSetup = true;
+                try {
+                    getEventPublisher().publishNotice({
+                        instanceId: this.id,
+                        platform: 'qq',
+                        noticeType: 'connection-restored',
+                        timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
+                        raw: event,
+                    });
+                }
+                catch (error) {
+                    this.log.warn('Failed to publish connection-restored notice:', error);
+                }
+            });
+            // }
+            this.isSetup = true;
+            this.isInit = true;
+        })();
+        this.initPromise
+            .then(() => this.log.info('Instance ✓ 初始化完成'))
+            .catch((err) => {
+            this.log.error('初始化失败', err);
+            sentry.captureException(err, { stage: 'instance-init', instanceId: this.id });
+        });
+        return this.initPromise;
+    }
+    async login(botToken) {
+        await this.load();
+        await this.init(botToken);
+    }
+    static async start(instanceId, botToken) {
+        const instance = new this(instanceId);
+        Instance.instances.push(instance);
+        await instance.login(botToken);
+        return instance;
+    }
+    static async createNew(botToken) {
+        const dbEntry = await db.instance.create({ data: {} });
+        return await this.start(dbEntry.id, botToken);
+    }
+    get owner() {
+        return this._owner;
+    }
+    get qq() {
+        return this._qq;
+    }
+    get qqUin() {
+        return this.qqClient?.uin;
+    }
+    get isSetup() {
+        return this._isSetup;
+    }
+    get workMode() {
+        return this._workMode;
+    }
+    get botMe() {
+        return this.tgBot.me;
+    }
+    get ownerChat() {
+        return undefined;
+    }
+    get botSessionId() {
+        return this._botSessionId;
+    }
+    get flags() {
+        return this._flags;
+    }
+    set owner(owner) {
+        this._owner = owner;
+        db.instance.update({
+            data: { owner },
+            where: { id: this.id },
+        })
+            .then(() => this.log.trace(owner));
+    }
+    set isSetup(isSetup) {
+        this._isSetup = isSetup;
+        db.instance.update({
+            data: { isSetup },
+            where: { id: this.id },
+        })
+            .then(() => this.log.trace(isSetup));
+    }
+    set workMode(workMode) {
+        this._workMode = workMode;
+        db.instance.update({
+            data: { workMode },
+            where: { id: this.id },
+        })
+            .then(() => this.log.trace(workMode));
+    }
+    set botSessionId(sessionId) {
+        this._botSessionId = sessionId;
+        db.instance.update({
+            data: { botSessionId: sessionId },
+            where: { id: this.id },
+        })
+            .then(() => this.log.trace(sessionId));
+    }
+    set qqBotId(id) {
+        if (this._qq)
+            this._qq.id = id;
+        db.instance.update({
+            data: { qqBotId: id },
+            where: { id: this.id },
+        })
+            .then(() => this.log.trace(id));
+    }
+    get qqBotId() {
+        return this._qq?.id;
+    }
+    set flags(value) {
+        this._flags = value;
+        db.instance.update({
+            data: { flags: value },
+            where: { id: this.id },
+        })
+            .then(() => this.log.trace(value));
+    }
+}
