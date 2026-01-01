@@ -56,18 +56,18 @@ describe('pluginRuntime Core', () => {
     }]
 
     // Mock loader to return test plugin
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
     // Mock lifecycle manager
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'uninstallAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstallAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -91,12 +91,12 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    const loadSpy = vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    const loadSpy = vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -116,8 +116,8 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    const loadSpy = vi.spyOn(pluginRuntime.loader, 'load')
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    const loadSpy = vi.spyOn((pluginRuntime as any).loader, 'load')
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -135,8 +135,8 @@ describe('pluginRuntime Core', () => {
       config: {},
     }] as any
 
-    const loadSpy = vi.spyOn(pluginRuntime.loader, 'load')
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    const loadSpy = vi.spyOn((pluginRuntime as any).loader, 'load')
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -155,12 +155,12 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockRejectedValue(new Error('install failed'))
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockRejectedValue(new Error('install failed'))
 
     await expect(pluginRuntime.start(specs)).rejects.toThrow('install failed')
   })
@@ -182,10 +182,10 @@ describe('pluginRuntime Core', () => {
     ]
 
     // Mock loader to return one working and one failing plugin
-    const loadSpy = vi.spyOn(pluginRuntime.loader, 'load')
+    const loadSpy = vi.spyOn((pluginRuntime as any).loader, 'load')
     loadSpy.mockImplementation(async (spec: any) => {
       if (spec.id === 'working-plugin') {
-        return { plugin: mockPlugin, type: 'native' as const }
+        return { plugin: mockPlugin, type: 'native' as any }
       }
       else {
         throw new Error('Failed to load plugin')
@@ -193,7 +193,7 @@ describe('pluginRuntime Core', () => {
     })
 
     // Mock lifecycle manager
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -213,17 +213,17 @@ describe('pluginRuntime Core', () => {
     }]
 
     // Mock loader and lifecycle
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'uninstallAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstallAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -246,17 +246,17 @@ describe('pluginRuntime Core', () => {
     }]
 
     // Mock loader and lifecycle
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'reload').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'reload').mockResolvedValue({
       success: true,
     })
 
@@ -276,17 +276,17 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'reload').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'reload').mockResolvedValue({
       success: false,
       error: new Error('Reload failed'),
     })
@@ -305,17 +305,17 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'reload').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'reload').mockResolvedValue({
       success: false,
     })
 
@@ -343,12 +343,12 @@ describe('pluginRuntime Core', () => {
     }]
 
     // Mock loader and lifecycle
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -374,12 +374,12 @@ describe('pluginRuntime Core', () => {
     }]
 
     // Mock loader and lifecycle
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
       type: 'native' as const,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -407,7 +407,7 @@ describe('pluginRuntime Core', () => {
   })
 
   it('should warn when stopping a non-running runtime', async () => {
-    const uninstallSpy = vi.spyOn(pluginRuntime.lifecycleManager, 'uninstallAll')
+    const uninstallSpy = vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstallAll')
 
     await expect(pluginRuntime.stop()).resolves.toBeUndefined()
     expect(uninstallSpy).not.toHaveBeenCalled()
@@ -421,17 +421,17 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'uninstallAll').mockRejectedValue(new Error('stop failed'))
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstallAll').mockRejectedValue(new Error('stop failed'))
 
     await pluginRuntime.start(specs)
 
@@ -447,17 +447,17 @@ describe('pluginRuntime Core', () => {
     }]
 
     // Mock loader, lifecycle, and uninstall
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: mockPlugin,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'uninstall').mockResolvedValue(undefined)
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstall').mockResolvedValue(undefined)
 
     // Start runtime
     await pluginRuntime.start(specs)
@@ -483,12 +483,12 @@ describe('pluginRuntime Core', () => {
       config: {},
     }] as any
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: { name: 'NoIdPlugin' },
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -513,12 +513,12 @@ describe('pluginRuntime Core', () => {
       },
     ]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: { ...mockPlugin, id: 'dup-plugin' },
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({
       succeeded: [],
       failed: [],
     })
@@ -558,12 +558,12 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: { id: 'plugin-id', install: vi.fn() } as any,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
 
     await pluginRuntime.start(specs)
     const instance = pluginRuntime.getPlugin('spec-id')
@@ -578,8 +578,8 @@ describe('pluginRuntime Core', () => {
       config: {},
     }]
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockRejectedValue('string error')
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockRejectedValue('string error')
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
 
     const report = await pluginRuntime.start(specs)
     expect(report.failed[0].error).toBe('string error')
@@ -593,12 +593,12 @@ describe('pluginRuntime Core', () => {
       // config is missing
     }] as any
 
-    vi.spyOn(pluginRuntime.loader, 'load').mockResolvedValue({
+    vi.spyOn((pluginRuntime as any).loader, 'load').mockResolvedValue({
       plugin: { id: 'no-config-plugin', install: vi.fn() } as any,
-      type: 'native' as const,
+      type: 'native' as any,
     })
 
-    vi.spyOn(pluginRuntime.lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
+    vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
 
     await pluginRuntime.start(specs)
     const instance = pluginRuntime.getPlugin('no-config-plugin')

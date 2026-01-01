@@ -866,9 +866,9 @@ describe('message Conversion Coverage', () => {
     expect(result).toBeDefined()
     expect(result?.segments[0].type).toBe('raw')
     expect(result?.segments[1].type).toBe('text')
-    expect(result?.segments[1].data.text).toBe('')
+    expect((result?.segments[1].data as any).text).toBe('')
     expect(result?.segments[2].type).toBe('at')
-    expect(result?.segments[2].data.userId).toBe('')
+    expect((result?.segments[2].data as any).userId).toBe('')
   })
 
   it('covers sendViaInstance edge cases (replyTo empty, qqType default)', async () => {
