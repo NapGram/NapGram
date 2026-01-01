@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { UnifiedMessage } from '../converter'
 import { MessageConverter } from '../converter'
 
 const fsMocks = vi.hoisted(() => ({
@@ -25,8 +26,9 @@ const fileTypeMock = vi.hoisted(() => ({
   fileTypeFromBuffer: vi.fn(),
 }))
 
-const jimpMocks = vi.hoisted(() => ({
-  read: vi.fn(),
+const imageJsMocks = vi.hoisted(() => ({
+  decode: vi.fn(),
+  encode: vi.fn(),
 }))
 
 const convertMocks = vi.hoisted(() => ({
@@ -53,10 +55,9 @@ vi.mock('file-type', () => ({
   fileTypeFromBuffer: fileTypeMock.fileTypeFromBuffer,
 }))
 
-vi.mock('jimp', () => ({
-  Jimp: {
-    read: jimpMocks.read,
-  },
+vi.mock('image-js', () => ({
+  decode: imageJsMocks.decode,
+  encode: imageJsMocks.encode,
 }))
 
 vi.mock('../../../shared/logger', () => ({
@@ -78,16 +79,16 @@ describe('messageConverter', () => {
     fsMocks.existsSync.mockReturnValue(true)
   })
 
-  const buildTelegram = (overrides: Record<string, any> = {}) => ({
+  const buildTelegram = (overrides: Record<string, any> = {}): any => ({
     id: 1,
     text: '',
     sender: { id: 1, displayName: 'User' },
     chat: { id: 2, type: 'group', title: 'Group' },
-    date: new Date('2020-01-01T00:00:00Z'),
+    date: new Date('2020-01-01T00:00:00+00:00'),
     ...overrides,
   })
 
-  const buildUnified = (content: any[]) => ({
+  const buildUnified = (content: any[]): UnifiedMessage => ({
     id: '1',
     platform: 'telegram',
     sender: { id: '1', name: 'User' },
@@ -343,9 +344,9 @@ describe('messageConverter', () => {
     const converter = new MessageConverter()
     const pngBuffer = Buffer.from('png')
     fileTypeMock.fileTypeFromBuffer.mockResolvedValue({ ext: 'webp' })
-    jimpMocks.read.mockResolvedValue({
-      getBuffer: vi.fn().mockResolvedValue(pngBuffer),
-    })
+    const dummyImage = { width: 100 }
+    imageJsMocks.decode.mockReturnValue(dummyImage)
+    imageJsMocks.encode.mockReturnValue(new Uint8Array(pngBuffer)) // encode returns Uint8Array
     vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
     vi.spyOn(Math, 'random').mockReturnValue(0.123456)
 
@@ -439,9 +440,8 @@ describe('messageConverter', () => {
     const downloadMedia = vi.fn().mockResolvedValue(Buffer.from([0x11, 0x22]))
     converter.setInstance({ tgBot: { downloadMedia } } as any)
     fileTypeMock.fileTypeFromBuffer.mockResolvedValue({ ext: 'webp' })
-    jimpMocks.read.mockResolvedValue({
-      getBuffer: vi.fn().mockResolvedValue(Buffer.from('png')),
-    })
+    imageJsMocks.decode.mockReturnValue({})
+    imageJsMocks.encode.mockReturnValue(new Uint8Array(Buffer.from('png')))
 
     const result = await converter.toNapCat(buildUnified([
       {
@@ -586,7 +586,9 @@ describe('messageConverter', () => {
 
   it('falls back to text when sticker conversion fails', async () => {
     const converter = new MessageConverter()
-    jimpMocks.read.mockRejectedValue(new Error('bad'))
+    imageJsMocks.decode.mockImplementation(() => {
+      throw new Error('bad')
+    })
 
     const result = await converter.toNapCat(buildUnified([
       {

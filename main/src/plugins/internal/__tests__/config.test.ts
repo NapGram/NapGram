@@ -53,9 +53,9 @@ describe('config', () => {
 
     vi.mocked(fs.access).mockResolvedValue(undefined)
     vi.mocked(fs.realpath).mockImplementation(async (p: any) => {
-      if (p && p.includes && p.includes('hack'))
+      if (typeof p === 'string' && p.includes('hack'))
         return '/etc/passwd'
-      return p
+      return p as string
     })
   })
 
@@ -108,16 +108,16 @@ describe('config', () => {
     ] as any)
 
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (typeof p === 'string' && p.includes('package.json'))
         return undefined
-      if (p.includes('index.mjs'))
+      if (typeof p === 'string' && p.includes('index.mjs'))
         return undefined
       if (p === '/app/data/plugins/local' || p === '/app/data/plugins' || p === '/app/data')
         return undefined
       throw new Error(`no file: ${p}`)
     })
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (typeof p === 'string' && p.includes('package.json'))
         return JSON.stringify({ name: 'mjs-plugin' })
       return ''
     })
@@ -129,18 +129,18 @@ describe('config', () => {
       { isFile: () => false, isDirectory: () => true, name: 'js-plugin' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (typeof p === 'string' && p.includes('package.json'))
         return undefined
-      if (p.includes('index.mjs'))
+      if (typeof p === 'string' && p.includes('index.mjs'))
         throw new Error('no mjs')
-      if (p.includes('index.js'))
+      if (typeof p === 'string' && p.includes('index.js'))
         return undefined
       if (p === '/app/data/plugins/local' || p === '/app/data/plugins' || p === '/app/data')
         return undefined
       throw new Error(`no file: ${p}`)
     })
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (typeof p === 'string' && p.includes('package.json'))
         return JSON.stringify({ name: '@scope/js-plugin' })
       return ''
     })
@@ -149,8 +149,8 @@ describe('config', () => {
   })
 
   it('loadPluginSpecs priority and overrides', async () => {
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (typeof p === 'string' && p.includes('config.json')) {
         return JSON.stringify({
           plugins: [{ id: 'dup', module: '/app/data/config-dup.js' }],
         })
@@ -184,10 +184,10 @@ describe('config', () => {
     vi.mocked(fs.readdir).mockRejectedValue(new Error('readdir failed'))
     await config.loadPluginSpecs()
 
-    vi.mocked(fs.realpath).mockImplementation(async (p) => {
-      if (p.includes('evil'))
+    vi.mocked(fs.realpath).mockImplementation(async (p: any) => {
+      if (typeof p === 'string' && p.includes('evil'))
         return '/etc/passwd'
-      return p
+      return p as string
     })
     process.env.PLUGINS_CONFIG_PATH = '/app/data/evil.json'
     await config.loadPluginSpecs()
@@ -196,7 +196,7 @@ describe('config', () => {
       { isFile: () => true, isDirectory: () => false, name: 'fail.js' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('fail.js'))
+      if (typeof p === 'string' && p.includes('fail.js'))
         throw new Error('access fail')
       return undefined
     })
@@ -207,8 +207,8 @@ describe('config', () => {
     vi.mocked(fs.readdir).mockResolvedValueOnce([
       { isFile: () => false, isDirectory: () => true, name: 'bad-pkg' },
     ] as any)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (typeof p === 'string' && p.includes('package.json'))
         return 'invalid json'
       return ''
     })
@@ -221,7 +221,7 @@ describe('config', () => {
       { isFile: () => false, isDirectory: () => true, name: 'no-entry-dir' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (typeof p === 'string' && p.includes('package.json'))
         return undefined
       throw new Error('no entry')
     })
@@ -233,9 +233,9 @@ describe('config', () => {
       { isFile: () => false, isDirectory: () => true, name: 'missing-entry-dir' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (typeof p === 'string' && p.includes('package.json'))
         return undefined
-      if (p.includes('main.js'))
+      if (typeof p === 'string' && p.includes('main.js'))
         throw new Error('not found')
       return undefined
     })
@@ -247,7 +247,7 @@ describe('config', () => {
       { isFile: () => false, isDirectory: () => true, name: 'no-pkg-dir' },
     ] as any)
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (typeof p === 'string' && p.includes('package.json'))
         throw new Error('no pkg')
       return undefined
     })
@@ -277,7 +277,7 @@ describe('config', () => {
     const tsSpec = specs.find(s => s.id === 'test')
 
     if (tsSpec) {
-      await expect(tsSpec.load()).rejects.toThrow('Refusing to load TypeScript plugin')
+      await expect(tsSpec.load?.()).rejects.toThrow('Refusing to load TypeScript plugin')
     }
   })
 
@@ -289,11 +289,11 @@ describe('config', () => {
     // The current mock says realpath(p) => p.
     // If we want to test the check `if (!real.startsWith(dataReal + path.sep))`, we need to mock realpath to return something outside.
 
-    vi.mocked(fs.realpath).mockImplementation(async (p) => {
+    vi.mocked(fs.realpath).mockImplementation(async (p: any) => {
       console.log('realpath called with:', p)
-      if (p.includes('hack'))
+      if (typeof p === 'string' && p.includes('hack'))
         return '/etc/passwd'
-      return p
+      return p as string
     })
 
     // resolvePathUnderDataDir is not exported. It is used by resolvePluginsInstances? No.
@@ -321,8 +321,8 @@ describe('config', () => {
   it('loadPluginSpecs should handle YAML config file', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.yaml'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.yaml')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.yaml')) {
         return `
 plugins:
   - id: yaml-plugin
@@ -342,8 +342,8 @@ plugins:
   it('loadPluginSpecs should handle .yml extension', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.yml'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.yml')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.yml')) {
         return 'plugins:\n  - id: yml-plugin\n    module: ./test.js'
       }
       return ''
@@ -361,17 +361,17 @@ plugins:
     ] as any)
 
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (((p as any).includes)('package.json'))
         return undefined
-      if (p.includes('index.mjs'))
+      if (((p as any).includes)('index.mjs'))
         throw new Error('no')
-      if (p.includes('index.js'))
+      if (((p as any).includes)('index.js'))
         throw new Error('no')
       return undefined
     })
 
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('package.json'))
         return JSON.stringify({ name: 'cjs-plugin', main: 'index.cjs' })
       return ''
     })
@@ -387,15 +387,15 @@ plugins:
     ] as any)
 
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (((p as any).includes)('package.json'))
         return undefined
-      if (p.includes('index.js'))
+      if (((p as any).includes)('index.js'))
         return undefined
       return undefined
     })
 
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('package.json'))
         return JSON.stringify({ name: '@scope/scoped-plugin' })
       return ''
     })
@@ -509,8 +509,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should override builtin plugin with config plugin (higher priority)', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'ping-pong',
@@ -548,8 +548,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should handle plugin with invalid id in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'invalid@#$%^&*()plugin!!!',
@@ -577,7 +577,7 @@ describe('loadPluginSpecs priority and override logic', () => {
     ] as any)
 
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (((p as any).includes)('package.json'))
         throw new Error('no package.json')
       return undefined
     })
@@ -595,15 +595,15 @@ describe('loadPluginSpecs priority and override logic', () => {
     ] as any)
 
     vi.mocked(fs.access).mockImplementation(async (p) => {
-      if (p.includes('package.json'))
+      if (((p as any).includes)('package.json'))
         return undefined
-      if (p.includes('index.'))
+      if (((p as any).includes)('index.'))
         throw new Error('no index file')
       throw new Error('not found')
     })
 
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('package.json'))
         return JSON.stringify({ name: 'no-entry-plugin' })
       return ''
     })
@@ -646,8 +646,8 @@ describe('loadPluginSpecs priority and override logic', () => {
     ] as any)
 
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('package.json'))
         return '{invalid json'
       return ''
     })
@@ -661,8 +661,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should skip plugin with empty module in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'empty-module',
@@ -684,8 +684,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should handle file:// prefixed module in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'file-url-plugin',
@@ -708,8 +708,8 @@ describe('loadPluginSpecs priority and override logic', () => {
     process.env.PLUGINS_ALLOW_TS = 'false'
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'ts-plugin',
@@ -731,8 +731,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should handle disabled plugin in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'disabled-plugin',
@@ -755,8 +755,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should infer ID from path when ID not provided in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             module: './my-awesome-plugin.js',
@@ -777,8 +777,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should handle config with plugin config and source fields', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'configured-plugin',
@@ -815,8 +815,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should skip plugin already in config when found in local dir', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'duplicate',
@@ -852,7 +852,7 @@ describe('loadPluginSpecs priority and override logic', () => {
       throw new Error('not found')
     })
 
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('package.json'))
         return JSON.stringify({ name: 'custom-main', main: 'custom.js' })
       return ''
@@ -868,8 +868,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should handle absolute path module in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'abs-path',
@@ -889,8 +889,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should handle plugin with very long sanitized ID', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'a'.repeat(100),
@@ -923,7 +923,7 @@ describe('loadPluginSpecs priority and override logic', () => {
       throw new Error('not found')
     })
 
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('package.json'))
         return JSON.stringify({})
       return ''
@@ -952,7 +952,7 @@ describe('loadPluginSpecs priority and override logic', () => {
       throw new Error('not found')
     })
 
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('package.json'))
         return JSON.stringify({ name: 'broken-pkg', main: 'main.js' })
       return ''
@@ -972,8 +972,8 @@ describe('loadPluginSpecs priority and override logic', () => {
         return undefined
       return undefined // or throw if you want to be strict
     })
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'configured-by-path',
@@ -997,8 +997,8 @@ describe('loadPluginSpecs priority and override logic', () => {
   it('should log plugin override info', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'commands',
@@ -1044,7 +1044,7 @@ describe('additional edge cases and helper functions', () => {
     expect(builtins.length).toBeGreaterThan(5)
 
     for (const spec of builtins) {
-      const result = await spec.load()
+      const result = await spec.load?.()
       expect(result).toBeDefined()
     }
   })
@@ -1052,8 +1052,8 @@ describe('additional edge cases and helper functions', () => {
   it('should handle file:// URLs in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (p.includes('config.json')) {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (((p as any).includes)('config.json')) {
         return JSON.stringify({
           plugins: [{
             id: 'file-url',
@@ -1095,8 +1095,8 @@ describe('additional edge cases and helper functions', () => {
         return undefined
       throw new Error('not found')
     })
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
-      if (typeof p === 'string' && p.includes('package.json'))
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      if (typeof p === 'string' && ((p as any).includes)('package.json'))
         return JSON.stringify({ name: 'mjs-plugin' })
       return ''
     })
@@ -1154,7 +1154,7 @@ describe('additional edge cases and helper functions', () => {
         return undefined
       throw new Error('not found')
     })
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('package.json'))
         return JSON.stringify({})
       return ''
@@ -1176,7 +1176,7 @@ describe('additional edge cases and helper functions', () => {
         return undefined
       throw new Error('not found')
     })
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('package.json'))
         return JSON.stringify({ name: 'dir-plugin' })
       return ''
@@ -1189,7 +1189,7 @@ describe('additional edge cases and helper functions', () => {
     // Hit line 337
     // Cover line 337
     try {
-      await spec?.load()
+      await spec?.load?.()
     }
     catch { }
   })
@@ -1197,7 +1197,7 @@ describe('additional edge cases and helper functions', () => {
   it('should skip local plugin if already present in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
           plugins: [{ id: 'my-plugin', module: '/app/data/my-plugin.js' }],
@@ -1218,7 +1218,7 @@ describe('additional edge cases and helper functions', () => {
   it('should log info when builtin plugin is overridden', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
           plugins: [{ id: 'ping-pong', module: './custom-ping.js' }],
@@ -1249,7 +1249,7 @@ describe('additional edge cases and helper functions', () => {
       { isFile: () => false, isDirectory: () => true, name: 'bad-pkg' },
     ] as any)
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('package.json'))
         return 'invalid json'
       return ''
@@ -1297,7 +1297,7 @@ describe('additional edge cases and helper functions', () => {
   it('should skip local directory plugin if already present in config', async () => {
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
           plugins: [{ id: 'dir-plugin', module: '/app/data/plugins/dir-plugin/index.js' }],
@@ -1321,7 +1321,7 @@ describe('additional edge cases and helper functions', () => {
     // Local vs Config
     process.env.PLUGINS_CONFIG_PATH = '/app/data/config.json'
     vi.mocked(fs.access).mockResolvedValue(undefined)
-    vi.mocked(fs.readFile).mockImplementation(async (p: any) => {
+    vi.mocked(fs.readFile).mockImplementation(async (p) => {
       if (String(p).includes('config.json')) {
         return JSON.stringify({
           plugins: [{ id: 'my-plugin', module: './config-mod.js' }],
@@ -1360,7 +1360,7 @@ describe('additional edge cases and helper functions', () => {
     expect(pluginSpec).toBeDefined()
 
     try {
-      await pluginSpec!.load()
+      await pluginSpec?.load?.()
     }
     catch {
       // Expected

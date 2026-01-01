@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import process from 'node:process'
 import { beforeAll } from 'vitest'
 
 // 在测试开始前确保所有需要的目录存在
