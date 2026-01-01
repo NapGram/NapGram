@@ -4,7 +4,7 @@ import { MessageQueue } from '../MessageQueue'
 import * as performanceMonitorModule from '../PerformanceMonitor'
 
 describe('messageQueue', () => {
-  let mockHandler: vi.Mock
+  let mockHandler: any
   let mockMessage: UnifiedMessage
 
   beforeEach(() => {
@@ -18,7 +18,11 @@ describe('messageQueue', () => {
       id: 'test-message-1',
       platform: 'qq',
       segments: [],
-    } as UnifiedMessage
+      sender: { userId: 'u', userName: 'n' },
+      chat: { chatId: 'c', type: 'private' },
+      content: 'test',
+      timestamp: Date.now(),
+    } as any as UnifiedMessage
   })
 
   afterEach(() => {

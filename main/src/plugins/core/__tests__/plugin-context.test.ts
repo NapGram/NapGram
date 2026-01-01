@@ -143,9 +143,9 @@ describe('pluginContextImpl', () => {
 
   it('mock apis work when not provided', async () => {
     // MessageAPI
-    expect(await context.message.send({})).toBeDefined()
-    await context.message.recall('')
-    expect(await context.message.get('')).toBeNull()
+    expect(await context.message.send({ instanceId: 1, channelId: 'qq:1', content: 'h' })).toBeDefined()
+    await context.message.recall({ instanceId: 1, messageId: 'm1' })
+    expect(await context.message.get({ instanceId: 1, messageId: 'm1' })).toBeNull()
 
     // InstanceAPI
     expect(await context.instance.list()).toEqual([])
@@ -153,15 +153,16 @@ describe('pluginContextImpl', () => {
     expect(await context.instance.getStatus(0)).toBe('unknown')
 
     // UserAPI
-    expect(await context.user.getInfo('')).toBeNull()
-    expect(await context.user.isFriend('')).toBe(false)
+    expect(await context.user.getInfo({ instanceId: 1, userId: 'u1' })).toBeNull()
+    expect(await context.user.isFriend({ instanceId: 1, userId: 'u1' })).toBe(false)
 
     // GroupAPI
-    expect(await context.group.getInfo('')).toBeNull()
-    expect(await context.group.getMembers('')).toEqual([])
-    await context.group.setAdmin('', '', true)
-    await context.group.muteUser('', '', 60)
-    await context.group.kickUser('', '')
+    expect(await context.group.getInfo({ instanceId: 1, groupId: 'g1' })).toBeNull()
+    expect(await context.group.getMembers({ instanceId: 1, groupId: 'g1' })).toEqual([])
+    await context.group.setAdmin({ instanceId: 1, groupId: 'g1', userId: 'u1', enable: true })
+    await context.group.muteUser({ instanceId: 1, groupId: 'g1', userId: 'u1', duration: 60 })
+    await context.group.kickUser({ instanceId: 1, groupId: 'g1', userId: 'u1' })
+
 
     // WebAPI
     context.web.registerRoutes(vi.fn())

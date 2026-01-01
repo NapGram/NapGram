@@ -31,8 +31,9 @@ const fileTypeMocks = vi.hoisted(() => ({
   fileTypeFromBuffer: vi.fn(),
 }))
 
-const jimpMocks = vi.hoisted(() => ({
-  read: vi.fn(),
+const imageJsMocks = vi.hoisted(() => ({
+  decode: vi.fn(),
+  write: vi.fn().mockResolvedValue(undefined),
 }))
 
 const ffmpegMocks = vi.hoisted(() => ({
@@ -75,10 +76,9 @@ vi.mock('file-type', () => ({
   fileTypeFromBuffer: fileTypeMocks.fileTypeFromBuffer,
 }))
 
-vi.mock('jimp', () => ({
-  Jimp: {
-    read: jimpMocks.read,
-  },
+vi.mock('image-js', () => ({
+  decode: imageJsMocks.decode,
+  write: imageJsMocks.write,
 }))
 
 vi.mock('../../../domain/models/env', () => ({
@@ -132,15 +132,15 @@ describe('convert', () => {
     expect(fsPromMocks.writeFile).toHaveBeenCalledWith('/cache/buffer', expect.any(Buffer))
   })
 
-  it('converts webp to png via Jimp', async () => {
-    const image = { write: vi.fn().mockResolvedValue(undefined) }
-    jimpMocks.read.mockResolvedValue(image)
+  it('converts webp to png via Image-JS', async () => {
+    const image = {}
+    imageJsMocks.decode.mockReturnValue(image)
 
     const result = await convert.png('image', async () => Buffer.from('webp'))
 
     expect(result).toBe('/cache/image.png')
-    expect(jimpMocks.read).toHaveBeenCalled()
-    expect(image.write).toHaveBeenCalledWith('/cache/image.png')
+    expect(imageJsMocks.decode).toHaveBeenCalled()
+    expect(imageJsMocks.write).toHaveBeenCalledWith('/cache/image.png', image)
   })
 
   it('converts video to gif using temp file and ffmpeg', async () => {
@@ -254,30 +254,32 @@ describe('convert', () => {
     // fileType returns image/png
     fileTypeMocks.fileTypeFromBuffer.mockResolvedValue({ mime: 'image/png' })
 
-    // Jimp read (original), resize, write
-    const image = { resize: vi.fn().mockReturnThis(), write: vi.fn() }
-    jimpMocks.read.mockResolvedValue(image)
+    // Image-JS decode, resize, write
+    const image = { resize: vi.fn().mockReturnThis() }
+    imageJsMocks.decode.mockReturnValue(image)
 
     const res = await convert.customEmoji('e1', async () => Buffer.from('png'), true)
     expect(res).toBe('/cache/e1@50.png')
-    expect(image.resize).toHaveBeenCalledWith({ w: 50 })
+    expect(image.resize).toHaveBeenCalledWith({ width: 50 })
+    expect(imageJsMocks.write).toHaveBeenCalledWith('/cache/e1@50.png', image)
   })
 
   it('customEmoji returns original size when not using small size', async () => {
     fileTypeMocks.fileTypeFromBuffer.mockResolvedValue({ mime: 'image/png' })
-    const image = { write: vi.fn().mockResolvedValue(undefined) }
-    jimpMocks.read.mockResolvedValue(image)
+    const image = {}
+    imageJsMocks.decode.mockReturnValue(image)
 
     const res = await convert.customEmoji('e_full', async () => Buffer.from('png'), false)
 
     expect(res).toBe('/cache/e_full.png')
-    expect(jimpMocks.read).toHaveBeenCalled()
+    expect(imageJsMocks.decode).toHaveBeenCalled()
+    expect(imageJsMocks.write).toHaveBeenCalledWith('/cache/e_full.png', image)
   })
 
   it('customEmoji falls back to default image type when fileType is missing', async () => {
     fileTypeMocks.fileTypeFromBuffer.mockResolvedValue(undefined)
-    const image = { write: vi.fn().mockResolvedValue(undefined) }
-    jimpMocks.read.mockResolvedValue(image)
+    const image = {}
+    imageJsMocks.decode.mockReturnValue(image)
 
     const res = await convert.customEmoji('e_fallback', async () => Buffer.from('png'), false)
 
@@ -297,23 +299,25 @@ describe('convert', () => {
     // tgs2gif called. It calls tgsToGif.
     tgsMocks.tgsToGif.mockResolvedValue('/cache/e2.gif')
 
-    const image = { resize: vi.fn().mockReturnThis(), write: vi.fn() }
-    jimpMocks.read.mockResolvedValue(image)
+    const image = { resize: vi.fn().mockReturnThis() }
+    imageJsMocks.decode.mockReturnValue(image)
 
     const res = await convert.customEmoji('e2', async () => Buffer.from('tgs'), true)
     // Fallback flow: tgs2gif -> e2.gif. Then cachedConvert e2@50.gif -> resize e2.gif -> write.
     expect(res).toBe('/cache/e2@50.gif')
+    expect(image.resize).toHaveBeenCalledWith({ width: 50 })
+    expect(imageJsMocks.write).toHaveBeenCalledWith('/cache/e2@50.gif', image)
   })
 
   it('converts webp to png', async () => {
-    const image = { write: vi.fn().mockResolvedValue(undefined) }
-    jimpMocks.read.mockResolvedValue(image)
+    const image = {}
+    imageJsMocks.decode.mockReturnValue(image)
 
     const res = await convert.webp('w1', async () => Buffer.from('webp'))
 
     expect(res).toBe('/cache/w1.png')
-    expect(jimpMocks.read).toHaveBeenCalled()
-    expect(image.write).toHaveBeenCalledWith('/cache/w1.png')
+    expect(imageJsMocks.decode).toHaveBeenCalled()
+    expect(imageJsMocks.write).toHaveBeenCalledWith('/cache/w1.png', image)
   })
 
   it('converts webm', async () => {

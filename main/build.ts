@@ -1,4 +1,7 @@
+import fs from 'node:fs'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
 import esbuild from 'esbuild'
 import packageJson from './package.json'
 
@@ -16,14 +19,11 @@ const banner = {
   `,
 }
 
-import fs from 'node:fs'
-import path from 'node:path'
-
 const packagesDir = path.resolve(__dirname, '../packages')
 const packages = fs.readdirSync(packagesDir).filter(f => fs.statSync(path.join(packagesDir, f)).isDirectory())
 
 const workspaceAliases: Record<string, string> = {}
-packages.forEach(pkg => {
+packages.forEach((pkg) => {
   const srcIndex = path.join(packagesDir, pkg, 'src/index.ts')
   const pkgJsonPath = path.join(packagesDir, pkg, 'package.json')
 
@@ -31,7 +31,8 @@ packages.forEach(pkg => {
     try {
       const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'))
       workspaceAliases[pkgJson.name] = srcIndex
-    } catch (e) {
+    }
+    catch (e) {
       console.warn(`Failed to parse package.json for ${pkg}`, e)
     }
   }
