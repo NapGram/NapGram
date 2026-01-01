@@ -270,7 +270,7 @@ export class CommandsFeature {
 
             loadedCommands.add(config.name)
             if (config.aliases) {
-              config.aliases.forEach(alias => loadedCommands.add(alias))
+              config.aliases.forEach((alias: string) => loadedCommands.add(alias))
             }
 
             logger.debug(`  ✓ Loaded command: /${config.name}${config.aliases ? ` (aliases: ${config.aliases.join(', ')})` : ''} from plugin ${pluginInfo.id}`)

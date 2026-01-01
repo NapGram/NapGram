@@ -70,7 +70,7 @@ describe('durationParser', () => {
       const originalMatch = String.prototype.match
       let callCount = 0
 
-      const matchSpy = vi.spyOn(String.prototype, 'match').mockImplementation(function (this: string, regex: RegExp) {
+      const matchSpy = vi.spyOn(String.prototype, 'match').mockImplementation(function (this: string, regex: any) {
         callCount++
         if (callCount === 1 && this.trim() === '1x') {
           // First call: return a fake match that passes validation

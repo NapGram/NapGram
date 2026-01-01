@@ -1,4 +1,4 @@
-import type { AudioContent, ImageContent, VideoContent } from '../../../../main/src/domain/message'
+import type { AudioContent, ImageContent, VideoContent } from '@napgram/message-kit'
 import type Instance from '../../../../main/src/domain/models/Instance'
 import type { IQQClient } from '../../../../main/src/infrastructure/clients/qq'
 import type Telegram from '../../../../main/src/infrastructure/clients/telegram/client'
@@ -6,7 +6,7 @@ import type Telegram from '../../../../main/src/infrastructure/clients/telegram/
 import { Buffer } from 'node:buffer'
 import fsP from 'node:fs/promises'
 import { fileTypeFromBuffer } from 'file-type'
-import { Jimp } from 'jimp'
+import { decode, encode, Image as ImageJS } from 'image-js'
 import { getLogger } from '../../../../main/src/shared/logger'
 import { file as createTempFile } from '../../../../main/src/shared/utils/temp'
 
@@ -300,20 +300,20 @@ export class MediaFeature {
       const type = await fileTypeFromBuffer(buffer)
       const mime = type?.mime || 'image/jpeg'
 
-      // 简单的格式检查 (Jimp 支持的格式)
-      if (!['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/gif', 'image/webp'].includes(mime)) {
+      // 简单的格式检查 (Image-JS 支持的 format)
+      if (!['image/jpeg', 'image/png', 'image/bmp', 'image/tiff'].includes(mime)) {
         logger.warn(`Unsupported/Unnecessary image format for compression: ${mime}`)
         return buffer
       }
 
-      // 使用 Jimp 读取图片
-      const image = await Jimp.read(buffer)
+      // 使用 Image-JS 读取图片
+      let image = decode(buffer)
 
       // 计算压缩目标
       let quality = 80
       // 获取原始宽高
-      let width = image.bitmap.width
-      let height = image.bitmap.height
+      let width = image.width
+      let height = image.height
 
       // 如果图片过大，先尝试调整尺寸
       // 限制最大边长为 1920
@@ -328,37 +328,46 @@ export class MediaFeature {
           height = MAX_DIMENSION
         }
         logger.info(`Resizing image to ${width}x${height}`)
-        image.resize({ w: width, h: height })
+        image = image.resize({ width, height })
       }
 
       // 尝试压缩循环
       let compressedBuffer: Buffer
 
-      // Jimp 无法直接输出 buffer 到 buffer 多次而不重新 encode
-      // 对于 WebP，Jimp 可能不支持写入，统一转为 JPEG 或 PNG
-      let targetMime = mime
-      if (targetMime === 'image/webp') {
-        targetMime = 'image/png' // WebP -> PNG
-      }
+      // Determine format for Image-JS
+      let format: 'jpeg' | 'png' = 'jpeg'
+      if (mime === 'image/png') format = 'png'
+      // WebP is not directly supported for encoding in basic image-js without plugins, usually falls back to png/jpeg if forced or fails.
+      // Logic above filters to jpeg/png/bmp/tiff.
 
       // 第一次尝试
-      // Cast to any to avoid type issues with specific Jimp version definitions
-      (image as any).quality(quality)
-      compressedBuffer = await (image as any).getBuffer(targetMime)
+      if (format === 'jpeg') {
+        compressedBuffer = Buffer.from(encode(image, { format: 'jpeg', encoderOptions: { quality } }))
+      }
+      else {
+        compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
+      }
 
-      // 如果还是太大，继续降低质量
+      // 如果还是太大，继续降低质量 (Only effective for JPEG usually, PNG quality affects compression speed not much size lossy)
       while (compressedBuffer.length > maxSize && quality > 20) {
         quality -= 20
-        logger.debug(`Image still too large (${compressedBuffer.length}), trying quality ${quality}`);
-        (image as any).quality(quality)
-        compressedBuffer = await (image as any).getBuffer(targetMime)
+        logger.debug(`Image still too large (${compressedBuffer.length}), trying quality ${quality}`)
+        if (format === 'jpeg') {
+          compressedBuffer = Buffer.from(encode(image, { format: 'jpeg', encoderOptions: { quality } }))
+        }
+        else {
+          // PNG compression loop is mostly futile for quality param, but structure kept.
+          compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
+          // Force break for PNG as reducing "quality" var doesn't help much if we don't change png params, and we want to avoid infinite loop if size doesn't ensure.
+          if (format === 'png') break
+        }
       }
 
       if (compressedBuffer.length > maxSize) {
         logger.warn(`Failed to compress image below ${maxSize} bytes even at quality ${quality}. Current: ${compressedBuffer.length}`)
       }
 
-      logger.info(`Compression result: ${buffer.length} -> ${compressedBuffer.length} bytes (Quality: ${quality}, Format: ${targetMime})`)
+      logger.info(`Compression result: ${buffer.length} -> ${compressedBuffer.length} bytes (Quality: ${quality}, Format: ${format})`)
       return compressedBuffer
     }
     catch (error) {

@@ -60,7 +60,7 @@ describe('telegramChat', () => {
 
     it('should send message with params', async () => {
       const mockResult = { id: 2, chatId: 123456789 }
-      const params = { replyToMessageId: 100 }
+      const params = { replyToMessageId: 100 } as any
       vi.mocked(mockClient.sendText).mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.sendMessage('Reply message', params)

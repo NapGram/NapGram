@@ -38,7 +38,7 @@ async function writeMarketplacesFile(filePath: string, next: MarketplacesConfigF
   await fs.mkdir(path.dirname(filePath), { recursive: true })
   const normalized: MarketplacesConfigFile = {
     version: 1,
-    indexes: (next.indexes || []).map(i => ({ ...i, id: sanitizeId(i.id), enabled: i.enabled !== false })),
+    indexes: (next.indexes || []).map((i: MarketplaceIndexSpec) => ({ ...i, id: sanitizeId(i.id), enabled: i.enabled !== false })),
   }
   normalized.indexes.sort((a, b) => a.id.localeCompare(b.id))
   await fs.writeFile(filePath, YAML.stringify(normalized), 'utf8')
@@ -63,7 +63,7 @@ function parseMarketplaces(raw: string, ext: string): MarketplacesConfigFile {
       url: typeof i?.url === 'string' ? i.url : '',
       enabled: i?.enabled !== false,
     }))
-    .filter(i => i.id && i.url)
+    .filter((i: any) => i.id && i.url)
   return { version: 1, indexes: normalized }
 }
 

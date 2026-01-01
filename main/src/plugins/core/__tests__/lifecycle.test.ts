@@ -15,7 +15,7 @@ const mockPlugin = {
 // Create a properly mocked plugin context
 function createMockPluginContext() {
   return {
-    logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
     on: vi.fn(),
     onUnload: vi.fn(),
     triggerUnload: vi.fn(),
@@ -23,9 +23,25 @@ function createMockPluginContext() {
     pluginId: 'test-plugin',
     config: {},
     apis: {},
-    storage: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), clear: vi.fn() },
-    eventBus: { on: vi.fn(), off: vi.fn(), publish: vi.fn(), publishSync: vi.fn() },
+    storage: { get: vi.fn(), set: vi.fn(), delete: vi.fn(), clear: vi.fn(), keys: vi.fn() },
+    eventBus: { on: vi.fn(), off: vi.fn(), publish: vi.fn(), publishSync: vi.fn(), clear: vi.fn() },
     cleanup: vi.fn(),
+    message: {} as any,
+    instance: {} as any,
+    user: {} as any,
+    group: {} as any,
+    web: {} as any,
+    command: vi.fn().mockReturnThis(),
+    onReload: vi.fn(),
+    commands: [] as any[],
+    reloadCallbacks: [] as any[],
+    unloadCallbacks: [] as any[],
+    createMockMessageAPI: vi.fn(),
+    createMockInstanceAPI: vi.fn(),
+    createMockUserAPI: vi.fn(),
+    createMockGroupAPI: vi.fn(),
+    createMockWebAPI: vi.fn(),
+    getCommands: vi.fn(),
   }
 }
 
@@ -45,8 +61,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: mockPlugin,
-      context: pluginContext,
+      plugin: mockPlugin as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Uninitialized,
     }
@@ -61,8 +77,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: mockPlugin,
-      context: pluginContext,
+      plugin: mockPlugin as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Installed,
     }
@@ -83,8 +99,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'failing-plugin',
-      plugin: failingPlugin,
-      context: pluginContext,
+      plugin: failingPlugin as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Uninitialized,
     }
@@ -101,8 +117,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, uninstall: vi.fn() },
-      context: pluginContext,
+      plugin: { ...mockPlugin, uninstall: vi.fn() } as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Installed,
     }
@@ -117,8 +133,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, uninstall: vi.fn() },
-      context: pluginContext,
+      plugin: { ...mockPlugin, uninstall: vi.fn() } as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Uninstalled,
     }
@@ -139,8 +155,8 @@ describe('pluginLifecycleManager', () => {
 
     const pluginInstance: PluginInstance = {
       id: 'failing-plugin',
-      plugin: { ...mockPlugin, uninstall: vi.fn() },
-      context: pluginContext,
+      plugin: { ...mockPlugin, uninstall: vi.fn() } as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Installed,
     }
@@ -157,7 +173,7 @@ describe('pluginLifecycleManager', () => {
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
       plugin: { ...mockPlugin, reload: vi.fn() },
-      context: pluginContext,
+      context: pluginContext as any,
       config: {},
       state: PluginState.Installed,
     }
@@ -173,8 +189,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, reload: undefined },
-      context: pluginContext,
+      plugin: { ...mockPlugin, reload: undefined } as any,
+      context: pluginContext as any as any,
       config: { oldConfig: true },
       state: PluginState.Installed,
     }
@@ -209,7 +225,7 @@ describe('pluginLifecycleManager', () => {
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
       plugin: { ...mockPlugin, reload: vi.fn() },
-      context: pluginContext,
+      context: pluginContext as any,
       config: {},
       state: PluginState.Installed,
     }
@@ -227,15 +243,15 @@ describe('pluginLifecycleManager', () => {
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
-        plugin: mockPlugin,
-        context: pluginContext1,
+        plugin: mockPlugin as any,
+        context: pluginContext1 as any,
         config: {},
         state: PluginState.Uninitialized,
       },
       {
         id: 'plugin-2',
-        plugin: { ...mockPlugin, id: 'plugin-2' },
-        context: pluginContext2,
+        plugin: { ...mockPlugin, id: 'plugin-2' } as any,
+        context: pluginContext2 as any,
         config: {},
         state: PluginState.Uninitialized,
       },
@@ -262,15 +278,15 @@ describe('pluginLifecycleManager', () => {
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
-        plugin: mockPlugin,
-        context: pluginContext1,
+        plugin: mockPlugin as any,
+        context: pluginContext1 as any,
         config: {},
         state: PluginState.Uninitialized,
       },
       {
         id: 'plugin-2',
-        plugin: failingPlugin,
-        context: pluginContext2,
+        plugin: failingPlugin as any,
+        context: pluginContext2 as any,
         config: {},
         state: PluginState.Uninitialized,
       },
@@ -293,14 +309,14 @@ describe('pluginLifecycleManager', () => {
       {
         id: 'plugin-1',
         plugin: { ...mockPlugin, uninstall: vi.fn() },
-        context: pluginContext1,
+        context: pluginContext1 as any,
         config: {},
         state: PluginState.Installed,
       },
       {
         id: 'plugin-2',
         plugin: { ...mockPlugin, id: 'plugin-2', uninstall: vi.fn() },
-        context: pluginContext2,
+        context: pluginContext2 as any,
         config: {},
         state: PluginState.Installed,
       },
@@ -324,15 +340,15 @@ describe('pluginLifecycleManager', () => {
     const pluginInstances: PluginInstance[] = [
       {
         id: 'plugin-1',
-        plugin: { ...mockPlugin, uninstall: vi.fn() },
-        context: pluginContext1,
+        plugin: { ...mockPlugin, uninstall: vi.fn() } as any,
+        context: pluginContext1 as any,
         config: {},
         state: PluginState.Installed,
       },
       {
         id: 'plugin-2',
-        plugin: { ...mockPlugin, id: 'plugin-2', uninstall: vi.fn() },
-        context: pluginContext2,
+        plugin: { ...mockPlugin, id: 'plugin-2', uninstall: vi.fn() } as any,
+        context: pluginContext2 as any,
         config: {},
         state: PluginState.Installed,
       },
@@ -351,8 +367,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, reload: vi.fn().mockResolvedValue(undefined) },
-      context: pluginContext,
+      plugin: { ...mockPlugin, reload: vi.fn().mockResolvedValue(undefined) } as any,
+      context: pluginContext as any as any,
       config: { old: true },
       state: PluginState.Installed,
     }
@@ -368,8 +384,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, reload: undefined },
-      context: pluginContext,
+      plugin: { ...mockPlugin, reload: undefined } as any,
+      context: pluginContext as any as any,
       config: { old: true },
       state: PluginState.Installed,
     }
@@ -389,14 +405,14 @@ describe('pluginLifecycleManager', () => {
     const healthyInstance: PluginInstance = {
       id: 'healthy',
       plugin: mockPlugin,
-      context: createMockPluginContext(),
+      context: createMockPluginContext() as any,
       config: {},
       state: PluginState.Installed,
     }
     const errorInstance: PluginInstance = {
       id: 'error',
       plugin: mockPlugin,
-      context: createMockPluginContext(),
+      context: createMockPluginContext() as any,
       config: {},
       state: PluginState.Error,
       error: new Error('fail'),
@@ -404,7 +420,7 @@ describe('pluginLifecycleManager', () => {
     const uninstalledInstance: PluginInstance = {
       id: 'uninstalled',
       plugin: mockPlugin,
-      context: createMockPluginContext(),
+      context: createMockPluginContext() as any,
       config: {},
       state: PluginState.Uninstalled,
     }
@@ -425,8 +441,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, reload: vi.fn() },
-      context: pluginContext,
+      plugin: { ...mockPlugin, reload: vi.fn() } as any,
+      context: pluginContext as any as any,
       config: { old: true },
       state: PluginState.Installed,
     }
@@ -439,8 +455,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin',
-      plugin: { ...mockPlugin, uninstall: undefined },
-      context: pluginContext,
+      plugin: { ...mockPlugin, uninstall: undefined } as any,
+      context: pluginContext as any as any,
       config: {},
       state: PluginState.Installed,
     }
@@ -463,8 +479,8 @@ describe('pluginLifecycleManager', () => {
     const pluginContext = createMockPluginContext()
     const pluginInstance: PluginInstance = {
       id: 'test-plugin-no-config-reload',
-      plugin: { ...mockPlugin, reload: undefined },
-      context: pluginContext,
+      plugin: { ...mockPlugin, reload: undefined } as any,
+      context: pluginContext as any as any,
       config: { existing: true },
       state: PluginState.Installed,
     }
@@ -487,7 +503,7 @@ describe('pluginLifecycleManager', () => {
     const pluginInstance = {
       id: 'p1',
       plugin: mockPlugin,
-      context: pluginContext,
+      context: pluginContext as any,
       config: {},
       state: PluginState.Uninitialized,
     } as PluginInstance

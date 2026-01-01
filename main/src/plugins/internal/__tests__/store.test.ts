@@ -38,7 +38,7 @@ describe('store.ts', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(readStringEnv).mockReturnValue(undefined)
+    vi.mocked(readStringEnv).mockReturnValue(undefined as any)
     // Set default DATA_DIR
     process.env.DATA_DIR = mockDataDir
   })
@@ -55,7 +55,7 @@ describe('store.ts', () => {
 
     it('should use override from environment', async () => {
       const { readStringEnv } = await import('../env')
-      vi.mocked(readStringEnv).mockReturnValue('/custom/path/config.yaml')
+      vi.mocked(readStringEnv).mockReturnValue('/custom/path/config.yaml' as any)
 
       const configPath = await store.getManagedPluginsConfigPath()
       expect(configPath).toContain('config.yaml')
@@ -164,7 +164,7 @@ describe('store.ts', () => {
       vi.mocked(fs.realpath).mockImplementation(async p => String(p))
 
       // Mock JSON config path inside DATA_DIR
-      vi.mocked(readStringEnv).mockReturnValue(path.join(mockDataDir, 'plugins', 'config.json'))
+      vi.mocked(readStringEnv).mockReturnValue(path.join(mockDataDir, 'plugins', 'config.json') as any)
 
       const result = await store.readPluginsConfig()
 
@@ -261,7 +261,7 @@ describe('store.ts', () => {
 
     it('should throw error for paths outside DATA_DIR', async () => {
       vi.mocked(fs.realpath).mockImplementation(async (p) => {
-        if (p.includes('outside')) {
+        if (((p as any).includes)('outside')) {
           return '/completely/different/path'
         }
         return mockDataDir
