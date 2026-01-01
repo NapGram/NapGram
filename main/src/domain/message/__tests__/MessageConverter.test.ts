@@ -1,5 +1,6 @@
 import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { UnifiedMessage } from '../converter'
 import { MessageConverter } from '../converter'
 
 const fsMocks = vi.hoisted(() => ({
@@ -78,16 +79,16 @@ describe('messageConverter', () => {
     fsMocks.existsSync.mockReturnValue(true)
   })
 
-  const buildTelegram = (overrides: Record<string, any> = {}) => ({
+  const buildTelegram = (overrides: Record<string, any> = {}): any => ({
     id: 1,
     text: '',
     sender: { id: 1, displayName: 'User' },
     chat: { id: 2, type: 'group', title: 'Group' },
-    date: new Date('2020-01-01T00:00:00Z'),
+    date: new Date('2020-01-01T00:00:00+00:00'),
     ...overrides,
   })
 
-  const buildUnified = (content: any[]) => ({
+  const buildUnified = (content: any[]): UnifiedMessage => ({
     id: '1',
     platform: 'telegram',
     sender: { id: '1', name: 'User' },

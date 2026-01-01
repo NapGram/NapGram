@@ -49,13 +49,17 @@
     "outDir": "build",
     "sourceMap": false,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ]
   },
+  "include": [
+    "src/**/*",
+    "vitest.setup.ts"
+  ],
   "exclude": [
     "node_modules",
-    "**/*.test.ts",
-    "**/__tests__/**",
-    "tests/**",
     "tools/**"
   ]
 }
