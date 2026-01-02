@@ -11,6 +11,9 @@
       "@napgram/feature-kit": [
         "../packages/feature-kit/src/index.ts"
       ],
+      "@napgram/qq-client": [
+        "../packages/qq-client/src/index.ts"
+      ],
       "@napgram/gateway-kit": [
         "../packages/gateway-kit/src/index.ts"
       ],
@@ -32,11 +35,20 @@
       "@napgram/request-kit": [
         "../packages/request-kit/src/index.ts"
       ],
+      "@napgram/plugin-kit": [
+        "../packages/plugin-kit/src/index.ts"
+      ],
       "@napgram/runtime-kit": [
         "../packages/runtime-kit/src/index.ts"
       ],
+      "@napgram/runtime-kit/*": [
+        "../packages/runtime-kit/src/*"
+      ],
       "@napgram/web-interfaces": [
         "../packages/web-interfaces/src/index.ts"
+      ],
+      "@napgram/app/*": [
+        "./src/*"
       ]
     },
     "types": [

@@ -17,15 +17,17 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
-
-    groups:
-      all-deps:
-        patterns:
-          - "*"
-        # 排除内部包
-        exclude-patterns:
-          - "@napgram/*"
-          - "@naplink/*"
+    
+    # Temporarily disabled: grouped updates cause failures in complex workspace
+    # See: https://github.com/NapGram/NapGram/actions/runs/20653950893
+    # groups:
+    #   all-deps:
+    #     patterns:
+    #       - "*"
+    #     # 排除内部包
+    #     exclude-patterns:
+    #       - "@napgram/*"
+    #       - "@naplink/*"
     
     ignore:
       - dependency-name: "@naplink/naplink"

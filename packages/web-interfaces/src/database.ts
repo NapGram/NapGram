@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authMiddleware, db, getLogger } from '@napgram/runtime-kit'
+import { db, getLogger } from '@napgram/infra-kit'
+import { authMiddleware } from '@napgram/auth-kit'
 
 const logger = getLogger('database')
 
@@ -41,7 +42,7 @@ export default async function (fastify: FastifyInstance) {
             `
       return {
         success: true,
-        data: result.map(r => r.tablename),
+        data: result.map((r: any) => r.tablename),
       }
     }
     catch (error: any) {
@@ -66,7 +67,7 @@ export default async function (fastify: FastifyInstance) {
             `
       return {
         success: true,
-        data: result.map(r => r.schema_name),
+        data: result.map((r: any) => r.schema_name),
       }
     }
     catch (error: any) {
@@ -280,7 +281,7 @@ export default async function (fastify: FastifyInstance) {
           ipAddress: request.ip,
           userAgent: request.headers['user-agent'],
         },
-      }).catch((err) => {
+      }).catch((err: any) => {
         logger.warn(err, 'audit_log_failed')
       })
 
@@ -367,7 +368,7 @@ export default async function (fastify: FastifyInstance) {
           ipAddress: request.ip,
           userAgent: request.headers['user-agent'],
         },
-      }).catch((err) => {
+      }).catch((err: any) => {
         logger.warn(err, 'audit_log_failed')
       })
 
@@ -426,7 +427,7 @@ export default async function (fastify: FastifyInstance) {
           ipAddress: request.ip,
           userAgent: request.headers['user-agent'],
         },
-      }).catch((err) => {
+      }).catch((err: any) => {
         logger.warn(err, 'audit_log_failed')
       })
 
