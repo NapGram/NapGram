@@ -739,6 +739,9 @@ importers:
       '@napgram/sdk':
         specifier: workspace:*
         version: link:../../external/sdk/packages/sdk
+      '@napgram/web-interfaces':
+        specifier: workspace:*
+        version: link:../web-interfaces
       '@types/node':
         specifier: 25.0.3
         version: 25.0.3

@@ -6,6 +6,7 @@ import {
   performanceMonitor,
   userInfoCache,
 } from '@napgram/infra-kit'
+import { authMiddleware } from '@napgram/auth-kit'
 
 /**
  * 监控和统计 API
@@ -16,7 +17,9 @@ export default function setupMonitoring(app: FastifyInstance) {
    * GET /api/monitor/performance
    * 获取性能统计数据
    */
-  app.get('/api/monitor/performance', async () => {
+  app.get('/api/monitor/performance', {
+    preHandler: authMiddleware,
+  }, async () => {
     const stats = performanceMonitor.getStats()
     return {
       uptime: stats.uptime,
@@ -37,7 +40,9 @@ export default function setupMonitoring(app: FastifyInstance) {
    * GET /api/monitor/cache
    * 获取缓存统计数据
    */
-  app.get('/api/monitor/cache', async () => {
+  app.get('/api/monitor/cache', {
+    preHandler: authMiddleware,
+  }, async () => {
     return {
       userCache: userInfoCache.getStats(),
       groupCache: groupInfoCache.getStats(),
@@ -50,7 +55,9 @@ export default function setupMonitoring(app: FastifyInstance) {
    * GET /api/monitor/health
    * 健康检查端点
    */
-  app.get('/api/monitor/health', async () => {
+  app.get('/api/monitor/health', {
+    preHandler: authMiddleware,
+  }, async () => {
     const stats = performanceMonitor.getStats()
     const errorRate = stats.errorRate
     const cacheHitRate = stats.cacheHitRate
@@ -81,7 +88,9 @@ export default function setupMonitoring(app: FastifyInstance) {
    * POST /api/monitor/stats/print
    * 手动触发统计信息打印到日志
    */
-  app.post('/api/monitor/stats/print', async () => {
+  app.post('/api/monitor/stats/print', {
+    preHandler: authMiddleware,
+  }, async () => {
     performanceMonitor.printStats()
     return { success: true, message: 'Stats printed to logs' }
   })

@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
+import type { } from '@fastify/cookie'
 import { AuthService, TokenManager } from './index'
 
 /**
