@@ -87,16 +87,12 @@ vi.mock('node:fs/promises', () => ({
   rm: fsPromMocks.rm,
 }))
 
-vi.mock('../../../../domain/models/env', () => ({
-  default: envMock,
-}))
-
-vi.mock('../../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  env: envMock,
   getLogger: vi.fn(() => loggerMocks),
-}))
-
-vi.mock('../../../../shared/utils/temp', () => ({
-  TEMP_PATH: '/tmp/napgram-temp',
+  temp: {
+    TEMP_PATH: '/tmp/napgram-temp',
+  }
 }))
 
 const coreMocks = vi.hoisted(() => ({
@@ -187,7 +183,7 @@ describe('telegram client', () => {
     envMock.PROXY_IP = undefined
     envMock.PROXY_PORT = undefined
     fsMocks.existsSync.mockReturnValue(true)
-    ; (Telegram as any).existedBots = {}
+      ; (Telegram as any).existedBots = {}
   })
 
   it('creates a new bot and imports session', async () => {

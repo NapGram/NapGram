@@ -1,5 +1,5 @@
 import type { MessageContent } from '../../types'
-import { getLogger } from '../../../../../main/src/shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('JsonCardConverter')
 

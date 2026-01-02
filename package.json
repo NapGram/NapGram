@@ -20,5 +20,8 @@
             "silk-sdk",
             "ssh2"
         ]
+    },
+    "devDependencies": {
+        "typescript": "^5.9.3"
     }
 }

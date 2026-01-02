@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { ApiResponse, authMiddleware, db } from '@napgram/runtime-kit'
+import { ApiResponse, db } from '@napgram/infra-kit'
+import { authMiddleware } from '@napgram/auth-kit'
 
 /**
  * 实例管理 API
@@ -89,16 +90,16 @@ export default async function (fastify: FastifyInstance) {
     ])
 
     return ApiResponse.paginated(
-      items.map(item => ({
+      items.map((item: any) => ({
         ...item,
         owner: item.owner.toString(),
         qqBot: item.qqBot
           ? {
-              ...item.qqBot,
-              uin: item.qqBot.uin?.toString() || null,
-            }
+            ...item.qqBot,
+            uin: item.qqBot.uin?.toString() || null,
+          }
           : null,
-        ForwardPair: item.ForwardPair.map(pair => ({
+        ForwardPair: item.ForwardPair.map((pair: any) => ({
           ...pair,
           qqRoomId: pair.qqRoomId.toString(),
           tgChatId: pair.tgChatId.toString(),
@@ -142,9 +143,9 @@ export default async function (fastify: FastifyInstance) {
         owner: instance.owner.toString(),
         qqBot: instance.qqBot
           ? {
-              ...instance.qqBot,
-              uin: instance.qqBot.uin?.toString() || null,
-            }
+            ...instance.qqBot,
+            uin: instance.qqBot.uin?.toString() || null,
+          }
           : null,
       },
     }
@@ -184,7 +185,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('@napgram/runtime-kit')
+      const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
         auth.userId,
         'create_instance',
@@ -282,7 +283,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('@napgram/runtime-kit')
+      const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
         auth.userId,
         'update_instance',
@@ -333,7 +334,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('@napgram/runtime-kit')
+      const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
         auth.userId,
         'delete_instance',
@@ -379,7 +380,7 @@ export default async function (fastify: FastifyInstance) {
 
     return {
       success: true,
-      items: bots.map(bot => ({
+      items: bots.map((bot: any) => ({
         ...bot,
         uin: bot.uin?.toString() || null,
         password: bot.password ? '******' : null, // 隐藏密码

@@ -1,21 +1,18 @@
 import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '@napgram/feature-kit'
 import type { IQQClient } from '../../infrastructure/clients/qq'
 import type Telegram from '../../infrastructure/clients/telegram/client'
-import type { AppLogger } from '../../shared/logger'
+import type { AppLogger } from '@napgram/infra-kit'
 import { FeatureManager } from '../../features/FeatureManager'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
-import { getEventPublisher } from '../../plugins/core/event-publisher'
-import { getLogger } from '../../shared/logger'
-import db from './db'
-import env from './env'
-import ForwardMap from './ForwardMap'
-import sentry from './sentry'
+import { getEventPublisher } from '@napgram/plugin-kit'
+import { db, env, getLogger, ForwardMap, sentry } from '@napgram/infra-kit'
+
+import { InstanceRegistry } from '@napgram/runtime-kit'
 
 export type WorkMode = 'personal' | 'group' | 'public'
 
 export default class Instance {
-  public static readonly instances: Instance[] = []
 
   private _owner = 0
   private _isSetup = false
@@ -321,7 +318,7 @@ export default class Instance {
 
   public static async start(instanceId: number, botToken?: string) {
     const instance = new this(instanceId)
-    Instance.instances.push(instance)
+    InstanceRegistry.add(instance as any)
     await instance.login(botToken)
     return instance
   }

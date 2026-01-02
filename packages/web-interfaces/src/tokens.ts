@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { ApiResponse, authMiddleware, db, TokenManager } from '@napgram/runtime-kit'
+import { ApiResponse, db } from '@napgram/infra-kit'
+import { authMiddleware, TokenManager } from '@napgram/auth-kit'
 
 function maskToken(token: string) {
   if (!token)
@@ -51,12 +52,12 @@ export default async function (fastify: FastifyInstance) {
         },
       })
 
-      return ApiResponse.success(
-        tokens.map(t => ({
+      return ApiResponse.success({
+        data: tokens.map((t: any) => ({
           ...t,
           token: maskToken(t.token),
         })),
-      )
+      })
     },
   )
 
@@ -75,20 +76,20 @@ export default async function (fastify: FastifyInstance) {
         const body = createSchema.parse(request.body)
         const expiresAt
           = body.expiresAt
-            ?? (body.expiresInDays ? new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000) : undefined)
+          ?? (body.expiresInDays ? new Date(Date.now() + body.expiresInDays * 24 * 60 * 60 * 1000) : undefined)
 
         const token = body.token
           ? (
-              await db.accessToken.create({
-                data: {
-                  token: body.token,
-                  description: body.description,
-                  createdBy: auth.userId ?? null,
-                  expiresAt,
-                  isActive: true,
-                },
-              })
-            ).token
+            await db.accessToken.create({
+              data: {
+                token: body.token,
+                description: body.description,
+                createdBy: auth.userId ?? null,
+                expiresAt,
+                isActive: true,
+              },
+            })
+          ).token
           : await TokenManager.createAccessToken(body.description, auth.userId, expiresAt)
         return ApiResponse.success({ token }, 'Token created')
       }

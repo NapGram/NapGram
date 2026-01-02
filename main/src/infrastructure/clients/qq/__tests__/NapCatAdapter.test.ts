@@ -158,8 +158,13 @@ vi.mock('@naplink/naplink', () => {
   }
 })
 
-vi.mock('../../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => mockLogger),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
 }))
 
 vi.mock('../../../../domain/message/converter', () => ({

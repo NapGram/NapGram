@@ -7,20 +7,23 @@ import { z } from 'zod'
 import {
   ApiResponse,
   env,
-  getGlobalRuntime,
   getLogger,
+} from '@napgram/infra-kit'
+import { getGlobalRuntime } from '@napgram/plugin-kit'
+
+import {
   getPluginVersions,
   installFromMarketplace,
   normalizeModuleSpecifierForPluginsConfig,
   patchPluginConfig,
-  PluginRuntime,
+  // PluginRuntime, // Interface now, cannot be used as value
   readPluginsConfig,
   removePluginConfig,
   rollbackPlugin,
   uninstallPlugin,
   upgradePlugin,
   upsertPluginConfig,
-} from '@napgram/runtime-kit'
+} from '@napgram/plugin-kit'
 const logger = getLogger('PluginAdmin')
 
 async function pathExists(p: string): Promise<boolean> {
@@ -111,7 +114,7 @@ export default async function (fastify: FastifyInstance) {
     if (direct && token && token === direct)
       return
 
-    const { authMiddleware } = await import('@napgram/runtime-kit')
+    const { authMiddleware } = await import('@napgram/auth-kit')
     await authMiddleware(request, reply)
   }
 
@@ -125,7 +128,7 @@ export default async function (fastify: FastifyInstance) {
       if (!body.success) {
         return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues })
       }
-      const result = await PluginRuntime.reload({ defaultInstances: body.data.instances })
+      const result = await getGlobalRuntime().reload({ defaultInstances: body.data.instances })
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -138,7 +141,7 @@ export default async function (fastify: FastifyInstance) {
       const pluginId = String((request.params as any).id || '').trim()
       if (!pluginId)
         return reply.code(400).send(ApiResponse.error('Missing plugin id'))
-      const result = await PluginRuntime.reloadPlugin(pluginId)
+      const result = await getGlobalRuntime().reloadPlugin(pluginId)
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -198,7 +201,7 @@ export default async function (fastify: FastifyInstance) {
   })
 
   fastify.get('/api/admin/plugins/status', { preHandler: requirePluginAdmin }, async () => {
-    return ApiResponse.success(PluginRuntime.getLastReport())
+    return ApiResponse.success(getGlobalRuntime().getLastReport())
   })
 
   const pluginCreateSchema = z.object({
@@ -238,13 +241,13 @@ export default async function (fastify: FastifyInstance) {
 
   fastify.get('/api/admin/plugins', { preHandler: requirePluginAdmin }, async () => {
     const { path: configPath, config, exists } = await readPluginsConfig()
-    const report = PluginRuntime.getLastReport()
+    const report = getGlobalRuntime().getLastReport()
     const failed = new Map(report.failed.map((f: any) => [f.id, f.error] as const))
     const loaded = new Set(report.loaded)
     const runtime = getGlobalRuntime()
     const runtimeActive = runtime.isActive()
 
-    const plugins = await Promise.all(config.plugins.map(async (p) => {
+    const plugins = await Promise.all(config.plugins.map(async (p: any) => {
       let absolute: string | null = null
       try {
         absolute = (await normalizeModuleSpecifierForPluginsConfig(p.module)).absolute
@@ -292,7 +295,7 @@ export default async function (fastify: FastifyInstance) {
         source: body.data.source,
       })
       if (body.data.reload)
-        await PluginRuntime.reload()
+        await getGlobalRuntime().reload()
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -307,8 +310,7 @@ export default async function (fastify: FastifyInstance) {
     }
     try {
       const result = await patchPluginConfig(String((request.params as any).id), body.data)
-      if (body.data.reload)
-        await PluginRuntime.reload()
+      await getGlobalRuntime().reload()
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -353,7 +355,7 @@ export default async function (fastify: FastifyInstance) {
       const result = await installFromMarketplace(body.data)
       logger.info({ pluginId: result.id, version: result.version }, 'Plugin install completed')
       if (body.data.reload && !body.data.dryRun)
-        await PluginRuntime.reload()
+        await getGlobalRuntime().reload()
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -386,7 +388,7 @@ export default async function (fastify: FastifyInstance) {
       const result = await upgradePlugin(String((request.params as any).id), body.data)
       logger.info({ pluginId: result.id, version: result.version }, 'Plugin upgrade completed')
       if (body.data.reload && !body.data.dryRun)
-        await PluginRuntime.reload()
+        await getGlobalRuntime().reload()
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -411,7 +413,7 @@ export default async function (fastify: FastifyInstance) {
     try {
       const result = await rollbackPlugin(String((request.params as any).id), body.data)
       if (body.data.reload && !body.data.dryRun)
-        await PluginRuntime.reload()
+        await getGlobalRuntime().reload()
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -435,7 +437,7 @@ export default async function (fastify: FastifyInstance) {
     try {
       const result = await uninstallPlugin(String((request.params as any).id), body.data)
       if (body.data.reload && !body.data.dryRun)
-        await PluginRuntime.reload()
+        await getGlobalRuntime().reload()
       return ApiResponse.success(result)
     }
     catch (error: any) {
@@ -461,7 +463,7 @@ export default async function (fastify: FastifyInstance) {
 
     try {
       const { config } = await readPluginsConfig()
-      const record = config.plugins.find(p => p.id === pluginId)
+      const record = config.plugins.find((p: any) => p.id === pluginId)
       let absolute: string | null = null
       if (record) {
         try {

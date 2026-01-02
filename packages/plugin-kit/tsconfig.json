@@ -1,0 +1,27 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+        "baseUrl": "../../",
+        "composite": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "references": [
+        {
+            "path": "../infra-kit"
+        },
+        {
+            "path": "../runtime-kit"
+        },
+        {
+            "path": "../marketplace-kit"
+        },
+        {
+            "path": "../message-kit"
+        }
+    ]
+}

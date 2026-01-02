@@ -1,4 +1,4 @@
-export { default as Instance } from '../../../main/src/domain/models/Instance'
+export { Instance } from '@napgram/runtime-kit'
 export { CommandsFeature } from './features/commands/CommandsFeature'
 export { ForwardFeature } from './features/forward/ForwardFeature'
 export { MediaFeature } from './features/MediaFeature'

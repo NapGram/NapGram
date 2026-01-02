@@ -1,14 +1,14 @@
 import { configureTelegramClient } from '@napgram/telegram-client'
-import env from '../../../domain/models/env'
+import { env } from '@napgram/infra-kit'
 import TelegramSession from '../../../domain/models/TelegramSession'
-import { getLogger } from '../../../shared/logger'
-import { TEMP_PATH } from '../../../shared/utils/temp'
+import { getLogger } from '@napgram/infra-kit'
+import { temp } from '@napgram/infra-kit'
 
 configureTelegramClient({
   env,
   sessionFactory: (sessionId?: number) => new TelegramSession(sessionId),
   loggerFactory: getLogger,
-  tempPath: TEMP_PATH,
+  tempPath: temp.TEMP_PATH,
 })
 
 export { default } from '@napgram/telegram-client'

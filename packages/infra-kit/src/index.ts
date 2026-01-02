@@ -1,24 +1,81 @@
 export { configureInfraKit } from './deps'
 export type { InfraLogger, LoggerFactory } from './deps'
+import flags from './flags'
+import qface from './qface'
+export { default as ForwardMap } from './models/ForwardMap'
+export type { ForwardPairRecord } from './models/ForwardMap'
+export { Pair } from './models/Pair'
 
-export {
-  type CacheConfig,
-  CacheManager,
-  configCache,
-  groupInfoCache,
-  mediaCache,
-  userInfoCache,
-} from './CacheManager'
+import { CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache } from './CacheManager'
+export type { CacheConfig } from './CacheManager'
+import { MessageQueue } from './MessageQueue'
+export type { MessageHandler, QueueConfig } from './MessageQueue'
+import { performanceMonitor, PerformanceMonitor } from './PerformanceMonitor'
+export type { PerformanceMetrics, PerformanceStats } from './PerformanceMonitor'
+import env from './env'
+import getLogger, { setConsoleLogLevel } from './logger'
+import type { AppLogger } from './logger'
+import db from './db'
+import * as temp from './temp'
+import { DurationParser } from './utils/duration-parser'
+import * as hashing from './utils/hashing'
+import random from './utils/random'
+import { getMimeType } from './utils/mime'
+import { ApiResponse } from './utils/api-response'
+import * as urls from './utils/urls'
+import * as flagControl from './utils/flagControl'
+import sentry from './sentry'
+import * as arrays from './utils/arrays'
+import * as cache from './utils/cache'
+import * as date from './utils/date'
+import * as pastebin from './utils/pastebin'
+import * as highLevel from './utils/highLevel'
 
+// Individual named exports from modules
+export { TTLCache } from './utils/cache'
+export { formatDate } from './utils/date'
+export { registerDualRoute, ErrorResponses } from './utils/fastify'
+export const { TEMP_PATH } = temp
+
+// Named exports
 export {
-  type MessageHandler,
+  CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache,
   MessageQueue,
-  type QueueConfig,
-} from './MessageQueue'
+  performanceMonitor, PerformanceMonitor,
+  env,
+  getLogger, setConsoleLogLevel,
+  db,
+  temp,
+  qface,
+  DurationParser,
+  hashing,
+  random,
+  getMimeType,
+  flags,
+  ApiResponse,
+  urls,
+  flagControl,
+  sentry,
+  arrays,
+  cache,
+  date,
+  pastebin,
+  highLevel
+}
+export type { AppLogger }
 
-export {
-  type PerformanceMetrics,
-  PerformanceMonitor,
+// Default export for compatibility with tests
+const kit = {
+  env,
+  getLogger,
+  db,
+  temp,
   performanceMonitor,
-  type PerformanceStats,
-} from './PerformanceMonitor'
+  CacheManager,
+  MessageQueue,
+  qface,
+}
+
+Object.assign(kit, env)
+
+export default kit

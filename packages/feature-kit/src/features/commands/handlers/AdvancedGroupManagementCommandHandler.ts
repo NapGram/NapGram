@@ -1,8 +1,8 @@
-import type { UnifiedMessage } from '../../../../../../main/src/domain/message'
-import type ForwardMap from '../../../../../../main/src/domain/models/ForwardMap'
+import type { UnifiedMessage } from '@napgram/message-kit'
+import type { ForwardMap } from '../../../shared-types'
 import type { CommandContext } from './CommandContext'
-import { PermissionChecker } from '../../../../../../main/src/shared/utils/permission-checker'
-import { getLogger } from '../../../../../../main/src/shared/logger'
+import { PermissionChecker } from '../../../shared-types'
+import { getLogger } from '@napgram/infra-kit'
 import { CommandArgsParser } from '../utils/CommandArgsParser'
 
 const logger = getLogger('AdvancedGroupManagementCommandHandler')

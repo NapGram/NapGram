@@ -1,12 +1,12 @@
-import type { UnifiedMessage } from '../../../../../../main/src/domain/message'
-import type ForwardMap from '../../../../../../main/src/domain/models/ForwardMap'
-import type Instance from '../../../../../../main/src/domain/models/Instance'
+import type { UnifiedMessage } from '@napgram/message-kit'
+import type { ForwardMap } from '../../../shared-types'
+import type { Instance } from '../../../shared-types'
 import type { TelegramSender } from '../senders/TelegramSender'
 import type { ForwardModeService } from '../services/ForwardModeService'
 import type { ForwardMapper } from '../services/MessageMapper'
 import type { ReplyResolver } from '../services/ReplyResolver'
-import { getEventPublisher } from '../../../../../../main/src/plugins/core/event-publisher'
-import { getLogger } from '../../../../../../main/src/shared/logger'
+import { getEventPublisher } from '../../../shared-types'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('QQMessageHandler')
 
@@ -75,6 +75,7 @@ export class QQMessageHandler {
                 : 'group'
 
           eventPublisher.publishMessage({
+            eventId: `qq:${msg.id}`,
             instanceId: pair.instanceId,
             platform: 'qq',
             channelId: String(msg.chat.id),
@@ -90,7 +91,7 @@ export class QQMessageHandler {
               timestamp: msg.timestamp || Date.now(),
             },
             raw: msg,
-            reply: async (content) => {
+            reply: async (content: any) => {
               const text = typeof content === 'string'
                 ? content
                 : Array.isArray(content)
@@ -104,9 +105,9 @@ export class QQMessageHandler {
                 content: [{ type: 'text', data: { text } }],
                 timestamp: Date.now(),
               } as any)
-              return { messageId: receipt.messageId }
+              return { messageId: receipt.messageId, timestamp: Date.now() }
             },
-            send: async (content) => {
+            send: async (content: any) => {
               const text = typeof content === 'string'
                 ? content
                 : Array.isArray(content)
@@ -120,7 +121,7 @@ export class QQMessageHandler {
                 content: [{ type: 'text', data: { text } }],
                 timestamp: Date.now(),
               } as any)
-              return { messageId: receipt.messageId }
+              return { messageId: receipt.messageId, timestamp: Date.now() }
             },
             recall: async () => {
               logger.warn('[Plugin] Recall not implemented for QQ events')

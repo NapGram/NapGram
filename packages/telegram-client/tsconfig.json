@@ -2,7 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
+        "baseUrl": "../../",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "paths": {
             "@napgram/telegram-client": [
                 "./src/index.ts"

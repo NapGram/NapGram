@@ -1,4 +1,4 @@
-export type { IQQClient } from '../../../main/src/infrastructure/clients/qq'
-export { default as Instance } from '../../../main/src/domain/models/Instance'
-export { default as db } from '../../../main/src/domain/models/db'
-export { getLogger } from '../../../main/src/shared/logger'
+export type { IQQClient } from '@napgram/qq-client'
+export { Instance } from '@napgram/runtime-kit'
+export { db } from '@napgram/infra-kit'
+export { getLogger } from '@napgram/infra-kit'

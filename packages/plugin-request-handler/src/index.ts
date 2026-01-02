@@ -18,7 +18,7 @@ const plugin: NapGramPlugin = {
         ctx.logger.info('Request handler plugin installed');
 
         const resolveInstance = (instanceId: number) => {
-            return Instance.instances.find(i => i.id === instanceId);
+            return Instance.instances.find((i: any) => i.id === instanceId);
         };
 
         const ensureAutomationService = (instance: Instance | undefined) => {
@@ -136,7 +136,7 @@ const plugin: NapGramPlugin = {
             ensureAutomationService(instance);
         };
 
-        Instance.instances.forEach(instance => {
+        Instance.instances.forEach((instance: any) => {
             ensureAutomationService(instance);
         });
 

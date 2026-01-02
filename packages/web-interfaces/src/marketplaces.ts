@@ -4,13 +4,17 @@ import process from 'node:process'
 import { z } from 'zod'
 import {
   ApiResponse,
+} from '@napgram/infra-kit'
+
+import {
   readMarketplaceCache,
   readMarketplaces,
   refreshMarketplaceIndex,
   removeMarketplaceIndex,
   upsertMarketplaceIndex,
   writeMarketplaces,
-} from '@napgram/runtime-kit'
+  type MarketplaceIndexSpec,
+} from '@napgram/plugin-kit'
 
 /**
  * Marketplace (index) Admin API
@@ -29,7 +33,7 @@ export default async function (fastify: FastifyInstance) {
     if (direct && token && token === direct)
       return
 
-    const { authMiddleware } = await import('@napgram/runtime-kit')
+    const { authMiddleware } = await import('@napgram/auth-kit')
     await authMiddleware(request, reply)
   }
 
@@ -108,7 +112,7 @@ export default async function (fastify: FastifyInstance) {
 
     try {
       const { config } = await readMarketplaces()
-      const targets = body.data.id ? config.indexes.filter(i => i.id === body.data.id) : config.indexes
+      const targets = body.data.id ? config.indexes.filter((i: MarketplaceIndexSpec) => i.id === body.data.id) : config.indexes
       const results: any[] = []
       for (const idx of targets) {
         if (idx.enabled === false)

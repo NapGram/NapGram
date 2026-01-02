@@ -26,7 +26,7 @@ const plugin: NapGramPlugin = {
 
         const handleStatus = async (event: InstanceStatusEvent) => {
             if (event.status !== 'starting' && event.status !== 'running') return;
-            const instance = Instance.instances.find(i => i.id === event.instanceId);
+            const instance = Instance.instances.find((i: any) => i.id === event.instanceId);
             if (!instance) return;
             attach(instance);
         };
@@ -36,7 +36,7 @@ const plugin: NapGramPlugin = {
     },
 
     uninstall: async () => {
-        for (const instance of Instance.instances) {
+        for (const instance of Instance.instances as any[]) {
             if (!createdInstances.has(instance.id)) continue;
             if (instance.commandsFeature) {
                 instance.commandsFeature.destroy?.();

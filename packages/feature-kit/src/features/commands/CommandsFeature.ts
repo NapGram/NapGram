@@ -1,14 +1,14 @@
 import type { Message } from '@mtcute/core'
-import type { UnifiedMessage } from '../../../../../main/src/domain/message'
-import type ForwardMap from '../../../../../main/src/domain/models/ForwardMap'
-import type Instance from '../../../../../main/src/domain/models/Instance'
-import type { IQQClient } from '../../../../../main/src/infrastructure/clients/qq'
-import type Telegram from '../../../../../main/src/infrastructure/clients/telegram/client'
+import type { UnifiedMessage } from '@napgram/message-kit'
+import type { ForwardMap } from '../../shared-types'
+import type { Instance } from '../../shared-types'
+import type { IQQClient } from '../../shared-types'
+import type { Telegram } from '../../shared-types'
 import type { Command } from './services/CommandRegistry'
 import { md } from '@mtcute/markdown-parser'
-import { messageConverter } from '../../../../../main/src/domain/message/converter'
-import { getEventPublisher } from '../../../../../main/src/plugins/core/event-publisher'
-import { getLogger } from '../../../../../main/src/shared/logger'
+import { messageConverter } from '@napgram/message-kit'
+import { getEventPublisher } from '../../shared-types'
+import { getLogger } from '@napgram/infra-kit'
 import { BindCommandHandler } from './handlers/BindCommandHandler'
 import { CommandContext } from './handlers/CommandContext'
 import { ForwardControlCommandHandler } from './handlers/ForwardControlCommandHandler'
@@ -229,7 +229,7 @@ export class CommandsFeature {
 
     try {
       // 动态导入 plugin runtime（避免循环依赖，ESM 兼容）
-      const { getGlobalRuntime } = await import('../../../../../main/src/plugins/runtime.js')
+      const { getGlobalRuntime } = await import('@napgram/plugin-kit')
       const runtime = getGlobalRuntime()
 
       if (!runtime) {
@@ -365,6 +365,7 @@ export class CommandsFeature {
           const chatId = msg.chat.id
           await commandContext.replyQQ(chatId, text)
         }
+        return { messageId: `qq:${msg.id}`, timestamp: Date.now() }
       },
       send: async (content: string | any[]) => {
         // send 与 reply 相同（暂时没有独立的 send API）
@@ -378,6 +379,7 @@ export class CommandsFeature {
           const chatId = msg.chat.id
           await commandContext.replyQQ(chatId, text)
         }
+        return { messageId: `qq:${msg.id}`, timestamp: Date.now() }
       },
       recall: async () => {
         // recall 功能暂不实现
@@ -618,6 +620,7 @@ export class CommandsFeature {
         }
 
         eventPublisher.publishMessage({
+          eventId: `tg:cmd:${tgMsg.id}`,
           instanceId: this.instance.id,
           platform: 'tg',
           channelId: String(tgMsg.chat.id),
@@ -641,7 +644,7 @@ export class CommandsFeature {
             if (threadId)
               params.messageThreadId = threadId
             const sent = await chat.sendMessage(textContent, params)
-            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}` }
+            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           send: async (content) => {
             const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
@@ -650,7 +653,7 @@ export class CommandsFeature {
             if (threadId)
               params.messageThreadId = threadId
             const sent = await chat.sendMessage(textContent, params)
-            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}` }
+            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           recall: async () => {
             const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))

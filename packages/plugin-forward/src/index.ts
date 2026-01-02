@@ -16,18 +16,24 @@ const plugin: NapGramPlugin = {
         ctx.logger.info('Forward feature plugin installed');
 
         const attach = (instance: any) => {
-            if (!instance || !instance.qqClient || !instance.tgBot || !instance.forwardPairs) return;
+            if (!instance || !instance.qqClient || !instance.tgBot) return;
             if (instance.forwardFeature) return;
+            ctx.logger.debug(`Attempting to attach ForwardFeature to instance ${instance.id}`);
             const media = instance.mediaFeature;
             const commands = instance.commandsFeature;
             instance.forwardFeature = new ForwardFeature(instance, instance.tgBot, instance.qqClient, media, commands);
             instance.featureManager?.registerFeature?.('forward', instance.forwardFeature);
+            ctx.logger.info(`ForwardFeature attached to instance ${instance.id}`);
         };
 
         const handleStatus = async (event: InstanceStatusEvent) => {
+            ctx.logger.debug(`Received instance-status event: ${event.status} for instance ${event.instanceId}`);
             if (event.status !== 'starting' && event.status !== 'running') return;
-            const instance = Instance.instances.find(i => i.id === event.instanceId);
-            if (!instance) return;
+            const instance = Instance.instances.find((i: any) => i.id === event.instanceId);
+            if (!instance) {
+                ctx.logger.warn(`Instance ${event.instanceId} not found in registry during handleStatus`);
+                return;
+            }
             attach(instance);
         };
 
@@ -36,7 +42,7 @@ const plugin: NapGramPlugin = {
     },
 
     uninstall: async () => {
-        for (const instance of Instance.instances) {
+        for (const instance of Instance.instances as any[]) {
             if (instance.forwardFeature) {
                 instance.forwardFeature.destroy?.();
                 instance.forwardFeature = undefined;

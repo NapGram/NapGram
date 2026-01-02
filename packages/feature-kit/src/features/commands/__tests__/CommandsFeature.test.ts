@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-// import { CommandsFeature } from '../CommandsFeature' -> Removed
+import { db, env } from '@napgram/infra-kit'
 
 // Mock dependencies
 vi.mock('../services/CommandRegistry', () => {
@@ -52,7 +52,7 @@ vi.mock('../handlers/CommandContext', () => {
         extractThreadId: vi.fn().mockReturnValue(undefined),
         replyTG: vi.fn().mockResolvedValue({}),
         replyQQ: vi.fn().mockResolvedValue({}),
-        replenish: vi.fn().mockImplementation(msg => msg),
+        replenish: vi.fn().mockImplementation((msg: any) => msg),
       }
     }),
   }
@@ -96,8 +96,7 @@ vi.mock('../handlers/ForwardControlCommandHandler', () => ({
   }),
 }))
 
-vi.mock('../../../../../../main/src/domain/message/converter.ts', () => {
-  console.log('DEBUG: messageConverter mock factory called')
+vi.mock('@napgram/message-kit', () => {
   return {
     messageConverter: {
       fromTelegram: vi.fn().mockReturnValue({
@@ -111,9 +110,14 @@ vi.mock('../../../../../../main/src/domain/message/converter.ts', () => {
   }
 })
 
-vi.mock('../../../../../../main/src/plugins/core/event-publisher', () => ({
+vi.mock('@napgram/plugin-kit', () => ({
   getEventPublisher: vi.fn().mockReturnValue({
     publishMessage: vi.fn(),
+    eventBus: {},
+    publishFriendRequest: vi.fn(),
+    publishGroupRequest: vi.fn(),
+    publishNotice: vi.fn(),
+    publishInstanceStatus: vi.fn(),
   }),
 }))
 
@@ -125,11 +129,23 @@ vi.mock('../services/ThreadIdExtractor', () => ({
   }),
 }))
 
-vi.mock('../../../../../../main/src/plugins/runtime.js', () => ({
-  getGlobalRuntime: vi.fn().mockReturnValue({
-    getLastReport: vi.fn().mockReturnValue({ loadedPlugins: [] }),
-  }),
-}))
+vi.mock('@napgram/plugin-kit', async (importOriginal: () => Promise<any>) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    getGlobalRuntime: vi.fn().mockReturnValue({
+      getLastReport: vi.fn().mockReturnValue({ loadedPlugins: [] }),
+    }),
+    getEventPublisher: vi.fn().mockReturnValue({
+      publishMessage: vi.fn(),
+      eventBus: {},
+      publishFriendRequest: vi.fn(),
+      publishGroupRequest: vi.fn(),
+      publishNotice: vi.fn(),
+      publishInstanceStatus: vi.fn(),
+    }),
+  }
+})
 
 const { mockLogger } = vi.hoisted(() => ({
   mockLogger: {
@@ -140,8 +156,25 @@ const { mockLogger } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../../../../../../main/src/shared/logger', () => ({
-  getLogger: vi.fn(() => mockLogger),
+vi.mock('@napgram/infra-kit', () => ({
+  db: {
+    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    qQRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
+    $queryRaw: vi.fn()
+  },
+  env: {
+    ENABLE_AUTO_RECALL: true,
+    TG_MEDIA_TTL_SECONDS: undefined,
+    DATA_DIR: '/tmp',
+    CACHE_DIR: '/tmp/cache',
+    WEB_ENDPOINT: 'http://napgram-dev:8080'
+  },
+  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  getLogger: vi.fn(() => mockLogger), // Use hoisted mockLogger
+  configureInfraKit: vi.fn(),
+  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
 describe('commandsFeature', () => {
@@ -154,118 +187,6 @@ describe('commandsFeature', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     vi.resetModules() // Important to reload modules
-
-    // Mock dependencies
-    vi.doMock('../services/CommandRegistry', () => {
-      return {
-        CommandRegistry: vi.fn(function CommandRegistryMock() {
-          return {
-            register: vi.fn(),
-            unregister: vi.fn(),
-            getCommand: vi.fn(),
-            get: vi.fn(),
-            clear: vi.fn(),
-            getAll: vi.fn().mockReturnValue(new Map()),
-            getUniqueCommandCount: vi.fn().mockReturnValue(0),
-            prefix: '/',
-          }
-        }),
-      }
-    })
-
-    vi.doMock('../services/PermissionChecker', () => {
-      return {
-        PermissionChecker: vi.fn(function PermissionCheckerMock() {
-          return {
-            check: vi.fn().mockReturnValue(true),
-            isAdmin: vi.fn().mockReturnValue(true),
-          }
-        }),
-      }
-    })
-
-    vi.doMock('../services/InteractiveStateManager', () => {
-      return {
-        InteractiveStateManager: vi.fn(function InteractiveStateManagerMock() {
-          return {
-            get: vi.fn(),
-            set: vi.fn(),
-            delete: vi.fn(),
-            getBindingState: vi.fn(),
-            isTimeout: vi.fn(),
-            deleteBindingState: vi.fn(),
-          }
-        }),
-      }
-    })
-
-    vi.doMock('../handlers/CommandContext', () => {
-      return {
-        CommandContext: vi.fn(function CommandContextMock() {
-          return {
-            extractThreadId: vi.fn().mockReturnValue(undefined),
-            replyTG: vi.fn().mockResolvedValue({}),
-            replyQQ: vi.fn().mockResolvedValue({}),
-            replenish: vi.fn().mockImplementation(msg => msg),
-          }
-        }),
-      }
-    })
-
-    // Mock all handlers
-    const mockHandler = { execute: vi.fn() }
-    const handlerMock = vi.fn(function CommandHandlerMock() {
-      return mockHandler
-    })
-    vi.doMock('../handlers/InfoCommandHandler', () => ({
-      InfoCommandHandler: handlerMock,
-    }))
-    vi.doMock('../handlers/HelpCommandHandler', () => ({
-      HelpCommandHandler: handlerMock,
-    }))
-    vi.doMock('../handlers/StatusCommandHandler', () => ({
-      StatusCommandHandler: handlerMock,
-    }))
-    vi.doMock('../handlers/BindCommandHandler', () => ({
-      BindCommandHandler: handlerMock,
-    }))
-    vi.doMock('../handlers/UnbindCommandHandler', () => ({
-      UnbindCommandHandler: handlerMock,
-    }))
-    vi.doMock('../handlers/RecallCommandHandler', () => ({
-      RecallCommandHandler: handlerMock,
-    }))
-    vi.doMock('../handlers/ForwardControlCommandHandler', () => ({
-      ForwardControlCommandHandler: handlerMock,
-    }))
-
-    vi.doMock('../../../../../../main/src/domain/message/converter', () => {
-      return {
-        messageConverter: {
-          fromTelegram: vi.fn().mockReturnValue({
-            metadata: {},
-            sender: { userId: 'tg:u:456', userName: 'User', name: 'User' },
-            text: '/help',
-            content: [{ type: 'text', data: { text: '/help' } }],
-          }),
-          fromQQ: vi.fn().mockReturnValue({}),
-        },
-      }
-    })
-
-    vi.doMock('../../../../../../main/src/plugins/core/event-publisher', () => ({
-      getEventPublisher: vi.fn().mockReturnValue({
-        publishMessage: vi.fn(),
-      }),
-    }))
-
-    vi.doMock('../services/ThreadIdExtractor', () => ({
-      ThreadIdExtractor: vi.fn(function ThreadIdExtractorMock() {
-        return {
-          extractFromRaw: vi.fn().mockReturnValue(undefined),
-        }
-      }),
-    }))
 
     // Import module under test dynamically
     const mod = await import('../CommandsFeature')
@@ -301,13 +222,13 @@ describe('commandsFeature', () => {
 
   it('check for initialization errors', async () => {
     await new Promise(resolve => setTimeout(resolve, 500))
-    const logger = (await import('../../../../../../main/src/shared/logger')).getLogger('CommandsFeature')
+    const logger = (await import('@napgram/infra-kit')).getLogger('CommandsFeature')
     expect(logger.error).not.toHaveBeenCalled()
   })
 
   it('reloads commands', async () => {
     const registry = (commandsFeature as any).registry
-            ; (commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
+      ; (commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
     await commandsFeature.reloadCommands()
     expect(registry.clear).toHaveBeenCalled()
     expect(registry.register).toHaveBeenCalled()
@@ -421,11 +342,19 @@ describe('commandsFeature', () => {
       registry.prefix = '/'
 
       let capturedEvent: any
-      const publishMessage = vi.fn((event) => {
+      const publishMessage = vi.fn((event: any) => {
         capturedEvent = event
       })
-      const eventPublisherModule = await import('../../../../../../main/src/plugins/core/event-publisher')
-      vi.mocked(eventPublisherModule.getEventPublisher).mockReturnValue({ publishMessage })
+
+      const { getEventPublisher } = await import('@napgram/plugin-kit')
+      vi.mocked(getEventPublisher).mockReturnValue({
+        publishMessage,
+        eventBus: {},
+        publishFriendRequest: vi.fn(),
+        publishGroupRequest: vi.fn(),
+        publishNotice: vi.fn(),
+        publishInstanceStatus: vi.fn(),
+      } as any)
 
       const sendMessage = vi.fn().mockResolvedValue({ id: 321 })
       const deleteMessages = vi.fn().mockResolvedValue(undefined)
@@ -472,8 +401,16 @@ describe('commandsFeature', () => {
       const publishMessage = vi.fn(() => {
         throw new Error('boom')
       })
-      const eventPublisherModule = await import('../../../../../../main/src/plugins/core/event-publisher')
-      vi.mocked(eventPublisherModule.getEventPublisher).mockReturnValue({ publishMessage })
+
+      const { getEventPublisher } = await import('@napgram/plugin-kit')
+      vi.mocked(getEventPublisher).mockReturnValue({
+        publishMessage,
+        eventBus: {},
+        publishFriendRequest: vi.fn(),
+        publishGroupRequest: vi.fn(),
+        publishNotice: vi.fn(),
+        publishInstanceStatus: vi.fn(),
+      } as any)
 
       const result = await handler({
         id: 99999,

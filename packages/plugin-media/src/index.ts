@@ -23,7 +23,7 @@ const plugin: NapGramPlugin = {
 
         const handleStatus = async (event: InstanceStatusEvent) => {
             if (event.status !== 'starting' && event.status !== 'running') return;
-            const instance = Instance.instances.find(i => i.id === event.instanceId);
+            const instance = Instance.instances.find((i: any) => i.id === event.instanceId);
             if (!instance) return;
             attach(instance);
         };

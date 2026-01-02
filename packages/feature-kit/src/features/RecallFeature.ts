@@ -1,10 +1,10 @@
-import type { RecallEvent } from '../../../../main/src/domain/message'
-import type Instance from '../../../../main/src/domain/models/Instance'
-import type { IQQClient } from '../../../../main/src/infrastructure/clients/qq'
-import type Telegram from '../../../../main/src/infrastructure/clients/telegram/client'
-import db from '../../../../main/src/domain/models/db'
-import env from '../../../../main/src/domain/models/env'
-import { getLogger } from '../../../../main/src/shared/logger'
+import type { RecallEvent } from '@napgram/message-kit'
+import type { Instance } from '../shared-types'
+import type { IQQClient } from '../shared-types'
+import type { Telegram } from '../shared-types'
+import { db } from '@napgram/infra-kit'
+import { env } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('RecallFeature')
 

@@ -1,5 +1,5 @@
-import type Instance from '../../../../../../main/src/domain/models/Instance'
-import env from '../../../../../../main/src/domain/models/env'
+import type { Instance } from '../../../shared-types'
+import { env } from '@napgram/infra-kit'
 
 /**
  * 权限检查服务
@@ -17,7 +17,7 @@ export class PermissionService {
     const envAdminQQ = env.ADMIN_QQ ? String(env.ADMIN_QQ) : null
     const envAdminTG = env.ADMIN_TG ? String(env.ADMIN_TG) : null
     return userId === String(this.instance.owner)
-      || (envAdminQQ && userId === envAdminQQ)
-      || (envAdminTG && userId === envAdminTG)
+      || (envAdminQQ !== null && userId === envAdminQQ)
+      || (envAdminTG !== null && userId === envAdminTG)
   }
 }

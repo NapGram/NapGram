@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getEventPublisher } from '../../../plugins/core/event-publisher'
+import { getEventPublisher } from '@napgram/plugin-kit'
 import Instance from '../Instance'
 
 const envMock = vi.hoisted(() => ({
@@ -70,23 +70,22 @@ const qqMocks = vi.hoisted(() => {
   return { handlers, client, factory }
 })
 
-vi.mock('../env', () => ({
-  default: envMock,
-}))
-
-vi.mock('../db', () => ({
-  default: dbMocks,
-}))
-
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  env: envMock,
+  db: dbMocks,
   getLogger: vi.fn(() => loggerMocks),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
 }))
 
 vi.mock('../sentry', () => ({
   default: sentryMocks,
 }))
 
-vi.mock('../../../plugins/core/event-publisher', () => ({
+vi.mock('@napgram/plugin-kit', () => ({
   getEventPublisher: vi.fn(() => eventPublisherMocks),
 }))
 
@@ -363,7 +362,7 @@ describe('instance', () => {
 
       // Set to undefined
       ; (qqMocks.client as any).handleFriendRequest = undefined
-    ; (qqMocks.client as any).handleGroupRequest = undefined
+      ; (qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')

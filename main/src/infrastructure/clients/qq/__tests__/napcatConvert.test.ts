@@ -7,10 +7,12 @@ const { mockWarn } = vi.hoisted(() => {
   return { mockWarn: vi.fn() }
 })
 
-vi.mock('../../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
   getLogger: () => ({
     warn: mockWarn,
   }),
+  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
 }))
 
 describe('napCatForwardMultiple', () => {

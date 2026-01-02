@@ -1,5 +1,5 @@
 import type { Message } from '@mtcute/core'
-import type Instance from '../../../main/src/domain/models/Instance'
+import type { IInstance as Instance } from '@napgram/runtime-kit'
 import type { MessageContent, UnifiedMessage } from './types'
 import { Buffer } from 'node:buffer'
 import fsSync from 'node:fs'
@@ -7,9 +7,9 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileTypeFromBuffer } from 'file-type'
 import { decode, encode } from 'image-js'
-import { getLogger } from '../../../main/src/shared/logger'
-import convert from '../../../main/src/shared/utils/convert'
-import env from '../../../main/src/domain/models/env'
+import { getLogger, env } from '@napgram/infra-kit'
+import convert from '@napgram/runtime-kit'
+
 import { NapCatConverter } from './converters'
 
 const logger = getLogger('MessageConverter')

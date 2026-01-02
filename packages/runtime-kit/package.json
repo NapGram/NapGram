@@ -3,13 +3,18 @@
     "version": "1.0.0",
     "description": "Runtime exports for NapGram web interfaces",
     "main": "./dist/index.js",
-            "types": "./src/index.ts",
+    "types": "./src/index.ts",
     "type": "module",
     "exports": {
         ".": {
             "types": "./src/index.ts",
             "import": "./src/index.ts",
             "default": "./dist/index.js"
+        },
+        "./legacy": {
+            "types": "./src/legacy.ts",
+            "import": "./src/legacy.ts",
+            "default": "./dist/legacy.js"
         },
         "./package.json": "./package.json"
     },
@@ -23,6 +28,11 @@
     ],
     "author": "NapGram Team",
     "license": "MIT",
+    "dependencies": {
+        "@napgram/infra-kit": "workspace:*",
+        "@napgram/telegram-client": "workspace:*",
+        "yaml": "^2.8.2"
+    },
     "devDependencies": {
         "@types/node": "^25.0.3",
         "typescript": "^5.9.3"

@@ -30,7 +30,7 @@ packages.forEach((pkg) => {
   if (fs.existsSync(srcIndex) && fs.existsSync(pkgJsonPath)) {
     try {
       const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'))
-      workspaceAliases[pkgJson.name] = srcIndex
+      workspaceAliases[pkgJson.name] = path.join(packagesDir, pkg, 'src')
     }
     catch (e) {
       console.warn(`Failed to parse package.json for ${pkg}`, e)
