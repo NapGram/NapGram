@@ -1,19 +1,7 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/plugin-adapter-qq-napcat": [
-                "./src/index.ts"
-            ],
-            "@napgram/sdk": [
-                "../../external/sdk/packages/sdk/src/index.ts"
-            ],
-            "@napgram/qq-client": [
-                "../qq-client/src/index.ts"
-            ]
-        }
+        "outDir": "./dist"
     },
     "include": [
         "src/**/*"

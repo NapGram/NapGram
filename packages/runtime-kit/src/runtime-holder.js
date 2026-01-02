@@ -1,4 +1,27 @@
 let globalRuntime = null;
+const globalInstances = [];
+/**
+ * Registry for active instances.
+ */
+export const InstanceRegistry = {
+    add(instance) {
+        if (!globalInstances.find(i => i.id === instance.id)) {
+            globalInstances.push(instance);
+        }
+    },
+    remove(id) {
+        const index = globalInstances.findIndex(i => i.id === id);
+        if (index !== -1) {
+            globalInstances.splice(index, 1);
+        }
+    },
+    getAll() {
+        return globalInstances;
+    },
+    getById(id) {
+        return globalInstances.find(i => i.id === id);
+    }
+};
 /**
  * Set the global runtime instance.
  * Should be called by the host application (main) on startup.

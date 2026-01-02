@@ -3,7 +3,6 @@
     "compilerOptions": {
         "outDir": "./dist",
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
-        "baseUrl": "../../",
         "composite": true
     },
     "include": [

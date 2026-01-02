@@ -2,7 +2,6 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": "../../",
         "composite": true,
         "tsBuildInfoFile": "./dist/.tsbuildinfo",
         "jsx": "react",

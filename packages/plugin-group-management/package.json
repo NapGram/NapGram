@@ -2,14 +2,14 @@
     "name": "@napgram/plugin-group-management",
     "version": "0.1.4",
     "description": "NapGram group management plugin: ban/kick/admin/title",
-    "main": "./dist/index.js",
-    "types": "./src/index.ts",
+    "main": "./src/index.ts",
+    "types": "./dist/src/index.d.ts",
     "type": "module",
     "exports": {
         ".": {
-            "types": "./src/index.ts",
+            "types": "./dist/src/index.d.ts",
             "import": "./src/index.ts",
-            "default": "./dist/index.js"
+            "default": "./src/index.ts"
         },
         "./package.json": "./package.json"
     },
@@ -29,5 +29,17 @@
         "@napgram/sdk": "workspace:*",
         "@types/node": "25.0.3",
         "typescript": "5.9.3"
+    },
+    "publishConfig": {
+        "main": "./dist/src/index.js",
+        "types": "./dist/src/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/src/index.d.ts",
+                "import": "./dist/src/index.js",
+                "default": "./dist/src/index.js"
+            },
+            "./package.json": "./package.json"
+        }
     }
 }

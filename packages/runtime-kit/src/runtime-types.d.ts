@@ -66,4 +66,6 @@ export interface IInstance {
     tgBot: any;
     qqClient?: any;
     forwardPairs: any;
+    owner: number;
+    flags: number;
 }

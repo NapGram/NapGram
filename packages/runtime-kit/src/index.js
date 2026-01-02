@@ -7,7 +7,11 @@
 export { env, getLogger, db, temp } from '@napgram/infra-kit';
 // New Runtime Abstraction
 export * from './runtime-types';
+export * from './config-store';
 export * from './runtime-holder';
+export { InstanceRegistry } from './runtime-holder';
+export { PermissionChecker } from './permission-checker';
+export { Instance } from './legacy';
 // Re-exports of key store utilities that are safe to use
 // (We might want to move these fully to runtime-kit later)
 export { ApiResponse } from '@napgram/infra-kit';
