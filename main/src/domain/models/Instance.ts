@@ -264,8 +264,8 @@ export default class Instance {
       }
 
       // 监听掉线/恢复事件，交给插件侧处理通知
-      this.qqClient.on('connection:lost', async (event: any) => {
-        this.log.warn('NapCat connection lost:', event)
+      this.qqClient.on('offline', async (event: any) => {
+        this.log.warn('NapCat connection offline (disconnect):', event)
         this.isSetup = false
         try {
           getEventPublisher().publishNotice({
@@ -281,8 +281,8 @@ export default class Instance {
         }
       })
 
-      this.qqClient.on('connection:restored', async (event: any) => {
-        this.log.info('NapCat connection restored:', event)
+      this.qqClient.on('online', async (event: any) => {
+        this.log.info('NapCat connection online (connect):', event)
         this.isSetup = true
         try {
           getEventPublisher().publishNotice({
@@ -296,6 +296,15 @@ export default class Instance {
         catch (error) {
           this.log.warn('Failed to publish connection-restored notice:', error)
         }
+      })
+
+      // SDK 级别的永久连接丢失事件，我们也记录下来，但不重复发送 notice（插件会有去重和退避，但这里保持一致性）
+      this.qqClient.on('connection:lost', (event: any) => {
+        this.log.error('NapCat permanent connection lost!', event)
+      })
+
+      this.qqClient.on('connection:restored', (event: any) => {
+        this.log.info('NapCat permanent connection restored!', event)
       })
       // }
 
