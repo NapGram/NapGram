@@ -5,7 +5,8 @@ import { CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache } 
 import { MessageQueue } from './MessageQueue'
 import { performanceMonitor, PerformanceMonitor } from './PerformanceMonitor'
 import env from './env'
-import getLogger, { AppLogger, setConsoleLogLevel } from './logger'
+import getLogger, { setConsoleLogLevel } from './logger'
+import type { AppLogger } from './logger'
 import db from './db'
 import * as temp from './temp'
 
@@ -15,10 +16,11 @@ export {
   MessageQueue,
   performanceMonitor, PerformanceMonitor,
   env,
-  getLogger, AppLogger, setConsoleLogLevel,
+  getLogger, setConsoleLogLevel,
   db,
   temp
 }
+export type { AppLogger }
 
 // Default export for compatibility with tests using import kit from '@napgram/infra-kit'
 // and expecting kit.env, kit.db, etc.
