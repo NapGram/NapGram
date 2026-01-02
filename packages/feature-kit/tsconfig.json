@@ -12,12 +12,16 @@
             ]
         }
     },
-    "include": [
-        "src/**/*",
-        "../../main/src/domain/models/Instance.ts"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
+    "types": [
+        "vitest/globals"
     ]
+},
+"include": [
+    "src/**/*",
+    "../../main/src/domain/models/Instance.ts"
+],
+"exclude": [
+    "node_modules",
+    "dist"
+]
 }
