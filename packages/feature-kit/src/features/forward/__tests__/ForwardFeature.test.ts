@@ -86,9 +86,9 @@ function createFeature() {
   }
 
   const feature = new ForwardFeature(instance as any, tgBot as any, qqClient as any)
-  ;(feature as any).telegramSender = { sendToTelegram: vi.fn().mockResolvedValue({ id: 321 }) }
-  ;(feature as any).mapper = { saveMessage: vi.fn().mockResolvedValue(undefined) }
-  ;(feature as any).replyResolver = { resolveQQReply: vi.fn().mockResolvedValue(undefined) }
+    ; (feature as any).telegramSender = { sendToTelegram: vi.fn().mockResolvedValue({ id: 321 }) }
+    ; (feature as any).mapper = { saveMessage: vi.fn().mockResolvedValue(undefined) }
+    ; (feature as any).replyResolver = { resolveQQReply: vi.fn().mockResolvedValue(undefined) }
 
   return { feature, forwardMap, tgBot, qqClient, instance }
 }
@@ -433,5 +433,22 @@ describe('forwardFeature', () => {
     await (feature as any).handleQQMessage(msg)
 
     expect((feature as any).telegramSender.sendToTelegram).not.toHaveBeenCalled()
+  })
+  it('deduplicates identical messages within time window', async () => {
+    const { feature, forwardMap } = createFeature()
+    forwardMap.findByQQ.mockReturnValue(createPair())
+
+    const msg = createMessage({
+      id: 'dup-1',
+      content: [{ type: 'text', data: { text: 'hello' } }],
+    })
+
+    // First call
+    await (feature as any).handleQQMessage(msg)
+    // Second call with same message ID
+    await (feature as any).handleQQMessage(msg)
+
+    // Should only forward once
+    expect((feature as any).telegramSender.sendToTelegram).toHaveBeenCalledTimes(1)
   })
 })
