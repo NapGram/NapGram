@@ -11,6 +11,11 @@
             "import": "./src/index.ts",
             "default": "./dist/index.js"
         },
+        "./legacy": {
+            "types": "./src/legacy.ts",
+            "import": "./src/legacy.ts",
+            "default": "./dist/legacy.js"
+        },
         "./package.json": "./package.json"
     },
     "scripts": {
@@ -24,7 +29,9 @@
     "author": "NapGram Team",
     "license": "MIT",
     "dependencies": {
-        "@napgram/infra-kit": "workspace:*"
+        "@napgram/infra-kit": "workspace:*",
+        "@napgram/telegram-client": "workspace:*",
+        "yaml": "^2.8.2"
     },
     "devDependencies": {
         "@types/node": "^25.0.3",

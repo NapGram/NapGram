@@ -2,12 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/infra-kit": [
-                "./src/index.ts"
-            ]
-        }
+        "baseUrl": "../../",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
         "src/**/*"
@@ -15,5 +12,13 @@
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../qq-client"
+        },
+        {
+            "path": "../telegram-client"
+        }
     ]
 }

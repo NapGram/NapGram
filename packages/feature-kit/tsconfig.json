@@ -2,25 +2,41 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/feature-kit": [
-                "./src/index.ts"
-            ],
-            "@napgram/message-kit": [
-                "../message-kit/src/index.ts"
-            ]
-        },
-        "types": [
-            "vitest/globals"
-        ]
+        "baseUrl": "../../",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
-        "src/**/*",
-        "../../main/src/domain/models/Instance.ts"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../infra-kit"
+        },
+        {
+            "path": "../runtime-kit"
+        },
+        {
+            "path": "../plugin-kit"
+        },
+        {
+            "path": "../message-kit"
+        },
+        {
+            "path": "../media-kit"
+        },
+        {
+            "path": "../auth-kit"
+        },
+        {
+            "path": "../qq-client"
+        },
+        {
+            "path": "../telegram-client"
+        }
     ]
 }

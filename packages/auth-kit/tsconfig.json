@@ -2,16 +2,23 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+        "baseUrl": "../../",
         "paths": {
             "@napgram/auth-kit": [
-                "./src/index.ts"
+                "packages/auth-kit/src/index.ts"
             ],
             "@napgram/infra-kit": [
-                "../infra-kit/src/index.ts"
+                "packages/infra-kit/src/index.ts"
             ]
         }
     },
+    "references": [
+        {
+            "path": "../infra-kit"
+        }
+    ],
     "include": [
         "src/**/*"
     ],

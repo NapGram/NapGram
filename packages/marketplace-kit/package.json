@@ -27,7 +27,8 @@
     "dependencies": {
         "fflate": "^0.8.2",
         "yaml": "^2.8.2",
-        "@napgram/infra-kit": "workspace:*"
+        "@napgram/infra-kit": "workspace:*",
+        "@napgram/runtime-kit": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^25.0.3",

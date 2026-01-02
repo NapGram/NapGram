@@ -2,12 +2,7 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/request-kit": [
-                "./src/index.ts"
-            ]
-        }
+        "baseUrl": "../../"
     },
     "include": [
         "src/**/*"
