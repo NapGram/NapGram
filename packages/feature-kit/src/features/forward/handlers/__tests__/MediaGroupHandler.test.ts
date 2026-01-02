@@ -1,9 +1,9 @@
-import type { UnifiedMessage } from '../../../../../../../main/src/domain/message'
+import type { UnifiedMessage } from '@napgram/message-kit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { messageConverter } from '../../../../../../../main/src/domain/message'
+import { messageConverter } from '@napgram/message-kit'
 import { MediaGroupHandler } from '../MediaGroupHandler'
 
-vi.mock('../../../../../../../main/src/domain/message', () => ({
+vi.mock('@napgram/message-kit', () => ({
   messageConverter: {
     fromTelegram: vi.fn(),
     toNapCat: vi.fn(),

@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import env from '../../../../../../../main/src/domain/models/env'
+import { env } from '@napgram/infra-kit'
 import silk from '../../../../../../../main/src/shared/utils/encoding/silk'
 import { ForwardMediaPreparer } from '../MediaPreparer'
 

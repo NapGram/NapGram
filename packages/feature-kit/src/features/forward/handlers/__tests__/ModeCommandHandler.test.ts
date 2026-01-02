@@ -1,4 +1,4 @@
-import type { UnifiedMessage } from '../../../../../../../main/src/domain/message'
+import type { UnifiedMessage } from '@napgram/message-kit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ModeCommandHandler } from '../ModeCommandHandler'
 
