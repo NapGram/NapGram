@@ -264,16 +264,15 @@ export default class Instance {
       }
 
       // 监听掉线/恢复事件，交给插件侧处理通知
-      this.qqClient.on('offline', async (event: any) => {
-        this.log.warn('NapCat connection offline (disconnect):', event)
+      this.qqClient.on('offline', async () => {
+        this.log.warn('NapCat connection offline (disconnect)')
         this.isSetup = false
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,
             platform: 'qq',
             noticeType: 'connection-lost',
-            timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
-            raw: event,
+            timestamp: Date.now(),
           })
         }
         catch (error) {
@@ -281,16 +280,15 @@ export default class Instance {
         }
       })
 
-      this.qqClient.on('online', async (event: any) => {
-        this.log.info('NapCat connection online (connect):', event)
+      this.qqClient.on('online', async () => {
+        this.log.info('NapCat connection online (connect)')
         this.isSetup = true
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,
             platform: 'qq',
             noticeType: 'connection-restored',
-            timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
-            raw: event,
+            timestamp: Date.now(),
           })
         }
         catch (error) {
