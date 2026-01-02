@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process'
 import fsP from 'node:fs/promises'
 import { promisify } from 'node:util'
 import { decode, encode } from 'silk-wasm'
-import { file } from '../../../../main/src/shared/utils/temp'
+import { temp } from '@napgram/infra-kit'
 
 const execFileAsync = promisify(execFile)
 async function runFfmpeg(args: string[]) {
@@ -39,7 +39,7 @@ export default {
     const bufPcm = Buffer.from(result.data)
 
     // 写入临时 PCM 文件
-    const { path, cleanup } = await file()
+    const { path, cleanup } = await temp.file()
     await fsP.writeFile(path, bufPcm)
 
     // 使用 ffmpeg 将 PCM 转为 OGG
@@ -55,7 +55,7 @@ export default {
    * 编码音频文件为 SILK Buffer
    */
   async encode(filePath: string): Promise<Buffer> {
-    const { path: pcmPath, cleanup } = await file()
+    const { path: pcmPath, cleanup } = await temp.file()
 
     try {
       // 1. 转为 PCM

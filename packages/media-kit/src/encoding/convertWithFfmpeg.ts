@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process'
 import fsP from 'node:fs/promises'
 import { promisify } from 'node:util'
-import { getLogger } from '../../../../main/src/shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('convertWithFfmpeg')
 const execFileAsync = promisify(execFile)

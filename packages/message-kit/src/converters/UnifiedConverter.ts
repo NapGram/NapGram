@@ -3,7 +3,7 @@ import { Buffer } from 'node:buffer'
 import fsSync from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import env from '../../../../main/src/domain/models/env'
+import { env } from '@napgram/infra-kit'
 import { BaseConverter } from './BaseConverter'
 
 export class UnifiedConverter extends BaseConverter {

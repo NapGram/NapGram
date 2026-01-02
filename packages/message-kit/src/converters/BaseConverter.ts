@@ -1,4 +1,4 @@
-import { getLogger } from '../../../../main/src/shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 export abstract class BaseConverter {
   protected logger = getLogger(this.constructor.name)

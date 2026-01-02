@@ -2,8 +2,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import YAML from 'yaml'
-import env from '../../../main/src/domain/models/env'
-import { getLogger } from '../../../main/src/shared/logger'
+import { env } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('MarketplacesConfig')
 const legacyConfigExtensions = ['.yaml', '.yml', '.json'] as const
