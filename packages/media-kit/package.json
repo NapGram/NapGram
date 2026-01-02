@@ -31,8 +31,8 @@
         "silk-wasm": "^3.7.1"
     },
     "devDependencies": {
-        "@types/node": "^25.0.3",
-        "typescript": "^5.9.3",
-        "vitest": "^4.0.16"
+        "@types/node": "25.0.3",
+        "typescript": "5.9.3",
+        "vitest": "4.0.16"
     }
 }

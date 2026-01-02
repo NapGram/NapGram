@@ -34,7 +34,7 @@
         "yaml": "^2.8.2"
     },
     "devDependencies": {
-        "@types/node": "^25.0.3",
-        "typescript": "^5.9.3"
+        "@types/node": "25.0.3",
+        "typescript": "5.9.3"
     }
 }

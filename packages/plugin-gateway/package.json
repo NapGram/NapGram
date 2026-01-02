@@ -25,9 +25,9 @@
     "author": "NapGram Team",
     "license": "MIT",
     "devDependencies": {
-        "@types/node": "^25.0.3",
-        "typescript": "^5.9.3",
+        "@napgram/gateway-kit": "workspace:*",
         "@napgram/sdk": "workspace:*",
-        "@napgram/gateway-kit": "workspace:*"
+        "@types/node": "25.0.3",
+        "typescript": "5.9.3"
     }
 }

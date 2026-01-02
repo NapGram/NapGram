@@ -29,8 +29,8 @@
         "@napgram/qq-client": "workspace:*"
     },
     "devDependencies": {
-        "@types/node": "^25.0.3",
-        "typescript": "^5.9.3",
-        "@napgram/sdk": "workspace:*"
+        "@napgram/sdk": "workspace:*",
+        "@types/node": "25.0.3",
+        "typescript": "5.9.3"
     }
 }
