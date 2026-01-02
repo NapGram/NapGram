@@ -105,6 +105,8 @@ describe('performanceMonitor', () => {
     const updateSpy = vi.spyOn(monitor, 'updateMemoryUsage')
     const printSpy = vi.spyOn(monitor, 'printStats')
 
+    module.startMonitoring()
+
     await vi.advanceTimersByTimeAsync(300000)
 
     expect(updateSpy).toHaveBeenCalled()

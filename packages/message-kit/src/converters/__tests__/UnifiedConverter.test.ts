@@ -59,6 +59,14 @@ vi.mock('@napgram/infra-kit', () => ({
     error: vi.fn(),
     debug: vi.fn(),
   })),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
+  hashing: {
+    md5Hex: vi.fn((s) => 'hashed-' + s),
+  },
 }))
 
 describe('unifiedConverter', () => {

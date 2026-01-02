@@ -1,6 +1,8 @@
 import type { Message } from '@mtcute/core'
 import type { IInstance as Instance } from '@napgram/runtime-kit'
 import type { MessageContent, UnifiedMessage } from './types'
+export type { UnifiedMessage }
+
 import { Buffer } from 'node:buffer'
 import fsSync from 'node:fs'
 import fs from 'node:fs/promises'

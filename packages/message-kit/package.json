@@ -15,7 +15,9 @@
     },
     "scripts": {
         "build": "tsc -p tsconfig.json",
-        "dev": "tsc -p tsconfig.json --watch"
+        "dev": "tsc -p tsconfig.json --watch",
+        "test": "vitest",
+        "test:coverage": "vitest --coverage"
     },
     "keywords": [
         "napgram",
@@ -34,6 +36,8 @@
     },
     "devDependencies": {
         "@types/node": "25.0.3",
-        "typescript": "5.9.3"
+        "@vitest/coverage-v8": "4.0.16",
+        "typescript": "5.9.3",
+        "vitest": "4.0.16"
     }
 }

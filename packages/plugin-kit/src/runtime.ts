@@ -81,6 +81,9 @@ export class PluginRuntimeAPI implements IPluginRuntime {
       if (options?.builtins) {
         this.builtins = options.builtins
       }
+      if (options?.webRoutes) {
+        this.webRoutes = options.webRoutes
+      }
       this.configureApis()
       // 加载插件规范
       const specs = await loadPluginSpecs(this.builtins)

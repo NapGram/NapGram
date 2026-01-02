@@ -133,7 +133,13 @@ export class PerformanceMonitor {
 
 export const performanceMonitor = new PerformanceMonitor()
 
-setInterval(() => {
-  performanceMonitor.updateMemoryUsage()
-  performanceMonitor.printStats()
-}, 300000)
+export const startMonitoring = () => {
+  setInterval(() => {
+    performanceMonitor.updateMemoryUsage()
+    performanceMonitor.printStats()
+  }, 300000)
+}
+
+if (process.env.NODE_ENV !== 'test') {
+  startMonitoring()
+}

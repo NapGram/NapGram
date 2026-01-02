@@ -10,7 +10,7 @@ import { CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache } 
 export type { CacheConfig } from './CacheManager'
 import { MessageQueue } from './MessageQueue'
 export type { MessageHandler, QueueConfig } from './MessageQueue'
-import { performanceMonitor, PerformanceMonitor } from './PerformanceMonitor'
+import { performanceMonitor, PerformanceMonitor, startMonitoring } from './PerformanceMonitor'
 export type { PerformanceMetrics, PerformanceStats } from './PerformanceMonitor'
 import env from './env'
 import getLogger, { setConsoleLogLevel } from './logger'
@@ -41,7 +41,7 @@ export const { TEMP_PATH } = temp
 export {
   CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache,
   MessageQueue,
-  performanceMonitor, PerformanceMonitor,
+  performanceMonitor, PerformanceMonitor, startMonitoring,
   env,
   getLogger, setConsoleLogLevel,
   db,

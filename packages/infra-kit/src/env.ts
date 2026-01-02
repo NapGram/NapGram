@@ -1,8 +1,24 @@
+import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import z from 'zod'
 
+const detectDefaultUiPath = () => {
+    // Try to find web/dist relative to CWD (usually main/)
+    const devPath = path.resolve('../web/dist')
+    if (fs.existsSync(devPath) && fs.existsSync(path.join(devPath, 'index.html'))) {
+        return devPath
+    }
+    return undefined
+}
+
+const processUiPath = (value: unknown) => {
+    const val = value === '' ? undefined : value
+    return val ?? detectDefaultUiPath()
+}
+
 const emptyStringToUndefined = (value: unknown) => (value === '' ? undefined : value)
+
 
 // 在测试环境下填充必要的占位符，避免 zod 校验直接退出
 if (process.env.NODE_ENV === 'test') {
@@ -35,7 +51,7 @@ const configParsed = z.object({
     TG_BOT_TOKEN: z.string(),
     TG_CONNECTION: z.enum(['websocket', 'tcp']).default('tcp'),
     TG_INITIAL_DCID: z.preprocess(emptyStringToUndefined, z.string().regex(/^\d+$/).transform(Number).optional()),
-    TG_INITIAL_SERVER: z.preprocess(emptyStringToUndefined, z.string().ip().optional()),
+    TG_INITIAL_SERVER: z.preprocess(emptyStringToUndefined, z.string().optional()),
     TG_USE_TEST_DC: z.string().default('false').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
     // Telegram 媒体自毁（view-once/TTL），单位秒；不设置或 <=0 表示禁用
     TG_MEDIA_TTL_SECONDS: z.string().regex(/^\d+$/).transform(Number).optional(),
@@ -43,7 +59,7 @@ const configParsed = z.object({
     ADMIN_QQ: z.preprocess(emptyStringToUndefined, z.string().regex(/^\d+$/).transform(Number).optional()),
     ADMIN_TG: z.preprocess(emptyStringToUndefined, z.string().regex(/^-?\d+$/).transform(Number).optional()),
 
-    PROXY_IP: z.preprocess(emptyStringToUndefined, z.string().ip().optional()),
+    PROXY_IP: z.preprocess(emptyStringToUndefined, z.string().optional()),
     PROXY_PORT: z.preprocess(emptyStringToUndefined, z.string().regex(/^\d+$/).transform(Number).optional()),
     PROXY_USERNAME: z.preprocess(emptyStringToUndefined, z.string().optional()),
     PROXY_PASSWORD: z.preprocess(emptyStringToUndefined, z.string().optional()),
@@ -57,7 +73,7 @@ const configParsed = z.object({
     LISTEN_PORT: z.string().regex(/^\d+$/).default('8080').transform(Number),
 
     ADMIN_TOKEN: z.preprocess(emptyStringToUndefined, z.string().optional()),
-    UI_PATH: z.preprocess(emptyStringToUndefined, z.string().optional()),
+    UI_PATH: z.preprocess(processUiPath, z.string().optional()),
     UI_PROXY: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
     WEB_ENDPOINT: z.preprocess(emptyStringToUndefined, z.string().url().optional()),
     RICH_HEADER_VERSION: z.preprocess(emptyStringToUndefined, z.string().optional()),

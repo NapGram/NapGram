@@ -108,6 +108,9 @@ export default class Instance {
       await this.qqClient.login()
       this.log.info('NapCat 客户端 ✓ 初始化完成')
 
+      // 仅 NapCat 链路，使用轻量转发表
+      this.forwardPairs = await ForwardMap.load(this.id)
+
       // 插件系统：桥接 QQ 侧事件到插件 EventBus
       try {
         const eventPublisher = getEventPublisher()
@@ -245,8 +248,7 @@ export default class Instance {
         this.log.warn('Plugin event bridge init failed:', error)
       }
 
-      // 仅 NapCat 链路，使用轻量转发表
-      this.forwardPairs = await ForwardMap.load(this.id)
+
 
       // 初始化新架构的功能管理器
       // if (this.qqClient) { // Redundant check, login() succeeded above

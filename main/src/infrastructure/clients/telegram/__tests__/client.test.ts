@@ -92,7 +92,13 @@ vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => loggerMocks),
   temp: {
     TEMP_PATH: '/tmp/napgram-temp',
-  }
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
+  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  sentry: { captureException: vi.fn() },
+  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
+  qface: { 14: '/微笑' },
 }))
 
 const coreMocks = vi.hoisted(() => ({

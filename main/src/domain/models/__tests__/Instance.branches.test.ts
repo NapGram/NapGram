@@ -48,6 +48,24 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
+  hashing: {
+    md5Hex: vi.fn((s) => 'hashed-' + s),
+  },
+  sentry: {
+    captureException: vi.fn(),
+  },
+  ForwardMap: {
+    load: vi.fn().mockResolvedValue({ map: true }),
+  },
+}))
+
+vi.mock('../../../infrastructure/clients/qq', () => ({
+  qqClientFactory: {
+    create: vi.fn().mockResolvedValue({
+      login: vi.fn(),
+      on: vi.fn(),
+    }),
+  },
 }))
 vi.mock('../../../infrastructure/clients/telegram', () => ({
   telegramClientFactory: {
@@ -58,13 +76,23 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
     }),
   },
 }))
-vi.mock('../../../infrastructure/clients/qq', () => ({
-  qqClientFactory: {
-    create: vi.fn().mockResolvedValue({
-      login: vi.fn(),
-      on: vi.fn(),
-    }),
+
+
+vi.mock('@napgram/runtime-kit', () => ({
+  InstanceRegistry: {
+    add: vi.fn(),
   },
+  setGlobalRuntime: vi.fn(),
+
+}))
+
+vi.mock('@napgram/plugin-kit', () => ({
+  getEventPublisher: vi.fn(() => ({
+    publishInstanceStatus: vi.fn(),
+    publishFriendRequest: vi.fn(),
+    publishGroupRequest: vi.fn(),
+    publishNotice: vi.fn(),
+  })),
 }))
 
 describe('instance Branches', () => {

@@ -165,6 +165,10 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
+  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  sentry: { captureException: vi.fn() },
+  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
+  qface: { 14: '/微笑' },
 }))
 
 vi.mock('../../../../domain/message/converter', () => ({

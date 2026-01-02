@@ -5,6 +5,8 @@ vi.mock('@napgram/infra-kit', () => ({
   env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
   getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
   temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
+  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  qface: { 14: '/smile' },
 }))
 
 describe('napCatConverter', () => {

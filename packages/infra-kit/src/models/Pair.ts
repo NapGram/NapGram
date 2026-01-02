@@ -1,8 +1,9 @@
 import type { Friend, Group, IQQClient } from '@napgram/qq-client'
 import { TelegramChat } from '@napgram/telegram-client'
 import { Buffer } from 'node:buffer'
-import { db, getLogger } from '../index'
-import { hashing as hashingUtils } from '../index'
+import db from '../db'
+import getLogger from '../logger'
+import * as hashingUtils from '../utils/hashing'
 const { md5 } = hashingUtils
 import { getAvatar } from '../utils/urls'
 import flags from '../flags'

@@ -68,9 +68,15 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
+  hashing: {
+    md5Hex: vi.fn((s) => 'hashed-' + s),
+  },
+  qface: {
+    14: '/smile',
+  },
 }))
 
-vi.mock('../../../shared/utils/convert', () => ({
+vi.mock('@napgram/runtime-kit', () => ({
   default: convertMocks,
 }))
 

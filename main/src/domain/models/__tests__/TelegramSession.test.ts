@@ -25,6 +25,11 @@ vi.mock('@napgram/infra-kit', () => ({
   env: envMock,
   db: dbMocks,
   getLogger: vi.fn(() => loggerMocks),
+  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
+  sentry: { captureException: vi.fn() },
+  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
+  qface: { 14: '/微笑' },
 }))
 
 describe('telegramSession', () => {

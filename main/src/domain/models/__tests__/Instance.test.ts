@@ -79,6 +79,16 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
+  hashing: {
+    md5Hex: vi.fn((s) => 'hashed-' + s),
+  },
+  qface: {
+    14: '/微笑',
+  },
+  sentry: sentryMocks,
+  ForwardMap: {
+    load: vi.fn().mockResolvedValue({ map: true }),
+  },
 }))
 
 vi.mock('../sentry', () => ({
@@ -112,10 +122,19 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
   },
 }))
 
+const instanceRegistryMocks = vi.hoisted(() => ({
+  add: vi.fn(),
+  remove: vi.fn(),
+  get: vi.fn(),
+}))
+
+vi.mock('@napgram/runtime-kit', () => ({
+  InstanceRegistry: instanceRegistryMocks,
+}))
+
 describe('instance', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    Instance.instances.length = 0
     qqMocks.handlers.clear()
     qqMocks.client.on.mockImplementation((event: string, handler: any) => {
       qqMocks.handlers.set(event, handler)
@@ -178,7 +197,7 @@ describe('instance', () => {
     expect(instance.forwardPairs).toEqual({ map: true })
     expect(instance.isInit).toBe(true)
     expect(instance.isSetup).toBe(true)
-    expect(Instance.instances).toHaveLength(1)
+    expect(instanceRegistryMocks.add).toHaveBeenCalledWith(instance)
 
     const friendHandler = qqMocks.handlers.get('request.friend')
     await friendHandler({ flag: 'req1', userId: '42', userName: 'Alice', comment: 'hi', timestamp: 100 })
@@ -396,9 +415,10 @@ describe('instance', () => {
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(9, 'token')
 
+
     // Should warn but not fail instance start
     expect(loggerMocks.warn).toHaveBeenCalledWith('Plugin event bridge init failed:', error)
-    expect(Instance.instances).toHaveLength(1)
+    expect(instanceRegistryMocks.add).toHaveBeenCalled()
   })
 
   it('reuses existing init promise', async () => {
