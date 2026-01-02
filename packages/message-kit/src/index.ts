@@ -5,3 +5,4 @@
 export * from './converter'
 export * from './types'
 export * from './converters'
+export * from './segments'

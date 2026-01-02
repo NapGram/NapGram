@@ -41,3 +41,8 @@ export {
 } from '../../../main/src/plugins/store'
 export { groupInfoCache } from '../../../main/src/infrastructure/services/CacheManager'
 export type { default as TelegramClient } from '../../../main/src/infrastructure/clients/telegram/client'
+
+// 通用工具函数
+export { md5Hex } from '../../../main/src/shared/utils/hashing'
+export { DurationParser } from '../../../main/src/shared/utils/duration-parser'
+

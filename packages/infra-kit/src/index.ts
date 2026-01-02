@@ -1,5 +1,8 @@
 export { configureInfraKit } from './deps'
 export type { InfraLogger, LoggerFactory } from './deps'
+export { default as flags } from './flags'
+export { default as ForwardMap } from './models/ForwardMap'
+export type { ForwardPairRecord } from './models/ForwardMap'
 
 import { CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache } from './CacheManager'
 import { MessageQueue } from './MessageQueue'
