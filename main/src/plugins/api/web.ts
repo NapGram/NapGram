@@ -3,7 +3,7 @@
  */
 
 import type { WebAPI } from '../core/interfaces'
-import { getLogger } from '../../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('WebAPI')
 

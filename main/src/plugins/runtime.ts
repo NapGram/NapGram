@@ -5,7 +5,7 @@
  */
 
 import Instance from '../domain/models/Instance'
-import { getLogger } from '../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 import { createGroupAPI } from './api/group'
 import { createInstanceAPI } from './api/instance'
 import { createMessageAPI } from './api/message'

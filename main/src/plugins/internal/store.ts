@@ -3,8 +3,8 @@ import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import YAML from 'yaml'
-import env from '../../domain/models/env'
-import { getLogger } from '../../shared/logger'
+import { env } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/infra-kit'
 import { readStringEnv } from './env'
 
 const logger = getLogger('PluginStore')

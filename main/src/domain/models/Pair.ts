@@ -1,11 +1,10 @@
 import type { Friend, Group, IQQClient } from '../../infrastructure/clients/qq'
 import type TelegramChat from '../../infrastructure/clients/telegram/chat'
 import { Buffer } from 'node:buffer'
-import { getLogger } from '../../shared/logger'
+import { db, getLogger } from '@napgram/infra-kit'
 import { md5 } from '../../shared/utils/hashing'
 import { getAvatar } from '../../shared/utils/urls'
 import flags from '../constants/flags'
-import db from './db'
 
 const log = getLogger('ForwardPair')
 

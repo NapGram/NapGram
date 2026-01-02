@@ -16,6 +16,16 @@ vi.mock('node:fs/promises', () => ({
   },
 }))
 
+
+vi.mock('@napgram/infra-kit', () => ({
+  getLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+}))
+
 describe('convertWithFfmpeg', () => {
   beforeEach(() => {
     vi.resetAllMocks()

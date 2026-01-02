@@ -4,21 +4,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import * as config from '../config'
 
 vi.mock('node:fs/promises')
-vi.mock('../../../domain/models/env', () => ({
-  default: {
-    DATA_DIR: '/app/data',
-    CACHE_DIR: '/app/data/cache',
-    LOG_FILE: '/app/data/logs/napgram.log',
-  },
-}))
 const loggerMock = vi.hoisted(() => ({
   debug: vi.fn(),
   info: vi.fn(),
   error: vi.fn(),
   warn: vi.fn(),
 }))
-vi.mock('../../../shared/logger', () => ({
+
+vi.mock('@napgram/infra-kit', () => ({
+  env: {
+    DATA_DIR: '/app/data',
+    CACHE_DIR: '/app/data/cache',
+    LOG_FILE: '/app/data/logs/napgram.log',
+  },
   getLogger: vi.fn(() => loggerMock),
+  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
 }))
 
 vi.mock('../../../../packages/plugin-ping-pong/src/index', () => ({

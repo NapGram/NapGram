@@ -10,15 +10,12 @@ vi.mock('@sentry/node', () => ({
   flush: vi.fn().mockResolvedValue(true),
 }))
 
-vi.mock('../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => ({
     info: vi.fn(),
     error: vi.fn(),
   })),
-}))
-
-vi.mock('../env', () => ({
-  default: {
+  env: {
     ERROR_REPORTING: true,
     REPO: 'test/repo',
     REF: 'refs/heads/main',

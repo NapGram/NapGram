@@ -1,14 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import db from '../../../domain/models/db'
+import { db } from '@napgram/infra-kit'
 import processNestedForward from '../processNestedForward'
 
 // Mock db
-vi.mock('../../../domain/models/db', () => ({
-  default: {
+vi.mock('@napgram/infra-kit', () => ({
+  db: {
     forwardMultiple: {
       findFirst: vi.fn(),
       create: vi.fn(),
     },
+  },
+  getLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
   },
 }))
 

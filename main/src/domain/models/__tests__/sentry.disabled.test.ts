@@ -1,11 +1,15 @@
 import * as Sentry from '@sentry/node'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('../env', () => ({
-  default: {
+vi.mock('@napgram/infra-kit', () => ({
+  env: {
     ERROR_REPORTING: false,
     LOG_FILE: '/tmp/test.log',
   },
+  getLogger: vi.fn(() => ({
+    info: vi.fn(),
+    error: vi.fn(),
+  })),
 }))
 
 vi.mock('@sentry/node', () => ({
@@ -14,13 +18,6 @@ vi.mock('@sentry/node', () => ({
   captureMessage: vi.fn(),
   setTag: vi.fn(),
   flush: vi.fn(),
-}))
-
-vi.mock('../../shared/logger', () => ({
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    error: vi.fn(),
-  })),
 }))
 
 describe('sentry Disabled', () => {

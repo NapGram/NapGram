@@ -1,8 +1,8 @@
 import process from 'node:process'
 import cookie from '@fastify/cookie'
 import Fastify from 'fastify'
-import env from '../domain/models/env'
-import { getLogger } from '../shared/logger'
+import { env } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/infra-kit'
 
 const log = getLogger('Web Api')
 const registeredWebPlugins = new Set<string>()

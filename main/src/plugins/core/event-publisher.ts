@@ -6,7 +6,7 @@
 
 import type { EventBus } from '../core/event-bus'
 import type { FriendRequestEvent, GroupRequestEvent, MessageEvent, NoticeEvent, NoticeType } from '../core/interfaces'
-import { getLogger } from '../../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 import { getGlobalRuntime } from '../core/plugin-runtime'
 
 const logger = getLogger('EventPublisher')

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GroupAPIImpl } from '../../api/group'
 
 // Mock logger
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => ({
     info: vi.fn(),
     debug: vi.fn(),

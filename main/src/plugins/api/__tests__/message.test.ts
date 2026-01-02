@@ -2,13 +2,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageAPIImpl } from '../../api/message'
 
 // Mock logger
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => ({
     info: vi.fn(),
     debug: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
   })),
+  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
+  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
 }))
 
 describe('messageAPIImpl', () => {

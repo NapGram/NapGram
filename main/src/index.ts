@@ -1,11 +1,11 @@
 import process from 'node:process'
-import db from './domain/models/db'
-import env from './domain/models/env'
+import { db } from '@napgram/infra-kit'
+import { env } from '@napgram/infra-kit'
 import Instance from './domain/models/Instance'
 import sentry from './domain/models/sentry'
 import api, { registerWebRoutes } from './interfaces'
 import { PluginRuntime } from './plugins/runtime'
-import { getLogger } from './shared/logger';
+import { getLogger } from '@napgram/infra-kit';
 
 (async () => {
   const log = getLogger('Main')

@@ -24,8 +24,10 @@ vi.mock('node:fs/promises', () => ({
   readdir: fsMocks.readdir,
 }))
 
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: getLoggerMock,
+  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
+  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
 }))
 
 describe('plugin storage', () => {

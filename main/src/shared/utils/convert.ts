@@ -4,11 +4,11 @@ import fsP from 'node:fs/promises'
 import path from 'node:path'
 import { fileTypeFromBuffer } from 'file-type'
 import { decode, write } from 'image-js'
-import env from '../../domain/models/env'
-import { getLogger } from '../logger'
+import { env } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/infra-kit'
 import convertWithFfmpeg from './encoding/convertWithFfmpeg'
 import tgsToGif from './encoding/tgsToGif'
-import { file as createTempFile } from './temp'
+import { temp } from '@napgram/infra-kit'
 
 const CACHE_PATH = env.CACHE_DIR
 let cacheDirInitialized = false
@@ -44,10 +44,10 @@ const convert = {
     }),
   video2gif: (key: string, webmData: () => Promise<Buffer | Uint8Array | string>, webm = false) =>
     cachedConvert(`${key}.gif`, async (convertedPath) => {
-      const temp = await createTempFile()
-      await fsP.writeFile(temp.path, await webmData())
-      await convertWithFfmpeg(temp.path, convertedPath, 'gif', webm ? 'libvpx-vp9' : undefined)
-      await temp.cleanup()
+      const t = await temp.createTempFile()
+      await fsP.writeFile(t.path, await webmData())
+      await convertWithFfmpeg(t.path, convertedPath, 'gif', webm ? 'libvpx-vp9' : undefined)
+      await t.cleanup()
     }),
   tgs2gif: (key: string, tgsData: () => Promise<Buffer | Uint8Array | string>) =>
     cachedConvert(`${key}.gif`, async (convertedPath) => {

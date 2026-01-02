@@ -9,7 +9,7 @@
  */
 
 import { configureInfraKit } from '@napgram/infra-kit'
-import { getLogger } from '../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 configureInfraKit({ loggerFactory: getLogger })
 

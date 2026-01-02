@@ -1,4 +1,4 @@
-export * from '../logger'
+
 export * from './arrays'
 export * from './convert'
 export { default as emojiUtils } from './emoji'

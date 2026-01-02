@@ -70,16 +70,15 @@ const qqMocks = vi.hoisted(() => {
   return { handlers, client, factory }
 })
 
-vi.mock('../env', () => ({
-  default: envMock,
-}))
-
-vi.mock('../db', () => ({
-  default: dbMocks,
-}))
-
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  env: envMock,
+  db: dbMocks,
   getLogger: vi.fn(() => loggerMocks),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
 }))
 
 vi.mock('../sentry', () => ({
@@ -363,7 +362,7 @@ describe('instance', () => {
 
       // Set to undefined
       ; (qqMocks.client as any).handleFriendRequest = undefined
-    ; (qqMocks.client as any).handleGroupRequest = undefined
+      ; (qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')

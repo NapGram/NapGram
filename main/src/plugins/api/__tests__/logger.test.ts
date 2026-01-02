@@ -10,7 +10,7 @@ const loggerMocks = vi.hoisted(() => ({
 
 const getLoggerMock = vi.hoisted(() => vi.fn(() => loggerMocks))
 
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: getLoggerMock,
 }))
 

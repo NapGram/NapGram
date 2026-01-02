@@ -6,7 +6,7 @@
 
 import type { PluginSpec } from './interfaces'
 import type { PluginInstance } from './lifecycle'
-import { getLogger } from '../../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 import { EventBus } from './event-bus'
 import { PluginLifecycleManager, PluginState } from './lifecycle'
 import { PluginContextImpl } from './plugin-context'

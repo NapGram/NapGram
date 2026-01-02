@@ -1,5 +1,5 @@
 import type { ForwardMessage } from '../../infrastructure/clients/qq'
-import db from '../../domain/models/db'
+import { db } from '@napgram/infra-kit'
 
 export default async (messages: ForwardMessage[], fromPairId: number) => {
   for (const message of messages) {

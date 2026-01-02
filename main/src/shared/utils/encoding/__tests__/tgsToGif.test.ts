@@ -23,13 +23,16 @@ vi.mock('node:fs/promises', () => ({
   },
 }))
 
-vi.mock('../../logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
     error: vi.fn(),
     warn: vi.fn(),
   })),
+  env: {
+    DATA_DIR: '/tmp',
+  },
 }))
 
 describe('tgsToGif', () => {

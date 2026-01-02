@@ -5,7 +5,7 @@
  */
 
 import type { PluginLogger } from '../core/interfaces'
-import { getLogger } from '../../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 /**
  * 创建插件日志记录器

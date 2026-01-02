@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import db from '../db'
+import { db } from '@napgram/infra-kit'
 import Instance from '../Instance'
 
 // Mocks
@@ -15,8 +15,8 @@ const { mockInstance } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../db', () => ({
-  default: {
+vi.mock('@napgram/infra-kit', () => ({
+  db: {
     instance: {
       update: vi.fn().mockResolvedValue(mockInstance),
       findFirst: vi.fn().mockResolvedValue(mockInstance),
@@ -29,17 +29,13 @@ vi.mock('../db', () => ({
       findUnique: vi.fn(),
     },
   },
-}))
-vi.mock('../env', () => ({
-  default: {
+  env: {
     TG_BOT_TOKEN: 'fake-token',
     NAPCAT_WS_URL: 'ws://fake',
     LOG_FILE: '/tmp/test.log',
     DATA_DIR: '/tmp/data', // Added
     CACHE_DIR: '/tmp/cache', // Added
   },
-}))
-vi.mock('../../shared/logger', () => ({
   getLogger: vi.fn(() => ({
     info: vi.fn(),
     debug: vi.fn(),
@@ -47,6 +43,11 @@ vi.mock('../../shared/logger', () => ({
     warn: vi.fn(),
     trace: vi.fn(),
   })),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
 }))
 vi.mock('../../../infrastructure/clients/telegram', () => ({
   telegramClientFactory: {

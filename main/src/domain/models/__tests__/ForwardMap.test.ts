@@ -14,11 +14,8 @@ const loggerMocks = vi.hoisted(() => ({
   debug: vi.fn(),
 }))
 
-vi.mock('../db', () => ({
-  default: dbMocks,
-}))
-
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  db: dbMocks,
   getLogger: vi.fn(() => loggerMocks),
 }))
 

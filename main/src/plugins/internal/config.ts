@@ -32,8 +32,8 @@ import builtinRequestManagement from '../../../../packages/plugin-request-manage
 import builtinStatistics from '../../../../packages/plugin-statistics/src/index'
 import builtinWebAssets from '../../../../packages/plugin-web-assets/src/index'
 import builtinWebConsole from '../../../../packages/plugin-web-console/src/index'
-import env from '../../domain/models/env'
-import { getLogger } from '../../shared/logger'
+import { env } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/infra-kit'
 import { readBoolEnv, readStringEnv } from './env'
 import { getManagedPluginsConfigPath } from './store'
 

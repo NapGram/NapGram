@@ -1,5 +1,4 @@
-import { getLogger } from '../../shared/logger'
-import db from './db'
+import { db, getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('ForwardMap')
 

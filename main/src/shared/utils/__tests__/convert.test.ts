@@ -16,8 +16,10 @@ const fsPromMocks = vi.hoisted(() => ({
 }))
 
 const envMock = vi.hoisted(() => ({
-  CACHE_DIR: '/cache',
-  DATA_DIR: '/data',
+  env: {
+    CACHE_DIR: '/cache',
+    DATA_DIR: '/data',
+  }
 }))
 
 const loggerMocks = vi.hoisted(() => ({
@@ -81,12 +83,13 @@ vi.mock('image-js', () => ({
   write: imageJsMocks.write,
 }))
 
-vi.mock('../../../domain/models/env', () => ({
-  default: envMock,
-}))
-
-vi.mock('../../logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  env: envMock.env,
   getLogger: vi.fn(() => loggerMocks),
+  temp: {
+    file: tempMocks.file,
+    createTempFile: tempMocks.file
+  }
 }))
 
 vi.mock('../encoding/convertWithFfmpeg', () => ({
@@ -97,9 +100,7 @@ vi.mock('../encoding/tgsToGif', () => ({
   default: tgsMocks.tgsToGif,
 }))
 
-vi.mock('../temp', () => ({
-  file: tempMocks.file,
-}))
+
 
 describe('convert', () => {
   beforeEach(() => {

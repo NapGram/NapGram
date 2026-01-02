@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getLogger } from '../../../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 import { EventBus } from '../event-bus'
 
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),

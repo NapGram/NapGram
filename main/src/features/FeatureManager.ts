@@ -2,7 +2,7 @@ import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } fro
 import type Instance from '../domain/models/Instance'
 import type { IQQClient } from '../infrastructure/clients/qq'
 import type Telegram from '../infrastructure/clients/telegram/client'
-import { getLogger } from '../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('FeatureManager')
 

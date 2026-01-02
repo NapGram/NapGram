@@ -3,7 +3,7 @@ import { execFile } from 'node:child_process'
 import fsP from 'node:fs/promises'
 import { decode, encode } from 'silk-wasm'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { file } from '../../temp'
+import { temp } from '@napgram/infra-kit'
 import silk from '../silk'
 
 vi.mock('silk-wasm', () => ({
@@ -15,8 +15,16 @@ vi.mock('node:child_process', () => ({
   execFile: vi.fn(),
 }))
 
-vi.mock('../../temp', () => ({
-  file: vi.fn(),
+vi.mock('@napgram/infra-kit', () => ({
+  getLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  })),
+  temp: {
+    file: vi.fn(),
+  },
 }))
 
 vi.mock('node:fs/promises', () => ({
@@ -34,7 +42,7 @@ describe('silk utility', () => {
   it('should decode silk to ogg', async () => {
     vi.mocked(decode).mockResolvedValue({ data: new Uint8Array(10), duration: 1 } as any)
     const cleanup = vi.fn()
-    vi.mocked(file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
+    vi.mocked(temp.file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
     vi.mocked(execFile).mockImplementation((_cmd, _args, cb: any) => {
       cb(null)
       return {} as any
@@ -50,7 +58,7 @@ describe('silk utility', () => {
 
   it('should encode audio to silk', async () => {
     const cleanup = vi.fn()
-    vi.mocked(file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
+    vi.mocked(temp.file).mockResolvedValue({ path: '/tmp/pcm', cleanup })
     vi.mocked(execFile).mockImplementation((_cmd, _args, cb: any) => {
       cb(null)
       return {} as any

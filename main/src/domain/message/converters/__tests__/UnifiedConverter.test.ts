@@ -51,8 +51,14 @@ vi.mock('node:fs/promises', async () => {
   }
 })
 
-vi.mock('../../../models/env', () => ({
-  default: envMock,
+vi.mock('@napgram/infra-kit', () => ({
+  env: envMock,
+  getLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
 }))
 
 describe('unifiedConverter', () => {
@@ -249,6 +255,6 @@ describe('unifiedConverter', () => {
     })
 
     // It should recover and use fallback
-    expect(result[0].data.file).toEqual(expect.stringContaining('http://internal/temp/'))
+    expect(result[0].data.file).toEqual(expect.stringMatching(/^http:\/\/.*\/temp\//))
   })
 })

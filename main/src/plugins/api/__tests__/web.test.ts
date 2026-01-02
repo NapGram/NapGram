@@ -6,7 +6,7 @@ const { warnMock, infoMock } = vi.hoisted(() => ({
   infoMock: vi.fn(),
 }))
 
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
   getLogger: () => ({
     warn: warnMock,
     info: infoMock,

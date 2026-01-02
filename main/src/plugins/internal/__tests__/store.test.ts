@@ -16,13 +16,19 @@ vi.mock('node:process', () => ({
   },
 }))
 
-vi.mock('../../../domain/models/env', () => ({
-  default: {
+vi.mock('@napgram/infra-kit', () => ({
+  env: {
     DATA_DIR: '/test/data',
     LOG_FILE: '/test/data/logs/app.log',
     LOG_LEVEL: 'info',
     LOG_FILE_LEVEL: 'debug',
   },
+  getLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
 }))
 
 vi.mock('../env', () => ({
@@ -668,27 +674,27 @@ describe('store.ts', () => {
 
   describe('internal helpers', () => {
     it('resolveDataDir should use process.env when env is empty', async () => {
-      const envModule = await import('../../../domain/models/env')
+      const envModule = await import('@napgram/infra-kit')
 
-      envModule.default.DATA_DIR = ''
+      envModule.env.DATA_DIR = ''
       process.env.DATA_DIR = '/env/data'
 
       const result = store.__testing.resolveDataDir()
 
       expect(result).toBe(path.resolve('/env/data'))
-      envModule.default.DATA_DIR = mockDataDir
+      envModule.env.DATA_DIR = mockDataDir
     })
 
     it('resolveDataDir should fall back to default when env and process missing', async () => {
-      const envModule = await import('../../../domain/models/env')
+      const envModule = await import('@napgram/infra-kit')
 
-      envModule.default.DATA_DIR = ''
+      envModule.env.DATA_DIR = ''
       delete process.env.DATA_DIR
 
       const result = store.__testing.resolveDataDir()
 
       expect(result).toBe(path.resolve('/app/data'))
-      envModule.default.DATA_DIR = mockDataDir
+      envModule.env.DATA_DIR = mockDataDir
     })
 
     it('parseConfig should ignore non-string fields', () => {

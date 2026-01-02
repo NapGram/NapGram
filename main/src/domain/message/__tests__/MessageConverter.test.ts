@@ -60,16 +60,18 @@ vi.mock('image-js', () => ({
   encode: imageJsMocks.encode,
 }))
 
-vi.mock('../../../shared/logger', () => ({
+vi.mock('@napgram/infra-kit', () => ({
+  env: envMock,
   getLogger: vi.fn(() => loggerMocks),
+  temp: {
+    TEMP_PATH: '/tmp/napgram',
+    file: vi.fn(),
+    createTempFile: vi.fn(),
+  },
 }))
 
 vi.mock('../../../shared/utils/convert', () => ({
   default: convertMocks,
-}))
-
-vi.mock('../../models/env', () => ({
-  default: envMock,
 }))
 
 describe('messageConverter', () => {

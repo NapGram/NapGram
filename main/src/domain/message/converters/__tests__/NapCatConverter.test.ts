@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { NapCatConverter } from '../NapCatConverter'
+
+vi.mock('@napgram/infra-kit', () => ({
+  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
+}))
 
 describe('napCatConverter', () => {
   it('converts napcat segments and uses sender card', () => {

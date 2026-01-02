@@ -17,7 +17,7 @@ import type {
   NoticeEvent,
   PluginReloadEvent,
 } from './interfaces'
-import { getLogger } from '../../shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 const logger = getLogger('EventBus')
 
