@@ -1,4 +1,4 @@
-import type { UnifiedMessage } from '../../../../../../../main/src/domain/message'
+import type { UnifiedMessage } from '@napgram/message-kit'
 import { describe, expect, it } from 'vitest'
 import { ThreadIdExtractor } from '../ThreadIdExtractor'
 

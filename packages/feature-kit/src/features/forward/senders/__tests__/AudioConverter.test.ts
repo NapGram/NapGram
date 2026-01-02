@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { db, env } from '@napgram/infra-kit'
 import silk from '../../../../../../../main/src/shared/utils/encoding/silk'
 import { AudioConverter } from '../AudioConverter'
 
@@ -15,11 +16,31 @@ vi.mock('../../../../../../../main/src/shared/utils/encoding/silk', () => ({
   },
 }))
 
-vi.mock('../../../../../../../main/src/domain/models/env', () => ({
-  default: {
-    DATA_DIR: '/tmp/napgram-test-data',
-    LOG_FILE: '/tmp/napgram-test-data/test.log',
+vi.mock('@napgram/infra-kit', () => ({
+  db: {
+    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    qQRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
+    $queryRaw: vi.fn()
   },
+  env: { 
+    ENABLE_AUTO_RECALL: true, 
+    TG_MEDIA_TTL_SECONDS: undefined, 
+    DATA_DIR: '/tmp', 
+    CACHE_DIR: '/tmp/cache',
+    WEB_ENDPOINT: 'http://napgram-dev:8080'
+  },
+  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  getLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+  })),
+  configureInfraKit: vi.fn(),
+  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
 describe('audioConverter', () => {

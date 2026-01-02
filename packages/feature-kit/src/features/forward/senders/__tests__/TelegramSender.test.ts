@@ -1,24 +1,36 @@
 import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import db from '../../../../../../../main/src/domain/models/db'
-import env from '../../../../../../../main/src/domain/models/env'
+import { db, env } from '@napgram/infra-kit'
 import { TelegramSender } from '../TelegramSender'
 
-vi.mock('../../../../../../../main/src/domain/models/db', () => ({
-  default: {
-    forwardMultiple: {
-      create: vi.fn().mockResolvedValue({ id: 1 }),
-    },
+vi.mock('@napgram/infra-kit', () => ({
+  db: {
+    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    qQRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
+    $queryRaw: vi.fn()
   },
+  env: {
+    ENABLE_AUTO_RECALL: true,
+    TG_MEDIA_TTL_SECONDS: undefined,
+    DATA_DIR: '/tmp',
+    CACHE_DIR: '/tmp/cache',
+    WEB_ENDPOINT: 'http://napgram-dev:8080'
+  },
+  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  getLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+  })),
+  configureInfraKit: vi.fn(),
+  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
-vi.mock('../../../../../../../main/src/domain/models/env', () => ({
-  default: {
-    DATA_DIR: '/tmp/napgram-test-data',
-    WEB_ENDPOINT: 'http://example.com',
-    LOG_FILE: '/tmp/napgram-test-data/test.log',
-  },
-}))
+
 
 describe('telegramSender', () => {
   const mockInstance = {
@@ -124,7 +136,8 @@ describe('telegramSender', () => {
     }
     await sender.sendToTelegram(mockChat, msg, { id: 1 }, undefined, '00')
     expect(db.forwardMultiple.create).toHaveBeenCalled()
-    expect(mockChat.sendMessage).toHaveBeenCalledWith(expect.stringContaining('[转发消息]'), expect.any(Object))
+    // Actual message format includes count, e.g. "[转发消息x0]"
+    expect(mockChat.sendMessage).toHaveBeenCalledWith('[转发消息x0]', expect.any(Object))
   })
 
   it('sendToTelegram handles location message', async () => {

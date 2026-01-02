@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { db, env } from '@napgram/infra-kit'
 // import { CommandsFeature } from '../CommandsFeature' -> Removed
 
 // Mock dependencies
@@ -140,8 +141,25 @@ const { mockLogger } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../../../../../../main/src/shared/logger', () => ({
-  getLogger: vi.fn(() => mockLogger),
+vi.mock('@napgram/infra-kit', () => ({
+  db: {
+    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
+    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    qQRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
+    $queryRaw: vi.fn()
+  },
+  env: {
+    ENABLE_AUTO_RECALL: true,
+    TG_MEDIA_TTL_SECONDS: undefined,
+    DATA_DIR: '/tmp',
+    CACHE_DIR: '/tmp/cache',
+    WEB_ENDPOINT: 'http://napgram-dev:8080'
+  },
+  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  getLogger: vi.fn(() => mockLogger), // Use hoisted mockLogger
+  configureInfraKit: vi.fn(),
+  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
 describe('commandsFeature', () => {
@@ -239,7 +257,7 @@ describe('commandsFeature', () => {
       ForwardControlCommandHandler: handlerMock,
     }))
 
-    vi.doMock('../../../../../../main/src/domain/message/converter', () => {
+    vi.doMock('@napgram/message-kit', () => {
       return {
         messageConverter: {
           fromTelegram: vi.fn().mockReturnValue({
@@ -301,13 +319,13 @@ describe('commandsFeature', () => {
 
   it('check for initialization errors', async () => {
     await new Promise(resolve => setTimeout(resolve, 500))
-    const logger = (await import('../../../../../../main/src/shared/logger')).getLogger('CommandsFeature')
+    const logger = (await import('@napgram/infra-kit')).getLogger('CommandsFeature')
     expect(logger.error).not.toHaveBeenCalled()
   })
 
   it('reloads commands', async () => {
     const registry = (commandsFeature as any).registry
-            ; (commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
+      ; (commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
     await commandsFeature.reloadCommands()
     expect(registry.clear).toHaveBeenCalled()
     expect(registry.register).toHaveBeenCalled()

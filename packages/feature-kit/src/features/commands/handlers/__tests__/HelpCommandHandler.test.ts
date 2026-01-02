@@ -1,4 +1,4 @@
-import type { UnifiedMessage } from '../../../../../../../main/src/domain/message'
+import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../../../../../main/src/infrastructure/clients/qq'
 import type { CommandContext } from '../CommandContext'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
