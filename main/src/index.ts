@@ -7,6 +7,7 @@ import api, { registerWebRoutes } from './interfaces'
 import { PluginRuntime } from '@napgram/plugin-kit'
 import { getLogger, random } from '@napgram/infra-kit';
 import { builtins } from './builtins'
+import { InstanceRegistry } from '@napgram/runtime-kit'
 
 (async () => {
   const log = getLogger('Main')
@@ -77,8 +78,8 @@ import { builtins } from './builtins'
 
   // Configure PluginRuntime (Phase 2 Modularization)
   PluginRuntime.setInstanceResolvers(
-    (id) => Instance.instances.find(i => i.id === id) as any,
-    () => Instance.instances as any
+    (id) => InstanceRegistry.getById(id) as any,
+    () => InstanceRegistry.getAll() as any
   )
 
   // 先启动插件运行时（在 Instance 之前，确保插件命令可被 CommandsFeature 发现）

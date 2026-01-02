@@ -100,9 +100,5 @@ declare module 'fastify' {
       userId?: number
       token: string
     }
-    cookies: {
-      admin_token?: string
-      [key: string]: string | undefined
-    }
   }
 }
