@@ -1,10 +1,7 @@
 import type { FastifyInstance } from 'fastify'
-import {
-  authMiddleware,
-  db,
-  Instance,
-  PluginRuntime,
-} from '@napgram/runtime-kit'
+import { db, getGlobalRuntime } from '@napgram/runtime-kit'
+import { Instance } from '@napgram/runtime-kit'
+import { authMiddleware } from '@napgram/auth-kit'
 /**
  * 统计分析 API
  */
@@ -50,7 +47,7 @@ export default async function (fastify: FastifyInstance) {
     }
 
     try {
-      const runtimeReport = PluginRuntime.getLastReport()
+      const runtimeReport = getGlobalRuntime().getLastReport()
       health.plugins.enabled = Boolean(runtimeReport?.enabled)
       health.plugins.loaded = Array.isArray(runtimeReport?.loaded) ? runtimeReport.loaded.length : 0
       health.plugins.failed = Array.isArray(runtimeReport?.failed) ? runtimeReport.failed.length : 0
@@ -84,8 +81,8 @@ export default async function (fastify: FastifyInstance) {
       = !health.db
         ? 'unhealthy'
         : (health.plugins.failed > 0
-            ? 'degraded'
-            : (health.instances.total > 0 && health.instances.online < health.instances.total ? 'degraded' : 'healthy'))
+          ? 'degraded'
+          : (health.instances.total > 0 && health.instances.online < health.instances.total ? 'degraded' : 'healthy'))
 
     return {
       success: true,
@@ -138,7 +135,7 @@ export default async function (fastify: FastifyInstance) {
     }
 
     // 填充实际数据
-    messages.forEach((msg) => {
+    messages.forEach((msg: any) => {
       const dateKey = new Date(msg.time * 1000).toISOString().split('T')[0]
       dailyCounts.set(dateKey, (dailyCounts.get(dateKey) || 0) + msg._count.id)
     })
@@ -175,31 +172,31 @@ export default async function (fastify: FastifyInstance) {
 
     const relatedPairs = topPairs.length > 0
       ? await db.forwardPair.findMany({
-          where: {
-            OR: topPairs.map(pair => ({
-              qqRoomId: pair.qqRoomId,
-              tgChatId: pair.tgChatId,
-              instanceId: pair.instanceId,
-            })),
-          },
-          select: {
-            id: true,
-            qqRoomId: true,
-            tgChatId: true,
-            instanceId: true,
-          },
-        })
+        where: {
+          OR: topPairs.map((pair: any) => ({
+            qqRoomId: pair.qqRoomId,
+            tgChatId: pair.tgChatId,
+            instanceId: pair.instanceId,
+          })),
+        },
+        select: {
+          id: true,
+          qqRoomId: true,
+          tgChatId: true,
+          instanceId: true,
+        },
+      })
       : []
 
     const pairIdMap = new Map<string, number>()
-    relatedPairs.forEach((pair) => {
+    relatedPairs.forEach((pair: any) => {
       const key = `${pair.qqRoomId.toString()}-${pair.tgChatId.toString()}-${pair.instanceId}`
       pairIdMap.set(key, pair.id)
     })
 
     return {
       success: true,
-      data: topPairs.map((pair) => {
+      data: topPairs.map((pair: any) => {
         const key = `${pair.qqRoomId.toString()}-${pair.tgChatId.toString()}-${pair.instanceId}`
         const pairId = pairIdMap.get(key) ?? null
         return {
@@ -232,9 +229,9 @@ export default async function (fastify: FastifyInstance) {
 
     const stats = {
       total: instances.length,
-      online: instances.filter(i => i.isSetup && i.qqBot).length,
-      offline: instances.filter(i => !i.isSetup || !i.qqBot).length,
-      instances: instances.map(instance => ({
+      online: instances.filter((i: any) => i.isSetup && i.qqBot).length,
+      offline: instances.filter((i: any) => !i.isSetup || !i.qqBot).length,
+      instances: instances.map((instance: any) => ({
         id: instance.id,
         owner: instance.owner.toString(),
         isOnline: instance.isSetup && !!instance.qqBot,
@@ -271,7 +268,7 @@ export default async function (fastify: FastifyInstance) {
 
     return {
       success: true,
-      data: messages.map(msg => ({
+      data: messages.map((msg: any) => ({
         id: msg.id,
         qqRoomId: msg.qqRoomId.toString(),
         tgChatId: msg.tgChatId.toString(),
