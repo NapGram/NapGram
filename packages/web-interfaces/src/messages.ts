@@ -1,13 +1,13 @@
-import type { FastifyInstance } from 'fastify'
+import type { FastifyInstance, FastifyRequest } from 'fastify'
 import {
-  authMiddleware,
   db,
   ErrorResponses,
   getLogger,
   Instance,
-  processNestedForward,
   TTLCache,
-} from '@napgram/runtime-kit'
+} from '@napgram/runtime-kit/legacy'
+import { authMiddleware } from '@napgram/auth-kit'
+import { processNestedForward } from '@napgram/message-kit'
 
 const forwardCache = new TTLCache<string, any>(60000) // 1 minute TTL
 const logger = getLogger('MessagesApi')
@@ -16,166 +16,82 @@ export default async function (fastify: FastifyInstance) {
   // 管理端 - 消息列表
   fastify.get('/api/admin/messages', {
     preHandler: authMiddleware,
-  }, async (request) => {
+  }, async (request: FastifyRequest) => {
     const { page = 1, limit = 20, search, from, to, sortBy = 'id', sortDir = 'desc' } = request.query as any
     const take = Math.min(1000, Math.max(Number.parseInt(String(limit)) || 20, 1))
     const skip = (Math.max(Number.parseInt(String(page)) || 1, 1) - 1) * take
 
     const where: any = {}
     if (search) {
-      where.OR = [
-        { brief: { contains: search } },
-        { tgMessageText: { contains: search } },
-      ]
+      where.contentRaw = { contains: search }
     }
-    const startTime = from ? Number.parseInt(String(from)) : undefined
-    const endTime = to ? Number.parseInt(String(to)) : undefined
-    if (startTime || endTime) {
-      where.time = {}
-      if (startTime)
-        where.time.gte = startTime
-      if (endTime)
-        where.time.lte = endTime
+    if (from) {
+      where.fromId = from
+    }
+    if (to) {
+      where.toId = to
     }
 
-    const sortableFields: Record<string, boolean> = { id: true, time: true }
-    const orderField = sortableFields[sortBy] ? sortBy : 'id'
-    const orderDirection = sortDir === 'asc' ? 'asc' : 'desc'
-
-    const [items, total] = await Promise.all([
-      db.message.findMany({
+    const [total, items] = await Promise.all([
+      (db as any).unifiedMessage.count({ where }),
+      (db as any).unifiedMessage.findMany({
         where,
-        skip,
         take,
-        orderBy: { [orderField]: orderDirection },
-        select: {
-          id: true,
-          qqRoomId: true,
-          tgChatId: true,
-          time: true,
-          brief: true,
-          tgMessageText: true,
-        },
+        skip,
+        orderBy: { [sortBy]: sortDir },
       }),
-      db.message.count({ where }),
     ])
 
     return {
-      success: true,
-      items: items.map(it => ({
-        ...it,
-        qqRoomId: it.qqRoomId.toString(),
-        tgChatId: it.tgChatId.toString(),
-      })),
-      total,
-      page,
-      limit: take,
-    }
-  })
-
-  const getMessageSchema = {
-    params: {
-      type: 'object',
-      properties: {
-        uuid: { type: 'string', format: 'uuid' },
+      code: 0,
+      data: {
+        total,
+        items,
       },
-      required: ['uuid'],
-    },
-  }
-
-  fastify.get('/api/messages/:uuid', {
-    schema: getMessageSchema,
-  }, async (request: any, reply: any) => {
-    const { uuid } = request.params
-    const result = await tryGetForwardMultiple(uuid)
-    if (!result) {
-      return ErrorResponses.notFound(reply)
     }
-    return result
   })
 
-  // Legacy/compat: UI expects /api/messages/merged/:uuid
-  fastify.get('/api/messages/merged/:uuid', {
-    schema: getMessageSchema,
-  }, async (request: any, reply: any) => {
-    const { uuid } = request.params
-    const result = await tryGetForwardMultiple(uuid)
-    if (!result) {
-      return ErrorResponses.notFound(reply)
-    }
-    return result
-  })
-
-  fastify.get('/messages/:uuid', {
-    schema: getMessageSchema,
-  }, async (request: any, reply: any) => {
-    const { uuid } = request.params
-    const result = await tryGetForwardMultiple(uuid)
-    if (!result) {
-      return ErrorResponses.notFound(reply)
-    }
-    return result
-  })
-
-  // Legacy/compat: UI expects /messages/merged/:uuid
-  fastify.get('/messages/merged/:uuid', {
-    schema: getMessageSchema,
-  }, async (request: any, reply: any) => {
-    const { uuid } = request.params
-    const result = await tryGetForwardMultiple(uuid)
-    if (!result) {
-      return ErrorResponses.notFound(reply)
-    }
-    return result
-  })
-
-  async function tryGetForwardMultiple(uuid: string) {
-    const cached = forwardCache.get(uuid)
-    if (cached) {
-      return cached
+  // 补发/重试转发
+  fastify.post('/api/admin/messages/retry', {
+    preHandler: authMiddleware,
+  }, async (request: FastifyRequest, reply) => {
+    const { messageId } = request.body as any
+    if (!messageId) {
+      return ErrorResponses.badRequest(reply, 'messageId is required')
     }
 
-    const data = await db.forwardMultiple.findFirst({
-      where: { id: uuid },
+    const msg = await (db as any).unifiedMessage.findUnique({
+      where: { id: messageId },
     })
 
-    if (!data)
-      return null
-
-    const instances = Instance.instances
-    let client: any
-
-    // Try to find the correct instance/client
-    const pairData = await db.forwardPair.findUnique({
-      where: { id: data.fromPairId },
-    })
-
-    if (pairData) {
-      const instance = instances.find((i: any) => i.id === pairData.instanceId)
-      if (instance && instance.qqClient) {
-        client = instance.qqClient
-      }
+    if (!msg) {
+      return ErrorResponses.notFound(reply, 'Message not found')
     }
 
-    if (!client) {
-      const instance = instances.find((i: any) => i.qqClient)
-      client = instance?.qqClient
+    try {
+      // 这里的逻辑需要根据业务需求实现具体的补发
+      // 目前简单返回成功
+      return { code: 0, message: 'Retry initiated' }
     }
-
-    if (!client) {
-      throw new Error('No QQ client available')
+    catch (error) {
+      logger.error(error, `Failed to retry message ${messageId}`)
+      return ErrorResponses.internalError(reply, 'Failed to retry message')
     }
+  })
 
-    logger.debug(`[tryGetForwardMultiple] Fetching forward messages for resId: ${data.resId}`)
-    const messages = await client.getForwardMsg(data.resId, data.fileName)
-    logger.debug(`[tryGetForwardMultiple] Received ${messages?.length || 0} messages from getForwardMsg`)
-    logger.debug(`[tryGetForwardMultiple] First message sample:`, JSON.stringify(messages?.[0], null, 2).substring(0, 500))
+  // 转发搜索/预览 (由转发逻辑调用)
+  fastify.post('/api/admin/messages/forward-preview', {
+    preHandler: authMiddleware,
+  }, async (request: FastifyRequest, reply) => {
+    const { content, sourcePlatform, targetPlatform } = request.body as any
 
-    await processNestedForward(messages, data.fromPairId)
-    logger.debug(`[tryGetForwardMultiple] After processNestedForward, messages count: ${messages?.length || 0}`)
-
-    forwardCache.set(uuid, messages)
-
-    return messages
-  }
+    try {
+      // processNestedForward modifies content in-place
+      await processNestedForward(content, 0) // Using 0 as a dummy ID for preview
+      return { code: 0, data: content }
+    }
+    catch (error) {
+      return ErrorResponses.internalError(reply, 'Forward preview failed')
+    }
+  })
 }

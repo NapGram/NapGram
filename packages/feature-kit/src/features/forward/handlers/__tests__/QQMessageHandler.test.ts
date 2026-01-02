@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as eventPublisher from '../../../../../../../main/src/plugins/core/event-publisher'
+import { getEventPublisher } from '../../../../shared-types'
 
 const publishMessageMock = vi.fn()
 
@@ -16,6 +16,16 @@ function createMessage(): UnifiedMessage {
     timestamp: Date.now(),
   }
 }
+
+vi.mock('../../../../shared-types', async (importOriginal) => {
+  const actual = await importOriginal<any>()
+  return {
+    ...actual,
+    getEventPublisher: vi.fn(() => ({
+      publishMessage: publishMessageMock,
+    })),
+  }
+})
 
 describe('qqMessageHandler', () => {
   const instance = {
@@ -41,9 +51,6 @@ describe('qqMessageHandler', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    vi.spyOn(eventPublisher, 'getEventPublisher').mockReturnValue({
-      publishMessage: publishMessageMock,
-    } as any)
     if (!QQMessageHandler) {
       ({ QQMessageHandler } = await import('../QQMessageHandler'))
     }

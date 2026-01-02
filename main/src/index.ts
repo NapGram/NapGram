@@ -2,10 +2,11 @@ import process from 'node:process'
 import { db } from '@napgram/infra-kit'
 import { env } from '@napgram/infra-kit'
 import Instance from './domain/models/Instance'
-import sentry from './domain/models/sentry'
+import { sentry } from '@napgram/infra-kit'
 import api, { registerWebRoutes } from './interfaces'
-import { PluginRuntime } from './plugins/runtime'
-import { getLogger } from '@napgram/infra-kit';
+import { PluginRuntime } from '@napgram/plugin-kit'
+import { getLogger, random } from '@napgram/infra-kit';
+import { builtins } from './builtins'
 
 (async () => {
   const log = getLogger('Main')
@@ -41,8 +42,7 @@ import { getLogger } from '@napgram/infra-kit';
   }
   else {
     // Generate random 32-character token
-    const randomToken = Array.from({ length: 32 }, () =>
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random() * 62)]).join('')
+    const randomToken = random.hex(32)
 
     // Set to both process.env and env object
     process.env.ADMIN_TOKEN = randomToken;
@@ -75,8 +75,14 @@ import { getLogger } from '@napgram/infra-kit';
   const instanceEntries = await db.instance.findMany()
   const targets = instanceEntries.length ? instanceEntries.map(it => it.id) : [0]
 
+  // Configure PluginRuntime (Phase 2 Modularization)
+  PluginRuntime.setInstanceResolvers(
+    (id) => Instance.instances.find(i => i.id === id) as any,
+    () => Instance.instances as any
+  )
+
   // 先启动插件运行时（在 Instance 之前，确保插件命令可被 CommandsFeature 发现）
-  await PluginRuntime.start({ defaultInstances: targets, webRoutes: registerWebRoutes })
+  await PluginRuntime.start({ defaultInstances: targets, webRoutes: registerWebRoutes, builtins })
 
   api.startListening()
 

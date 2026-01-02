@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getEventPublisher } from '../../../plugins/core/event-publisher'
+import { getEventPublisher } from '@napgram/plugin-kit'
 import Instance from '../Instance'
 
 const envMock = vi.hoisted(() => ({
@@ -85,7 +85,7 @@ vi.mock('../sentry', () => ({
   default: sentryMocks,
 }))
 
-vi.mock('../../../plugins/core/event-publisher', () => ({
+vi.mock('@napgram/plugin-kit', () => ({
   getEventPublisher: vi.fn(() => eventPublisherMocks),
 }))
 

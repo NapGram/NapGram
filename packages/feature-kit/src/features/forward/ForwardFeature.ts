@@ -77,7 +77,7 @@ export class ForwardFeature {
     // Publish gateway event (doesn't affect forwarding)
     try {
       const gatewayMessage = unified ?? messageConverter.fromTelegram(tgMsg as any)
-      await this.instance.eventPublisher?.publishMessageCreated(this.instance.id, gatewayMessage as any, pair)
+      await getEventPublisher().publishMessageCreated(this.instance.id, gatewayMessage as any, pair)
     }
     catch (e) {
       logger.debug(e, '[Gateway] publishMessageCreated (TG) failed')
@@ -281,6 +281,7 @@ export class ForwardFeature {
       const timestamp = tgMsg.date ? (typeof tgMsg.date === 'number' ? tgMsg.date : tgMsg.date.getTime()) : Date.now()
 
       eventPublisher.publishMessage({
+        eventId: `tg:${tgMsg.id}`,
         instanceId: pair.instanceId,
         platform: 'tg',
         channelId: String(tgMsg.chat.id),
@@ -304,7 +305,7 @@ export class ForwardFeature {
           if (threadId)
             params.messageThreadId = threadId
           const sent = await chat.sendMessage(replyText, params)
-          return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}` }
+          return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
         },
         send: async (content) => {
           const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
@@ -313,7 +314,7 @@ export class ForwardFeature {
           if (threadId)
             params.messageThreadId = threadId
           const sent = await chat.sendMessage(sendText, params)
-          return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}` }
+          return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
         },
         recall: async () => {
           const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
@@ -362,6 +363,7 @@ export class ForwardFeature {
         const segments = this.toPluginSegments(msg.content as any, 'qq')
 
         eventPublisher.publishMessage({
+          eventId: `qq:${msg.id}`,
           instanceId: this.instance.id,
           platform: 'qq',
           channelId: String(msg.chat.id),
@@ -390,7 +392,7 @@ export class ForwardFeature {
               ],
               timestamp: Date.now(),
             } as any)
-            return { messageId: `qq:${String(receipt.messageId)}` }
+            return { messageId: `qq:${String(receipt.messageId)}`, timestamp: Date.now() }
           },
           send: async (content) => {
             const text = this.contentToText(content)
@@ -402,7 +404,7 @@ export class ForwardFeature {
               content: [{ type: 'text', data: { text } }],
               timestamp: Date.now(),
             } as any)
-            return { messageId: `qq:${String(receipt.messageId)}` }
+            return { messageId: `qq:${String(receipt.messageId)}`, timestamp: Date.now() }
           },
           recall: async () => {
             await this.qqClient.recallMessage(String(msg.id))
@@ -426,7 +428,7 @@ export class ForwardFeature {
 
       // Publish gateway event (doesn't affect forwarding)
       try {
-        await this.instance.eventPublisher?.publishMessageCreated(this.instance.id, msg as any, pair)
+        await getEventPublisher().publishMessageCreated(this.instance.id, msg as any, pair)
       }
       catch (e) {
         logger.debug(e, '[Gateway] publishMessageCreated (QQ) failed')
