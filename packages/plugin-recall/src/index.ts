@@ -1,5 +1,6 @@
 import type { NapGramPlugin, PluginContext, InstanceStatusEvent } from '@napgram/sdk';
-import { Instance, RecallFeature } from '@napgram/feature-kit';
+import { RecallFeature } from '@napgram/feature-kit';
+import type { Instance } from '@napgram/feature-kit';
 
 const plugin: NapGramPlugin = {
     id: 'recall',
