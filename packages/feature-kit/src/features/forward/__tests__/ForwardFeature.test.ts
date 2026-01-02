@@ -328,7 +328,7 @@ describe('forwardFeature', () => {
         { type: 'audio', data: { file: 'audio.mp3' } },
         { type: 'file', data: { file: 'file.bin', filename: 'file.bin' } },
         { type: 'forward', data: { messages: [forwardMsg] } },
-        { type: 'mystery', data: { value: 1 } },
+        { type: 'mystery', data: { value: 1 } } as any,
       ],
     })
 
