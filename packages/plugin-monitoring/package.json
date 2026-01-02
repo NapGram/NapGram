@@ -27,6 +27,7 @@
     "devDependencies": {
         "@napgram/infra-kit": "workspace:*",
         "@napgram/sdk": "workspace:*",
+        "@napgram/web-interfaces": "workspace:*",
         "@types/node": "25.0.3",
         "typescript": "5.9.3"
     },
