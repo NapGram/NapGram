@@ -1,32 +1,34 @@
 import { env, getLogger } from '@napgram/infra-kit'
-import builtinQqNapcatAdapter from '../../../packages/plugin-adapter-qq-napcat/src/index'
-import builtinTelegramAdapter from '../../../packages/plugin-adapter-telegram-mtcute/src/index'
-import builtinAdminAuth from '../../../packages/plugin-admin-auth/src/index'
-import builtinAdminDatabase from '../../../packages/plugin-admin-database/src/index'
-import builtinAdminInstances from '../../../packages/plugin-admin-instances/src/index'
-import builtinAdminLogs from '../../../packages/plugin-admin-logs/src/index'
-import builtinAdminMessages from '../../../packages/plugin-admin-messages/src/index'
-import builtinAdminPairs from '../../../packages/plugin-admin-pairs/src/index'
-import builtinAdminPlugins from '../../../packages/plugin-admin-plugins/src/index'
-import builtinAdminSettings from '../../../packages/plugin-admin-settings/src/index'
-import builtinAdminSuite from '../../../packages/plugin-admin-suite/src/index'
-import builtinCommands from '../../../packages/plugin-commands/src/index'
-import builtinFlags from '../../../packages/plugin-flags/src/index'
-import builtinForward from '../../../packages/plugin-forward/src/index'
-import builtinGateway from '../../../packages/plugin-gateway/src/index'
-import builtinGroupManagement from '../../../packages/plugin-group-management/src/index'
-import builtinMedia from '../../../packages/plugin-media/src/index'
-import builtinMonitoring from '../../../packages/plugin-monitoring/src/index'
-import builtinNotifications from '../../../packages/plugin-notifications/src/index'
-import builtinPingPong from '../../../packages/plugin-ping-pong/src/index'
-import builtinQQInteraction from '../../../packages/plugin-qq-interaction/src/index'
-import builtinRecall from '../../../packages/plugin-recall/src/index'
-import builtinRefresh from '../../../packages/plugin-refresh/src/index'
-import builtinRequestHandler from '../../../packages/plugin-request-handler/src/index'
-import builtinRequestManagement from '../../../packages/plugin-request-management/src/index'
-import builtinStatistics from '../../../packages/plugin-statistics/src/index'
-import builtinWebAssets from '../../../packages/plugin-web-assets/src/index'
-import builtinWebConsole from '../../../packages/plugin-web-console/src/index'
+
+// 使用动态导入避免打包时的路径问题
+const builtinQqNapcatAdapter = () => import('@napgram/plugin-adapter-qq-napcat')
+const builtinTelegramAdapter = () => import('@napgram/plugin-adapter-telegram-mtcute')
+const builtinAdminAuth = () => import('@napgram/plugin-admin-auth')
+const builtinAdminDatabase = () => import('@napgram/plugin-admin-database')
+const builtinAdminInstances = () => import('@napgram/plugin-admin-instances')
+const builtinAdminLogs = () => import('@napgram/plugin-admin-logs')
+const builtinAdminMessages = () => import('@napgram/plugin-admin-messages')
+const builtinAdminPairs = () => import('@napgram/plugin-admin-pairs')
+const builtinAdminPlugins = () => import('@napgram/plugin-admin-plugins')
+const builtinAdminSettings = () => import('@napgram/plugin-admin-settings')
+const builtinAdminSuite = () => import('@napgram/plugin-admin-suite')
+const builtinCommands = () => import('@napgram/plugin-commands')
+const builtinFlags = () => import('@napgram/plugin-flags')
+const builtinForward = () => import('@napgram/plugin-forward')
+const builtinGateway = () => import('@napgram/plugin-gateway')
+const builtinGroupManagement = () => import('@napgram/plugin-group-management')
+const builtinMedia = () => import('@napgram/plugin-media')
+const builtinMonitoring = () => import('@napgram/plugin-monitoring')
+const builtinNotifications = () => import('@napgram/plugin-notifications')
+const builtinPingPong = () => import('@napgram/plugin-ping-pong')
+const builtinQQInteraction = () => import('@napgram/plugin-qq-interaction')
+const builtinRecall = () => import('@napgram/plugin-recall')
+const builtinRefresh = () => import('@napgram/plugin-refresh')
+const builtinRequestHandler = () => import('@napgram/plugin-request-handler')
+const builtinRequestManagement = () => import('@napgram/plugin-request-management')
+const builtinStatistics = () => import('@napgram/plugin-statistics')
+const builtinWebAssets = () => import('@napgram/plugin-web-assets')
+const builtinWebConsole = () => import('@napgram/plugin-web-console')
 
 const logger = getLogger('Builtins')
 
@@ -35,97 +37,97 @@ export const builtins = [
         id: 'adapter-qq-napcat',
         module: '@builtin/adapter-qq-napcat',
         enabled: true,
-        load: async () => builtinQqNapcatAdapter,
+        load: builtinQqNapcatAdapter,
     },
     {
         id: 'adapter-telegram-mtcute',
         module: '@builtin/adapter-telegram-mtcute',
         enabled: true,
-        load: async () => builtinTelegramAdapter,
+        load: builtinTelegramAdapter,
     },
     {
         id: 'ping-pong',
         module: '@builtin/ping-pong',
         enabled: true,
-        load: async () => builtinPingPong,
+        load: builtinPingPong,
     },
     {
         id: 'commands',
         module: '@builtin/commands',
         enabled: true,
-        load: async () => builtinCommands,
+        load: builtinCommands,
     },
     {
         id: 'qq-interaction',
         module: '@builtin/qq-interaction',
         enabled: true,
-        load: async () => builtinQQInteraction,
+        load: builtinQQInteraction,
     },
     {
         id: 'refresh',
         module: '@builtin/refresh',
         enabled: true,
-        load: async () => builtinRefresh,
+        load: builtinRefresh,
     },
     {
         id: 'flags',
         module: '@builtin/flags',
         enabled: true,
-        load: async () => builtinFlags,
+        load: builtinFlags,
     },
     {
         id: 'request-handler',
         module: '@builtin/request-handler',
         enabled: true,
-        load: async () => builtinRequestHandler,
+        load: builtinRequestHandler,
     },
     {
         id: 'request-management',
         module: '@builtin/request-management',
         enabled: true,
-        load: async () => builtinRequestManagement,
+        load: builtinRequestManagement,
     },
     {
         id: 'group-management',
         module: '@builtin/group-management',
         enabled: true,
-        load: async () => builtinGroupManagement,
+        load: builtinGroupManagement,
     },
     {
         id: 'media',
         module: '@builtin/media',
         enabled: true,
-        load: async () => builtinMedia,
+        load: builtinMedia,
     },
     {
         id: 'recall',
         module: '@builtin/recall',
         enabled: true,
-        load: async () => builtinRecall,
+        load: builtinRecall,
     },
     {
         id: 'forward',
         module: '@builtin/forward',
         enabled: true,
-        load: async () => builtinForward,
+        load: builtinForward,
     },
     {
         id: 'monitoring',
         module: '@builtin/monitoring',
         enabled: true,
-        load: async () => builtinMonitoring,
+        load: builtinMonitoring,
     },
     {
         id: 'statistics',
         module: '@builtin/statistics',
         enabled: true,
-        load: async () => builtinStatistics,
+        load: builtinStatistics,
     },
     {
         id: 'gateway',
         module: '@builtin/gateway',
         enabled: false,
-        load: async () => builtinGateway,
+        load: builtinGateway,
     },
     {
         id: 'notifications',
@@ -137,72 +139,72 @@ export const builtins = [
             adminTG: env.ADMIN_TG,
             cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
         },
-        load: async () => builtinNotifications,
+        load: builtinNotifications,
     },
     {
         id: 'admin-auth',
         module: '@builtin/admin-auth',
         enabled: false,
-        load: async () => builtinAdminAuth,
+        load: builtinAdminAuth,
     },
     {
         id: 'admin-instances',
         module: '@builtin/admin-instances',
         enabled: false,
-        load: async () => builtinAdminInstances,
+        load: builtinAdminInstances,
     },
     {
         id: 'admin-pairs',
         module: '@builtin/admin-pairs',
         enabled: false,
-        load: async () => builtinAdminPairs,
+        load: builtinAdminPairs,
     },
     {
         id: 'admin-messages',
         module: '@builtin/admin-messages',
         enabled: false,
-        load: async () => builtinAdminMessages,
+        load: builtinAdminMessages,
     },
     {
         id: 'admin-logs',
         module: '@builtin/admin-logs',
         enabled: false,
-        load: async () => builtinAdminLogs,
+        load: builtinAdminLogs,
     },
     {
         id: 'admin-settings',
         module: '@builtin/admin-settings',
         enabled: false,
-        load: async () => builtinAdminSettings,
+        load: builtinAdminSettings,
     },
     {
         id: 'admin-plugins',
         module: '@builtin/admin-plugins',
         enabled: false,
-        load: async () => builtinAdminPlugins,
+        load: builtinAdminPlugins,
     },
     {
         id: 'admin-database',
         module: '@builtin/admin-database',
         enabled: false,
-        load: async () => builtinAdminDatabase,
+        load: builtinAdminDatabase,
     },
     {
         id: 'admin-suite',
         module: '@builtin/admin-suite',
         enabled: true,
-        load: async () => builtinAdminSuite,
+        load: builtinAdminSuite,
     },
     {
         id: 'web-assets',
         module: '@builtin/web-assets',
         enabled: true,
-        load: async () => builtinWebAssets,
+        load: builtinWebAssets,
     },
     {
         id: 'web-console',
         module: '@builtin/web-console',
         enabled: true,
-        load: async () => builtinWebConsole,
+        load: builtinWebConsole,
     },
 ]
