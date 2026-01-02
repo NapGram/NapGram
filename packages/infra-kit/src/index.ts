@@ -1,17 +1,41 @@
 export { configureInfraKit } from './deps'
 export type { InfraLogger, LoggerFactory } from './deps'
-export { default as flags } from './flags'
+import flags from './flags'
+import qface from './qface'
 export { default as ForwardMap } from './models/ForwardMap'
 export type { ForwardPairRecord } from './models/ForwardMap'
+export { Pair } from './models/Pair'
 
 import { CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache } from './CacheManager'
+export type { CacheConfig } from './CacheManager'
 import { MessageQueue } from './MessageQueue'
+export type { MessageHandler, QueueConfig } from './MessageQueue'
 import { performanceMonitor, PerformanceMonitor } from './PerformanceMonitor'
+export type { PerformanceMetrics, PerformanceStats } from './PerformanceMonitor'
 import env from './env'
 import getLogger, { setConsoleLogLevel } from './logger'
 import type { AppLogger } from './logger'
 import db from './db'
 import * as temp from './temp'
+import { DurationParser } from './utils/duration-parser'
+import * as hashing from './utils/hashing'
+import random from './utils/random'
+import { getMimeType } from './utils/mime'
+import { ApiResponse } from './utils/api-response'
+import * as urls from './utils/urls'
+import * as flagControl from './utils/flagControl'
+import sentry from './sentry'
+import * as arrays from './utils/arrays'
+import * as cache from './utils/cache'
+import * as date from './utils/date'
+import * as pastebin from './utils/pastebin'
+import * as highLevel from './utils/highLevel'
+
+// Individual named exports from modules
+export { TTLCache } from './utils/cache'
+export { formatDate } from './utils/date'
+export { registerDualRoute, ErrorResponses } from './utils/fastify'
+export const { TEMP_PATH } = temp
 
 // Named exports
 export {
@@ -21,12 +45,26 @@ export {
   env,
   getLogger, setConsoleLogLevel,
   db,
-  temp
+  temp,
+  qface,
+  DurationParser,
+  hashing,
+  random,
+  getMimeType,
+  flags,
+  ApiResponse,
+  urls,
+  flagControl,
+  sentry,
+  arrays,
+  cache,
+  date,
+  pastebin,
+  highLevel
 }
 export type { AppLogger }
 
-// Default export for compatibility with tests using import kit from '@napgram/infra-kit'
-// and expecting kit.env, kit.db, etc.
+// Default export for compatibility with tests
 const kit = {
   env,
   getLogger,
@@ -35,17 +73,9 @@ const kit = {
   performanceMonitor,
   CacheManager,
   MessageQueue,
+  qface,
 }
 
-// To support the weird pattern in some tests where they do (module as any).default || module
-// and expect properties like ADMIN_QQ to be directly on that object if they mocked it that way.
-// We can't easily fix the mock bodies automatically, but we can make the default export
-// proxy or include the properties if needed.
-// Actually, the best way is to make the default export the same object that has everything.
-Object.assign(kit, env) // This might be dangerous if there are name collisions.
-// But mostly people want kit.env.ADMIN_QQ.
-// Wait, PermissionChecker.test.ts mocked it as:
-// default: { ADMIN_QQ: ... }
-// So it expects the default export to BE the env object? No, it expects it to HAVE those properties.
+Object.assign(kit, env)
 
 export default kit

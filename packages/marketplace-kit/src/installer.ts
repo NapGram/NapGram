@@ -9,9 +9,14 @@ import { promisify } from 'node:util'
 import { unzipSync } from 'fflate'
 import { env } from '@napgram/infra-kit'
 import { getLogger } from '@napgram/infra-kit'
-import { PluginRuntime } from '../../../main/src/plugins/runtime'
+import {
+  getGlobalRuntime,
+  patchPluginConfig,
+  readPluginsConfig,
+  removePluginConfig,
+  upsertPluginConfig,
+} from '@napgram/runtime-kit'
 import { readMarketplaceCache } from './marketplace'
-import { patchPluginConfig, readPluginsConfig, removePluginConfig, upsertPluginConfig } from '../../../main/src/plugins/internal/store'
 
 const execFileAsync = promisify(execFile)
 const logger = getLogger('PluginInstaller')
@@ -359,7 +364,7 @@ async function linkHostSdk(installDir: string): Promise<void> {
       }
     }
 
-    const sdkPackages = ['sdk', 'core', 'utils']
+    const sdkPackages = await fs.readdir(hostNodeModules).catch(() => [])
 
     for (const pkg of sdkPackages) {
       const hostPkg = path.join(hostNodeModules, pkg)
@@ -561,7 +566,7 @@ async function listInstalledVersions(pluginId: string): Promise<string[]> {
 
 async function inferCurrentVersion(pluginId: string): Promise<string | null> {
   const { config } = await readPluginsConfig()
-  const entry = config.plugins.find(p => p.id === pluginId)
+  const entry = config.plugins.find((p: any) => p.id === pluginId)
   const src = (entry as any)?.source
   if (typeof src?.version === 'string' && src.version)
     return src.version
@@ -600,7 +605,7 @@ async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<Plu
     dryRun: opts.dryRun === true,
   }, 'Marketplace install started')
 
-  const existing = (await readPluginsConfig()).config.plugins.find(p => p.id === pluginId)
+  const existing = (await readPluginsConfig()).config.plugins.find((p: any) => p.id === pluginId)
   const enabled = typeof opts.enabled === 'boolean' ? opts.enabled : (existing ? existing.enabled !== false : true)
   const requestedConfig = typeof opts.config === 'undefined' ? undefined : opts.config
   const existingConfig = existing?.config
@@ -730,7 +735,7 @@ export async function upgradePlugin(pluginIdRaw: string, options: UpgradeOptions
     const rawMarketplaceId = String(options.marketplaceId || '').trim()
     if (!rawMarketplaceId) {
       const { config } = await readPluginsConfig()
-      const entry = config.plugins.find(p => p.id === pluginId)
+      const entry = config.plugins.find((p: any) => p.id === pluginId)
       const src = (entry as any)?.source
       const mid = typeof src?.marketplaceId === 'string' ? src.marketplaceId : ''
       if (!mid)
@@ -802,7 +807,7 @@ export async function uninstallPlugin(pluginIdRaw: string, options: UninstallOpt
   return withInstallLock(async () => {
     const pluginId = sanitizeId(pluginIdRaw)
     const { config } = await readPluginsConfig()
-    const idx = config.plugins.findIndex(p => p.id === pluginId)
+    const idx = config.plugins.findIndex((p: any) => p.id === pluginId)
     const removed = idx >= 0
 
     if (!options.dryRun) {
@@ -822,12 +827,12 @@ export async function uninstallPlugin(pluginIdRaw: string, options: UninstallOpt
       else {
         // Plugin not in config yet (probably auto-discovered local plugin)
         // Check if it's loaded in runtime to determine if it's a local plugin
-        const runtime = PluginRuntime.getLastReport()
+        const runtime = getGlobalRuntime().getLastReport()
         const isLoaded = runtime.loaded.includes(pluginId)
 
         if (isLoaded) {
           // It's a local plugin that was auto-discovered - add it to config as disabled
-          const loadedPlugin = runtime.loadedPlugins?.find(p => p.id === pluginId)
+          const loadedPlugin = runtime.loadedPlugins?.find((p: any) => p.id === pluginId)
           if (loadedPlugin) {
             // Try to infer the module path from runtime
             const possiblePaths = [

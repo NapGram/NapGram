@@ -229,7 +229,7 @@ export class CommandsFeature {
 
     try {
       // 动态导入 plugin runtime（避免循环依赖，ESM 兼容）
-      const { getGlobalRuntime } = await import('../../../../../main/src/plugins/runtime.js')
+      const { getGlobalRuntime } = await import('@napgram/plugin-kit')
       const runtime = getGlobalRuntime()
 
       if (!runtime) {
@@ -365,6 +365,7 @@ export class CommandsFeature {
           const chatId = msg.chat.id
           await commandContext.replyQQ(chatId, text)
         }
+        return { messageId: `qq:${msg.id}`, timestamp: Date.now() }
       },
       send: async (content: string | any[]) => {
         // send 与 reply 相同（暂时没有独立的 send API）
@@ -378,6 +379,7 @@ export class CommandsFeature {
           const chatId = msg.chat.id
           await commandContext.replyQQ(chatId, text)
         }
+        return { messageId: `qq:${msg.id}`, timestamp: Date.now() }
       },
       recall: async () => {
         // recall 功能暂不实现
@@ -618,6 +620,7 @@ export class CommandsFeature {
         }
 
         eventPublisher.publishMessage({
+          eventId: `tg:cmd:${tgMsg.id}`,
           instanceId: this.instance.id,
           platform: 'tg',
           channelId: String(tgMsg.chat.id),
@@ -641,7 +644,7 @@ export class CommandsFeature {
             if (threadId)
               params.messageThreadId = threadId
             const sent = await chat.sendMessage(textContent, params)
-            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}` }
+            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           send: async (content) => {
             const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
@@ -650,7 +653,7 @@ export class CommandsFeature {
             if (threadId)
               params.messageThreadId = threadId
             const sent = await chat.sendMessage(textContent, params)
-            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}` }
+            return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           recall: async () => {
             const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))

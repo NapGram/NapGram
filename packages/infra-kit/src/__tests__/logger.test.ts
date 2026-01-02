@@ -34,7 +34,7 @@ describe('logger', () => {
       }
     })
 
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: 'info',
         LOG_FILE_LEVEL: 'debug',
@@ -49,7 +49,7 @@ describe('logger', () => {
   })
 
   it('should normalize invalid log levels to info and log correctly', async () => {
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: 'invalid-level',
         LOG_FILE_LEVEL: 'debug',
@@ -116,7 +116,7 @@ describe('logger', () => {
   })
 
   it('should respect file log threshold', async () => {
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: 'info',
         LOG_FILE_LEVEL: 'error',
@@ -139,7 +139,7 @@ describe('logger', () => {
   })
 
   it('should cover all log levels', async () => {
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: 'trace',
         LOG_FILE_LEVEL: 'off',
@@ -211,7 +211,7 @@ describe('logger', () => {
 
   it('should handle undefined/empty LOG_LEVEL (line 23)', async () => {
     vi.resetModules()
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: '', // Empty string to trigger (level || '')
         LOG_FILE_LEVEL: undefined, // Undefined to trigger fallback
@@ -229,7 +229,7 @@ describe('logger', () => {
 
   it('should handle file logging initialization errors (lines 63, 78-79)', async () => {
     vi.resetModules()
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: 'info',
         LOG_FILE_LEVEL: 'debug',
@@ -254,7 +254,7 @@ describe('logger', () => {
 
   it('should handle file stream creation errors (lines 78-79)', async () => {
     vi.resetModules()
-    vi.doMock('../../domain/models/env', () => ({
+    vi.doMock('../env', () => ({
       default: {
         LOG_LEVEL: 'info',
         LOG_FILE_LEVEL: 'debug',

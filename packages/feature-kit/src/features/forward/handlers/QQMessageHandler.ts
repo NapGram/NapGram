@@ -75,6 +75,7 @@ export class QQMessageHandler {
                 : 'group'
 
           eventPublisher.publishMessage({
+            eventId: `qq:${msg.id}`,
             instanceId: pair.instanceId,
             platform: 'qq',
             channelId: String(msg.chat.id),
@@ -90,7 +91,7 @@ export class QQMessageHandler {
               timestamp: msg.timestamp || Date.now(),
             },
             raw: msg,
-            reply: async (content) => {
+            reply: async (content: any) => {
               const text = typeof content === 'string'
                 ? content
                 : Array.isArray(content)
@@ -104,9 +105,9 @@ export class QQMessageHandler {
                 content: [{ type: 'text', data: { text } }],
                 timestamp: Date.now(),
               } as any)
-              return { messageId: receipt.messageId }
+              return { messageId: receipt.messageId, timestamp: Date.now() }
             },
-            send: async (content) => {
+            send: async (content: any) => {
               const text = typeof content === 'string'
                 ? content
                 : Array.isArray(content)
@@ -120,7 +121,7 @@ export class QQMessageHandler {
                 content: [{ type: 'text', data: { text } }],
                 timestamp: Date.now(),
               } as any)
-              return { messageId: receipt.messageId }
+              return { messageId: receipt.messageId, timestamp: Date.now() }
             },
             recall: async () => {
               logger.warn('[Plugin] Recall not implemented for QQ events')

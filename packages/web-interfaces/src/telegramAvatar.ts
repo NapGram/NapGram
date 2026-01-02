@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import type { TelegramClient } from '@napgram/runtime-kit'
+import type { default as TelegramClient } from '@napgram/telegram-client'
 import fs from 'node:fs'
 import {
   convert,
@@ -7,7 +7,7 @@ import {
   getLogger,
   Instance,
   registerDualRoute,
-} from '@napgram/runtime-kit'
+} from '@napgram/runtime-kit/legacy'
 
 const log = getLogger('telegramAvatar')
 
@@ -29,7 +29,7 @@ export default async function (fastify: FastifyInstance) {
     const { instanceId, userId } = request.params
     log.debug('请求头像', userId)
 
-    const instance = Instance.instances.find(it => it.id.toString() === instanceId)
+    const instance = Instance.instances.find((it: any) => it.id.toString() === instanceId)
     if (!instance) {
       return ErrorResponses.notFound(reply, 'Instance not found')
     }
