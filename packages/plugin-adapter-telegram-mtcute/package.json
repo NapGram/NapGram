@@ -2,14 +2,14 @@
     "name": "@napgram/plugin-adapter-telegram-mtcute",
     "version": "0.1.4",
     "description": "NapGram Telegram adapter for mtcute",
-    "main": "./dist/index.js",
-    "types": "./src/index.ts",
+    "main": "./src/index.ts",
+    "types": "./dist/src/index.d.ts",
     "type": "module",
     "exports": {
         ".": {
-            "types": "./src/index.ts",
+            "types": "./dist/src/index.d.ts",
             "import": "./src/index.ts",
-            "default": "./dist/index.js"
+            "default": "./src/index.ts"
         },
         "./package.json": "./package.json"
     },
@@ -33,5 +33,17 @@
     },
     "dependencies": {
         "@napgram/telegram-client": "workspace:*"
+    },
+    "publishConfig": {
+        "main": "./dist/src/index.js",
+        "types": "./dist/src/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/src/index.d.ts",
+                "import": "./dist/src/index.js",
+                "default": "./dist/src/index.js"
+            },
+            "./package.json": "./package.json"
+        }
     }
 }

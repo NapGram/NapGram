@@ -3,16 +3,7 @@
     "compilerOptions": {
         "outDir": "./dist",
         "composite": true,
-        "tsBuildInfoFile": "./dist/.tsbuildinfo",
-        "baseUrl": "../../",
-        "paths": {
-            "@napgram/auth-kit": [
-                "packages/auth-kit/src/index.ts"
-            ],
-            "@napgram/infra-kit": [
-                "packages/infra-kit/src/index.ts"
-            ]
-        }
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "references": [
         {

@@ -1,4 +1,13 @@
-import { IPluginRuntime } from './runtime-types';
+import { IInstance, IPluginRuntime } from './runtime-types';
+/**
+ * Registry for active instances.
+ */
+export declare const InstanceRegistry: {
+    add(instance: IInstance): void;
+    remove(id: number): void;
+    getAll(): IInstance[];
+    getById(id: number): IInstance | undefined;
+};
 /**
  * Set the global runtime instance.
  * Should be called by the host application (main) on startup.

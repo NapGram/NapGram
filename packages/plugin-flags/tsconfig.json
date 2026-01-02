@@ -1,16 +1,7 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/plugin-flags": [
-                "./src/index.ts"
-            ],
-            "@napgram/sdk": [
-                "../../external/sdk/packages/sdk/src/index.ts"
-            ]
-        }
+        "outDir": "./dist"
     },
     "include": [
         "src/**/*"

@@ -41,13 +41,12 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
     libpixman-1-dev libcairo2-dev libpango1.0-dev libgif-dev libjpeg62-turbo-dev libpng-dev librsvg2-dev libvips-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* /app/
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
 COPY main/package.json /app/main/
+COPY main/prisma/ /app/main/prisma/
 COPY web/package.json /app/web/
 COPY packages/ /app/packages/
-COPY external/sdk/packages/sdk/package.json /app/external/sdk/packages/sdk/
-COPY external/sdk/packages/core/package.json /app/external/sdk/packages/core/
-COPY external/sdk/packages/utils/package.json /app/external/sdk/packages/utils/
+COPY external/sdk/ /app/external/sdk/
 
 # 两步安装策略：
 # 1. 安装所有依赖并跳过脚本（避免 sharp 尝试源码编译）
@@ -55,12 +54,13 @@ COPY external/sdk/packages/utils/package.json /app/external/sdk/packages/utils/
 #    - better-sqlite3: mtcute 用于 Telegram session 存储
 #    - silk-wasm 是纯 WASM，无需编译
 RUN pnpm install --no-frozen-lockfile --shamefully-hoist --ignore-scripts && \
-    pnpm -r rebuild better-sqlite3
+    pnpm -r rebuild better-sqlite3 && \
+    DATABASE_URL="postgresql://dummy" pnpm --filter ./main exec prisma generate --no-hints && \
+    pnpm --filter "./packages/**" run build
 
 # 源码构建（后端）
-COPY external/sdk/ /app/external/sdk/
+
 COPY main/ /app/main/
-RUN DATABASE_URL="postgresql://dummy" pnpm --filter ./main exec prisma generate --no-hints
 RUN pnpm --filter ./main run build
 
 # Frontend 使用预构建产物

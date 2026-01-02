@@ -2,14 +2,14 @@
     "name": "@napgram/media-kit",
     "version": "0.1.4",
     "description": "Media conversion utilities for NapGram",
-    "main": "./dist/index.js",
-    "types": "./src/index.ts",
+    "main": "./src/index.ts",
+    "types": "./dist/src/index.d.ts",
     "type": "module",
     "exports": {
         ".": {
-            "types": "./src/index.ts",
+            "types": "./dist/src/index.d.ts",
             "import": "./src/index.ts",
-            "default": "./dist/index.js"
+            "default": "./src/index.ts"
         },
         "./package.json": "./package.json"
     },
@@ -34,5 +34,17 @@
         "@types/node": "25.0.3",
         "typescript": "5.9.3",
         "vitest": "4.0.16"
+    },
+    "publishConfig": {
+        "main": "./dist/src/index.js",
+        "types": "./dist/src/index.d.ts",
+        "exports": {
+            ".": {
+                "types": "./dist/src/index.d.ts",
+                "import": "./dist/src/index.js",
+                "default": "./dist/src/index.js"
+            },
+            "./package.json": "./package.json"
+        }
     }
 }
