@@ -27,9 +27,13 @@ const plugin: NapGramPlugin = {
         };
 
         const handleStatus = async (event: InstanceStatusEvent) => {
+            ctx.logger.debug(`Received instance-status event: ${event.status} for instance ${event.instanceId}`);
             if (event.status !== 'starting' && event.status !== 'running') return;
             const instance = Instance.instances.find((i: any) => i.id === event.instanceId);
-            if (!instance) return;
+            if (!instance) {
+                ctx.logger.warn(`Instance ${event.instanceId} not found in registry during handleStatus`);
+                return;
+            }
             attach(instance);
         };
 
