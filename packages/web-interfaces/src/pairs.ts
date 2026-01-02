@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { ApiResponse, authMiddleware, db, getLogger, groupInfoCache, Instance } from '@napgram/runtime-kit'
+import { ApiResponse, db, getLogger, groupInfoCache } from '@napgram/infra-kit'
+import { Instance } from '@napgram/runtime-kit'
+import { authMiddleware } from '@napgram/auth-kit'
 
 const log = getLogger('PairsApi')
 
@@ -137,7 +139,7 @@ export default async function (fastify: FastifyInstance) {
   })
 
   const refreshInstanceForwardMap = async (instanceId: number) => {
-    const inst = Instance.instances.find(it => it.id === instanceId)
+    const inst = Instance.instances.find((it: any) => it.id === instanceId)
     const map = inst?.forwardPairs as any
     if (map && typeof map.reload === 'function') {
       await map.reload()
@@ -193,22 +195,22 @@ export default async function (fastify: FastifyInstance) {
       db.forwardPair.count({ where }),
     ])
 
-    const mapped = items.map(item => ({
+    const mapped = items.map((item: any) => ({
       ...item,
       qqRoomId: item.qqRoomId.toString(),
       tgChatId: item.tgChatId.toString(),
       qqFromGroupId: item.qqFromGroupId?.toString() || null,
       instance: item.instance
         ? {
-            ...item.instance,
-            owner: item.instance.owner.toString(),
-            qqBot: item.instance.qqBot
-              ? {
-                  ...item.instance.qqBot,
-                  uin: item.instance.qqBot.uin?.toString() || null,
-                }
-              : null,
-          }
+          ...item.instance,
+          owner: item.instance.owner.toString(),
+          qqBot: item.instance.qqBot
+            ? {
+              ...item.instance.qqBot,
+              uin: item.instance.qqBot.uin?.toString() || null,
+            }
+            : null,
+        }
         : null,
       notifyTelegram: item.notifyTelegram,
       notifyQQ: item.notifyQQ,
@@ -270,15 +272,15 @@ export default async function (fastify: FastifyInstance) {
         qqFromGroupId: pair.qqFromGroupId?.toString() || null,
         instance: pair.instance
           ? {
-              ...pair.instance,
-              owner: pair.instance.owner.toString(),
-              qqBot: pair.instance.qqBot
-                ? {
-                    ...pair.instance.qqBot,
-                    uin: pair.instance.qqBot.uin?.toString() || null,
-                  }
-                : null,
-            }
+            ...pair.instance,
+            owner: pair.instance.owner.toString(),
+            qqBot: pair.instance.qqBot
+              ? {
+                ...pair.instance.qqBot,
+                uin: pair.instance.qqBot.uin?.toString() || null,
+              }
+              : null,
+          }
           : null,
         notifyTelegram: pair.notifyTelegram,
         notifyQQ: pair.notifyQQ,
@@ -318,7 +320,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('@napgram/runtime-kit')
+      const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
         auth.userId,
         'create_pair',
@@ -401,10 +403,10 @@ export default async function (fastify: FastifyInstance) {
           ...(body.tgThreadId !== undefined ? { tgThreadId: body.tgThreadId } : {}),
           ...(body.instanceId !== undefined
             ? {
-                instance: {
-                  connect: { id: body.instanceId },
-                },
-              }
+              instance: {
+                connect: { id: body.instanceId },
+              },
+            }
             : {}),
           forwardMode: body.forwardMode,
           nicknameMode: body.nicknameMode,
@@ -419,7 +421,7 @@ export default async function (fastify: FastifyInstance) {
       })
 
       // 审计日志
-      const { AuthService } = await import('@napgram/runtime-kit')
+      const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
         auth.userId,
         'update_pair',
@@ -490,7 +492,7 @@ export default async function (fastify: FastifyInstance) {
       const pair = await db.forwardPair.delete({ where: { id: pairId } })
 
       // 审计日志
-      const { AuthService } = await import('@napgram/runtime-kit')
+      const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
         auth.userId,
         'delete_pair',
@@ -523,7 +525,7 @@ export default async function (fastify: FastifyInstance) {
     if (!options.notifyTelegram && !options.notifyQQ)
       return
 
-    const instance = Instance.instances.find(it => it.id === pair.instanceId)
+    const instance = Instance.instances.find((it: any) => it.id === pair.instanceId)
     if (!instance) {
       log.warn({ instanceId: pair.instanceId }, 'Instance not available for pair notification')
       return
@@ -629,7 +631,7 @@ async function resolveQqGroupName(instanceId: number, qqRoomId: string) {
   if (cached)
     return cached as string
 
-  const instance = Instance.instances.find(it => it.id === instanceId)
+  const instance = Instance.instances.find((it: any) => it.id === instanceId)
   if (!instance?.qqClient)
     return null
   try {
@@ -652,7 +654,7 @@ async function resolveTgChatName(instanceId: number, tgChatId: string) {
   if (cached)
     return cached as string
 
-  const instance = Instance.instances.find(it => it.id === instanceId)
+  const instance = Instance.instances.find((it: any) => it.id === instanceId)
   const chatIdNum = Number(tgChatId)
   if (!instance?.tgBot || Number.isNaN(chatIdNum))
     return null
