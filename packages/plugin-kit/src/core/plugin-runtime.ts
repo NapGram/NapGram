@@ -8,7 +8,7 @@ import type { PluginSpec } from './interfaces'
 import type { PluginInstance } from './lifecycle'
 import { getLogger } from '@napgram/infra-kit'
 import { IPluginRuntime, setGlobalRuntime as setKitRuntime } from '@napgram/runtime-kit'
-import { EventBus } from './event-bus'
+import { EventBus, globalEventBus } from './event-bus'
 import { PluginLifecycleManager, PluginState } from './lifecycle'
 import { PluginContextImpl } from './plugin-context'
 import { PluginLoader, PluginType } from './plugin-loader'
@@ -116,7 +116,7 @@ export class PluginRuntime implements IPluginRuntime {
   private apis?: RuntimeConfig['apis']
 
   constructor(config?: RuntimeConfig) {
-    this.eventBus = config?.eventBus || new EventBus()
+    this.eventBus = config?.eventBus || globalEventBus
     this.loader = config?.loader || new PluginLoader()
     this.lifecycleManager = config?.lifecycleManager || new PluginLifecycleManager()
     this.apis = config?.apis
@@ -149,7 +149,7 @@ export class PluginRuntime implements IPluginRuntime {
       return this.lastReport
     }
 
-    logger.info({ pluginCount: specs.length }, 'Starting PluginRuntime')
+    logger.info({ pluginCount: specs.length, eventBus: this.eventBus === globalEventBus ? 'global' : 'private' }, 'Starting PluginRuntime')
 
     const report: RuntimeReport = {
       enabled: true,
