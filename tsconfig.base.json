@@ -9,7 +9,10 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "moduleResolution": "node",
+        "moduleResolution": "bundler",
+        "jsx": "react",
+        "jsxFactory": "Html.createElement",
+        "jsxFragmentFactory": "Html.Fragment",
         "resolveJsonModule": true,
         "declaration": true,
         "baseUrl": ".",
@@ -28,6 +31,24 @@
             ],
             "@napgram/runtime-kit": [
                 "packages/runtime-kit/src/index.ts"
+            ],
+            "@napgram/runtime-kit/*": [
+                "packages/runtime-kit/src/*"
+            ],
+            "@napgram/qq-client": [
+                "packages/qq-client/src/index.ts"
+            ],
+            "@napgram/auth-kit": [
+                "packages/auth-kit/src/index.ts"
+            ],
+            "@napgram/media-kit": [
+                "packages/media-kit/src/index.ts"
+            ],
+            "@napgram/plugin-kit": [
+                "packages/plugin-kit/src/index.ts"
+            ],
+            "@napgram/app/*": [
+                "main/src/*"
             ]
         }
     }

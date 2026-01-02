@@ -25,11 +25,14 @@
     "author": "NapGram Team",
     "license": "MIT",
     "dependencies": {
-        "silk-wasm": "^3.7.1",
-        "@napgram/infra-kit": "workspace:*"
+        "@napgram/infra-kit": "workspace:*",
+        "file-type": "^21.2.0",
+        "image-js": "^1.3.0",
+        "silk-wasm": "^3.7.1"
     },
     "devDependencies": {
         "@types/node": "^25.0.3",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vitest": "^4.0.16"
     }
 }

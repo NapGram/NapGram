@@ -2,12 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/qq-client": [
-                "./src/index.ts"
-            ]
-        }
+        "baseUrl": "../../",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
         "src/**/*"

@@ -2,12 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/media-kit": [
-                "./src/index.ts"
-            ]
-        }
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+        "baseUrl": "../../",
+        "composite": true
     },
     "include": [
         "src/**/*"
@@ -15,5 +12,10 @@
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../infra-kit"
+        }
     ]
 }

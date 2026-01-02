@@ -36,7 +36,8 @@
         "@napgram/media-kit": "workspace:*",
         "@napgram/qq-client": "workspace:*",
         "@napgram/telegram-client": "workspace:*",
-        "@napgram/auth-kit": "workspace:*"
+        "@napgram/auth-kit": "workspace:*",
+        "@napgram/plugin-kit": "workspace:*"
     },
     "devDependencies": {
         "@types/node": "^25.0.3",

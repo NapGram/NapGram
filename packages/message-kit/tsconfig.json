@@ -2,25 +2,26 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "baseUrl": ".",
-        "paths": {
-            "@napgram/message-kit": [
-                "./src/index.ts"
-            ],
-            "@napgram/feature-kit": [
-                "../feature-kit/src/index.ts"
-            ],
-            "@napgram/media-kit": [
-                "../media-kit/src/index.ts"
-            ]
-        }
+        "tsBuildInfoFile": "./dist/.tsbuildinfo",
+        "baseUrl": "../../",
+        "composite": true
     },
     "include": [
-        "src/**/*",
-        "../../main/src/**/*.ts"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../infra-kit"
+        },
+        {
+            "path": "../runtime-kit"
+        },
+        {
+            "path": "../media-kit"
+        }
     ]
 }
