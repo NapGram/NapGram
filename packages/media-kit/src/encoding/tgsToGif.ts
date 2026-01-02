@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import { gunzipSync } from 'node:zlib'
-import { getLogger } from '../../../../main/src/shared/logger'
+import { getLogger } from '@napgram/infra-kit'
 
 const execFileAsync = promisify(execFile)
 const logger = getLogger('TGSConverter')
