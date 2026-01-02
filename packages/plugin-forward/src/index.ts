@@ -16,12 +16,14 @@ const plugin: NapGramPlugin = {
         ctx.logger.info('Forward feature plugin installed');
 
         const attach = (instance: any) => {
-            if (!instance || !instance.qqClient || !instance.tgBot || !instance.forwardPairs) return;
+            if (!instance || !instance.qqClient || !instance.tgBot) return;
             if (instance.forwardFeature) return;
+            ctx.logger.debug(`Attempting to attach ForwardFeature to instance ${instance.id}`);
             const media = instance.mediaFeature;
             const commands = instance.commandsFeature;
             instance.forwardFeature = new ForwardFeature(instance, instance.tgBot, instance.qqClient, media, commands);
             instance.featureManager?.registerFeature?.('forward', instance.forwardFeature);
+            ctx.logger.info(`ForwardFeature attached to instance ${instance.id}`);
         };
 
         const handleStatus = async (event: InstanceStatusEvent) => {
