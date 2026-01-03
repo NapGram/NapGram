@@ -742,4 +742,63 @@ describe('instance', () => {
     // instance.qqBotId getter checks this._qq?.id, so it should be undefined
     expect(instance.qqBotId).toBeUndefined()
   })
+
+  it('handles offline/online events correctly', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    const instance = await Instance.start(23, 'token')
+
+    // Clear previous calls
+    loggerMocks.warn.mockClear()
+    loggerMocks.info.mockClear()
+    eventPublisherMocks.publishNotice.mockClear()
+
+    // Test offline event
+    const offlineHandler = qqMocks.handlers.get('offline')
+    expect(offlineHandler).toBeDefined()
+    await offlineHandler()
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith('NapCat connection offline (disconnect)')
+    expect(instance.isSetup).toBe(false)
+    expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
+      noticeType: 'connection-lost',
+      platform: 'qq',
+      instanceId: 23,
+    }))
+
+    // Test online event
+    const onlineHandler = qqMocks.handlers.get('online')
+    expect(onlineHandler).toBeDefined()
+    await onlineHandler()
+
+    expect(loggerMocks.info).toHaveBeenCalledWith('NapCat connection online (connect)')
+    expect(instance.isSetup).toBe(true)
+    expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
+      noticeType: 'connection-restored',
+      platform: 'qq',
+      instanceId: 23,
+    }))
+  })
+
+  it('handles offline/online notice publish failures', async () => {
+    dbMocks.instance.findFirst.mockResolvedValue({})
+    await Instance.start(24, 'token')
+
+    loggerMocks.warn.mockClear()
+
+    // Test offline with publish failure
+    eventPublisherMocks.publishNotice.mockImplementationOnce(() => {
+      throw new Error('Offline Notice Failed')
+    })
+    const offlineHandler = qqMocks.handlers.get('offline')
+    await offlineHandler()
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-lost notice:', expect.any(Error))
+
+    // Test online with publish failure  
+    eventPublisherMocks.publishNotice.mockImplementationOnce(() => {
+      throw new Error('Online Notice Failed')
+    })
+    const onlineHandler = qqMocks.handlers.get('online')
+    await onlineHandler()
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-restored notice:', expect.any(Error))
+  })
 })
