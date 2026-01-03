@@ -34,9 +34,9 @@ export class NapCatAdapter extends EventEmitter {
       },
       reconnect: params.reconnect
         ? {
-            enabled: true,
-            maxAttempts: 100,
-          }
+          enabled: true,
+          maxAttempts: 100,
+        }
         : undefined,
       logging: {
         level: 'info',
@@ -88,7 +88,7 @@ export class NapCatAdapter extends EventEmitter {
         this.normalizeMediaIds(data.message)
         await this.client.hydrateMessage(data.message)
         const unifiedMsg = messageConverter.fromNapCat(data)
-        ;(this as any).emit('message', unifiedMsg)
+          ; (this as any).emit('message', unifiedMsg)
       }
       catch (err) {
         this.logger.error('Failed to handle message event:', err)
@@ -96,7 +96,7 @@ export class NapCatAdapter extends EventEmitter {
     })
 
     this.client.on('notice.group_recall', (data: any) => {
-      ;(this as any).emit('recall', {
+      ; (this as any).emit('recall', {
         messageId: String(data.message_id),
         chatId: String(data.group_id),
         operatorId: String(data.operator_id),
@@ -105,7 +105,7 @@ export class NapCatAdapter extends EventEmitter {
     })
 
     this.client.on('notice.friend_recall', (data: any) => {
-      ;(this as any).emit('recall', {
+      ; (this as any).emit('recall', {
         messageId: String(data.message_id),
         chatId: String(data.user_id),
         operatorId: String(data.user_id),
@@ -114,30 +114,30 @@ export class NapCatAdapter extends EventEmitter {
     })
 
     this.client.on('notice.group_increase', (data: any) => {
-      ;(this as any).emit('group.increase', String(data.group_id), {
+      ; (this as any).emit('group.increase', String(data.group_id), {
         id: String(data.user_id),
         name: '',
       })
     })
 
     this.client.on('notice.group_decrease', (data: any) => {
-      ;(this as any).emit('group.decrease', String(data.group_id), String(data.user_id))
+      ; (this as any).emit('group.decrease', String(data.group_id), String(data.user_id))
     })
 
     this.client.on('notice.friend_add', (data: any) => {
-      ;(this as any).emit('friend.increase', {
+      ; (this as any).emit('friend.increase', {
         id: String(data.user_id),
         name: '',
       })
     })
 
     this.client.on('notice.notify.poke', (data: any) => {
-      ;(this as any).emit('poke', String(data.group_id || data.user_id), String(data.user_id), String(data.target_id),
+      ; (this as any).emit('poke', String(data.group_id || data.user_id), String(data.user_id), String(data.target_id),
       )
     })
 
     this.client.on('request.friend', (data: any) => {
-      ;(this as any).emit('request.friend', {
+      ; (this as any).emit('request.friend', {
         flag: data.flag,
         userId: String(data.user_id),
         comment: data.comment || '',
@@ -146,7 +146,7 @@ export class NapCatAdapter extends EventEmitter {
     })
 
     this.client.on('request.group', (data: any) => {
-      ;(this as any).emit('request.group', {
+      ; (this as any).emit('request.group', {
         flag: data.flag,
         groupId: String(data.group_id),
         userId: String(data.user_id),
@@ -175,7 +175,7 @@ export class NapCatAdapter extends EventEmitter {
         if (rest.includes('/'))
           continue // likely a local absolute path
 
-        ;(data as any)[key] = rest
+          ; (data as any)[key] = rest
       }
     }
   }
@@ -402,6 +402,9 @@ export class NapCatAdapter extends EventEmitter {
   async getRecord(file: string, outFormat?: string): Promise<any> {
     return this.client.api.getRecord(file, outFormat)
   }
+
+
+
 
   async sendPrivateMessage(userId: string, message: any): Promise<any> {
     return this.client.api.sendPrivateMessage(userId, message)

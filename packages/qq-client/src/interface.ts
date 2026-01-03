@@ -67,7 +67,6 @@ export interface IQQClient extends EventEmitter {
   markMessageAsRead?: (messageId: string) => Promise<any>
   getGroupAtAllRemain?: (groupId: string) => Promise<number>
   getGroupSystemMsg?: () => Promise<any>
-  sendGroupPoke?: (groupId: string, userId: string) => Promise<any>
   sendFriendPoke?: (userId: string) => Promise<any>
   sendPoke?: (targetId: string, groupId?: string) => Promise<any>
   markGroupMsgAsRead?: (groupId: string) => Promise<any>
@@ -179,8 +178,6 @@ export interface IQQClient extends EventEmitter {
 
   kickUser?: (groupId: string, userId: string, rejectAddRequest?: boolean) => Promise<void>
 
-  setGroupCard?: (groupId: string, userId: string, card: string) => Promise<void>
-
   setGroupWholeBan?: (groupId: string, enable: boolean) => Promise<void>
 
   setGroupAdmin?: (groupId: string, userId: string, enable: boolean) => Promise<void>
@@ -197,21 +194,26 @@ export interface IQQClient extends EventEmitter {
 
   getGroupHonorInfo?: (groupId: string, type?: 'talkative' | 'performer' | 'legend' | 'strong_newbie' | 'emotion' | 'all') => Promise<any>
 
+  // Interactive features
+  setGroupBan?: (groupId: string, userId: string, duration?: number) => Promise<boolean>
+  sendGroupPoke?: (groupId: string, userId: string) => Promise<boolean>
+  setGroupCard?: (groupId: string, userId: string, card: string) => Promise<boolean>
+
 
   on: ((event: 'message', listener: (message: UnifiedMessage) => void) => this)
-    & ((event: 'recall', listener: (event: RecallEvent) => void) => this)
-    & ((event: 'friend.increase', listener: (friend: Sender) => void) => this)
-    & ((event: 'friend.decrease', listener: (uin: string) => void) => this)
-    & ((event: 'group.increase', listener: (groupId: string, member: Sender) => void) => this)
-    & ((event: 'group.decrease', listener: (groupId: string, uin: string) => void) => this)
-    & ((event: 'poke', listener: (chatId: string, operatorId: string, targetId: string) => void) => this)
-    & ((event: 'error', listener: (error: Error) => void) => this)
-    & ((event: 'offline', listener: () => void) => this)
-    & ((event: 'online', listener: () => void) => this)
-    & ((event: 'connection:lost', listener: (data: { timestamp: number, reason: string }) => void) => this)
-    & ((event: 'connection:restored', listener: (data: { timestamp: number }) => void) => this)
-    & ((event: 'request.friend', listener: (data: FriendRequestEvent) => void) => this)
-    & ((event: 'request.group', listener: (data: GroupRequestEvent) => void) => this)
+  & ((event: 'recall', listener: (event: RecallEvent) => void) => this)
+  & ((event: 'friend.increase', listener: (friend: Sender) => void) => this)
+  & ((event: 'friend.decrease', listener: (uin: string) => void) => this)
+  & ((event: 'group.increase', listener: (groupId: string, member: Sender) => void) => this)
+  & ((event: 'group.decrease', listener: (groupId: string, uin: string) => void) => this)
+  & ((event: 'poke', listener: (chatId: string, operatorId: string, targetId: string) => void) => this)
+  & ((event: 'error', listener: (error: Error) => void) => this)
+  & ((event: 'offline', listener: () => void) => this)
+  & ((event: 'online', listener: () => void) => this)
+  & ((event: 'connection:lost', listener: (data: { timestamp: number, reason: string }) => void) => this)
+  & ((event: 'connection:restored', listener: (data: { timestamp: number }) => void) => this)
+  & ((event: 'request.friend', listener: (data: FriendRequestEvent) => void) => this)
+  & ((event: 'request.group', listener: (data: GroupRequestEvent) => void) => this)
 
 
   login: () => Promise<void>

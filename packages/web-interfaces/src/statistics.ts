@@ -84,6 +84,17 @@ export default async function (fastify: FastifyInstance) {
           ? 'degraded'
           : (health.instances.total > 0 && health.instances.online < health.instances.total ? 'degraded' : 'healthy'))
 
+    // Strict DB health check for status field
+    let dbStatus = 'healthy';
+    try {
+      await db.$queryRaw`SELECT 1`;
+    } catch {
+      dbStatus = 'unhealthy';
+    }
+    // If db is unhealthy, overall status must be unhealthy
+    const finalStatus = dbStatus === 'unhealthy' ? 'unhealthy' : status;
+
+
     return {
       success: true,
       data: {
@@ -92,7 +103,7 @@ export default async function (fastify: FastifyInstance) {
         messageCount,
         todayMessageCount,
         avgMessagesPerDay: messageCount > 0 ? Math.round(messageCount / 30) : 0,
-        status,
+        status: finalStatus,
         health,
       },
     }
