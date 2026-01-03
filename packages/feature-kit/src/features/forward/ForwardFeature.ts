@@ -147,6 +147,7 @@ export class ForwardFeature {
   private setupListeners() {
     this.qqClient.on('message', this.handleQQMessage)
     this.qqClient.on('poke', this.handlePokeEvent)
+    this.qqClient.on('poke', this.handlePokeEvent)
     this.tgBot.addNewMessageEventHandler(this.handleTgMessage)
     logger.debug('[ForwardFeature] listeners attached')
   }
@@ -643,6 +644,7 @@ export class ForwardFeature {
     }
   }
 
+
   destroy() {
     this.mediaGroupHandler.destroy()
     this.qqClient.removeListener('message', this.handleQQMessage)
@@ -653,3 +655,4 @@ export class ForwardFeature {
 }
 
 export default ForwardFeature
+
