@@ -36,3 +36,6 @@ build.sh
 compose.dev.yaml
 compose.stable.yaml
 cloudflare/
+
+# Documentation (moved to wiki)
+docs/
