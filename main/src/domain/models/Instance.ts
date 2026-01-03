@@ -296,13 +296,39 @@ export default class Instance {
         }
       })
 
-      // SDK 级别的永久连接丢失事件，我们也记录下来，但不重复发送 notice（插件会有去重和退避，但这里保持一致性）
-      this.qqClient.on('connection:lost', (event: any) => {
-        this.log.error('NapCat permanent connection lost!', event)
+      // SDK 级别的永久连接丢失/恢复事件
+      this.qqClient.on('connection:lost', async (event: any) => {
+        this.log.warn('NapCat connection lost:', event)
+        this.isSetup = false
+        try {
+          getEventPublisher().publishNotice({
+            instanceId: this.id,
+            platform: 'qq',
+            noticeType: 'connection-lost',
+            timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
+            raw: event,
+          })
+        }
+        catch (error) {
+          this.log.warn('Failed to publish connection-lost notice:', error)
+        }
       })
 
-      this.qqClient.on('connection:restored', (event: any) => {
-        this.log.info('NapCat permanent connection restored!', event)
+      this.qqClient.on('connection:restored', async (event: any) => {
+        this.log.info('NapCat connection restored:', event)
+        this.isSetup = true
+        try {
+          getEventPublisher().publishNotice({
+            instanceId: this.id,
+            platform: 'qq',
+            noticeType: 'connection-restored',
+            timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
+            raw: event,
+          })
+        }
+        catch (error) {
+          this.log.warn('Failed to publish connection-restored notice:', error)
+        }
       })
       // }
 
