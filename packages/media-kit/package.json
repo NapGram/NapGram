@@ -26,7 +26,7 @@
     "license": "MIT",
     "dependencies": {
         "@napgram/infra-kit": "workspace:*",
-        "file-type": "^21.2.0",
+        "file-type": "^21.3.0",
         "image-js": "^1.3.0",
         "silk-wasm": "^3.7.1"
     },
