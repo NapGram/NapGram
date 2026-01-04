@@ -52,13 +52,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm --filter ./main exec prisma generate --no-hints
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
-
-      - name: Run Prisma migrations
-        run: pnpm --filter ./main exec prisma migrate deploy
+      - name: Run Drizzle migrations
+        run: pnpm --filter @napgram/database db:migrate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
 
