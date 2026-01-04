@@ -44,7 +44,7 @@
         "@napgram/media-kit": "workspace:*",
         "@napgram/qq-client": "workspace:*",
         "@napgram/runtime-kit": "workspace:*",
-        "file-type": "^21.2.0",
+        "file-type": "^21.3.0",
         "image-js": "^1.3.0"
     },
     "devDependencies": {
