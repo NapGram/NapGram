@@ -46,6 +46,7 @@ updates:
       - dependency-name: "@naplink/naplink"
       - dependency-name: "@napgram/*"
 
+
   # main 应用 (使用 npm lockfile)
   - package-ecosystem: "npm"
     directory: "/main"
