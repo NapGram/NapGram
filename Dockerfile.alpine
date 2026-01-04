@@ -33,7 +33,7 @@ COPY --from=lottie /usr/bin/gifski /usr/bin/
 # 如果遇到问题，可以安装 gcompat
 RUN apk add --no-cache gcompat
 
-RUN corepack enable && corepack prepare pnpm@latest --activate && npm install -g npm@latest
+RUN npm install -g pnpm@latest && npm install -g npm@latest
 WORKDIR /app
 
 FROM base AS build

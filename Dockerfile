@@ -26,7 +26,7 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
 COPY --from=lottie /usr/bin/lottie_to_png /usr/bin/
 COPY --from=lottie /usr/bin/gifski /usr/bin/
 
-RUN corepack enable && corepack prepare pnpm@latest --activate && npm install -g npm@latest
+RUN npm install -g pnpm@latest && npm install -g npm@latest
 WORKDIR /app
 
 FROM base AS build

@@ -306,12 +306,18 @@ async function extractTgz(tgzPath: string, destDir: string): Promise<void> {
 }
 
 async function extractArchive(distType: DistType, archivePath: string, destDir: string): Promise<void> {
-  await ensureDir(destDir)
-  if (distType === 'zip')
-    return extractZip(archivePath, destDir)
-  if (distType === 'tgz')
-    return extractTgz(archivePath, destDir)
-  throw new Error(`Unsupported dist.type: ${distType}`)
+  logger.info({ distType, archivePath, destDir }, 'Extracting archive')
+  try {
+    await ensureDir(destDir)
+    if (distType === 'zip')
+      return await extractZip(archivePath, destDir)
+    if (distType === 'tgz')
+      return await extractTgz(archivePath, destDir)
+    throw new Error(`Unsupported dist.type: ${distType}`)
+  } catch (error: any) {
+    logger.error({ error: error?.message || String(error), stack: error?.stack, archivePath, destDir }, 'Archive extraction failed')
+    throw error
+  }
 }
 
 async function resolveEntryFile(destDir: string, entryPath: string): Promise<string> {
@@ -439,12 +445,13 @@ async function runPnpmInstall(projectDir: string, opts: Required<NonNullable<Mar
   if (opts.registry)
     envVars.npm_config_registry = opts.registry
 
-  await execFileAsync('pnpm', args, {
-    cwd: projectDir,
-    env: envVars,
+  env: envVars,
     maxBuffer: 20 * 1024 * 1024,
-  })
-  logger.info({ projectDir }, 'pnpm install completed')
+  }).catch ((error) => {
+  logger.error({ error: error?.message || String(error), stderr: error?.stderr, stdout: error?.stdout, projectDir }, 'pnpm install failed')
+  throw error
+})
+logger.info({ projectDir }, 'pnpm install completed')
 }
 
 async function loadPluginDefaultConfig(installDir: string): Promise<any | null> {
