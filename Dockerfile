@@ -54,6 +54,7 @@ COPY external/sdk/ /app/external/sdk/
 #    - silk-wasm 是纯 WASM，无需编译
 RUN pnpm install --no-frozen-lockfile --shamefully-hoist --ignore-scripts && \
     pnpm -r rebuild better-sqlite3 && \
+    pnpm --filter "./external/sdk/packages/**" run build && \
     pnpm --filter "./packages/**" run build
 
 # 源码构建（后端）
