@@ -918,6 +918,9 @@ importers:
       typescript:
         specifier: 5.9.3
         version: 5.9.3
+      vitest:
+        specifier: 4.0.16
+        version: 4.0.16(@opentelemetry/api@1.9.0)(@types/node@25.0.3)(jiti@2.6.1)(jsdom@16.7.0(canvas@2.11.2(encoding@0.1.13)))(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2)
 
   packages/request-kit:
     dependencies:
@@ -927,6 +930,9 @@ importers:
       '@napgram/qq-client':
         specifier: workspace:*
         version: link:../qq-client
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.5.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.5.0)(gel@2.2.0)(mysql2@3.15.3)(pg@8.16.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.5.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
     devDependencies:
       '@types/node':
         specifier: 25.0.3
@@ -940,6 +946,9 @@ importers:
       '@napgram/infra-kit':
         specifier: workspace:*
         version: link:../infra-kit
+      '@napgram/media-kit':
+        specifier: workspace:*
+        version: link:../media-kit
       '@napgram/telegram-client':
         specifier: workspace:*
         version: link:../telegram-client
