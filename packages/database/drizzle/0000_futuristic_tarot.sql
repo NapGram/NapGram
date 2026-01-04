@@ -1,4 +1,4 @@
-CREATE SCHEMA "slave_market";
+CREATE SCHEMA IF NOT EXISTS "slave_market";
 --> statement-breakpoint
 CREATE TYPE "public"."QqBotType" AS ENUM('napcat');--> statement-breakpoint
 CREATE TABLE "AccessToken" (
