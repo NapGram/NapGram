@@ -96,7 +96,7 @@ const plugin: NapGramPlugin = {
             const instance = resolveInstance(event.instanceId);
 
             try {
-                const requestArr = await db.insert(schema.qQRequest).values({
+                const requestArr = await db.insert(schema.qqRequest).values({
                     instanceId: event.instanceId,
                     flag: event.requestId,
                     type,
@@ -112,7 +112,7 @@ const plugin: NapGramPlugin = {
                 if (automation) {
                     const autoHandled = await automation.applyAutomationRules(request);
                     if (autoHandled) {
-                        const updated = await db.query.qQRequest.findFirst({ where: eq(schema.qQRequest.id, request.id) });
+                        const updated = await db.query.qqRequest.findFirst({ where: eq(schema.qqRequest.id, request.id) });
                         if (updated) {
                             await sendTelegramNotification(instance, formatAutomationNotification(updated));
                         }

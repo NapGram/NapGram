@@ -241,11 +241,11 @@ export default async function (fastify: FastifyInstance) {
     preHandler: authMiddleware,
   }, async (request, reply) => {
     try {
-      const { sql, readOnly } = querySchema.parse(request.body)
+      const { sql: rawSql, readOnly } = querySchema.parse(request.body)
       const auth = (request as any).auth
 
       // 只读模式检查
-      if (readOnly && !/^\s*SELECT/i.test(sql.trim())) {
+      if (readOnly && !/^\s*SELECT/i.test(rawSql.trim())) {
         return reply.code(403).send({
           success: false,
           error: '只读模式下仅允许 SELECT 查询',
@@ -257,7 +257,7 @@ export default async function (fastify: FastifyInstance) {
 
       for (const keyword of dangerousKeywords) {
         const regex = new RegExp(`\\b${keyword}\\b`, 'i')
-        if (regex.test(sql)) {
+        if (regex.test(rawSql)) {
           return reply.code(403).send({
             success: false,
             error: `不允许执行包含 ${keyword} 的操作`,
@@ -266,7 +266,7 @@ export default async function (fastify: FastifyInstance) {
       }
 
       // 执行查询
-      const resultRaw = await db.execute(sql.raw(sql))
+      const resultRaw = await db.execute(sql.raw(rawSql))
       const result = resultRaw.rows as any[]
       const rowCount = Array.isArray(result) ? result.length : 0
 
@@ -276,7 +276,7 @@ export default async function (fastify: FastifyInstance) {
         action: 'database_query',
         resource: 'database',
         details: {
-          sql: sql.substring(0, 500), // 截断过长的 SQL
+          sql: rawSql.substring(0, 500), // 截断过长的 SQL
           rowCount,
         },
         ipAddress: request.ip,

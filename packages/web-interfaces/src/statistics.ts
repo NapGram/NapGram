@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { db, getGlobalRuntime, schema, eq, and, gte, lte, count, sql, desc } from '@napgram/runtime-kit'
+import { db, getGlobalRuntime, schema, eq, and, or, gte, lte, count, sql, desc } from '@napgram/runtime-kit'
 import { Instance } from '@napgram/runtime-kit'
 import { authMiddleware } from '@napgram/auth-kit'
 /**
@@ -224,7 +224,7 @@ export default async function (fastify: FastifyInstance) {
     const instances = await db.query.instance.findMany({
       with: {
         qqBot: true,
-        ForwardPair: true,
+        forwardPairs: true,
       },
     })
 
@@ -236,7 +236,7 @@ export default async function (fastify: FastifyInstance) {
         id: instance.id,
         owner: instance.owner.toString(),
         isOnline: instance.isSetup && !!instance.qqBot,
-        pairCount: instance.ForwardPair.length,
+        pairCount: instance.forwardPairs.length,
         botType: instance.qqBot?.type || null,
       })),
     }

@@ -46,11 +46,11 @@ export class RequestAutomationService {
     try {
       const expiryDate = new Date(Date.now() - this.EXPIRY_DAYS * 24 * 60 * 60 * 1000)
 
-      const result = await db.delete(schema.qQRequest)
+      const result = await db.delete(schema.qqRequest)
         .where(and(
-          eq(schema.qQRequest.instanceId, this.instance.id),
-          eq(schema.qQRequest.status, 'pending'),
-          lt(schema.qQRequest.createdAt, expiryDate),
+          eq(schema.qqRequest.instanceId, this.instance.id),
+          eq(schema.qqRequest.status, 'pending'),
+          lt(schema.qqRequest.createdAt, expiryDate),
         ))
         .returning()
 
@@ -178,13 +178,13 @@ export class RequestAutomationService {
     }
 
     // 更新数据库状态
-    await db.update(schema.qQRequest)
+    await db.update(schema.qqRequest)
       .set({
         status: 'approved',
         handledBy: BigInt(0), // 0 表示自动处理
         handledAt: new Date(),
       })
-      .where(eq(schema.qQRequest.id, request.id))
+      .where(eq(schema.qqRequest.id, request.id))
   }
 
   /**
@@ -211,14 +211,14 @@ export class RequestAutomationService {
     }
 
     // 更新数据库状态
-    await db.update(schema.qQRequest)
+    await db.update(schema.qqRequest)
       .set({
         status: 'rejected',
         handledBy: BigInt(0), // 0 表示自动处理
         handledAt: new Date(),
         rejectReason: reason,
       })
-      .where(eq(schema.qQRequest.id, request.id))
+      .where(eq(schema.qqRequest.id, request.id))
   }
 
   /**
@@ -228,13 +228,13 @@ export class RequestAutomationService {
     try {
       // 统计各类请求数量
       const rows = await db.select({
-        type: schema.qQRequest.type,
-        status: schema.qQRequest.status,
-        count: sql<number>`count(${schema.qQRequest.id})`,
+        type: schema.qqRequest.type,
+        status: schema.qqRequest.status,
+        count: sql<number>`count(${schema.qqRequest.id})`,
       })
-        .from(schema.qQRequest)
-        .where(eq(schema.qQRequest.instanceId, this.instance.id))
-        .groupBy(schema.qQRequest.type, schema.qQRequest.status)
+        .from(schema.qqRequest)
+        .where(eq(schema.qqRequest.instanceId, this.instance.id))
+        .groupBy(schema.qqRequest.type, schema.qqRequest.status)
 
       // 准备更新数据
       const updateData: any = {

@@ -78,9 +78,9 @@ export default async function (fastify: FastifyInstance) {
         offset: (page - 1) * pageSize,
         with: {
           qqBot: true,
-          ForwardPair: {
-            limit: 5,
-          },
+        forwardPairs: {
+          limit: 5,
+        },
         },
         orderBy: [desc(schema.instance.id)],
       }),
@@ -98,13 +98,13 @@ export default async function (fastify: FastifyInstance) {
             uin: item.qqBot.uin?.toString() || null,
           }
           : null,
-        ForwardPair: item.ForwardPair.map((pair: any) => ({
+        ForwardPair: item.forwardPairs.map((pair: any) => ({
           ...pair,
           qqRoomId: pair.qqRoomId.toString(),
           tgChatId: pair.tgChatId.toString(),
           qqFromGroupId: pair.qqFromGroupId?.toString() || null,
         })),
-        pairCount: item.ForwardPair.length,
+        pairCount: item.forwardPairs.length,
       })),
       total,
       page,
@@ -125,7 +125,7 @@ export default async function (fastify: FastifyInstance) {
       where: eq(schema.instance.id, Number.parseInt(id)),
       with: {
         qqBot: true,
-        ForwardPair: true,
+        forwardPairs: true,
       },
     })
 
@@ -362,7 +362,7 @@ export default async function (fastify: FastifyInstance) {
   }, async () => {
     const bots = await db.query.qqBot.findMany({
       with: {
-        Instance: {
+        instances: {
           columns: {
             id: true,
             owner: true,
