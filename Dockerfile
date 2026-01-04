@@ -26,17 +26,14 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
 COPY --from=lottie /usr/bin/lottie_to_png /usr/bin/
 COPY --from=lottie /usr/bin/gifski /usr/bin/
 
-RUN npm install -g corepack@latest --force && corepack enable && corepack prepare pnpm@latest --activate && npm install -g npm@latest
+RUN corepack enable && corepack prepare pnpm@latest --activate && npm install -g npm@latest
 WORKDIR /app
 
 FROM base AS build
 ARG USE_MIRROR=true
 
 # 编译环境依赖 (python3, build-essential)
-RUN if [ "$USE_MIRROR" = "true" ]; then \
-      sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources; \
-    fi && \
-    apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 build-essential pkg-config \
     libpixman-1-dev libcairo2-dev libpango1.0-dev libgif-dev libjpeg62-turbo-dev libpng-dev librsvg2-dev libvips-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -52,8 +49,7 @@ COPY external/sdk/ /app/external/sdk/
 # 2. 编译必需的原生模块
 #    - better-sqlite3: mtcute 用于 Telegram session 存储
 #    - silk-wasm 是纯 WASM，无需编译
-RUN pnpm install --no-frozen-lockfile --shamefully-hoist --ignore-scripts && \
-    pnpm -r rebuild better-sqlite3 && \
+RUN pnpm install --no-frozen-lockfile --shamefully-hoist && \
     pnpm --filter "./external/sdk/packages/**" run build && \
     pnpm --filter "./packages/**" run build
 
