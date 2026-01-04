@@ -8,6 +8,7 @@ vi.mock('@napgram/infra-kit', () => ({
   db: {
     execute: vi.fn().mockResolvedValue({ rows: [] }),
   },
+  sql: vi.fn(),
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,

@@ -17,6 +17,9 @@ vi.mock('@napgram/infra-kit', () => ({
   schema: {
     message: { id: 'id' },
   },
+  eq: vi.fn(),
+  and: vi.fn(),
+  desc: vi.fn(),
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,

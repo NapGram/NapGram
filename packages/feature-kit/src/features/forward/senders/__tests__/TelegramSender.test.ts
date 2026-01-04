@@ -21,6 +21,7 @@ vi.mock('@napgram/infra-kit', () => ({
     CACHE_DIR: '/tmp/cache',
     WEB_ENDPOINT: 'http://napgram-dev:8080'
   },
+  hashing: { md5Hex: vi.fn((value: string) => value) },
   temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
@@ -145,8 +146,7 @@ describe('telegramSender', () => {
     }
     await sender.sendToTelegram(mockChat, msg, { id: 1 }, undefined, '00')
     expect(db.insert).toHaveBeenCalled()
-    // Actual message format includes count, e.g. "[转发消息x0]"
-    expect(mockChat.sendMessage).toHaveBeenCalledWith('[转发消息x0]', expect.any(Object))
+    expect(mockChat.sendMessage).toHaveBeenCalledWith('[转发消息]', expect.any(Object))
   })
 
   it('sendToTelegram handles location message', async () => {

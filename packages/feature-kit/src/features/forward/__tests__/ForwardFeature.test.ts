@@ -26,6 +26,7 @@ vi.mock('@napgram/infra-kit', () => ({
     CACHE_DIR: '/tmp/cache',
     WEB_ENDPOINT: 'http://napgram-dev:8080'
   },
+  hashing: { md5Hex: vi.fn((value: string) => value) },
   temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
@@ -38,9 +39,13 @@ vi.mock('@napgram/infra-kit', () => ({
   performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
-vi.mock('../../../../../../main/src/plugins/core/event-publisher', () => ({
-  getEventPublisher: vi.fn(),
-}))
+vi.mock('../../../shared-types', async (importOriginal) => {
+  const actual = await importOriginal<any>()
+  return {
+    ...actual,
+    getEventPublisher: vi.fn(),
+  }
+})
 
 function createForwardMap() {
   return {
