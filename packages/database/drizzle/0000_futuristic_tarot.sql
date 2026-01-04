@@ -1,3 +1,6 @@
+-- Idempotent migration script for transitioning from Prisma to Drizzle
+-- This script safely handles existing database objects
+
 -- Create schema if it doesn't exist
 DO $$
 BEGIN
@@ -6,14 +9,18 @@ EXCEPTION
     WHEN duplicate_schema THEN NULL;
 END $$;
 --> statement-breakpoint
+
 -- Create enum type if it doesn't exist
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'QqBotType') THEN
         CREATE TYPE "public"."QqBotType" AS ENUM('napcat');
     END IF;
-END $$;--> statement-breakpoint
-CREATE TABLE "AccessToken" (
+END $$;
+--> statement-breakpoint
+
+-- Create tables with IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS "AccessToken" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"token" text NOT NULL,
 	"description" text,
@@ -24,7 +31,7 @@ CREATE TABLE "AccessToken" (
 	"lastUsedAt" timestamp
 );
 --> statement-breakpoint
-CREATE TABLE "AdminAuditLog" (
+CREATE TABLE IF NOT EXISTS "AdminAuditLog" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"userId" integer,
 	"action" text NOT NULL,
@@ -36,7 +43,7 @@ CREATE TABLE "AdminAuditLog" (
 	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "AdminSession" (
+CREATE TABLE IF NOT EXISTS "AdminSession" (
 	"id" text PRIMARY KEY DEFAULT 'gen_random_uuid()' NOT NULL,
 	"userId" integer NOT NULL,
 	"token" text NOT NULL,
@@ -46,7 +53,7 @@ CREATE TABLE "AdminSession" (
 	"userAgent" text
 );
 --> statement-breakpoint
-CREATE TABLE "AdminUser" (
+CREATE TABLE IF NOT EXISTS "AdminUser" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"username" text NOT NULL,
 	"passwordHash" text NOT NULL,
@@ -57,7 +64,7 @@ CREATE TABLE "AdminUser" (
 	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "AutomationRule" (
+CREATE TABLE IF NOT EXISTS "AutomationRule" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"instanceId" integer NOT NULL,
 	"type" text NOT NULL,
@@ -72,13 +79,13 @@ CREATE TABLE "AutomationRule" (
 	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "AvatarCache" (
+CREATE TABLE IF NOT EXISTS "AvatarCache" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"forwardPairId" integer NOT NULL,
 	"hash" "bytea" NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "Entity" (
+CREATE TABLE IF NOT EXISTS "Entity" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"entityId" text NOT NULL,
 	"sessionId" integer NOT NULL,
@@ -88,7 +95,7 @@ CREATE TABLE "Entity" (
 	"name" text
 );
 --> statement-breakpoint
-CREATE TABLE "File" (
+CREATE TABLE IF NOT EXISTS "File" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"roomId" bigint NOT NULL,
 	"fileId" text NOT NULL,
@@ -96,25 +103,25 @@ CREATE TABLE "File" (
 	"name" text
 );
 --> statement-breakpoint
-CREATE TABLE "FlashPhoto" (
+CREATE TABLE IF NOT EXISTS "FlashPhoto" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"photoMd5" text NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "FlashPhotoView" (
+CREATE TABLE IF NOT EXISTS "FlashPhotoView" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"flashPhotoId" integer NOT NULL,
 	"viewerId" bigint NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "ForwardMultiple" (
+CREATE TABLE IF NOT EXISTS "ForwardMultiple" (
 	"id" text PRIMARY KEY DEFAULT 'gen_random_uuid()' NOT NULL,
 	"resId" text NOT NULL,
 	"fileName" text NOT NULL,
 	"fromPairId" integer NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "ForwardPair" (
+CREATE TABLE IF NOT EXISTS "ForwardPair" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"qqRoomId" bigint NOT NULL,
 	"qqFromGroupId" bigint,
@@ -134,7 +141,7 @@ CREATE TABLE "ForwardPair" (
 	"apiKey" text DEFAULT 'gen_random_uuid()' NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "GlobalConfig" (
+CREATE TABLE IF NOT EXISTS "GlobalConfig" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"key" text NOT NULL,
 	"value" text NOT NULL,
@@ -143,7 +150,7 @@ CREATE TABLE "GlobalConfig" (
 	"updatedBy" integer
 );
 --> statement-breakpoint
-CREATE TABLE "Instance" (
+CREATE TABLE IF NOT EXISTS "Instance" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"owner" bigint DEFAULT 0 NOT NULL,
 	"workMode" text DEFAULT '' NOT NULL,
@@ -154,7 +161,7 @@ CREATE TABLE "Instance" (
 	"flags" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "Message" (
+CREATE TABLE IF NOT EXISTS "Message" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"qqRoomId" bigint NOT NULL,
 	"qqSenderId" bigint NOT NULL,
@@ -174,7 +181,7 @@ CREATE TABLE "Message" (
 	"ignoreDelete" boolean DEFAULT false NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "QqBot" (
+CREATE TABLE IF NOT EXISTS "QqBot" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"uin" bigint DEFAULT 0,
 	"name" text,
@@ -187,7 +194,7 @@ CREATE TABLE "QqBot" (
 	"wsUrl" text
 );
 --> statement-breakpoint
-CREATE TABLE "QQRequest" (
+CREATE TABLE IF NOT EXISTS "QQRequest" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"instanceId" integer NOT NULL,
 	"flag" text NOT NULL,
@@ -203,7 +210,7 @@ CREATE TABLE "QQRequest" (
 	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "RequestStatistics" (
+CREATE TABLE IF NOT EXISTS "RequestStatistics" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"instanceId" integer NOT NULL,
 	"friendTotal" integer DEFAULT 0 NOT NULL,
@@ -217,7 +224,7 @@ CREATE TABLE "RequestStatistics" (
 	"updatedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "Session" (
+CREATE TABLE IF NOT EXISTS "Session" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"dcId" integer,
 	"port" integer,
@@ -225,7 +232,7 @@ CREATE TABLE "Session" (
 	"authKey" "bytea"
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_admins" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_admins" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"userId" text NOT NULL,
 	"nickname" text NOT NULL,
@@ -233,7 +240,7 @@ CREATE TABLE "slave_market"."slave_market_admins" (
 	"addedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_appearances" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_appearances" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"userId" text NOT NULL,
 	"itemName" text NOT NULL,
@@ -242,7 +249,7 @@ CREATE TABLE "slave_market"."slave_market_appearances" (
 	"acquiredAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_farm_lands" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_farm_lands" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"userId" text NOT NULL,
 	"plotIndex" integer NOT NULL,
@@ -251,7 +258,7 @@ CREATE TABLE "slave_market"."slave_market_farm_lands" (
 	"harvestTime" bigint
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_players" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_players" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"userId" text NOT NULL,
 	"plainUserId" text,
@@ -284,7 +291,7 @@ CREATE TABLE "slave_market"."slave_market_players" (
 	"jailWorkIncome" integer DEFAULT 0 NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_red_packet_grabs" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_red_packet_grabs" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"packetId" text NOT NULL,
 	"userId" text NOT NULL,
@@ -293,7 +300,7 @@ CREATE TABLE "slave_market"."slave_market_red_packet_grabs" (
 	"grabbedAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_red_packets" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_red_packets" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"packetId" text NOT NULL,
 	"senderId" text NOT NULL,
@@ -306,14 +313,14 @@ CREATE TABLE "slave_market"."slave_market_red_packets" (
 	"expiresAt" timestamp NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_system" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_system" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"isDisabled" boolean DEFAULT false NOT NULL,
 	"lastAssetDecayTime" bigint,
 	"metadata" json
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_transactions" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_transactions" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"userId" text NOT NULL,
 	"type" text NOT NULL,
@@ -325,7 +332,7 @@ CREATE TABLE "slave_market"."slave_market_transactions" (
 	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "slave_market"."slave_market_vip_cards" (
+CREATE TABLE IF NOT EXISTS "slave_market"."slave_market_vip_cards" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"cardCode" text NOT NULL,
 	"cardType" text NOT NULL,
@@ -337,63 +344,186 @@ CREATE TABLE "slave_market"."slave_market_vip_cards" (
 	"createdAt" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "AdminAuditLog" ADD CONSTRAINT "AdminAuditLog_userId_AdminUser_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."AdminUser"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "AdminSession" ADD CONSTRAINT "AdminSession_userId_AdminUser_id_fk" FOREIGN KEY ("userId") REFERENCES "public"."AdminUser"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "AutomationRule" ADD CONSTRAINT "AutomationRule_instanceId_Instance_id_fk" FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "AvatarCache" ADD CONSTRAINT "AvatarCache_forwardPairId_ForwardPair_id_fk" FOREIGN KEY ("forwardPairId") REFERENCES "public"."ForwardPair"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "Entity" ADD CONSTRAINT "Entity_sessionId_Session_id_fk" FOREIGN KEY ("sessionId") REFERENCES "public"."Session"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "FlashPhotoView" ADD CONSTRAINT "FlashPhotoView_flashPhotoId_FlashPhoto_id_fk" FOREIGN KEY ("flashPhotoId") REFERENCES "public"."FlashPhoto"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ForwardMultiple" ADD CONSTRAINT "ForwardMultiple_fromPairId_ForwardPair_id_fk" FOREIGN KEY ("fromPairId") REFERENCES "public"."ForwardPair"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "ForwardPair" ADD CONSTRAINT "ForwardPair_instanceId_Instance_id_fk" FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "Instance" ADD CONSTRAINT "Instance_qqBotId_QqBot_id_fk" FOREIGN KEY ("qqBotId") REFERENCES "public"."QqBot"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "Message" ADD CONSTRAINT "Message_instanceId_Instance_id_fk" FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "QQRequest" ADD CONSTRAINT "QQRequest_instanceId_Instance_id_fk" FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "RequestStatistics" ADD CONSTRAINT "RequestStatistics_instanceId_Instance_id_fk" FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE UNIQUE INDEX "AccessToken_token_key" ON "AccessToken" USING btree ("token");--> statement-breakpoint
-CREATE INDEX "AccessToken_token_idx" ON "AccessToken" USING btree ("token");--> statement-breakpoint
-CREATE INDEX "AccessToken_isActive_idx" ON "AccessToken" USING btree ("isActive");--> statement-breakpoint
-CREATE INDEX "AdminAuditLog_userId_idx" ON "AdminAuditLog" USING btree ("userId");--> statement-breakpoint
-CREATE INDEX "AdminAuditLog_action_idx" ON "AdminAuditLog" USING btree ("action");--> statement-breakpoint
-CREATE INDEX "AdminAuditLog_createdAt_idx" ON "AdminAuditLog" USING btree ("createdAt");--> statement-breakpoint
-CREATE UNIQUE INDEX "AdminSession_token_key" ON "AdminSession" USING btree ("token");--> statement-breakpoint
-CREATE INDEX "AdminSession_userId_idx" ON "AdminSession" USING btree ("userId");--> statement-breakpoint
-CREATE INDEX "AdminSession_token_idx" ON "AdminSession" USING btree ("token");--> statement-breakpoint
-CREATE INDEX "AdminSession_expiresAt_idx" ON "AdminSession" USING btree ("expiresAt");--> statement-breakpoint
-CREATE UNIQUE INDEX "AdminUser_username_key" ON "AdminUser" USING btree ("username");--> statement-breakpoint
-CREATE INDEX "AdminUser_username_idx" ON "AdminUser" USING btree ("username");--> statement-breakpoint
-CREATE INDEX "AutomationRule_instanceId_enabled_idx" ON "AutomationRule" USING btree ("instanceId","enabled");--> statement-breakpoint
-CREATE INDEX "AutomationRule_type_target_idx" ON "AutomationRule" USING btree ("type","target");--> statement-breakpoint
-CREATE UNIQUE INDEX "AvatarCache_forwardPairId_key" ON "AvatarCache" USING btree ("forwardPairId");--> statement-breakpoint
-CREATE UNIQUE INDEX "Entity_entityId_sessionId_key" ON "Entity" USING btree ("entityId","sessionId");--> statement-breakpoint
-CREATE UNIQUE INDEX "FlashPhotoView_flashPhotoId_viewerId_key" ON "FlashPhotoView" USING btree ("flashPhotoId","viewerId");--> statement-breakpoint
-CREATE UNIQUE INDEX "ForwardPair_qqRoomId_instanceId_key" ON "ForwardPair" USING btree ("qqRoomId","instanceId");--> statement-breakpoint
-CREATE UNIQUE INDEX "ForwardPair_tgChatId_tgThreadId_instanceId_key" ON "ForwardPair" USING btree ("tgChatId","tgThreadId","instanceId");--> statement-breakpoint
-CREATE UNIQUE INDEX "ForwardPair_apiKey_key" ON "ForwardPair" USING btree ("apiKey");--> statement-breakpoint
-CREATE UNIQUE INDEX "GlobalConfig_key_key" ON "GlobalConfig" USING btree ("key");--> statement-breakpoint
-CREATE INDEX "GlobalConfig_key_idx" ON "GlobalConfig" USING btree ("key");--> statement-breakpoint
-CREATE INDEX "Message_qqRoomId_qqSenderId_seq_rand_pktnum_time_instanceId_idx" ON "Message" USING btree ("qqRoomId","qqSenderId","seq","rand","pktnum","time","instanceId");--> statement-breakpoint
-CREATE INDEX "Message_tgChatId_tgMsgId_instanceId_idx" ON "Message" USING btree ("tgChatId","tgMsgId","instanceId");--> statement-breakpoint
-CREATE UNIQUE INDEX "QQRequest_flag_key" ON "QQRequest" USING btree ("flag");--> statement-breakpoint
-CREATE INDEX "QQRequest_instanceId_status_idx" ON "QQRequest" USING btree ("instanceId","status");--> statement-breakpoint
-CREATE INDEX "QQRequest_flag_idx" ON "QQRequest" USING btree ("flag");--> statement-breakpoint
-CREATE INDEX "QQRequest_createdAt_idx" ON "QQRequest" USING btree ("createdAt");--> statement-breakpoint
-CREATE UNIQUE INDEX "RequestStatistics_instanceId_key" ON "RequestStatistics" USING btree ("instanceId");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_admins_userId_key" ON "slave_market"."slave_market_admins" USING btree ("userId");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_appearances_userId_itemName_key" ON "slave_market"."slave_market_appearances" USING btree ("userId","itemName");--> statement-breakpoint
-CREATE INDEX "slave_market_appearances_userId_equipped_idx" ON "slave_market"."slave_market_appearances" USING btree ("userId","equipped");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_farm_lands_userId_plotIndex_key" ON "slave_market"."slave_market_farm_lands" USING btree ("userId","plotIndex");--> statement-breakpoint
-CREATE INDEX "slave_market_farm_lands_userId_idx" ON "slave_market"."slave_market_farm_lands" USING btree ("userId");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_players_userId_key" ON "slave_market"."slave_market_players" USING btree ("userId");--> statement-breakpoint
-CREATE INDEX "slave_market_players_userId_idx" ON "slave_market"."slave_market_players" USING btree ("userId");--> statement-breakpoint
-CREATE INDEX "slave_market_players_ownerId_idx" ON "slave_market"."slave_market_players" USING btree ("ownerId");--> statement-breakpoint
-CREATE INDEX "slave_market_players_registerSource_idx" ON "slave_market"."slave_market_players" USING btree ("registerSource");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_red_packet_grabs_packetId_userId_key" ON "slave_market"."slave_market_red_packet_grabs" USING btree ("packetId","userId");--> statement-breakpoint
-CREATE INDEX "slave_market_red_packet_grabs_userId_idx" ON "slave_market"."slave_market_red_packet_grabs" USING btree ("userId");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_red_packets_packetId_key" ON "slave_market"."slave_market_red_packets" USING btree ("packetId");--> statement-breakpoint
-CREATE INDEX "slave_market_red_packets_scopeKey_idx" ON "slave_market"."slave_market_red_packets" USING btree ("scopeKey");--> statement-breakpoint
-CREATE INDEX "slave_market_red_packets_createdAt_idx" ON "slave_market"."slave_market_red_packets" USING btree ("createdAt");--> statement-breakpoint
-CREATE INDEX "slave_market_transactions_userId_createdAt_idx" ON "slave_market"."slave_market_transactions" USING btree ("userId","createdAt");--> statement-breakpoint
-CREATE INDEX "slave_market_transactions_type_idx" ON "slave_market"."slave_market_transactions" USING btree ("type");--> statement-breakpoint
-CREATE UNIQUE INDEX "slave_market_vip_cards_cardCode_key" ON "slave_market"."slave_market_vip_cards" USING btree ("cardCode");--> statement-breakpoint
-CREATE INDEX "slave_market_vip_cards_used_idx" ON "slave_market"."slave_market_vip_cards" USING btree ("used");--> statement-breakpoint
-CREATE INDEX "slave_market_vip_cards_cardCode_idx" ON "slave_market"."slave_market_vip_cards" USING btree ("cardCode");
+
+-- Add foreign key constraints only if they don't already exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'AdminAuditLog_userId_AdminUser_id_fk'
+    ) THEN
+        ALTER TABLE "AdminAuditLog" ADD CONSTRAINT "AdminAuditLog_userId_AdminUser_id_fk" 
+        FOREIGN KEY ("userId") REFERENCES "public"."AdminUser"("id") ON DELETE set null ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'AdminSession_userId_AdminUser_id_fk'
+    ) THEN
+        ALTER TABLE "AdminSession" ADD CONSTRAINT "AdminSession_userId_AdminUser_id_fk" 
+        FOREIGN KEY ("userId") REFERENCES "public"."AdminUser"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'AutomationRule_instanceId_Instance_id_fk'
+    ) THEN
+        ALTER TABLE "AutomationRule" ADD CONSTRAINT "AutomationRule_instanceId_Instance_id_fk" 
+        FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'AvatarCache_forwardPairId_ForwardPair_id_fk'
+    ) THEN
+        ALTER TABLE "AvatarCache" ADD CONSTRAINT "AvatarCache_forwardPairId_ForwardPair_id_fk" 
+        FOREIGN KEY ("forwardPairId") REFERENCES "public"."ForwardPair"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'Entity_sessionId_Session_id_fk'
+    ) THEN
+        ALTER TABLE "Entity" ADD CONSTRAINT "Entity_sessionId_Session_id_fk" 
+        FOREIGN KEY ("sessionId") REFERENCES "public"."Session"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'FlashPhotoView_flashPhotoId_FlashPhoto_id_fk'
+    ) THEN
+        ALTER TABLE "FlashPhotoView" ADD CONSTRAINT "FlashPhotoView_flashPhotoId_FlashPhoto_id_fk" 
+        FOREIGN KEY ("flashPhotoId") REFERENCES "public"."FlashPhoto"("id") ON DELETE no action ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'ForwardMultiple_fromPairId_ForwardPair_id_fk'
+    ) THEN
+        ALTER TABLE "ForwardMultiple" ADD CONSTRAINT "ForwardMultiple_fromPairId_ForwardPair_id_fk" 
+        FOREIGN KEY ("fromPairId") REFERENCES "public"."ForwardPair"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'ForwardPair_instanceId_Instance_id_fk'
+    ) THEN
+        ALTER TABLE "ForwardPair" ADD CONSTRAINT "ForwardPair_instanceId_Instance_id_fk" 
+        FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'Instance_qqBotId_QqBot_id_fk'
+    ) THEN
+        ALTER TABLE "Instance" ADD CONSTRAINT "Instance_qqBotId_QqBot_id_fk" 
+        FOREIGN KEY ("qqBotId") REFERENCES "public"."QqBot"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'Message_instanceId_Instance_id_fk'
+    ) THEN
+        ALTER TABLE "Message" ADD CONSTRAINT "Message_instanceId_Instance_id_fk" 
+        FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'QQRequest_instanceId_Instance_id_fk'
+    ) THEN
+        ALTER TABLE "QQRequest" ADD CONSTRAINT "QQRequest_instanceId_Instance_id_fk" 
+        FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'RequestStatistics_instanceId_Instance_id_fk'
+    ) THEN
+        ALTER TABLE "RequestStatistics" ADD CONSTRAINT "RequestStatistics_instanceId_Instance_id_fk" 
+        FOREIGN KEY ("instanceId") REFERENCES "public"."Instance"("id") ON DELETE cascade ON UPDATE no action;
+    END IF;
+END $$;
+--> statement-breakpoint
+
+-- Create indexes only if they don't already exist
+CREATE UNIQUE INDEX IF NOT EXISTS "AccessToken_token_key" ON "AccessToken" USING btree ("token");
+CREATE INDEX IF NOT EXISTS "AccessToken_token_idx" ON "AccessToken" USING btree ("token");
+CREATE INDEX IF NOT EXISTS "AccessToken_isActive_idx" ON "AccessToken" USING btree ("isActive");
+CREATE INDEX IF NOT EXISTS "AdminAuditLog_userId_idx" ON "AdminAuditLog" USING btree ("userId");
+CREATE INDEX IF NOT EXISTS "AdminAuditLog_action_idx" ON "AdminAuditLog" USING btree ("action");
+CREATE INDEX IF NOT EXISTS "AdminAuditLog_createdAt_idx" ON "AdminAuditLog" USING btree ("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "AdminSession_token_key" ON "AdminSession" USING btree ("token");
+CREATE INDEX IF NOT EXISTS "AdminSession_userId_idx" ON "AdminSession" USING btree ("userId");
+CREATE INDEX IF NOT EXISTS "AdminSession_token_idx" ON "AdminSession" USING btree ("token");
+CREATE INDEX IF NOT EXISTS "AdminSession_expiresAt_idx" ON "AdminSession" USING btree ("expiresAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "AdminUser_username_key" ON "AdminUser" USING btree ("username");
+CREATE INDEX IF NOT EXISTS "AdminUser_username_idx" ON "AdminUser" USING btree ("username");
+CREATE INDEX IF NOT EXISTS "AutomationRule_instanceId_enabled_idx" ON "AutomationRule" USING btree ("instanceId","enabled");
+CREATE INDEX IF NOT EXISTS "AutomationRule_type_target_idx" ON "AutomationRule" USING btree ("type","target");
+CREATE UNIQUE INDEX IF NOT EXISTS "AvatarCache_forwardPairId_key" ON "AvatarCache" USING btree ("forwardPairId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Entity_entityId_sessionId_key" ON "Entity" USING btree ("entityId","sessionId");
+CREATE UNIQUE INDEX IF NOT EXISTS "FlashPhotoView_flashPhotoId_viewerId_key" ON "FlashPhotoView" USING btree ("flashPhotoId","viewerId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ForwardPair_qqRoomId_instanceId_key" ON "ForwardPair" USING btree ("qqRoomId","instanceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ForwardPair_tgChatId_tgThreadId_instanceId_key" ON "ForwardPair" USING btree ("tgChatId","tgThreadId","instanceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ForwardPair_apiKey_key" ON "ForwardPair" USING btree ("apiKey");
+CREATE UNIQUE INDEX IF NOT EXISTS "GlobalConfig_key_key" ON "GlobalConfig" USING btree ("key");
+CREATE INDEX IF NOT EXISTS "GlobalConfig_key_idx" ON "GlobalConfig" USING btree ("key");
+CREATE INDEX IF NOT EXISTS "Message_qqRoomId_qqSenderId_seq_rand_pktnum_time_instanceId_idx" ON "Message" USING btree ("qqRoomId","qqSenderId","seq","rand","pktnum","time","instanceId");
+CREATE INDEX IF NOT EXISTS "Message_tgChatId_tgMsgId_instanceId_idx" ON "Message" USING btree ("tgChatId","tgMsgId","instanceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "QQRequest_flag_key" ON "QQRequest" USING btree ("flag");
+CREATE INDEX IF NOT EXISTS "QQRequest_instanceId_status_idx" ON "QQRequest" USING btree ("instanceId","status");
+CREATE INDEX IF NOT EXISTS "QQRequest_flag_idx" ON "QQRequest" USING btree ("flag");
+CREATE INDEX IF NOT EXISTS "QQRequest_createdAt_idx" ON "QQRequest" USING btree ("createdAt");
+CREATE UNIQUE INDEX IF NOT EXISTS "RequestStatistics_instanceId_key" ON "RequestStatistics" USING btree ("instanceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_admins_userId_key" ON "slave_market"."slave_market_admins" USING btree ("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_appearances_userId_itemName_key" ON "slave_market"."slave_market_appearances" USING btree ("userId","itemName");
+CREATE INDEX IF NOT EXISTS "slave_market_appearances_userId_equipped_idx" ON "slave_market"."slave_market_appearances" USING btree ("userId","equipped");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_farm_lands_userId_plotIndex_key" ON "slave_market"."slave_market_farm_lands" USING btree ("userId","plotIndex");
+CREATE INDEX IF NOT EXISTS "slave_market_farm_lands_userId_idx" ON "slave_market"."slave_market_farm_lands" USING btree ("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_players_userId_key" ON "slave_market"."slave_market_players" USING btree ("userId");
+CREATE INDEX IF NOT EXISTS "slave_market_players_userId_idx" ON "slave_market"."slave_market_players" USING btree ("userId");
+CREATE INDEX IF NOT EXISTS "slave_market_players_ownerId_idx" ON "slave_market"."slave_market_players" USING btree ("ownerId");
+CREATE INDEX IF NOT EXISTS "slave_market_players_registerSource_idx" ON "slave_market"."slave_market_players" USING btree ("registerSource");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_red_packet_grabs_packetId_userId_key" ON "slave_market"."slave_market_red_packet_grabs" USING btree ("packetId","userId");
+CREATE INDEX IF NOT EXISTS "slave_market_red_packet_grabs_userId_idx" ON "slave_market"."slave_market_red_packet_grabs" USING btree ("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_red_packets_packetId_key" ON "slave_market"."slave_market_red_packets" USING btree ("packetId");
+CREATE INDEX IF NOT EXISTS "slave_market_red_packets_scopeKey_idx" ON "slave_market"."slave_market_red_packets" USING btree ("scopeKey");
+CREATE INDEX IF NOT EXISTS "slave_market_red_packets_createdAt_idx" ON "slave_market"."slave_market_red_packets" USING btree ("createdAt");
+CREATE INDEX IF NOT EXISTS "slave_market_transactions_userId_createdAt_idx" ON "slave_market"."slave_market_transactions" USING btree ("userId","createdAt");
+CREATE INDEX IF NOT EXISTS "slave_market_transactions_type_idx" ON "slave_market"."slave_market_transactions" USING btree ("type");
+CREATE UNIQUE INDEX IF NOT EXISTS "slave_market_vip_cards_cardCode_key" ON "slave_market"."slave_market_vip_cards" USING btree ("cardCode");
+CREATE INDEX IF NOT EXISTS "slave_market_vip_cards_used_idx" ON "slave_market"."slave_market_vip_cards" USING btree ("used");
+CREATE INDEX IF NOT EXISTS "slave_market_vip_cards_cardCode_idx" ON "slave_market"."slave_market_vip_cards" USING btree ("cardCode");
