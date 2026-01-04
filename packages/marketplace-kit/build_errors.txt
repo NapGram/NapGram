@@ -1,4 +1,0 @@
-
-> @napgram/marketplace-kit@0.1.4 build /home/user/docker/q2tg/NapGram/packages/marketplace-kit
-> tsc -p tsconfig.json
-

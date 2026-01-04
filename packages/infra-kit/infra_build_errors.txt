@@ -1,4 +1,0 @@
-
-> @napgram/infra-kit@0.1.4 build /home/user/docker/q2tg/NapGram/packages/infra-kit
-> tsc -p tsconfig.json
-
