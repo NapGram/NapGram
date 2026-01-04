@@ -373,7 +373,7 @@ export default async function (fastify: FastifyInstance) {
 
     return {
       success: true,
-      items: bots.map((bot: any) => ({
+      data: bots.map((bot: any) => ({
         ...bot,
         uin: bot.uin?.toString() || null,
         password: bot.password ? '******' : null, // 隐藏密码
