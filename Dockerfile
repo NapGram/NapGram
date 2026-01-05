@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=25-slim
+ARG NODE_VERSION=25-alpine
 ARG INSTALL_PG_CLIENT=true
 
 # === Stage: Extract TGS conversion binaries ===
@@ -9,34 +9,43 @@ FROM edasriyan/lottie-to-gif:latest AS lottie
 FROM node:${NODE_VERSION} AS base
 ARG USE_MIRROR=true
 ARG INSTALL_PG_CLIENT=true
-ENV DEBIAN_FRONTEND=noninteractive
 
-# 基础运行时依赖
+# Alpine 使用 apk 包管理器，需要不同的包名
 RUN if [ "$USE_MIRROR" = "true" ]; then \
-      sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources; \
+      sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories; \
     fi && \
-    apt-get update && apt-get install -y --no-install-recommends \
+    apk upgrade --no-cache && \
+    apk add --no-cache \
     curl wget bash \
-    fonts-wqy-microhei \
-    libpixman-1-0 libcairo2 libpango1.0-0 libgif7 libjpeg62-turbo libpng16-16 librsvg2-2 libvips42 ffmpeg \
-    $(if [ "$INSTALL_PG_CLIENT" = "true" ]; then echo postgresql-client; fi) \
-    && rm -rf /var/lib/apt/lists/*
+    # 中文字体
+    font-wqy-zenhei \
+    # 图像处理库 (Alpine 包名不同)
+    pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg \
+    # PostgreSQL 客户端 (可选)
+    $(if [ "$INSTALL_PG_CLIENT" = "true" ]; then echo postgresql-client; fi)
 
 # 复制TGS转换工具（lottie_to_png和gifski）
+# 注意: edasriyan/lottie-to-gif 是基于 Debian 的,可能需要 glibc 兼容层
+# Alpine 使用 musl libc，可能存在兼容性问题
 COPY --from=lottie /usr/bin/lottie_to_png /usr/bin/
 COPY --from=lottie /usr/bin/gifski /usr/bin/
+
+# Alpine 可能需要 glibc 兼容层来运行编译自 Debian 的二进制文件
+# 如果遇到问题，可以安装 gcompat
+RUN apk add --no-cache gcompat
 
 RUN npm install -g pnpm@latest && npm install -g npm@latest
 WORKDIR /app
 
 FROM base AS build
 ARG USE_MIRROR=true
+ENV PNPM_STORE_PATH=/pnpm-store
 
-# 编译环境依赖 (python3, build-essential)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 build-essential pkg-config \
-    libpixman-1-dev libcairo2-dev libpango1.0-dev libgif-dev libjpeg62-turbo-dev libpng-dev librsvg2-dev libvips-dev \
-    && rm -rf /var/lib/apt/lists/*
+# 编译环境依赖
+RUN apk add --no-cache \
+    python3 make g++ pkgconfig \
+    # 开发头文件 (Alpine 使用 -dev 后缀)
+    pixman-dev cairo-dev pango-dev giflib-dev libjpeg-turbo-dev libpng-dev librsvg-dev vips-dev
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
 COPY main/package.json /app/main/
@@ -49,7 +58,8 @@ COPY external/sdk/ /app/external/sdk/
 # 2. 编译必需的原生模块
 #    - better-sqlite3: mtcute 用于 Telegram session 存储
 #    - silk-wasm 是纯 WASM，无需编译
-RUN pnpm install --no-frozen-lockfile --shamefully-hoist && \
+RUN --mount=type=cache,target=/pnpm-store \
+    pnpm install --no-frozen-lockfile --shamefully-hoist && \
     pnpm --filter "./external/sdk/packages/**" run build && \
     pnpm --filter "./packages/**" run build
 
@@ -57,6 +67,9 @@ RUN pnpm install --no-frozen-lockfile --shamefully-hoist && \
 
 COPY main/ /app/main/
 RUN pnpm --filter ./main run build
+
+# 剔除 devDependencies，避免将构建工具（如 esbuild）带入运行时镜像
+RUN CI=true pnpm prune --prod
 
 # Frontend 使用预构建产物
 COPY web/dist/ /app/web/dist/

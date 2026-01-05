@@ -51,7 +51,7 @@ jobs:
             echo "DOCKERHUB_IMAGE=" >> "$GITHUB_ENV"
           fi
 
-      - name: Checkout UI source (private)
+      - name: Checkout UI source
         uses: actions/checkout@v4
         with:
           repository: magisk317/napgram-ui-dist
@@ -90,9 +90,12 @@ jobs:
 
       - name: Resolve Alpine latest stable
         run: |
-          ALPINE_BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
-            | rg -n "^  branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
-          echo "ALPINE_BRANCH=${ALPINE_BRANCH}" >> "$GITHUB_ENV"
+          VER=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "version: " -m 1 | awk '{print $2}')
+          BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
+          echo "ALPINE_VERSION=$VER" >> "$GITHUB_ENV"
+          echo "ALPINE_BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
       - name: OCI meta (arch)
         id: meta
@@ -126,11 +129,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push (Alpine, amd64)
+      - name: Build and push (amd64)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.alpine
+          file: ./Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -235,9 +238,12 @@ jobs:
 
       - name: Resolve Alpine latest stable
         run: |
-          ALPINE_BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
-            | rg -n "^  branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
-          echo "ALPINE_BRANCH=${ALPINE_BRANCH}" >> "$GITHUB_ENV"
+          VER=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "version: " -m 1 | awk '{print $2}')
+          BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
+          echo "ALPINE_VERSION=$VER" >> "$GITHUB_ENV"
+          echo "ALPINE_BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
       - name: OCI meta (arch)
         id: meta
@@ -271,11 +277,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push (Alpine, arm64 native)
+      - name: Build and push (arm64 native)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.alpine
+          file: ./Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -382,9 +388,12 @@ jobs:
 
       - name: Resolve Alpine latest stable
         run: |
-          ALPINE_BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
-            | rg -n "^  branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
-          echo "ALPINE_BRANCH=${ALPINE_BRANCH}" >> "$GITHUB_ENV"
+          VER=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "version: " -m 1 | awk '{print $2}')
+          BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
+          echo "ALPINE_VERSION=$VER" >> "$GITHUB_ENV"
+          echo "ALPINE_BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
       - name: OCI meta (arch)
         id: meta
@@ -421,11 +430,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push (Alpine, arm64 qemu)
+      - name: Build and push (arm64 qemu)
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.alpine
+          file: ./Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -537,12 +546,12 @@ jobs:
         run: |
           IMAGES="$(printf '%s\n' "$TAGS" | sed '/^$/d' | sed 's/^/  - /')"
           MESSAGE="$(cat <<EOF
-          ✅ Docker Build Success (dev - Alpine)
+          ✅ Docker Build Success (dev)
 
           Repo: ${{ github.repository }}
           Ref: ${{ env.BUILD_REF_NAME }} @ ${{ env.BUILD_SHA }}
           Platforms: linux/amd64, linux/arm64
-          Base: Alpine Linux
+          Base: Linux
           Images:
           ${IMAGES}
           EOF

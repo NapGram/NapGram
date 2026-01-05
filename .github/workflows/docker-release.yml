@@ -85,6 +85,15 @@ jobs:
           pnpm -C web install --no-frozen-lockfile --ignore-workspace
           pnpm -C web --ignore-workspace run build
 
+      - name: Resolve Alpine latest stable
+        run: |
+          VER=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "version: " -m 1 | awk '{print $2}')
+          BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
+            | rg -n "branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
+          echo "ALPINE_VERSION=$VER" >> "$GITHUB_ENV"
+          echo "ALPINE_BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
       - name: OCI meta (Alpine)
         id: meta
         uses: docker/metadata-action@v5
@@ -121,7 +130,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.alpine
+          file: ./Dockerfile
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -133,7 +142,7 @@ jobs:
             REF=${{ github.ref }}
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
-            NODE_VERSION=25-alpine
+            NODE_VERSION=25-alpine${{ env.ALPINE_BRANCH }}
           secrets: |
             npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
 
@@ -264,7 +273,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile.debian
           push: ${{ github.actor != 'dependabot[bot]' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
