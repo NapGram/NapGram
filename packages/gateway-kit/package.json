@@ -24,7 +24,7 @@
         "@napgram/message-kit": "workspace:*",
         "@napgram/qq-client": "workspace:*",
         "@napgram/telegram-client": "workspace:*",
-        "ws": "^8.18.3"
+        "ws": "^8.19.0"
     },
     "keywords": [
         "napgram",
