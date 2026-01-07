@@ -88,7 +88,17 @@ import { InstanceRegistry } from '@napgram/runtime-kit'
   api.startListening()
 
   // 再启动实例（包括 FeatureManager 中的 CommandsFeature）
-  await Promise.all(targets.map((id) => Instance.start(id)))
+  const instances = await Promise.all(targets.map((id) => Instance.start(id)))
+
+  // 确保插件命令在运行时完全启动后再加载一次
+  for (const instance of instances) {
+    try {
+      await instance.commandsFeature?.reloadCommands?.()
+    }
+    catch (error) {
+      log.warn({ error, instanceId: instance.id }, 'Failed to reload commands after startup')
+    }
+  }
 
   sentry.captureMessage('启动完成', { instanceCount: targets.length })
 })()
