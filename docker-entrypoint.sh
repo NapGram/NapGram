@@ -17,7 +17,7 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
-if ! /app/node_modules/.bin/drizzle-kit migrate --config /app/database/drizzle.config.ts; then
+if ! /app/node_modules/.bin/drizzle-kit migrate --config /app/main/tools/drizzle.config.cjs; then
   echo "Database migration failed; aborting."
   exit 1
 fi
