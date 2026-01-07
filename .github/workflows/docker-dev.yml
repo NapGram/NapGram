@@ -360,6 +360,13 @@ jobs:
         with:
           version: 10.27.0
 
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          EOF
+
       - name: Install dependencies
         # CI 默认会启用 frozen-lockfile；但这里会用私有 UI 仓库覆盖 ./web，
         # 可能导致根目录 pnpm-lock.yaml 与 ./web/package.json 不一致，从而安装失败。
