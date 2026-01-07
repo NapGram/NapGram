@@ -31,7 +31,7 @@
         "@mtcute/node": "^0.27.5",
         "@napgram/auth-kit": "^0.1.5",
         "@napgram/database": "^0.1.1",
-        "@napgram/feature-kit": "^0.1.6",
+        "@napgram/feature-kit": "^0.1.7",
         "@napgram/gateway-kit": "^0.1.5",
         "@napgram/infra-kit": "^0.1.5",
         "@napgram/marketplace-kit": "^0.1.5",
