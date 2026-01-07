@@ -10,6 +10,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     services:
       postgres:
@@ -32,13 +35,6 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Checkout SDK source (main)
-        uses: actions/checkout@v4
-        with:
-          repository: NapGram/sdk
-          ref: main
-          token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
-          path: external/sdk
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -51,14 +47,18 @@ jobs:
           node-version: '25'
           cache: 'pnpm'
 
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          EOF
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build workspace packages
-        run: pnpm -r build
-
       - name: Run Drizzle migrations
-        run: pnpm --filter @napgram/database db:migrate
+        run: bash ./main/tools/run-drizzle-migrations.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
 
