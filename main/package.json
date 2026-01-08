@@ -70,7 +70,7 @@
         "@napgram/request-kit": "^0.1.5",
         "@napgram/runtime-kit": "^0.1.5",
         "@napgram/telegram-client": "^0.1.5",
-        "@napgram/web-interfaces": "^0.1.8",
+        "@napgram/web-interfaces": "^0.1.9",
         "@naplink/naplink": "^0.0.3",
         "@sentry/node": "10.32.1",
         "drizzle-kit": "^0.31.8",
