@@ -179,7 +179,7 @@ describe('messageConverter', () => {
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('image')
       expect(result[0].data.file).toBe('https://example.com/image.jpg')
-      expect(result[0].data.sub_type).toBe('0')
+      expect(result[0].data.sub_type).toBe(0)
     })
 
     it('should convert spoiler image to NapCat format', async () => {
@@ -208,7 +208,7 @@ describe('messageConverter', () => {
 
       const result = await converter.toNapCat(unifiedMsg)
 
-      expect(result[0].data.sub_type).toBe('7')
+      expect(result[0].data.sub_type).toBe(7)
     })
   })
 })

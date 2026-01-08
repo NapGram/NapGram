@@ -5,6 +5,18 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
+    server: {
+      deps: {
+        inline: [
+          '@napgram/qq-client',
+          '@naplink/naplink',
+          '@napgram/telegram-client',
+          '@mtcute/node',
+          '@mtcute/dispatcher',
+          '@mtcute/core',
+        ],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

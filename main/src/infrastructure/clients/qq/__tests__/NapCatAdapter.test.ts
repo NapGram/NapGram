@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NapCatAdapter } from '../NapCatAdapter'
+import type { NapCatAdapter as NapCatAdapterType } from '../NapCatAdapter'
 import { napCatForwardMultiple } from '../napcatConvert'
 
 // Mock dependencies
@@ -176,7 +176,8 @@ vi.mock('../../../../domain/message/converter', () => ({
 }))
 
 describe('napCatAdapter', () => {
-  let adapter: NapCatAdapter
+  let NapCatAdapter: typeof import('../NapCatAdapter').NapCatAdapter
+  let adapter: NapCatAdapterType
   const createParams: any = {
     type: 'napcat',
     wsUrl: 'ws://localhost:3000',
@@ -194,7 +195,7 @@ describe('napCatAdapter', () => {
       handler(...args)
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     // Reset resolved values to avoid pollution
     mockNapLinkInstance.getMessage.mockReset()
@@ -227,6 +228,9 @@ describe('napCatAdapter', () => {
     mockNapLinkInstance.hydrateMessage.mockResolvedValue(undefined)
     mockNapLinkInstance.getLoginInfo.mockResolvedValue({ user_id: 123456, nickname: 'Me' })
 
+    vi.resetModules()
+    const module = await import('../NapCatAdapter')
+    NapCatAdapter = module.NapCatAdapter
     adapter = new NapCatAdapter(createParams)
   })
 
