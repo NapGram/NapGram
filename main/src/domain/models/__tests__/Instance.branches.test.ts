@@ -3,7 +3,7 @@ import { db } from '@napgram/infra-kit'
 import Instance from '../Instance'
 
 // Mocks
-const { mockInstance } = vi.hoisted(() => ({
+const { mockInstance, mockUpdate, mockInsert } = vi.hoisted(() => ({
   mockInstance: {
     id: 1,
     owner: 0,
@@ -13,22 +13,30 @@ const { mockInstance } = vi.hoisted(() => ({
     botSessionId: 0,
     qqBot: { wsUrl: 'ws://fake' },
   },
+  mockUpdate: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn().mockResolvedValue(undefined),
+    })),
+  })),
+  mockInsert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+    })),
+  })),
 }))
 
 vi.mock('@napgram/infra-kit', () => ({
   db: {
-    instance: {
-      update: vi.fn().mockResolvedValue(mockInstance),
-      findFirst: vi.fn().mockResolvedValue(mockInstance),
-      create: vi.fn().mockResolvedValue(mockInstance),
+    query: {
+      instance: {
+        findFirst: vi.fn().mockResolvedValue(mockInstance),
+      },
     },
-    forwardPair: {
-      findMany: vi.fn().mockResolvedValue([]),
-    },
-    pluginConfig: {
-      findUnique: vi.fn(),
-    },
+    insert: mockInsert,
+    update: mockUpdate,
   },
+  schema: { instance: { id: 'id' } },
+  eq: vi.fn(),
   env: {
     TG_BOT_TOKEN: 'fake-token',
     NAPCAT_WS_URL: 'ws://fake',
@@ -105,38 +113,33 @@ describe('instance Branches', () => {
 
   it('should handle property setters', async () => {
     const instance = await Instance.createNew('token') as Instance
+    mockUpdate.mockClear()
 
     // Setters trigger db update
     instance.owner = 123
-    expect(db.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { owner: 123 },
-    }))
+    const ownerSetCalls = vi.mocked(mockUpdate).mock.results[0]?.value?.set?.mock?.calls ?? []
+    expect(ownerSetCalls[0]?.[0]).toEqual({ owner: BigInt(123) })
 
     instance.isSetup = true
-    expect(db.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { isSetup: true },
-    }))
+    const setupSetCalls = vi.mocked(mockUpdate).mock.results[1]?.value?.set?.mock?.calls ?? []
+    expect(setupSetCalls[0]?.[0]).toEqual({ isSetup: true })
 
     instance.workMode = 'group'
-    expect(db.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { workMode: 'group' },
-    }))
+    const workModeSetCalls = vi.mocked(mockUpdate).mock.results[2]?.value?.set?.mock?.calls ?? []
+    expect(workModeSetCalls[0]?.[0]).toEqual({ workMode: 'group' })
 
     instance.botSessionId = 999
-    expect(db.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { botSessionId: 999 },
-    }))
+    const botSessionSetCalls = vi.mocked(mockUpdate).mock.results[3]?.value?.set?.mock?.calls ?? []
+    expect(botSessionSetCalls[0]?.[0]).toEqual({ botSessionId: 999 })
 
     instance.flags = 1
-    expect(db.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { flags: 1 },
-    }))
+    const flagsSetCalls = vi.mocked(mockUpdate).mock.results[4]?.value?.set?.mock?.calls ?? []
+    expect(flagsSetCalls[0]?.[0]).toEqual({ flags: 1 })
 
     // qqBotId setter
     instance.qqBotId = 111
-    expect(db.instance.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: { qqBotId: 111 },
-    }))
+    const qqBotSetCalls = vi.mocked(mockUpdate).mock.results[5]?.value?.set?.mock?.calls ?? []
+    expect(qqBotSetCalls[0]?.[0]).toEqual({ qqBotId: 111 })
   })
 
   it('should not re-initialize on subsequent init calls', async () => {
@@ -146,5 +149,15 @@ describe('instance Branches', () => {
 
     const { telegramClientFactory } = await import('../../../infrastructure/clients/telegram')
     expect(telegramClientFactory.create).toHaveBeenCalledTimes(1)
+  })
+
+  it('should throw when createNew returns no db entry', async () => {
+    mockInsert.mockReturnValueOnce({
+      values: vi.fn(() => ({
+        returning: vi.fn().mockResolvedValue([]),
+      })),
+    })
+
+    await expect(Instance.createNew('token')).rejects.toThrow('Failed to create instance')
   })
 })

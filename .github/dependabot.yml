@@ -85,3 +85,16 @@ updates:
     ignore:
       - dependency-name: "@naplink/naplink"
       - dependency-name: "@napgram/*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    target-branch: "dev"
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      all-actions:
+        patterns:
+          - "*"
