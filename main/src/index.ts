@@ -7,6 +7,7 @@ import api, { registerWebRoutes } from './interfaces'
 import { PluginRuntime } from '@napgram/plugin-kit'
 import { getLogger, random } from '@napgram/infra-kit';
 import { builtins } from './builtins'
+import { InstanceRegistry } from '@napgram/runtime-kit'
 
 (async () => {
   const log = getLogger('Main')
@@ -72,13 +73,13 @@ import { builtins } from './builtins'
     sentry.captureException(error, { type: 'uncaughtException' })
   })
 
-  const instanceEntries = await db.instance.findMany()
-  const targets = instanceEntries.length ? instanceEntries.map(it => it.id) : [0]
+  const instanceEntries = await db.query.instance.findMany()
+  const targets = instanceEntries.length ? instanceEntries.map(entry => entry.id) : [0]
 
   // Configure PluginRuntime (Phase 2 Modularization)
   PluginRuntime.setInstanceResolvers(
-    (id) => Instance.instances.find(i => i.id === id) as any,
-    () => Instance.instances as any
+    (id) => InstanceRegistry.getById(id) as any,
+    () => InstanceRegistry.getAll() as any
   )
 
   // 先启动插件运行时（在 Instance 之前，确保插件命令可被 CommandsFeature 发现）
@@ -87,7 +88,17 @@ import { builtins } from './builtins'
   api.startListening()
 
   // 再启动实例（包括 FeatureManager 中的 CommandsFeature）
-  await Promise.all(targets.map(id => Instance.start(id)))
+  const instances = await Promise.all(targets.map((id) => Instance.start(id)))
+
+  // 确保插件命令在运行时完全启动后再加载一次
+  for (const instance of instances) {
+    try {
+      await instance.commandsFeature?.reloadCommands?.()
+    }
+    catch (error) {
+      log.warn({ error, instanceId: instance.id }, 'Failed to reload commands after startup')
+    }
+  }
 
   sentry.captureMessage('启动完成', { instanceCount: targets.length })
 })()

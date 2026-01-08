@@ -47,11 +47,9 @@ RUN apk add --no-cache \
     # 开发头文件 (Alpine 使用 -dev 后缀)
     pixman-dev cairo-dev pango-dev giflib-dev libjpeg-turbo-dev libpng-dev librsvg-dev vips-dev
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
+COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json .npmrc /app/
 COPY main/package.json /app/main/
 COPY web/package.json /app/web/
-COPY packages/ /app/packages/
-COPY external/sdk/ /app/external/sdk/
 
 # 两步安装策略：
 # 1. 安装所有依赖并跳过脚本（避免 sharp 尝试源码编译）
@@ -59,9 +57,10 @@ COPY external/sdk/ /app/external/sdk/
 #    - better-sqlite3: mtcute 用于 Telegram session 存储
 #    - silk-wasm 是纯 WASM，无需编译
 RUN --mount=type=cache,target=/pnpm-store \
+    --mount=type=secret,id=npmrc \
+    if [ -f /run/secrets/npmrc ]; then cat /run/secrets/npmrc >> /app/.npmrc; fi && \
     pnpm install --no-frozen-lockfile --shamefully-hoist && \
-    pnpm --filter "./external/sdk/packages/**" run build && \
-    pnpm --filter "./packages/**" run build
+    rm -f /app/.npmrc
 
 # 源码构建（后端）
 
@@ -78,11 +77,11 @@ FROM base AS release
 # Note: TGS to GIF conversion now handled by tgs-to npm package
 
 COPY --from=build --chown=node:node /app/node_modules /app/node_modules
-COPY --from=build --chown=node:node /app/external/sdk /app/external/sdk
+COPY --from=build --chown=node:node /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
+COPY --from=build --chown=node:node /app/main/tools/drizzle /app/main/tools/drizzle
 COPY --from=build --chown=node:node /app/main/build /app/build
 COPY --from=build --chown=node:node /app/main/package.json /app/package.json
 COPY --from=build --chown=node:node /app/web/dist /app/public
-COPY --from=build --chown=node:node /app/packages/database /app/database
 
 # 确保 ESM 兼容
 RUN echo '{ "type": "module" }' > /app/build/package.json && \

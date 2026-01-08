@@ -1,0 +1,188 @@
+name: Security - Secret Scanning
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+jobs:
+  gitleaks:
+    name: 🔒 Scan for Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整历史，用于扫描所有 commit
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # 可选，企业版才需要
+
+  trufflehog:
+    name: 🔍 TruffleHog Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  custom-patterns:
+    name: 🎯 Custom Pattern Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for sensitive files
+        run: |
+          echo "🔍 检查敏感文件..."
+          
+          # 定义不应提交的文件列表
+          SENSITIVE_FILES=(
+            "compose.stable.yaml"
+            "compose.dev.yaml"
+            ".env"
+            ".env.local"
+            ".env.*.local"
+          )
+          
+          FOUND_FILES=()
+          for file in "${SENSITIVE_FILES[@]}"; do
+            if git ls-files | grep -q "^${file}$"; then
+              FOUND_FILES+=("$file")
+            fi
+          done
+          
+          if [ ${#FOUND_FILES[@]} -gt 0 ]; then
+            echo "❌ 错误：发现不应提交的敏感文件："
+            printf '  - %s\n' "${FOUND_FILES[@]}"
+            echo ""
+            echo "这些文件包含敏感信息，不应提交到 git。"
+            echo "请执行以下命令移除："
+            echo ""
+            for file in "${FOUND_FILES[@]}"; do
+              echo "  git rm --cached ${file}"
+            done
+            exit 1
+          fi
+          
+          echo "✅ 未发现敏感文件"
+
+      - name: Check for hardcoded secrets in code
+        run: |
+          echo "🔍 检查硬编码的密钥..."
+          
+          # 检查常见的密钥模式
+          PATTERNS=(
+            # Telegram Bot Token
+            "TG_BOT_TOKEN.*[0-9]{10}:[A-Za-z0-9_-]{35}"
+            # Telegram API Hash (32位十六进制)
+            "TG_API_HASH.*[0-9a-f]{32}"
+            # API Keys
+            "api[_-]?key.*['\"][0-9a-zA-Z]{32,}['\"]"
+            # Access Token
+            "access[_-]?token.*['\"][0-9a-zA-Z]{32,}['\"]"
+            # Private keys
+            "-----BEGIN (RSA |DSA )?PRIVATE KEY-----"
+            # AWS
+            "AKIA[0-9A-Z]{16}"
+          )
+          
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            if git diff --cached | grep -iE "$pattern"; then
+              echo "❌ 发现可疑模式: $pattern"
+              FOUND=1
+            fi
+          done
+          
+          if [ $FOUND -eq 1 ]; then
+            echo ""
+            echo "❌ 在代码中发现可能的硬编码密钥！"
+            echo "请使用环境变量替代硬编码的密钥。"
+            exit 1
+          fi
+          
+          echo "✅ 未发现硬编码密钥"
+
+  # 可选：检查 PR 中的敏感信息
+  pr-check:
+    name: 📝 PR Diff Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR diff for secrets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 检查 PR 变更..."
+          
+          # 获取 PR 的差异
+          git fetch origin ${{ github.base_ref }}
+          
+          # 检查新增的行
+          SUSPICIOUS_LINES=$(git diff origin/${{ github.base_ref }}...HEAD | grep "^+" | grep -iE "(token|password|secret|key|hash).*[:=].*['\"]")
+          
+          if [ ! -z "$SUSPICIOUS_LINES" ]; then
+            echo "⚠️ 在 PR 中发现可疑的新增行："
+            echo "$SUSPICIOUS_LINES"
+            echo ""
+            echo "请确认这些不是敏感信息。"
+            echo "如果是配置示例，请使用占位符（如 'YOUR_TOKEN_HERE'）"
+            # 注意：这里只是警告，不会使 CI 失败
+            # 如果要强制失败，取消下面这行的注释：
+            # exit 1
+          else
+            echo "✅ PR 检查通过"
+          fi
+
+  report:
+    name: 📊 Security Report
+    runs-on: ubuntu-latest
+    needs: [gitleaks, trufflehog, custom-patterns]
+    if: always()
+    steps:
+      - name: Generate Report
+        run: |
+          echo "## 🛡️ 安全扫描报告" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.gitleaks.result }}" == "success" ]; then
+            echo "✅ Gitleaks: 未发现泄露" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Gitleaks: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.trufflehog.result }}" == "success" ]; then
+            echo "✅ TruffleHog: 未发现泄露" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ TruffleHog: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.custom-patterns.result }}" == "success" ]; then
+            echo "✅ 自定义检查: 通过" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ 自定义检查: 发现问题" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "扫描时间: $(date)" >> $GITHUB_STEP_SUMMARY

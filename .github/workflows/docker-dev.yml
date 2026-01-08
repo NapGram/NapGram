@@ -26,13 +26,6 @@ jobs:
           submodules: recursive
           token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
 
-      - name: Checkout SDK source (main)
-        uses: actions/checkout@v4
-        with:
-          repository: NapGram/sdk
-          ref: main
-          token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
-          path: external/sdk
 
       - name: Derive build info
         run: echo "BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -68,6 +61,13 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.27.0
+
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          EOF
 
       - name: Install dependencies
         # CI 默认会启用 frozen-lockfile；但这里会用私有 UI 仓库覆盖 ./web，
@@ -174,13 +174,6 @@ jobs:
           submodules: recursive
           token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
 
-      - name: Checkout SDK source (main)
-        uses: actions/checkout@v4
-        with:
-          repository: NapGram/sdk
-          ref: main
-          token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
-          path: external/sdk
 
       - name: Derive build info
         run: echo "BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -216,6 +209,13 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.27.0
+
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          EOF
 
       - name: Install dependencies
         # CI 默认会启用 frozen-lockfile；但这里会用私有 UI 仓库覆盖 ./web，
@@ -324,13 +324,6 @@ jobs:
           submodules: recursive
           token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
 
-      - name: Checkout SDK source (main)
-        uses: actions/checkout@v4
-        with:
-          repository: NapGram/sdk
-          ref: main
-          token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
-          path: external/sdk
 
       - name: Derive build info
         run: echo "BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -366,6 +359,13 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 10.27.0
+
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          EOF
 
       - name: Install dependencies
         # CI 默认会启用 frozen-lockfile；但这里会用私有 UI 仓库覆盖 ./web，

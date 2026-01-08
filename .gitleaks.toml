@@ -1,0 +1,82 @@
+# Gitleaks 配置文件
+# 文档: https://github.com/gitleaks/gitleaks#configuration
+
+title = "NapGram Secret Scanning"
+
+[extend]
+# 使用默认规则
+useDefault = true
+
+# 自定义规则
+[[rules]]
+id = "telegram-bot-token"
+description = "Telegram Bot Token"
+regex = '''[0-9]{10}:[A-Za-z0-9_-]{35}'''
+tags = ["telegram", "token", "high"]
+
+[[rules]]
+id = "telegram-api-hash"
+description = "Telegram API Hash"
+regex = '''TG_API_HASH.*[0-9a-f]{32}'''
+tags = ["telegram", "api", "medium"]
+
+[[rules]]
+id = "telegram-api-id"
+description = "Telegram API ID"
+regex = '''TG_API_ID.*[0-9]{8}'''
+tags = ["telegram", "api", "low"]
+
+[[rules]]
+id = "qq-number"
+description = "QQ Number (Admin credentials)"
+regex = '''(ADMIN_QQ|QQ_NUMBER).*[0-9]{5,11}'''
+tags = ["qq", "credential", "low"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)['\"]?\s*[:=]\s*['\"]?[0-9a-zA-Z]{32,}['\"]?'''
+tags = ["api", "key", "medium"]
+
+[[rules]]
+id = "database-url"
+description = "Database Connection String"
+regex = '''(?i)(database[_-]?url|db[_-]?url)['\"]?\s*[:=]\s*['\"]?(postgres|mysql|mongodb)://[^\s'"]+['\"]?'''
+tags = ["database", "credential", "high"]
+
+# 白名单：排除误报
+[allowlist]
+description = "Allowlist configuration"
+
+# 排除的文件路径
+paths = [
+  '''\.example$''',              # 所有 .example 文件
+  '''\.md$''',                   # Markdown 文档
+  '''\.test\.(ts|js)$''',        # 测试文件
+  '''^\.github/workflows/''',     # GitHub Actions（可能包含示例）
+  '''^docs/''',                  # 文档目录
+]
+
+# 排除的正则表达式（整行匹配）
+regexes = [
+  '''YOUR_.*_HERE''',            # 占位符
+  '''EXAMPLE_.*''',              # 示例值
+  '''xxx+''',                    # 占位符
+  '''123+''',                    # 测试值
+  '''\$\{[A-Z_]+\}''',          # 环境变量引用 ${VAR}
+  '''process\.env\.[A-Z_]+''',  # process.env.VAR
+]
+
+# 排除特定的提交
+commits = [
+  # 如果需要，在这里添加需要忽略的 commit SHA
+]
+
+# 停止词：包含这些词的行会被跳过
+stopwords = [
+  "placeholder",
+  "example",
+  "dummy",
+  "fake",
+  "test",
+]

@@ -10,7 +10,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      packages: read
 
     services:
       postgres:
@@ -32,28 +34,31 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
-          submodules: recursive
-          token: ${{ secrets.SUBMODULE_TOKEN || secrets.UI_SRC_TOKEN || github.token }}
+
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '25'
           cache: 'pnpm'
+
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          EOF
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Generate Prisma Client
-        run: pnpm --filter ./main exec prisma generate --no-hints
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
-
-      - name: Run Prisma migrations
-        run: pnpm --filter ./main exec prisma migrate deploy
+      - name: Run Drizzle migrations
+        run: bash ./main/tools/run-drizzle-migrations.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
 
