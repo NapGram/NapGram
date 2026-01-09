@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@napgram/sdk':
-        specifier: ^0.1.9
-        version: 0.1.9
+        specifier: ^0.1.15
+        version: 0.1.15
     devDependencies:
       typescript:
         specifier: 5.9.3
@@ -1099,6 +1099,9 @@ packages:
   '@napgram/auth-kit@0.1.5':
     resolution: {integrity: sha512-jRutPQgtwhyOtCPgfhvmE5wAHrM+CovLBgFzrcZfK6gq8fxxyfnaLXoJvtvMIR3RYAjVO7HyW67mynH2bMPdaQ==, tarball: https://npm.pkg.github.com/download/@napgram/auth-kit/0.1.5/9d1f534c1a882171d368e2168c25462e31354dbe}
 
+  '@napgram/core@0.1.15':
+    resolution: {integrity: sha512-/k68POBVZL3APMipDPbWYF4ZSOtJh2HSb9Isq4DRThM+m3cNO/+YDza8yKs8PiPDiKrSfakT7RXaODtDI4dMmQ==, tarball: https://npm.pkg.github.com/download/@napgram/core/0.1.15/b313dc7f25fff04dad556019fa4f4f4f756c03da}
+
   '@napgram/core@0.1.5':
     resolution: {integrity: sha512-X++i6HLe0ALkhxe2ehqJc5uwTqRBlTEEWluPiO4uG73Ai4wQAFU4bmZ27qjELZCLNdmqosGiaLOnHfgqWlDP/w==, tarball: https://npm.pkg.github.com/download/@napgram/core/0.1.5/4bc21ba19567f5b1fe8bb4e5634334f6efe69f76}
 
@@ -1219,11 +1222,17 @@ packages:
   '@napgram/runtime-kit@0.1.5':
     resolution: {integrity: sha512-HXdQ3VdI5QziYCZjMyku4rL0aXq1TWzx8UHi/PZw5P1Z1jLFfrOyltStGCREe4sWv/zOV3nOQUwslwcoeZaoYw==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/0.1.5/f744a8addb3baf504dd9fe90f2dbcec55a015086}
 
+  '@napgram/sdk@0.1.15':
+    resolution: {integrity: sha512-O5oObNYa7t+s3JJSS0JVWjoeCHSu7P6ZaYHVxhzCQ9vLfgsvDyspd8hWxV3HRLTosT1Waj6JbpjOFLvvgP3zuw==, tarball: https://npm.pkg.github.com/download/@napgram/sdk/0.1.15/4ca09b6621bc6e4320fbe89a8f7aea39417dfa91}
+
   '@napgram/sdk@0.1.9':
     resolution: {integrity: sha512-B8xVmZsHoosVyGpm5cWcY8/4rboeeRcWhGbHvcA1dDOaFo5x0/8BSSSGBaZbOzxxk/lwdzB2BZnCveS+QphUeQ==, tarball: https://npm.pkg.github.com/download/@napgram/sdk/0.1.9/fd722e8eda21fb4754b51f2bb90b54122f0b586b}
 
   '@napgram/telegram-client@0.1.5':
     resolution: {integrity: sha512-zl+m/kQSPJomad9wWKjmDE67uLWVLxmAtAelrkz3BujRKGtb9UBSWwZmYRbUK/FdxLtxx/3stwCg4ajdObNaKA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.1.5/f9ca16b68a96fc92cff14d65146f0d37877a016a}
+
+  '@napgram/utils@0.1.15':
+    resolution: {integrity: sha512-ZBkNLNfHnfdDp6QuM7YosV1Unqh5U/hFIavFz9+Z59ZQvxh4Ic7W98Wz7w6pM1mmoakDIqcOPfO2seZFkjIRhA==, tarball: https://npm.pkg.github.com/download/@napgram/utils/0.1.15/7d474892db9d5e3f4f63342916b8cba367753def}
 
   '@napgram/utils@0.1.9':
     resolution: {integrity: sha512-rdxFmiBUyepHcgTwfxNqf99HlrwCWlrMsy/3SKdGnrlG0IjwkMiaVq4Ex8dDVPOXVsHbsaKRsSDS0p5XuBdrUQ==, tarball: https://npm.pkg.github.com/download/@napgram/utils/0.1.9/6cf84d7859a264ad514f87659ad41c816b068ff3}
@@ -5316,6 +5325,8 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@napgram/core@0.1.15': {}
+
   '@napgram/core@0.1.5': {}
 
   '@napgram/database@0.1.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.5.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.5.0)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.5.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))':
@@ -5836,6 +5847,11 @@ snapshots:
       - utf-8-validate
       - ws
 
+  '@napgram/sdk@0.1.15':
+    dependencies:
+      '@napgram/core': 0.1.15
+      '@napgram/utils': 0.1.15
+
   '@napgram/sdk@0.1.9':
     dependencies:
       '@napgram/core': 0.1.5
@@ -5848,6 +5864,10 @@ snapshots:
       '@mtcute/node': 0.27.5(ws@8.19.0)
     transitivePeerDependencies:
       - ws
+
+  '@napgram/utils@0.1.15':
+    dependencies:
+      '@napgram/core': 0.1.15
 
   '@napgram/utils@0.1.9':
     dependencies:
