@@ -24,7 +24,7 @@ jobs:
       
     steps:
       - name: Find and Recreate Dependabot PRs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             console.log('Checking for Dependabot PRs that need recreation...');
