@@ -100,14 +100,38 @@ pnpm --filter=@napgram/app start
 
 📝 **[View Changelog](https://github.com/NapLink/NapGram/wiki/Changelog)**
 
-## 🎯 Enabled Features
+## 🧩 Feature Modules
 
-### Enabled plugins
+### 📨 Message Handling
+- **ForwardFeature**: Core forwarding logic with deduplication and advanced strategies
+- **RecallFeature**: Bidirectional recall synchronization (QQ <-> Telegram)
+- **MediaFeature**: Unified media download and transcoding (Silk/Ogg/Images/Videos/Files)
+- **ModeFilter**: Message mode filter (Group/Private/Allowlist/Blocklist)
 
-- **ForwardFeature**: forwarding core with dedup & advanced strategies
-- **RecallFeature**: bidirectional recall sync
-- **MediaFeature**: unified media download/transcoding
-- **CommandsFeature**: admin & management commands (send `/help` for full list)
+### 👥 Group & Interaction
+- **GroupManagement**: Group management (Member changes, Invite/Kick handling)
+- **QQInteraction**: QQ interaction handling (Friend/Group requests via TG buttons)
+- **RequestManagement**: Centralized request management system
+
+### 📊 System & Monitoring
+- **Monitoring**: Real-time system monitoring (CPU/Memory/Event Loop Latency)
+- **Statistics**: Message statistics and data analysis
+- **PingPong**: Latency check and connectivity testing
+- **Notifications**: Offline/Reconnect notifications (NapCat disconnect alerts)
+
+### 🛠️ Admin Suite (Web Console)
+- **WebConsole**: Full-featured Web Dashboard (built-in)
+  - **Instance Management**: Multi-instance management
+  - **Pair Management**: Visual forwarding binding management
+  - **Plugin Management**: Plugin enable/disable/config
+  - **Permission Management**: Role-Based Access Control (RBAC)
+  - **System Settings**: Global system configuration
+  - **Logs & Database**: Log viewer and database browser
+
+### 🚀 Advanced
+- **Gateway**: API Gateway (External access support)
+- **Commands**: Powerful command system (send `/help` for full list)
+- **Flags**: Feature toggles and flags management
 
 ### Commands
 
