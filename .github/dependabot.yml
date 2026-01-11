@@ -21,6 +21,8 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 10
     target-branch: "dev"
+    registries:
+      - github-packages
     
     # 显式指定 Commit 风格
     commit-message:
@@ -56,6 +58,8 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 10
     target-branch: "dev"
+    registries:
+      - github-packages
     
     # 显式指定 Commit 风格
     commit-message:
