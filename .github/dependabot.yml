@@ -7,6 +7,11 @@ version: 2
 
 # 注册表配置
 registries:
+  # npmjs 作为默认 registry
+  npmjs:
+    type: npm-registry
+    url: https://registry.npmjs.org
+    replaces-base: true
   # GitHub Packages 用于 @napgram/* scope 的内部包
   github-packages:
     type: npm-registry
@@ -22,6 +27,7 @@ updates:
     open-pull-requests-limit: 10
     target-branch: "dev"
     registries:
+      - npmjs
       - github-packages
     
     # 显式指定 Commit 风格
