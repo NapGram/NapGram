@@ -12,6 +12,7 @@ const builtinAdminPairs = () => import('@napgram/plugin-admin-pairs')
 const builtinAdminPlugins = () => import('@napgram/plugin-admin-plugins')
 const builtinAdminSettings = () => import('@napgram/plugin-admin-settings')
 const builtinAdminSuite = () => import('@napgram/plugin-admin-suite')
+const builtinPermissionManagement = () => import('@napgram/plugin-permission-management')
 const builtinCommands = () => import('@napgram/plugin-commands')
 const builtinFlags = () => import('@napgram/plugin-flags')
 const builtinForward = () => import('@napgram/plugin-forward')
@@ -194,6 +195,12 @@ export const builtins = [
         module: '@builtin/admin-suite',
         enabled: true,
         load: builtinAdminSuite,
+    },
+    {
+        id: 'permission-management',
+        module: '@builtin/permission-management',
+        enabled: false,
+        load: builtinPermissionManagement,
     },
     {
         id: 'web-assets',
