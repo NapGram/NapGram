@@ -6,29 +6,14 @@
 version: 2
 
 # 注册表配置
-registries:
-  # GitHub Packages 用于 @napgram/* scope 的内部包
-  github-packages:
-    type: npm-registry
-    url: https://npm.pkg.github.com
-    token: ${{secrets.NPM_TOKEN}}
-  
-  # 公共 NPM 注册表 (明确指定，防止被 github-packages 覆盖默认行为)
-  npm-npmjs:
-    type: npm-registry
-    url: https://registry.npmjs.org
-
 updates:
-  # workspace 根目录 (pnpm lockfile) - @napgram/* 走 GitHub Packages
+  # workspace 根目录 (pnpm lockfile) - @napgram/* 走 GitHub Packages (通过 .npmrc 配置)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 10
     target-branch: "dev"
-    registries:
-      - github-packages
-      - npm-npmjs
     
     # 显式指定 Commit 风格
     commit-message:
