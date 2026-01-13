@@ -1,4 +1,5 @@
-const path = require('path');
+const path = require('node:path')
+const process = require('node:process')
 
 /** @type {import('drizzle-kit').Config} */
 module.exports = {
@@ -8,4 +9,4 @@ module.exports = {
   dbCredentials: {
     url: process.env.DATABASE_URL,
   },
-};
+}

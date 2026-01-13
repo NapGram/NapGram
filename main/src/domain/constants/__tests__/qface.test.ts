@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import { qface } from '@napgram/infra-kit'
+import { describe, expect, it } from 'vitest'
 
 describe('qface constants', () => {
   it('contains expected face mappings', () => {

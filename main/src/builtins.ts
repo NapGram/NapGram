@@ -1,4 +1,4 @@
-import { env, getLogger } from '@napgram/infra-kit'
+import { env } from '@napgram/infra-kit'
 
 // 使用动态导入避免打包时的路径问题
 const builtinQqNapcatAdapter = () => import('@napgram/plugin-adapter-qq-napcat')
@@ -31,187 +31,185 @@ const builtinStatistics = () => import('@napgram/plugin-statistics')
 const builtinWebAssets = () => import('@napgram/plugin-web-assets')
 const builtinWebConsole = () => import('@napgram/plugin-web-console')
 
-const logger = getLogger('Builtins')
-
 export const builtins = [
-    {
-        id: 'adapter-qq-napcat',
-        module: '@builtin/adapter-qq-napcat',
-        enabled: true,
-        load: builtinQqNapcatAdapter,
+  {
+    id: 'adapter-qq-napcat',
+    module: '@builtin/adapter-qq-napcat',
+    enabled: true,
+    load: builtinQqNapcatAdapter,
+  },
+  {
+    id: 'adapter-telegram-mtcute',
+    module: '@builtin/adapter-telegram-mtcute',
+    enabled: true,
+    load: builtinTelegramAdapter,
+  },
+  {
+    id: 'ping-pong',
+    module: '@builtin/ping-pong',
+    enabled: true,
+    load: builtinPingPong,
+  },
+  {
+    id: 'commands',
+    module: '@builtin/commands',
+    enabled: true,
+    load: builtinCommands,
+  },
+  {
+    id: 'qq-interaction',
+    module: '@builtin/qq-interaction',
+    enabled: true,
+    load: builtinQQInteraction,
+  },
+  {
+    id: 'refresh',
+    module: '@builtin/refresh',
+    enabled: true,
+    load: builtinRefresh,
+  },
+  {
+    id: 'flags',
+    module: '@builtin/flags',
+    enabled: true,
+    load: builtinFlags,
+  },
+  {
+    id: 'request-handler',
+    module: '@builtin/request-handler',
+    enabled: true,
+    load: builtinRequestHandler,
+  },
+  {
+    id: 'request-management',
+    module: '@builtin/request-management',
+    enabled: true,
+    load: builtinRequestManagement,
+  },
+  {
+    id: 'group-management',
+    module: '@builtin/group-management',
+    enabled: true,
+    load: builtinGroupManagement,
+  },
+  {
+    id: 'media',
+    module: '@builtin/media',
+    enabled: true,
+    load: builtinMedia,
+  },
+  {
+    id: 'recall',
+    module: '@builtin/recall',
+    enabled: true,
+    load: builtinRecall,
+  },
+  {
+    id: 'forward',
+    module: '@builtin/forward',
+    enabled: true,
+    load: builtinForward,
+  },
+  {
+    id: 'monitoring',
+    module: '@builtin/monitoring',
+    enabled: true,
+    load: builtinMonitoring,
+  },
+  {
+    id: 'statistics',
+    module: '@builtin/statistics',
+    enabled: true,
+    load: builtinStatistics,
+  },
+  {
+    id: 'gateway',
+    module: '@builtin/gateway',
+    enabled: false,
+    load: builtinGateway,
+  },
+  {
+    id: 'notifications',
+    module: '@builtin/notifications',
+    enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
+    config: {
+      enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
+      adminQQ: env.ADMIN_QQ,
+      adminTG: env.ADMIN_TG,
+      cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
     },
-    {
-        id: 'adapter-telegram-mtcute',
-        module: '@builtin/adapter-telegram-mtcute',
-        enabled: true,
-        load: builtinTelegramAdapter,
-    },
-    {
-        id: 'ping-pong',
-        module: '@builtin/ping-pong',
-        enabled: true,
-        load: builtinPingPong,
-    },
-    {
-        id: 'commands',
-        module: '@builtin/commands',
-        enabled: true,
-        load: builtinCommands,
-    },
-    {
-        id: 'qq-interaction',
-        module: '@builtin/qq-interaction',
-        enabled: true,
-        load: builtinQQInteraction,
-    },
-    {
-        id: 'refresh',
-        module: '@builtin/refresh',
-        enabled: true,
-        load: builtinRefresh,
-    },
-    {
-        id: 'flags',
-        module: '@builtin/flags',
-        enabled: true,
-        load: builtinFlags,
-    },
-    {
-        id: 'request-handler',
-        module: '@builtin/request-handler',
-        enabled: true,
-        load: builtinRequestHandler,
-    },
-    {
-        id: 'request-management',
-        module: '@builtin/request-management',
-        enabled: true,
-        load: builtinRequestManagement,
-    },
-    {
-        id: 'group-management',
-        module: '@builtin/group-management',
-        enabled: true,
-        load: builtinGroupManagement,
-    },
-    {
-        id: 'media',
-        module: '@builtin/media',
-        enabled: true,
-        load: builtinMedia,
-    },
-    {
-        id: 'recall',
-        module: '@builtin/recall',
-        enabled: true,
-        load: builtinRecall,
-    },
-    {
-        id: 'forward',
-        module: '@builtin/forward',
-        enabled: true,
-        load: builtinForward,
-    },
-    {
-        id: 'monitoring',
-        module: '@builtin/monitoring',
-        enabled: true,
-        load: builtinMonitoring,
-    },
-    {
-        id: 'statistics',
-        module: '@builtin/statistics',
-        enabled: true,
-        load: builtinStatistics,
-    },
-    {
-        id: 'gateway',
-        module: '@builtin/gateway',
-        enabled: false,
-        load: builtinGateway,
-    },
-    {
-        id: 'notifications',
-        module: '@builtin/notifications',
-        enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
-        config: {
-            enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
-            adminQQ: env.ADMIN_QQ,
-            adminTG: env.ADMIN_TG,
-            cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
-        },
-        load: builtinNotifications,
-    },
-    {
-        id: 'admin-auth',
-        module: '@builtin/admin-auth',
-        enabled: false,
-        load: builtinAdminAuth,
-    },
-    {
-        id: 'admin-instances',
-        module: '@builtin/admin-instances',
-        enabled: false,
-        load: builtinAdminInstances,
-    },
-    {
-        id: 'admin-pairs',
-        module: '@builtin/admin-pairs',
-        enabled: false,
-        load: builtinAdminPairs,
-    },
-    {
-        id: 'admin-messages',
-        module: '@builtin/admin-messages',
-        enabled: false,
-        load: builtinAdminMessages,
-    },
-    {
-        id: 'admin-logs',
-        module: '@builtin/admin-logs',
-        enabled: false,
-        load: builtinAdminLogs,
-    },
-    {
-        id: 'admin-settings',
-        module: '@builtin/admin-settings',
-        enabled: false,
-        load: builtinAdminSettings,
-    },
-    {
-        id: 'admin-plugins',
-        module: '@builtin/admin-plugins',
-        enabled: false,
-        load: builtinAdminPlugins,
-    },
-    {
-        id: 'admin-database',
-        module: '@builtin/admin-database',
-        enabled: false,
-        load: builtinAdminDatabase,
-    },
-    {
-        id: 'admin-suite',
-        module: '@builtin/admin-suite',
-        enabled: true,
-        load: builtinAdminSuite,
-    },
-    {
-        id: 'permission-management',
-        module: '@builtin/permission-management',
-        enabled: false,
-        load: builtinPermissionManagement,
-    },
-    {
-        id: 'web-assets',
-        module: '@builtin/web-assets',
-        enabled: true,
-        load: builtinWebAssets,
-    },
-    {
-        id: 'web-console',
-        module: '@builtin/web-console',
-        enabled: true,
-        load: builtinWebConsole,
-    },
+    load: builtinNotifications,
+  },
+  {
+    id: 'admin-auth',
+    module: '@builtin/admin-auth',
+    enabled: false,
+    load: builtinAdminAuth,
+  },
+  {
+    id: 'admin-instances',
+    module: '@builtin/admin-instances',
+    enabled: false,
+    load: builtinAdminInstances,
+  },
+  {
+    id: 'admin-pairs',
+    module: '@builtin/admin-pairs',
+    enabled: false,
+    load: builtinAdminPairs,
+  },
+  {
+    id: 'admin-messages',
+    module: '@builtin/admin-messages',
+    enabled: false,
+    load: builtinAdminMessages,
+  },
+  {
+    id: 'admin-logs',
+    module: '@builtin/admin-logs',
+    enabled: false,
+    load: builtinAdminLogs,
+  },
+  {
+    id: 'admin-settings',
+    module: '@builtin/admin-settings',
+    enabled: false,
+    load: builtinAdminSettings,
+  },
+  {
+    id: 'admin-plugins',
+    module: '@builtin/admin-plugins',
+    enabled: false,
+    load: builtinAdminPlugins,
+  },
+  {
+    id: 'admin-database',
+    module: '@builtin/admin-database',
+    enabled: false,
+    load: builtinAdminDatabase,
+  },
+  {
+    id: 'admin-suite',
+    module: '@builtin/admin-suite',
+    enabled: true,
+    load: builtinAdminSuite,
+  },
+  {
+    id: 'permission-management',
+    module: '@builtin/permission-management',
+    enabled: false,
+    load: builtinPermissionManagement,
+  },
+  {
+    id: 'web-assets',
+    module: '@builtin/web-assets',
+    enabled: true,
+    load: builtinWebAssets,
+  },
+  {
+    id: 'web-console',
+    module: '@builtin/web-console',
+    enabled: true,
+    load: builtinWebConsole,
+  },
 ]

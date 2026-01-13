@@ -1,19 +1,18 @@
 import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '@napgram/feature-kit'
+import type { AppLogger } from '@napgram/infra-kit'
 import type { IQQClient } from '../../infrastructure/clients/qq'
 import type Telegram from '../../infrastructure/clients/telegram/client'
-import type { AppLogger } from '@napgram/infra-kit'
+import { db, env, eq, ForwardMap, getLogger, schema, sentry } from '@napgram/infra-kit'
+import { getEventPublisher } from '@napgram/plugin-kit'
+import { InstanceRegistry } from '@napgram/runtime-kit'
 import { FeatureManager } from '../../features/FeatureManager'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
-import { telegramClientFactory } from '../../infrastructure/clients/telegram'
-import { getEventPublisher } from '@napgram/plugin-kit'
-import { db, env, getLogger, ForwardMap, sentry, schema, eq } from '@napgram/infra-kit'
 
-import { InstanceRegistry } from '@napgram/runtime-kit'
+import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 
 export type WorkMode = 'personal' | 'group' | 'public'
 
 export default class Instance {
-
   private _owner = 0
   private _isSetup = false
   private _workMode = ''
@@ -245,8 +244,6 @@ export default class Instance {
       catch (error) {
         this.log.warn('Plugin event bridge init failed:', error)
       }
-
-
 
       // 初始化新架构的功能管理器
       // if (this.qqClient) { // Redundant check, login() succeeded above

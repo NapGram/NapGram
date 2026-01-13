@@ -95,7 +95,7 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
-  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
   sentry: { captureException: vi.fn() },
   ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
   qface: { 14: '/微笑' },
@@ -189,7 +189,7 @@ describe('telegram client', () => {
     envMock.PROXY_IP = undefined
     envMock.PROXY_PORT = undefined
     fsMocks.existsSync.mockReturnValue(true)
-      ; (Telegram as any).existedBots = {}
+    ; (Telegram as any).existedBots = {}
   })
 
   it('creates a new bot and imports session', async () => {

@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db } from '@napgram/infra-kit'
 import Instance from '../Instance'
 
 // Mocks
@@ -57,7 +56,7 @@ vi.mock('@napgram/infra-kit', () => ({
     createTempFile: vi.fn(),
   },
   hashing: {
-    md5Hex: vi.fn((s) => 'hashed-' + s),
+    md5Hex: vi.fn(s => `hashed-${s}`),
   },
   sentry: {
     captureException: vi.fn(),
@@ -84,7 +83,6 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
     }),
   },
 }))
-
 
 vi.mock('@napgram/runtime-kit', () => ({
   InstanceRegistry: {

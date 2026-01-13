@@ -1,13 +1,10 @@
 import process from 'node:process'
-import { db } from '@napgram/infra-kit'
-import { env } from '@napgram/infra-kit'
-import Instance from './domain/models/Instance'
-import { sentry } from '@napgram/infra-kit'
-import api, { registerWebRoutes } from './interfaces'
+import { db, env, getLogger, random, sentry } from '@napgram/infra-kit'
 import { PluginRuntime } from '@napgram/plugin-kit'
-import { getLogger, random } from '@napgram/infra-kit';
-import { builtins } from './builtins'
 import { InstanceRegistry } from '@napgram/runtime-kit'
+import { builtins } from './builtins'
+import Instance from './domain/models/Instance'
+import api, { registerWebRoutes } from './interfaces'
 
 (async () => {
   const log = getLogger('Main')
@@ -78,8 +75,8 @@ import { InstanceRegistry } from '@napgram/runtime-kit'
 
   // Configure PluginRuntime (Phase 2 Modularization)
   PluginRuntime.setInstanceResolvers(
-    (id) => InstanceRegistry.getById(id) as any,
-    () => InstanceRegistry.getAll() as any
+    id => InstanceRegistry.getById(id) as any,
+    () => InstanceRegistry.getAll() as any,
   )
 
   // 先启动插件运行时（在 Instance 之前，确保插件命令可被 CommandsFeature 发现）
@@ -88,7 +85,7 @@ import { InstanceRegistry } from '@napgram/runtime-kit'
   api.startListening()
 
   // 再启动实例（包括 FeatureManager 中的 CommandsFeature）
-  const instances = await Promise.all(targets.map((id) => Instance.start(id)))
+  const instances = await Promise.all(targets.map(id => Instance.start(id)))
 
   // 确保插件命令在运行时完全启动后再加载一次
   for (const instance of instances) {

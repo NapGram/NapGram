@@ -8,8 +8,7 @@
  * - 消息队列
  */
 
-import { configureInfraKit } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { configureInfraKit, getLogger } from '@napgram/infra-kit'
 
 configureInfraKit({ loggerFactory: getLogger })
 

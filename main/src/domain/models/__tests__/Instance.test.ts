@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getEventPublisher } from '@napgram/plugin-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Instance from '../Instance'
 
 const envMock = vi.hoisted(() => ({
@@ -118,7 +118,7 @@ vi.mock('@napgram/infra-kit', () => ({
     createTempFile: vi.fn(),
   },
   hashing: {
-    md5Hex: vi.fn((s) => 'hashed-' + s),
+    md5Hex: vi.fn(s => `hashed-${s}`),
   },
   qface: {
     14: '/微笑',
@@ -431,7 +431,7 @@ describe('instance', () => {
 
       // Set to undefined
       ; (qqMocks.client as any).handleFriendRequest = undefined
-      ; (qqMocks.client as any).handleGroupRequest = undefined
+    ; (qqMocks.client as any).handleGroupRequest = undefined
 
     dbMocks.query.instance.findFirst.mockResolvedValue({})
     await Instance.start(8, 'token')
@@ -464,7 +464,6 @@ describe('instance', () => {
 
     dbMocks.query.instance.findFirst.mockResolvedValue({})
     await Instance.start(9, 'token')
-
 
     // Should warn but not fail instance start
     expect(loggerMocks.warn).toHaveBeenCalledWith('Plugin event bridge init failed:', error)
@@ -836,7 +835,7 @@ describe('instance', () => {
     await offlineHandler()
     expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-lost notice:', expect.any(Error))
 
-    // Test online with publish failure  
+    // Test online with publish failure
     eventPublisherMocks.publishNotice.mockImplementationOnce(() => {
       throw new Error('Online Notice Failed')
     })

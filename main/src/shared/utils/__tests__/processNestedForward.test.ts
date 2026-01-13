@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@napgram/infra-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import processNestedForward from '../processNestedForward'
 
 // Mock db
@@ -29,7 +29,7 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
-  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
   sentry: { captureException: vi.fn() },
   ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
   qface: { 14: '/微笑' },

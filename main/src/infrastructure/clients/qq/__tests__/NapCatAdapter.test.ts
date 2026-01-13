@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { NapCatAdapter as NapCatAdapterType } from '../NapCatAdapter'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { napCatForwardMultiple } from '../napcatConvert'
 
 // Mock dependencies
@@ -165,7 +165,7 @@ vi.mock('@napgram/infra-kit', () => ({
     file: vi.fn(),
     createTempFile: vi.fn(),
   },
-  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
   sentry: { captureException: vi.fn() },
   ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
   qface: { 14: '/微笑' },
