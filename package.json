@@ -9,7 +9,8 @@
     },
     "pnpm": {
         "overrides": {
-            "esbuild": "0.27.2"
+            "esbuild": "0.27.2",
+            "hono": "^4.11.4"
         },
         "onlyBuiltDependencies": [
             "better-sqlite3",
