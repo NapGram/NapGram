@@ -5,20 +5,16 @@
 
 version: 2
 
-# 注册表配置
-registries:
-  # GitHub Packages (仅用于提供鉴权，配合 .npmrc 使用)
-  github-packages:
-    type: npm-registry
-    url: https://npm.pkg.github.com
-    token: ${{secrets.NPM_TOKEN}}
-
 updates:
   # workspace 根目录 (pnpm lockfile) - @napgram/* 走 GitHub Packages (通过 .npmrc 配置)
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+    # 忽略内部包
+    ignore:
+      - dependency-name: "@napgram/*"
+      - dependency-name: "@naplink/*"
     open-pull-requests-limit: 10
     target-branch: "dev"
     
