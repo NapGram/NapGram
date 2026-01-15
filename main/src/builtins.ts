@@ -197,7 +197,7 @@ export const builtins = [
   {
     id: 'permission-management',
     module: '@builtin/permission-management',
-    enabled: false,
+    enabled: true,
     load: builtinPermissionManagement,
   },
   {
