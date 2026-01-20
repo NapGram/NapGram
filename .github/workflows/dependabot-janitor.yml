@@ -44,11 +44,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
             const { execSync } = require('child_process');
+            
+            // Initialize Octokit with PAT to allow triggering other workflows
+            // Note: github-script provides 'github' constant, but we need custom auth.
+            // However, importing @octokit/rest might fail if not available in runner.
+            // Better to use the injected 'github' but we can't change its auth easily.
+            // Standard approach: Use 'github' if PAT not needed, or raw fetch/octokit if needed.
+            // Actually, we can just instantiate Octokit if available. 
+            // 'actions/github-script' includes @octokit/rest.
+            
+            const { Octokit } = require("@octokit/rest");
+            const patOctokit = new Octokit({ auth: process.env.GH_PAT || process.env.GITHUB_TOKEN });
 
             // --- Helper Functions ---
 
@@ -88,7 +100,8 @@ jobs:
 
               // Create Pull Request
               try {
-                const { data: pr } = await github.rest.pulls.create({
+                // Use patOctokit to trigger subsequent workflows (Auto-Merge)
+                const { data: pr } = await patOctokit.rest.pulls.create({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   title: title,
