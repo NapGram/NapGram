@@ -95,10 +95,7 @@ jobs:
               run(`git push origin ${branchName} --force`);
 
               // Create Pull Request
-              try {
-                // Use patOctokit to trigger subsequent workflows (Auto-Merge)
-              // Create Pull Request
-              try {
+                // Use patOctokit/github to trigger subsequent workflows (Auto-Merge)
                 // 'github' client is now authenticated with GH_PAT via 'with.github-token'
                 const { data: pr } = await github.rest.pulls.create({
                   owner: context.repo.owner,
