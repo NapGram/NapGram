@@ -1,0 +1,211 @@
+name: Dependabot Janitor
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天运行一次
+  workflow_dispatch:
+
+jobs:
+  janitor:
+    name: 🧹 Dependency Janitor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      security-events: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 10.28.0
+
+      - name: Janitor Logic
+        uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const { execSync } = require('child_process');
+
+            // --- Helper Functions ---
+
+            function run(command) {
+              try {
+                return execSync(command, { encoding: 'utf8', stdio: 'pipe' });
+              } catch (e) {
+                return null; // Return null on failure
+              }
+            }
+
+            function getPackageJson() {
+              return JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            }
+
+            function writePackageJson(data) {
+              fs.writeFileSync('package.json', JSON.stringify(data, null, 4) + '\n');
+            }
+
+            async function createPR(title, body, branchName) {
+              console.log(`Preparing PR: ${title}`);
+
+              // Configure git
+              run('git config user.name "github-actions[bot]"');
+              run('git config user.email "github-actions[bot]@users.noreply.github.com"');
+
+              // Create branch
+              run(`git checkout -b ${branchName}`);
+              run('git add package.json pnpm-lock.yaml');
+              
+              if (run('git commit -m "' + title + '"') === null) {
+                 console.log('No changes to commit, skipping PR.');
+                 return; 
+              }
+              
+              run(`git push origin ${branchName} --force`);
+
+              // Create Pull Request
+              try {
+                const { data: pr } = await github.rest.pulls.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  head: branchName,
+                  base: 'dev', // Target 'dev' branch
+                });
+                console.log(`PR Created: ${pr.html_url}`);
+              } catch (e) {
+                if (e.message.includes('A pull request already exists')) {
+                  console.log('PR already exists, skipping.');
+                } else {
+                  console.error('Failed to create PR:', e);
+                }
+              }
+            }
+
+            // --- MAIN LOGIC ---
+
+            // 1. Auto-Remove Stale Overrides
+            console.log('--- Checking for stale overrides ---');
+            const pkg = getPackageJson();
+            const overrides = pkg.pnpm && pkg.pnpm.overrides ? pkg.pnpm.overrides : {};
+            
+            for (const [dep, version] of Object.entries(overrides)) {
+              console.log(`Testing removal of override: ${dep}`);
+              
+              // Backup current state
+              const backupPkg = JSON.stringify(pkg);
+              run('cp pnpm-lock.yaml pnpm-lock.yaml.bak');
+
+              // Remove override
+              const tempPkg = JSON.parse(backupPkg);
+              delete tempPkg.pnpm.overrides[dep];
+              writePackageJson(tempPkg);
+
+              // Update lockfile
+              console.log('Running pnpm install...');
+              if (run('pnpm install') !== null) {
+                
+                // Audit
+                console.log('Running audit...');
+                // pnpm audit returns non-zero if vulnerabilities are found
+                const auditResult = run('pnpm audit --prod'); 
+                
+                if (auditResult !== null) {
+                  console.log(`✅ Override for ${dep} can be removed safely!`);
+                  // Restore backup to clean state before making real branch
+                  fs.writeFileSync('package.json', backupPkg);
+                  run('mv pnpm-lock.yaml.bak pnpm-lock.yaml');
+                  
+                  // Now create the PR for real
+                  // We do this in a "clean" way inside createPR logic effectively by running the modification again
+                  // But simpler: just commit the changes we just made if we hadn't restored. 
+                  // Let's refactor: we perform the check on current checkout. If success, we branch OFF current state.
+                  
+                  // Actually, to avoid messing up the loop, we should probably restore state after check.
+                  // Implemented above: restore backup.
+                  
+                  // Trigger PR creation flow
+                  await createPR(
+                    `chore(deps): remove unnecessary override for ${dep}`,
+                    `This override for \`${dep}\` seems to be no longer needed. \`pnpm audit\` passed without it.`,
+                    `janitor/remove-override/${dep}`
+                  );
+                } else {
+                  console.log(`⚠️ Removing limit for ${dep} causes vulnerabilities. Keeping it.`);
+                }
+              } else {
+                console.log('❌ pnpm install failed when removing override. Keeping it.');
+              }
+
+              // Restore for next iteration
+               fs.writeFileSync('package.json', backupPkg);
+               if (fs.existsSync('pnpm-lock.yaml.bak')) {
+                  run('mv pnpm-lock.yaml.bak pnpm-lock.yaml');
+                  // Re-install to ensure node_modules sync
+                  run('pnpm install'); 
+               }
+            }
+
+            // 2. Auto-Add Overrides for Alerts (Experimental)
+            console.log('--- Checking for active alerts ---');
+            try {
+              const alerts = await github.rest.dependabot.listAlertsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                severity: 'high,critical'
+              });
+
+              for (const alert of alerts.data) {
+                const pkgName = alert.dependency.package.name;
+                const patchedVer = alert.security_advisory.vulnerabilities[0]?.first_patched_version?.identifier;
+                
+                if (!patchedVer) continue;
+                if (overrides[pkgName]) continue; // Already overridden
+
+                console.log(`Found alert for ${pkgName}, patched in ${patchedVer}`);
+                
+                const backupPkg = JSON.stringify(getPackageJson());
+                run('cp pnpm-lock.yaml pnpm-lock.yaml.bak');
+
+                const tempPkg = JSON.parse(backupPkg);
+                if (!tempPkg.pnpm) tempPkg.pnpm = {};
+                if (!tempPkg.pnpm.overrides) tempPkg.pnpm.overrides = {};
+                
+                tempPkg.pnpm.overrides[pkgName] = `>=${patchedVer}`;
+                writePackageJson(tempPkg);
+
+                if (run('pnpm install') !== null) {
+                   console.log('Override installation successful.');
+                   // Restore
+                   fs.writeFileSync('package.json', backupPkg);
+                   run('mv pnpm-lock.yaml.bak pnpm-lock.yaml');
+                   run('pnpm install');
+
+                   await createPR(
+                     `chore(deps): override ${pkgName} to fix security alert`,
+                     `Fixes ${alert.security_advisory.summary}. Forces ${pkgName} to >=${patchedVer}.`,
+                     `janitor/add-override/${pkgName}`
+                   );
+                } else {
+                  console.log(`Failed to apply override for ${pkgName}. Restoration...`);
+                  fs.writeFileSync('package.json', backupPkg);
+                  run('mv pnpm-lock.yaml.bak pnpm-lock.yaml');
+                  run('pnpm install');
+                }
+              }
+            } catch (e) {
+               console.log('Failed to fetch alerts or process them: ' + e.message);
+            }
