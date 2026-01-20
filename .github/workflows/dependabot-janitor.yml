@@ -169,24 +169,49 @@ jobs:
                }
             }
 
-            // 2. Auto-Add Overrides for Alerts (Experimental)
-            console.log('--- Checking for active alerts ---');
+            // 2. Auto-Add Overrides for Alerts (via pnpm audit)
+            console.log('--- Checking for vulnerabilities via pnpm audit ---');
             try {
-              const alerts = await github.rest.dependabot.listAlertsForRepo({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                severity: 'high,critical'
-              });
+              // Run pnpm audit
+              // Note: pnpm audit returns exit code 1 if vulnerabilities are found, so we must catch the error
+              let auditJson;
+              try {
+                 execSync('pnpm audit --json', { encoding: 'utf8', stdio: 'pipe' });
+                 console.log('pnpm audit Clean. No action needed.');
+                 auditJson = { advisories: {} };
+              } catch (e) {
+                 // pnpm audit failed (found vulnerabilities), which is what we want
+                 // stdout contains the JSON
+                 try {
+                    auditJson = JSON.parse(e.stdout);
+                 } catch (parseError) {
+                    console.error('Failed to parse pnpm audit output:', parseError);
+                    auditJson = { advisories: {} };
+                 }
+              }
 
-              for (const alert of alerts.data) {
-                const pkgName = alert.dependency.package.name;
-                const patchedVer = alert.security_advisory.vulnerabilities[0]?.first_patched_version?.identifier;
+              const advisories = Object.values(auditJson.advisories || {});
+              console.log(`Found ${advisories.length} advisories.`);
+
+              for (const advisory of advisories) {
+                const pkgName = advisory.module_name;
+                const patchedVer = advisory.patched_versions;
+                const severity = advisory.severity;
+
+                // Focus on High/Critical only to minimize noise
+                if (severity !== 'high' && severity !== 'critical') {
+                    console.log(`Skipping ${severity} severity for ${pkgName}`);
+                    continue;
+                }
                 
                 if (!patchedVer) continue;
                 if (overrides[pkgName]) continue; // Already overridden
 
-                console.log(`Found alert for ${pkgName}, patched in ${patchedVer}`);
+                // clean up version string (e.g. ">=1.2.3")
+                // pnpm audit often returns ">=1.2.3" or ">= 1.2.3"
+                const cleanVer = patchedVer.replace(' ', '');
+
+                console.log(`Found alert for ${pkgName}, patched in ${cleanVer}`);
                 
                 const backupPkg = JSON.stringify(getPackageJson());
                 run('cp pnpm-lock.yaml pnpm-lock.yaml.bak');
@@ -195,7 +220,7 @@ jobs:
                 if (!tempPkg.pnpm) tempPkg.pnpm = {};
                 if (!tempPkg.pnpm.overrides) tempPkg.pnpm.overrides = {};
                 
-                tempPkg.pnpm.overrides[pkgName] = `>=${patchedVer}`;
+                tempPkg.pnpm.overrides[pkgName] = cleanVer;
                 writePackageJson(tempPkg);
 
                 if (run('pnpm install') !== null) {
@@ -207,7 +232,7 @@ jobs:
 
                    await createPR(
                      `chore(deps): override ${pkgName} to fix security alert`,
-                     `Fixes ${alert.security_advisory.summary}. Forces ${pkgName} to >=${patchedVer}.`,
+                     `Fixes ${advisory.title} (${advisory.cves.join(', ')}). Forces ${pkgName} to ${cleanVer}.`,
                      `janitor/add-override/${pkgName}`
                    );
                 } else {
@@ -218,5 +243,5 @@ jobs:
                 }
               }
             } catch (e) {
-               console.log('Failed to fetch alerts or process them: ' + e.message);
+               console.log('Failed to process pnpm audit: ' + e.message);
             }
