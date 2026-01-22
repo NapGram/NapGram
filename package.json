@@ -11,7 +11,8 @@
         "overrides": {
             "tar": ">=7.5.3",
             "hono": ">=4.11.4",
-            "esbuild": ">=0.25.0"
+            "esbuild": ">=0.25.0",
+            "lodash": ">=4.17.23"
         },
         "onlyBuiltDependencies": [
             "better-sqlite3",
