@@ -147,17 +147,6 @@ const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstr
   }
 })
 
-vi.mock('@naplink/naplink', () => {
-  return {
-    NapLink: class {
-      constructor(...args: any[]) {
-        mockNapLinkConstructor(...args)
-        return mockNapLinkInstance
-      }
-    },
-  }
-})
-
 vi.mock('@napgram/infra-kit', () => ({
   getLogger: vi.fn(() => mockLogger),
   temp: {
@@ -197,6 +186,8 @@ describe('napCatAdapter', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
+    ;(globalThis as any).__naplinkMockInstance = mockNapLinkInstance
+    ;(globalThis as any).__naplinkMockConstructor = mockNapLinkConstructor
     // Reset resolved values to avoid pollution
     mockNapLinkInstance.getMessage.mockReset()
     mockNapLinkInstance.getLoginInfo.mockReset()
