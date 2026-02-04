@@ -13,7 +13,8 @@
             "hono": "4.11.7",
             "esbuild": "0.27.2",
             "lodash": "4.17.23",
-            "fastify": ">=5.7.2"
+            "fastify": ">=5.7.2",
+            "@isaacs/brace-expansion": ">=5.0.1"
         },
         "onlyBuiltDependencies": [
             "better-sqlite3",
