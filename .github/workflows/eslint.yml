@@ -35,16 +35,17 @@ jobs:
           SARIF_ESLINT_IGNORE_SUPPRESSED: "true"
         run: |
           npx --yes \
-            --package eslint@8.10.0 \
+            --package eslint@9.39.2 \
+            --package @antfu/eslint-config@7.2.0 \
             --package @microsoft/eslint-formatter-sarif@3.1.0 \
-            eslint . \
-            --config .eslintrc.js \
-            --ext .js,.jsx,.ts,.tsx \
+            eslint main \
+            --config main/eslint.config.mjs \
             --format @microsoft/eslint-formatter-sarif \
             --output-file eslint-results.sarif
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
+        if: ${{ hashFiles('eslint-results.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: eslint-results.sarif
