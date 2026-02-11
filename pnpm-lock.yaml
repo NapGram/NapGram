@@ -224,8 +224,8 @@ importers:
         specifier: ^7.4.2
         version: 7.4.2(@vue/compiler-sfc@3.5.26)(eslint-plugin-react-hooks@7.0.1(eslint@10.0.0(jiti@2.6.1)))(eslint@10.0.0(jiti@2.6.1))(typescript@5.9.3)(vitest@4.0.18(@opentelemetry/api@1.9.0)(@types/node@25.2.3)(jiti@2.6.1)(jsdom@16.7.0(canvas@2.11.2(encoding@0.1.13)))(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
       '@kitajs/ts-html-plugin':
-        specifier: ^4.1.3
-        version: 4.1.3(@kitajs/html@4.2.12)(typescript@5.9.3)
+        specifier: ^4.1.4
+        version: 4.1.4(@kitajs/html@4.2.12)(typescript@5.9.3)
       '@types/ejs':
         specifier: ^3.1.5
         version: 3.1.5
@@ -808,12 +808,12 @@ packages:
     resolution: {integrity: sha512-6OWZlEdiuhdJdLlem5gP3EARKKdiYlIdO2Gjwf4412oKKhB3fPthGO/UPBkRW5heZ6x4IS4EPaFnXZgQL8cb4A==}
     engines: {node: '>=12'}
 
-  '@kitajs/ts-html-plugin@4.1.3':
-    resolution: {integrity: sha512-NlYrID5yMxfRKiO1eiiSC4MWveKe0ffoCJOZm4idNOqwimmLXr0g1NmvCcquOU2XLRrgzynxZqw6rhwR5CY5Nw==}
+  '@kitajs/ts-html-plugin@4.1.4':
+    resolution: {integrity: sha512-xK5mNrhnIy73kJFKx5yVGChJyWFRGmIaE0sjlVxVYllk5dyaEYVCrIh1N8AfnseEHka8gAqzPGW95HlkhDvnJA==}
     hasBin: true
     peerDependencies:
       '@kitajs/html': ^4.2.10
-      typescript: ^5.6.2
+      typescript: ^5.9.3
 
   '@lukeed/ms@2.0.2':
     resolution: {integrity: sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==}
@@ -4985,7 +4985,7 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
-  '@kitajs/ts-html-plugin@4.1.3(@kitajs/html@4.2.12)(typescript@5.9.3)':
+  '@kitajs/ts-html-plugin@4.1.4(@kitajs/html@4.2.12)(typescript@5.9.3)':
     dependencies:
       '@kitajs/html': 4.2.12
       chalk: 5.6.2
