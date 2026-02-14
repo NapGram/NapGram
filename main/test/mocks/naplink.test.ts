@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const clearGlobals = () => {
+function clearGlobals() {
   delete (globalThis as any).__naplinkMockConstructor
   delete (globalThis as any).__naplinkMockInstance
 }
