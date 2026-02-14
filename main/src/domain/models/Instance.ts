@@ -103,6 +103,7 @@ export default class Instance {
         reconnect: true,
       })
       await this.qqClient.login()
+      this.enableQQMediaDownloadDiagnostics()
       this.log.info('NapCat 客户端 ✓ 初始化完成')
 
       // 仅 NapCat 链路，使用轻量转发表
@@ -360,6 +361,89 @@ export default class Instance {
       throw new Error('Failed to create instance')
     }
     return await this.start(dbEntry.id, botToken)
+  }
+
+  private enableQQMediaDownloadDiagnostics() {
+    if (!this.qqClient)
+      return
+
+    const qq = this.qqClient as any
+    if (qq.__napgramMediaWrapped)
+      return
+    qq.__napgramMediaWrapped = true
+
+    const rawGetFile = typeof qq.getFile === 'function' ? qq.getFile.bind(qq) : undefined
+    const rawDownloadFile = typeof qq.downloadFile === 'function' ? qq.downloadFile.bind(qq) : undefined
+    const rawDownloadFileStreamToFile = typeof qq.downloadFileStreamToFile === 'function'
+      ? qq.downloadFileStreamToFile.bind(qq)
+      : undefined
+
+    if (rawDownloadFile) {
+      qq.downloadFile = async (url: string, threadCount?: number, headers?: Record<string, string>) => {
+        try {
+          return await rawDownloadFile(url, threadCount, headers)
+        }
+        catch (error) {
+          const message = String((error as any)?.message || error)
+          if (/file not found/i.test(message)) {
+            this.log.warn(`download_file file not found (url=${url})`)
+          }
+          else {
+            this.log.warn(`download_file failed (url=${url}): ${message}`)
+          }
+          throw error
+        }
+      }
+    }
+
+    if (rawDownloadFileStreamToFile) {
+      qq.downloadFileStreamToFile = async (fileId: string, options?: { chunkSize?: number, filename?: string }) => {
+        const normalizedId = typeof fileId === 'string' ? fileId.replace(/^\//, '') : fileId
+        try {
+          const res = await rawDownloadFileStreamToFile(normalizedId, options)
+          if (!res?.path) {
+            this.log.warn(`downloadFileStreamToFile returned without local path (fileId=${normalizedId})`)
+          }
+          return res
+        }
+        catch (error) {
+          this.log.warn(`downloadFileStreamToFile failed (fileId=${normalizedId}): ${String((error as any)?.message || error)}`)
+          throw error
+        }
+      }
+    }
+
+    // Stream-first to reduce failures from short-lived FTN URLs.
+    if (rawGetFile) {
+      qq.getFile = async (fileId: string) => {
+        const normalizedId = typeof fileId === 'string' ? fileId.replace(/^\//, '') : fileId
+
+        if (rawDownloadFileStreamToFile) {
+          try {
+            const streamed = await rawDownloadFileStreamToFile(normalizedId, { chunkSize: 64 * 1024 })
+            const localPath = streamed?.path
+            if (typeof localPath === 'string' && localPath.startsWith('/')) {
+              this.log.debug(`stream-first getFile success (fileId=${normalizedId}, path=${localPath})`)
+              return {
+                ...(streamed?.info ? { info: streamed.info } : {}),
+                file: localPath,
+                path: localPath,
+              }
+            }
+            this.log.warn(`stream-first getFile no local path (fileId=${normalizedId})`)
+          }
+          catch (error) {
+            this.log.warn(`stream-first getFile failed (fileId=${normalizedId}), fallback get_file: ${String((error as any)?.message || error)}`)
+          }
+        }
+
+        const result = await rawGetFile(normalizedId)
+        if (!result) {
+          this.log.warn(`get_file returned empty (fileId=${normalizedId})`)
+        }
+        return result
+      }
+    }
   }
 
   get owner() {

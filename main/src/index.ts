@@ -1,10 +1,42 @@
 import process from 'node:process'
-import { db, env, getLogger, random, sentry } from '@napgram/infra-kit'
+import { db, env, getLogger, performanceMonitor, random, sentry } from '@napgram/infra-kit'
 import { PluginRuntime } from '@napgram/plugin-kit'
 import { InstanceRegistry } from '@napgram/runtime-kit'
 import { builtins } from './builtins'
 import Instance from './domain/models/Instance'
 import api, { registerWebRoutes } from './interfaces'
+
+function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
+  let lastSampleAt = Date.now()
+  let lastTotalMessages = 0
+  let lastEstimatedErrors = 0
+
+  setInterval(() => {
+    try {
+      const stats = performanceMonitor.getStats()
+      const now = Date.now()
+      const deltaSeconds = (now - lastSampleAt) / 1000
+      const totalMessages = stats.totalMessages
+      const estimatedErrors = Math.max(0, stats.totalMessages * stats.errorRate)
+
+      const deltaMessages = Math.max(0, totalMessages - lastTotalMessages)
+      const deltaErrors = Math.max(0, estimatedErrors - lastEstimatedErrors)
+      const windowMps = deltaSeconds > 0 ? deltaMessages / deltaSeconds : 0
+      const windowErrorRate = deltaMessages > 0 ? (deltaErrors / deltaMessages) * 100 : 0
+
+      log.debug(
+        `[PerformanceWindow] 1m messages=${deltaMessages}, mps=${windowMps.toFixed(2)}, errorRate=${windowErrorRate.toFixed(2)}%, total=${totalMessages}`,
+      )
+
+      lastSampleAt = now
+      lastTotalMessages = totalMessages
+      lastEstimatedErrors = estimatedErrors
+    }
+    catch (error) {
+      log.warn('Failed to print windowed performance stats:', error)
+    }
+  }, 60_000)
+}
 
 (async () => {
   const log = getLogger('Main')
@@ -59,6 +91,7 @@ import api, { registerWebRoutes } from './interfaces'
   log.info('=================================')
 
   sentry.init()
+  startWindowedPerformanceLog(log)
 
   process.on('unhandledRejection', (error) => {
     log.error(error, 'UnhandledRejection: ')
