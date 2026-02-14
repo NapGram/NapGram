@@ -78,6 +78,9 @@ COPY web/dist/ /app/web/dist/
 
 FROM base AS release
 # Note: TGS to GIF conversion now handled by tgs-to npm package
+ARG REPO=Local Build
+ARG REF=Local Build
+ARG COMMIT=Local Build
 
 COPY --from=build --chown=node:node /app/node_modules /app/node_modules
 COPY --from=build --chown=node:node /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
@@ -97,7 +100,10 @@ RUN chmod +x /app/entrypoint.sh
 
 ENV DATA_DIR=/app/data \
     CACHE_DIR=/app/.config/QQ/NapCat/temp \
-    UI_PATH=/app/public
+    UI_PATH=/app/public \
+    REPO=${REPO} \
+    REF=${REF} \
+    COMMIT=${COMMIT}
 
 EXPOSE 8080
 USER node

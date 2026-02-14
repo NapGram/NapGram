@@ -537,6 +537,31 @@ jobs:
               "$tag-arm64"
           done
 
+      - name: Set up Node.js for sentry-cli
+        if: success()
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25
+
+      - name: Publish Sentry release (optional)
+        if: success()
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          BUILD_SHA: ${{ env.BUILD_SHA }}
+        run: |
+          if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
+            echo "SENTRY_AUTH_TOKEN not set, skip Sentry release publish."
+            exit 0
+          fi
+          : "${SENTRY_ORG:=napgram}"
+          : "${SENTRY_PROJECT:=napgram}"
+          npm i -g @sentry/cli
+          sentry-cli releases new "$BUILD_SHA"
+          sentry-cli releases set-commits "$BUILD_SHA" --auto
+          sentry-cli releases finalize "$BUILD_SHA"
+
       - name: Send Telegram Notification on Success
         if: success()
         env:
