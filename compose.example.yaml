@@ -145,9 +145,9 @@ services:
       # 构建信息（可选；不改则用默认值）
       # -----------------------------------------------------------------------------
       # 展示在管理页面中的构建信息
-      REPO: "Local Build"
-      REF: "Local Build"
-      COMMIT: "Local Build"
+      REPO: "${REPO:-NapGram/NapGram}"
+      REF: "${REF:-refs/heads/main}"
+      COMMIT: "${COMMIT:-dev-local}"
 
       # -----------------------------------------------------------------------------
       # 数据库连接（Drizzle 使用；需与下方 postgres 服务凭据一致）
