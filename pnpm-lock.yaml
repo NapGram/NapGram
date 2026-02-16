@@ -43,17 +43,17 @@ importers:
         specifier: ^4.2.12
         version: 4.2.12
       '@mtcute/core':
-        specifier: ^0.27.9
-        version: 0.27.9
+        specifier: ^0.28.0
+        version: 0.28.0
       '@mtcute/dispatcher':
-        specifier: ^0.27.9
-        version: 0.27.9
+        specifier: ^0.28.0
+        version: 0.28.0
       '@mtcute/markdown-parser':
-        specifier: ^0.27.9
-        version: 0.27.9
+        specifier: ^0.28.0
+        version: 0.28.0
       '@mtcute/node':
-        specifier: ^0.27.9
-        version: 0.27.9(ws@8.19.0)
+        specifier: ^0.28.0
+        version: 0.28.0(ws@8.19.0)
       '@napgram/auth-kit':
         specifier: ^0.1.8
         version: 0.1.8(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.18.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
@@ -830,8 +830,14 @@ packages:
   '@mtcute/core@0.27.9':
     resolution: {integrity: sha512-kbi/ml8H7Asnn5u1yQVRVl8CVZd03WU2Z4Sgd5d3RYqaoqRUA9wgUV9aEhq+bEgsvmnEr+PuwZ+/HKriXhtqlA==}
 
+  '@mtcute/core@0.28.0':
+    resolution: {integrity: sha512-c/p34I08xkSLRbDqdU5LPXLTpc8uzZE/unW67YHQjj1myWvuK71pwIlAkcL9j+vQzNuSif2FBkcpEFYbiZvgRQ==}
+
   '@mtcute/dispatcher@0.27.9':
     resolution: {integrity: sha512-YqCbH/DNEvIjBGG4GGWXd3MQI6W9RD3TJ+jUj64ADqnOw4FpFlevhcevLUtpyRHOMVjVEm7a4VXk13S+Ujk1UA==}
+
+  '@mtcute/dispatcher@0.28.0':
+    resolution: {integrity: sha512-mPApANWLgmVERxr6dEbp9MDSB1/WA9s5+3whj/hmdjVVs15R6nUuooBFdFGqeZl6YoXbwgxMJj6qZ42E3iwLPQ==}
 
   '@mtcute/file-id@0.27.8':
     resolution: {integrity: sha512-clwuBxVZKCSv65HMjxCx0zSnaZypAeNFy0pmnA0Uhvb9zvvB8lbd9Ig2BPieUkk/BbI+z8KZa0jvWOVe929Egw==}
@@ -839,17 +845,29 @@ packages:
   '@mtcute/html-parser@0.27.9':
     resolution: {integrity: sha512-ojq7ah4rwkLWmZP0fZx4glnSA7D75fcrMBS1HsEf6/uyrWy/F74aDZWwdLMrL8EjSVS0JdMKbli+kow+49JPJA==}
 
+  '@mtcute/html-parser@0.28.0':
+    resolution: {integrity: sha512-JaDVkWDHz8HrSxRP43yVkjxRMocsyByjym72Rn+cXwaC2vmOiZVXjeNlT6d7eoSj4+2KiFAcdrrV3eIOss6+vw==}
+
   '@mtcute/markdown-parser@0.27.9':
     resolution: {integrity: sha512-4roQapd+r3aZtP2BWeYbcPt6rhZUBv1Ua0CJfopGY25XlU3lEDYeqGrn0KuWYKr11dztEDo5M01IBmcyRqUlow==}
 
+  '@mtcute/markdown-parser@0.28.0':
+    resolution: {integrity: sha512-+ccFrBqmYRlw845zo/5a4PiIKoQ1uNvWWSSRiG4pdcuv+FfoWqLR9GVh7XzyFIodDJoBrDIXUPjxVh7qVyF03g==}
+
   '@mtcute/node@0.27.9':
     resolution: {integrity: sha512-Tflz5LRbTG5DE2rSUIRhLlBfey7ibhSQLTLTJD9nsoNpBeOG4ms/bc6VfBTQMHJytb8VCYQOHrXWZb9eYhWOPg==}
+
+  '@mtcute/node@0.28.0':
+    resolution: {integrity: sha512-QhwY6R8IGNza6nSdRh7cIII2sNcyASIFvmULYiBepVuTNTG1a8ztw1BMw+jM+d2kbxTrvwLq3GGgj9/xfxGOJg==}
 
   '@mtcute/tl-runtime@0.24.3':
     resolution: {integrity: sha512-61J3cgYgNOQT532GdIiuezRrSC7v6cc9MfvWv9GO27bRGf7JUKWVbFt4U0KzQ9Tp0J1uMOUfi1EbQKkYKacIKQ==}
 
   '@mtcute/tl@221.0.0':
     resolution: {integrity: sha512-Wp01L9nznTMLl2s9rbKnzQ8pij72eF4HK2XIziOQoJXiObPKZxQdxvMj+C6l0ArxMFmpT0H0/3EL5RB7O6VPwg==}
+
+  '@mtcute/tl@222.0.0':
+    resolution: {integrity: sha512-zg64rX2V7GPrQBJcZ2QX6Z+bLxkF7n1V2HxKQUB+mBkTPElmqMY9dE1lbzcwQw7Dys8lo9h3WlTOnfa1LeNyvw==}
 
   '@mtcute/wasm@0.27.8':
     resolution: {integrity: sha512-3z1v1WtkAAW95l5t8LB3Ul+Y8dQNMez5YF16cHE3mAHX5RRrfgE+rgVk+wRQJHa24CugfuEEBSi6QpdZuTRBIw==}
@@ -4067,6 +4085,7 @@ packages:
   tar@7.5.7:
     resolution: {integrity: sha512-fov56fJiRuThVFXD6o6/Q354S7pnWMJIVlDBYijsTNx6jKSE4pvrDTs6lUnmGvNyfJwFQQwWy3owKz1ucIhveQ==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   thread-stream@4.0.0:
     resolution: {integrity: sha512-4iMVL6HAINXWf1ZKZjIPcz5wYaOdPhtO8ATvZ+Xqp3BTdaqtAwQkNmKORqcIo5YkQqGXq5cwfswDwMqqQNrpJA==}
@@ -5028,10 +5047,26 @@ snapshots:
       '@types/events': 3.0.0
       long: 5.2.3
 
+  '@mtcute/core@0.28.0':
+    dependencies:
+      '@fuman/io': 0.0.19
+      '@fuman/net': 0.0.19
+      '@fuman/utils': 0.0.19
+      '@mtcute/file-id': 0.27.8
+      '@mtcute/tl': 222.0.0
+      '@mtcute/tl-runtime': 0.24.3
+      '@types/events': 3.0.0
+      long: 5.2.3
+
   '@mtcute/dispatcher@0.27.9':
     dependencies:
       '@fuman/utils': 0.0.19
       '@mtcute/core': 0.27.9
+
+  '@mtcute/dispatcher@0.28.0':
+    dependencies:
+      '@fuman/utils': 0.0.19
+      '@mtcute/core': 0.28.0
 
   '@mtcute/file-id@0.27.8':
     dependencies:
@@ -5045,9 +5080,20 @@ snapshots:
       htmlparser2: 10.1.0
       long: 5.2.3
 
+  '@mtcute/html-parser@0.28.0':
+    dependencies:
+      '@mtcute/core': 0.28.0
+      htmlparser2: 10.1.0
+      long: 5.2.3
+
   '@mtcute/markdown-parser@0.27.9':
     dependencies:
       '@mtcute/core': 0.27.9
+      long: 5.2.3
+
+  '@mtcute/markdown-parser@0.28.0':
+    dependencies:
+      '@mtcute/core': 0.28.0
       long: 5.2.3
 
   '@mtcute/node@0.27.9(ws@8.19.0)':
@@ -5063,12 +5109,29 @@ snapshots:
     transitivePeerDependencies:
       - ws
 
+  '@mtcute/node@0.28.0(ws@8.19.0)':
+    dependencies:
+      '@fuman/net': 0.0.19
+      '@fuman/node': 0.0.19(ws@8.19.0)
+      '@fuman/utils': 0.0.19
+      '@mtcute/core': 0.28.0
+      '@mtcute/html-parser': 0.28.0
+      '@mtcute/markdown-parser': 0.28.0
+      '@mtcute/wasm': 0.27.8
+      better-sqlite3: 12.6.2
+    transitivePeerDependencies:
+      - ws
+
   '@mtcute/tl-runtime@0.24.3':
     dependencies:
       '@fuman/utils': 0.0.15
       long: 5.2.3
 
   '@mtcute/tl@221.0.0':
+    dependencies:
+      long: 5.2.3
+
+  '@mtcute/tl@222.0.0':
     dependencies:
       long: 5.2.3
 
