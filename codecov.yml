@@ -1,0 +1,16 @@
+coverage:
+  status:
+    patch:
+      default:
+        target: auto
+        threshold: 5%
+        # Exclude test files from patch coverage requirement
+        paths:
+          - "!**/__tests__/**"
+          - "!**/*.test.ts"
+          - "!**/*.spec.ts"
+
+ignore:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.spec.ts"
