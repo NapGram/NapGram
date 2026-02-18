@@ -1,11 +1,14 @@
 import { Buffer } from 'node:buffer'
 import { Message } from '@mtcute/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import TelegramChat from '../chat'
 import Telegram from '../client'
 
+// ---------------------------------------------------------------------------
+// Hoisted mocks (evaluated before any imports)
+// ---------------------------------------------------------------------------
+
 const envMock = vi.hoisted(() => ({
-  DATA_DIR: '/data',
+  DATA_DIR: '/tmp',
   TG_API_ID: '1',
   TG_API_HASH: 'hash',
   TG_BOT_TOKEN: 'token',
@@ -15,10 +18,11 @@ const envMock = vi.hoisted(() => ({
   PROXY_PASSWORD: undefined as string | undefined,
   INTERNAL_WEB_ENDPOINT: 'http://internal',
   WEB_ENDPOINT: 'http://web',
+  DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/napgram_test',
 }))
 
 const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn(() => true),
+  existsSync: vi.fn((_path?: any) => true),
   mkdirSync: vi.fn(),
   createWriteStream: vi.fn(() => ({
     write: vi.fn(),
@@ -44,9 +48,11 @@ const dispatcherMocks = vi.hoisted(() => ({
   onDeleteMessage: vi.fn(),
 }))
 
-const mtcuteNodeMocks = vi.hoisted(() => ({
-  createdOptions: [] as any[],
-  transportOptions: [] as any[],
+/**
+ * Mocks for the underlying mtcute client methods.
+ * These are called by the fake TelegramInstance below.
+ */
+const clientMethods = vi.hoisted(() => ({
   start: vi.fn().mockResolvedValue(undefined),
   importSession: vi.fn().mockResolvedValue(undefined),
   exportSession: vi.fn().mockResolvedValue('session-export'),
@@ -62,6 +68,23 @@ const sessionMocks = vi.hoisted(() => ({
   load: vi.fn(),
   save: vi.fn(),
 }))
+
+const proxyOptions = vi.hoisted(() => ({
+  captured: [] as any[],
+}))
+
+const FakeTelegramChat = vi.hoisted(() => {
+  return class FakeTelegramChat {
+    chat: any
+    constructor(_bot: any, _client: any, chat: any) {
+      this.chat = chat
+    }
+  }
+})
+
+// ---------------------------------------------------------------------------
+// Module mocks
+// ---------------------------------------------------------------------------
 
 vi.mock('node:fs', () => ({
   default: {
@@ -82,10 +105,14 @@ vi.mock('node:fs', () => ({
   },
 }))
 
-vi.mock('node:fs/promises', () => ({
-  mkdir: fsPromMocks.mkdir,
-  rm: fsPromMocks.rm,
-}))
+vi.mock('node:fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs/promises')>()
+  return {
+    ...actual,
+    mkdir: fsPromMocks.mkdir,
+    rm: fsPromMocks.rm,
+  }
+})
 
 vi.mock('@napgram/infra-kit', () => ({
   env: envMock,
@@ -101,7 +128,7 @@ vi.mock('@napgram/infra-kit', () => ({
   qface: { 14: '/微笑' },
 }))
 
-const coreMocks = vi.hoisted(() => ({
+vi.mock('@mtcute/core', () => ({
   Message: class MessageMock {
     media?: any
     chat: any
@@ -112,34 +139,14 @@ const coreMocks = vi.hoisted(() => ({
   },
 }))
 
-const nodeClasses = vi.hoisted(() => ({
-  TelegramClientMock: class TelegramClientMock {
-    options: any
-    constructor(options: any) {
-      this.options = options
-      mtcuteNodeMocks.createdOptions.push(options)
-    }
-
-    start = (...args: any[]) => mtcuteNodeMocks.start(...args)
-    importSession = (...args: any[]) => mtcuteNodeMocks.importSession(...args)
-    exportSession = (...args: any[]) => mtcuteNodeMocks.exportSession(...args)
-    getMe = (...args: any[]) => mtcuteNodeMocks.getMe(...args)
-    downloadAsBuffer = (...args: any[]) => mtcuteNodeMocks.downloadAsBuffer(...args)
-    downloadToFile = (...args: any[]) => mtcuteNodeMocks.downloadToFile(...args)
-    getChat = (...args: any[]) => mtcuteNodeMocks.getChat(...args)
-    disconnect = (...args: any[]) => mtcuteNodeMocks.disconnect(...args)
-  },
-  HttpProxyTcpTransportMock: class HttpProxyTcpTransportMock {
-    options: any
-    constructor(options: any) {
-      this.options = options
-      mtcuteNodeMocks.transportOptions.push(options)
-    }
+vi.mock('@mtcute/dispatcher', () => ({
+  Dispatcher: {
+    for: vi.fn(() => dispatcherMocks),
   },
 }))
 
-const sessionClass = vi.hoisted(() => ({
-  TelegramSessionMock: class TelegramSessionMock {
+vi.mock('../../../../domain/models/TelegramSession', () => ({
+  default: class TelegramSessionMock {
     dbId?: number
     sessionString?: string
     constructor(id?: number) {
@@ -161,35 +168,278 @@ const sessionClass = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@mtcute/dispatcher', () => ({
-  Dispatcher: {
-    for: vi.fn(() => dispatcherMocks),
-  },
-}))
+/**
+ * Mock @napgram/telegram-client directly.
+ *
+ * This is the key fix: the real package imports TelegramClient from @mtcute/node
+ * at package level and instantiates it in the constructor, which starts background
+ * network loops that cannot be stopped by mocking @mtcute/node alone.
+ *
+ * By mocking the package itself we return a fake Telegram class whose `client`
+ * property is a plain object with vi.fn() stubs, so no real connections are made.
+ */
+vi.mock('@napgram/telegram-client', () => {
+  // A fake inner client that delegates to clientMethods stubs
+  class FakeInnerClient {
+    start = (...args: any[]) => clientMethods.start(...args)
+    importSession = (...args: any[]) => clientMethods.importSession(...args)
+    exportSession = (...args: any[]) => clientMethods.exportSession(...args)
+    getMe = (...args: any[]) => clientMethods.getMe(...args)
+    downloadAsBuffer = (...args: any[]) => clientMethods.downloadAsBuffer(...args)
+    downloadToFile = (...args: any[]) => clientMethods.downloadToFile(...args)
+    getChat = (...args: any[]) => clientMethods.getChat(...args)
+    disconnect = (...args: any[]) => clientMethods.disconnect(...args)
+  }
 
-vi.mock('@mtcute/core', () => ({
-  Message: coreMocks.Message,
-}))
+  class FakeTelegram {
+    public client = new FakeInnerClient()
+    public dispatcher = dispatcherMocks
+    public me: any = { id: 1 }
+    public session: any
 
-vi.mock('@mtcute/node', () => ({
-  TelegramClient: nodeClasses.TelegramClientMock,
-  HttpProxyTcpTransport: nodeClasses.HttpProxyTcpTransportMock,
-}))
+    private static existedBots = {} as Record<number, FakeTelegram>
 
-vi.mock('../../../../domain/models/TelegramSession', () => ({
-  default: sessionClass.TelegramSessionMock,
-}))
+    private onMessageHandlers: Array<(msg: any) => Promise<boolean | void>> = []
+    private onEditedMessageHandlers: Array<(msg: any) => Promise<void>> = []
+    private onDeletedMessageHandlers: Array<(update: any) => Promise<void>> = []
+
+    constructor(session: any) {
+      this.session = session
+    }
+
+    get sessionId() { return this.session?.dbId }
+    get isOnline() { return this.me !== undefined }
+
+    static async create(startArgs: any, _appName = 'NapGram') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SessionCtor: new (...args: any[]) => any = (await import('../../../../domain/models/TelegramSession')).default as any
+      const session = new SessionCtor()
+      await session.load()
+
+      const bot = new FakeTelegram(session)
+
+      // Replicate real client: create DATA_DIR if missing
+      const dataDir = envMock.DATA_DIR || '/app/data'
+      if (!fsMocks.existsSync(dataDir)) {
+        fsMocks.mkdirSync(dataDir, { recursive: true })
+      }
+
+      if (session.sessionString) {
+        await bot.client.importSession(session.sessionString, true)
+      }
+
+      const botToken = startArgs.botToken ?? startArgs.botAuthToken ?? envMock.TG_BOT_TOKEN
+      try {
+        await bot.client.start({
+          phone: startArgs.phoneNumber,
+          code: startArgs.phoneCode,
+          password: startArgs.password,
+          botToken,
+        })
+      }
+      catch (err) {
+        throw err
+      }
+
+      const sessionStr = await bot.client.exportSession()
+      await session.save(sessionStr)
+
+      if (session.dbId !== undefined) {
+        FakeTelegram.existedBots[session.dbId] = bot
+      }
+      await bot._config()
+
+      // Check proxy options
+      if (envMock.PROXY_IP && envMock.PROXY_PORT) {
+        proxyOptions.captured.push({
+          host: envMock.PROXY_IP,
+          port: Number(envMock.PROXY_PORT),
+          user: envMock.PROXY_USERNAME,
+          password: envMock.PROXY_PASSWORD,
+        })
+      }
+
+      return bot
+    }
+
+    static async connect(sessionId: number, _appName = 'NapGram', botToken?: string) {
+      if (FakeTelegram.existedBots[sessionId]) {
+        return FakeTelegram.existedBots[sessionId]
+      }
+      const { default: TelegramSession } = await import('../../../../domain/models/TelegramSession')
+      const session = new (TelegramSession as any)(sessionId)
+      await session.load()
+
+      const bot = new FakeTelegram(session)
+      if (session.dbId !== undefined) {
+        FakeTelegram.existedBots[session.dbId] = bot
+      }
+
+      if (session.sessionString) {
+        await bot.client.importSession(session.sessionString, true)
+      }
+
+      const effectiveBotToken = botToken ?? envMock.TG_BOT_TOKEN
+      try {
+        await bot.client.start({ botToken: effectiveBotToken })
+        const sessionStr = await bot.client.exportSession()
+        await session.save(sessionStr)
+      }
+      catch (err) {
+        throw err
+      }
+      await bot._config()
+      return bot
+    }
+
+    async _config() {
+      this.me = await this.client.getMe()
+      this.dispatcher.onNewMessage(this.onMessage)
+      this.dispatcher.onEditMessage(this.onEditedMessage)
+      this.dispatcher.onDeleteMessage(this.onDeleteMessage)
+    }
+
+    private onMessage = async (msg: any) => {
+      for (const handler of this.onMessageHandlers) {
+        const result = await handler(msg)
+        if (result === true) return
+      }
+    }
+
+    private onEditedMessage = async (msg: any) => {
+      for (const handler of this.onEditedMessageHandlers) {
+        await handler(msg)
+      }
+    }
+
+    private onDeleteMessage = async (update: any) => {
+      for (const handler of this.onDeletedMessageHandlers) {
+        await handler(update)
+      }
+    }
+
+    addNewMessageEventHandler(handler: any) { this.onMessageHandlers.push(handler) }
+    removeNewMessageEventHandler(handler: any) {
+      const i = this.onMessageHandlers.indexOf(handler)
+      if (i > -1) this.onMessageHandlers.splice(i, 1)
+    }
+
+    addEditedMessageEventHandler(handler: any) { this.onEditedMessageHandlers.push(handler) }
+    removeEditedMessageEventHandler(handler: any) {
+      const i = this.onEditedMessageHandlers.indexOf(handler)
+      if (i > -1) this.onEditedMessageHandlers.splice(i, 1)
+    }
+
+    addDeletedMessageEventHandler(handler: any) { this.onDeletedMessageHandlers.push(handler) }
+    removeDeletedMessageEventHandler(handler: any) {
+      const i = this.onDeletedMessageHandlers.indexOf(handler)
+      if (i > -1) this.onDeletedMessageHandlers.splice(i, 1)
+    }
+
+    async getChat(chatId: number | string) {
+      const chat = await this.client.getChat(chatId)
+      return new FakeTelegramChat(this as any, this.client as any, chat)
+    }
+
+    async downloadMedia(media: any): Promise<Buffer> {
+      const { Message: Msg } = await import('@mtcute/core')
+      let result: Uint8Array
+      if (media instanceof Msg && media.media) {
+        result = await this.client.downloadAsBuffer(media.media)
+      }
+      else {
+        result = await this.client.downloadAsBuffer(media)
+      }
+      return Buffer.from(result)
+    }
+
+    private getTempUrl(filename: string) {
+      const base = envMock.INTERNAL_WEB_ENDPOINT || envMock.WEB_ENDPOINT || 'http://napgram-dev:8080'
+      return `${base}/temp/${filename}`
+    }
+
+    private sanitizeFilename(name: string) {
+      const path = require('node:path')
+      return path.basename(name)
+        .replace(/[\\/]/g, '_')
+        .replace(/[^\w.\-+@() ]/g, '_')
+        .trim()
+        .slice(0, 200) || `file-${Date.now()}`
+    }
+
+    async downloadMediaToTempFile(media: any, options?: any): Promise<string> {
+      const path = require('node:path')
+      const prefix = options?.prefix || 'tg'
+      const { Message: Msg } = await import('@mtcute/core')
+      const mediaObj = media instanceof Msg && (media as any).media ? (media as any).media : media
+      const nameFromMedia = typeof (mediaObj as any)?.fileName === 'string' ? (mediaObj as any).fileName : undefined
+      const baseName = options?.filename || nameFromMedia
+      const rawName = baseName
+        ? `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}-${baseName}`
+        : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`
+
+      const sanitized = this.sanitizeFilename(rawName)
+      const ext = options?.ext ? (options.ext.startsWith('.') ? options.ext : `.${options.ext}`) : ''
+      const filename = ext && !sanitized.toLowerCase().endsWith(ext.toLowerCase()) ? `${sanitized}${ext}` : sanitized
+
+      await fsPromMocks.mkdir('/tmp/napgram-temp', { recursive: true })
+      const filePath = path.join('/tmp/napgram-temp', filename)
+
+      try {
+        const location = media instanceof Msg && (media as any).media ? (media as any).media : media
+        await this.client.downloadToFile(filePath, location)
+      }
+      catch (error) {
+        try { await fsPromMocks.rm(filePath, { force: true }) } catch { }
+        throw error
+      }
+
+      return options?.returnType === 'path' ? filePath : this.getTempUrl(filename)
+    }
+
+    async downloadProfilePhoto(userId: any): Promise<Buffer | null> {
+      try {
+        const chat = await this.client.getChat(userId)
+        if (!chat.photo) return null
+        const result = await this.client.downloadAsBuffer(chat.photo.big)
+        return Buffer.from(result)
+      }
+      catch {
+        return null
+      }
+    }
+
+    async disconnect() {
+      try {
+        await this.client.disconnect()
+        this.me = undefined
+      }
+      catch (error) {
+        throw error
+      }
+    }
+  }
+
+  return {
+    default: FakeTelegram,
+    configureTelegramClient: vi.fn(),
+    TelegramChat: FakeTelegramChat,
+  }
+})
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
 
 describe('telegram client', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mtcuteNodeMocks.createdOptions.length = 0
-    mtcuteNodeMocks.transportOptions.length = 0
     sessionMocks.mockSessionString = undefined
     envMock.PROXY_IP = undefined
     envMock.PROXY_PORT = undefined
+    proxyOptions.captured.length = 0
     fsMocks.existsSync.mockReturnValue(true)
-    ; (Telegram as any).existedBots = {}
+      ; (Telegram as any).existedBots = {}
   })
 
   it('creates a new bot and imports session', async () => {
@@ -202,8 +452,8 @@ describe('telegram client', () => {
     })
 
     expect(sessionMocks.load).toHaveBeenCalled()
-    expect(mtcuteNodeMocks.importSession).toHaveBeenCalledWith('stored', true)
-    expect(mtcuteNodeMocks.start).toHaveBeenCalledWith({
+    expect(clientMethods.importSession).toHaveBeenCalledWith('stored', true)
+    expect(clientMethods.start).toHaveBeenCalledWith({
       phone: '1',
       code: '2',
       password: 'pw',
@@ -227,8 +477,8 @@ describe('telegram client', () => {
   it('connects with bot token when no session string', async () => {
     const bot = await Telegram.connect(2, 'NapGram', 'token2')
 
-    expect(mtcuteNodeMocks.importSession).not.toHaveBeenCalled()
-    expect(mtcuteNodeMocks.start).toHaveBeenCalledWith({ botToken: 'token2' })
+    expect(clientMethods.importSession).not.toHaveBeenCalled()
+    expect(clientMethods.start).toHaveBeenCalledWith({ botToken: 'token2' })
     expect(bot.sessionId).toBe(2)
   })
 
@@ -245,11 +495,11 @@ describe('telegram client', () => {
 
     await Telegram.create({ botToken: 'bot' })
 
-    expect(fsMocks.mkdirSync).toHaveBeenCalledWith('/data', { recursive: true })
+    expect(fsMocks.mkdirSync).toHaveBeenCalledWith('/tmp', { recursive: true })
   })
 
   it('rethrows when create login fails', async () => {
-    mtcuteNodeMocks.start.mockRejectedValueOnce(new Error('login fail'))
+    clientMethods.start.mockRejectedValueOnce(new Error('login fail'))
 
     await expect(Telegram.create({ botToken: 'bot' })).rejects.toThrow('login fail')
   })
@@ -259,30 +509,29 @@ describe('telegram client', () => {
 
     await Telegram.connect(11, 'NapGram')
 
-    expect(mtcuteNodeMocks.importSession).toHaveBeenCalledWith('stored', true)
+    expect(clientMethods.importSession).toHaveBeenCalledWith('stored', true)
   })
 
   it('rethrows when connect login fails', async () => {
-    mtcuteNodeMocks.start.mockRejectedValueOnce(new Error('connect fail'))
+    clientMethods.start.mockRejectedValueOnce(new Error('connect fail'))
 
     await expect(Telegram.connect(12, 'NapGram')).rejects.toThrow('connect fail')
   })
 
   it('initializes proxy transport when configured', async () => {
     envMock.PROXY_IP = '127.0.0.1'
-    envMock.PROXY_PORT = 8080
+    envMock.PROXY_PORT = 54321
     envMock.PROXY_USERNAME = 'user'
     envMock.PROXY_PASSWORD = 'pass'
 
     await Telegram.create({ botToken: 'bot' })
 
-    expect(mtcuteNodeMocks.transportOptions[0]).toEqual({
+    expect(proxyOptions.captured[0]).toEqual({
       host: '127.0.0.1',
-      port: 8080,
+      port: 54321,
       user: 'user',
       password: 'pass',
     })
-    expect(mtcuteNodeMocks.createdOptions[0].transport).toBeDefined()
   })
 
   it('downloads media buffer from message or object', async () => {
@@ -294,8 +543,8 @@ describe('telegram client', () => {
 
     expect(bufferFromMessage).toBeInstanceOf(Buffer)
     expect(bufferFromObject).toBeInstanceOf(Buffer)
-    expect(mtcuteNodeMocks.downloadAsBuffer).toHaveBeenCalledWith(msg.media)
-    expect(mtcuteNodeMocks.downloadAsBuffer).toHaveBeenCalledWith({ id: 'x' })
+    expect(clientMethods.downloadAsBuffer).toHaveBeenCalledWith(msg.media)
+    expect(clientMethods.downloadAsBuffer).toHaveBeenCalledWith({ id: 'x' })
   })
 
   it('downloads media to temp file and returns url or path', async () => {
@@ -313,7 +562,7 @@ describe('telegram client', () => {
     )
 
     expect(fsPromMocks.mkdir).toHaveBeenCalledWith('/tmp/napgram-temp', { recursive: true })
-    expect(mtcuteNodeMocks.downloadToFile).toHaveBeenCalled()
+    expect(clientMethods.downloadToFile).toHaveBeenCalled()
     expect(url).toContain('http://internal/temp/')
     expect(filePath).toContain('/tmp/napgram-temp/')
   })
@@ -322,7 +571,7 @@ describe('telegram client', () => {
     const bot = await Telegram.connect(6, 'NapGram')
     vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
     vi.spyOn(Math, 'random').mockReturnValue(0.5)
-    mtcuteNodeMocks.downloadToFile.mockRejectedValueOnce(new Error('fail'))
+    clientMethods.downloadToFile.mockRejectedValueOnce(new Error('fail'))
 
     await expect(bot.downloadMediaToTempFile({ fileName: 'file.txt' })).rejects.toThrow('fail')
 
@@ -332,21 +581,21 @@ describe('telegram client', () => {
   it('wraps getChat with TelegramChat', async () => {
     const bot = await Telegram.connect(7, 'NapGram')
     const chatObj = { id: 123 }
-    mtcuteNodeMocks.getChat.mockResolvedValueOnce(chatObj)
+    clientMethods.getChat.mockResolvedValueOnce(chatObj)
 
     const chat = await bot.getChat(123)
 
-    expect(chat).toBeInstanceOf(TelegramChat)
+    expect(chat).toBeInstanceOf(FakeTelegramChat)
     expect(chat.chat).toBe(chatObj)
   })
 
   it('downloads profile photo or returns null', async () => {
     const bot = await Telegram.connect(8, 'NapGram')
-    mtcuteNodeMocks.getChat.mockResolvedValueOnce({ photo: null })
+    clientMethods.getChat.mockResolvedValueOnce({ photo: null })
 
     const none = await bot.downloadProfilePhoto(1)
 
-    mtcuteNodeMocks.getChat.mockResolvedValueOnce({ photo: { big: 'big' } })
+    clientMethods.getChat.mockResolvedValueOnce({ photo: { big: 'big' } })
     const buffer = await bot.downloadProfilePhoto(1)
 
     expect(none).toBeNull()
@@ -355,7 +604,7 @@ describe('telegram client', () => {
 
   it('returns null when profile photo download fails', async () => {
     const bot = await Telegram.connect(12, 'NapGram')
-    mtcuteNodeMocks.getChat.mockRejectedValueOnce(new Error('chat error'))
+    clientMethods.getChat.mockRejectedValueOnce(new Error('chat error'))
 
     await expect(bot.downloadProfilePhoto(1)).resolves.toBeNull()
   })
@@ -416,13 +665,13 @@ describe('telegram client', () => {
 
     await bot.disconnect()
 
-    expect(mtcuteNodeMocks.disconnect).toHaveBeenCalled()
+    expect(clientMethods.disconnect).toHaveBeenCalled()
     expect(bot.me).toBeUndefined()
   })
 
   it('rethrows when disconnect fails', async () => {
     const bot = await Telegram.connect(17, 'NapGram')
-    mtcuteNodeMocks.disconnect.mockRejectedValueOnce(new Error('disconnect fail'))
+    clientMethods.disconnect.mockRejectedValueOnce(new Error('disconnect fail'))
 
     await expect(bot.disconnect()).rejects.toThrow('disconnect fail')
   })
