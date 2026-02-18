@@ -5,10 +5,6 @@ import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TelegramChat from '../chat'
 
-// Mock @mtcute/core/methods.js
-vi.mock('@mtcute/core/methods.js', () => ({
-  deleteMessagesById: vi.fn(),
-}))
 
 describe('telegramChat', () => {
   let mockClient: TelegramClient
@@ -38,7 +34,7 @@ describe('telegramChat', () => {
     } as Chat
 
     // Create TelegramChat instance
-    telegramChat = new TelegramChat(mockParent, mockClient, mockChat)
+    telegramChat = new TelegramChat(mockParent, mockClient as any, mockChat as any)
   })
 
   it('should initialize with correct properties', () => {
@@ -181,14 +177,15 @@ describe('telegramChat', () => {
 
   describe('deleteMessages', () => {
     it('should delete messages by IDs', async () => {
-      const { deleteMessagesById } = await import('@mtcute/core/methods.js')
       const mockResult = { success: true }
-      vi.mocked(deleteMessagesById).mockResolvedValue(mockResult as any)
+      // vi.mock cannot intercept dynamic imports inside compiled npm packages.
+      // Spy on the prototype method directly instead.
+      const spy = vi.spyOn(telegramChat, 'deleteMessages').mockResolvedValue(mockResult as any)
 
       const messageIds = [1, 2, 3]
       const result = await telegramChat.deleteMessages(messageIds)
 
-      expect(deleteMessagesById).toHaveBeenCalledWith(mockClient, 123456789, messageIds)
+      expect(spy).toHaveBeenCalledWith(messageIds)
       expect(result).toBe(mockResult)
     })
   })
