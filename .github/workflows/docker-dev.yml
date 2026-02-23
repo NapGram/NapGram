@@ -544,6 +544,7 @@ jobs:
           node-version: 25
 
       - name: Publish Sentry release (optional)
+        continue-on-error: true
         if: success()
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
