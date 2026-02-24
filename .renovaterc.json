@@ -14,12 +14,12 @@
             ],
             "groupName": "all non-major dependencies",
             "groupSlug": "all-minor-patch"
+        },
+        {
+            "matchPackagePatterns": [
+                "^@napgram/"
+            ],
+            "enabled": false
         }
-    ],
-    "npm": {
-        "packageManager": true
-    },
-    "packageManager": {
-        "enabled": true
-    }
+    ]
 }
