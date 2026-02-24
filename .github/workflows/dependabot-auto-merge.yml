@@ -1,4 +1,4 @@
-name: Dependabot Auto Merge
+name: Auto Merge
 
 on: pull_request
 
@@ -9,7 +9,7 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: (github.actor == 'dependabot[bot]' || startsWith(github.head_ref, 'janitor/')) && github.event.pull_request.base.ref == 'dev'
+    if: (github.actor == 'dependabot[bot]' || github.actor == 'renovate[bot]' || startsWith(github.head_ref, 'janitor/')) && github.event.pull_request.base.ref == 'dev'
     steps:
       - name: Dependabot metadata
         id: metadata
@@ -27,6 +27,13 @@ jobs:
 
       - name: Enable auto-merge for Janitor PRs
         if: startsWith(github.head_ref, 'janitor/')
+        run: gh pr merge --merge --delete-branch "$PR_URL"
+        env:
+          PR_URL: ${{github.event.pull_request.html_url}}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for Renovate PRs
+        if: github.actor == 'renovate[bot]'
         run: gh pr merge --merge --delete-branch "$PR_URL"
         env:
           PR_URL: ${{github.event.pull_request.html_url}}
