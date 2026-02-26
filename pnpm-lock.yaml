@@ -64,8 +64,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       '@napgram/feature-kit':
-        specifier: ^0.1.18
-        version: 0.1.18(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.18.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.1.19
+        version: 0.1.19(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.18.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/gateway-kit':
         specifier: ^0.1.14
         version: 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.18.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
@@ -880,8 +880,8 @@ packages:
   '@napgram/database@0.1.1':
     resolution: {integrity: sha512-jVydZkvbzBp4wXGEenPh8nuuqoiNYMsgkX0QlPK06jRbwQ2kX4CB27dFfQnMICkWocQAP4G5l+xvK3f/HgPQPw==, tarball: https://npm.pkg.github.com/download/@napgram/database/0.1.1/57cb82018fa7bb755e9b8192e37abf39135eeda2}
 
-  '@napgram/feature-kit@0.1.18':
-    resolution: {integrity: sha512-V9D87fUyBiz8r5o53sKbD3pqSUSkSQWhJRmSzYsWE5mCkTatIvvOPOUs/Go1bFygBo1joj7rb/h4CpnWoPiS2Q==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.1.18/7f7e078c3e99ef826dafef0bd0ca4351baa3b6aa}
+  '@napgram/feature-kit@0.1.19':
+    resolution: {integrity: sha512-SOUJjfbDMqjYG85KlmK4jgN2uFI8Si1DWEorIaKTEfE7jS5ppz9SQ/VVeWg8b5B6D/aneb9wPg0Tjnrh7ShGMQ==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.1.19/c121957abb9f433ff987e8c26ba91d6aef143e37}
 
   '@napgram/gateway-kit@0.1.14':
     resolution: {integrity: sha512-an1pO8VIF629nfpbgu9S8Wy4p1mAPORN2oytS3ZkpnbLDGejyBJE/kHSP9N6+9kSmwis+1l2mkqGKcJCiJhb1w==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.1.14/8871c9d59cc727082af66d2b4c7903bae0abb9ca}
@@ -3424,6 +3424,10 @@ packages:
     resolution: {integrity: sha512-Rwi3pnapEqirPSbWbrZaa6N3nmqq4Xer/2XooiOKyV3q12ML06f7MOuc5DVH8ONZIFhwIYQ3yzPH4nt7iWHaTg==}
     engines: {node: 18 || 20 || >=22}
 
+  minimatch@10.2.4:
+    resolution: {integrity: sha512-oRjTw/97aTBN0RHbYCdtF1MQfvusSIBQM0IZEgzl6426+8jSC0nF1a/GmnVLpfB9yyr6g6FTqWqiZVbxrtaCIg==}
+    engines: {node: 18 || 20 || >=22}
+
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
 
@@ -5223,7 +5227,7 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@napgram/feature-kit@0.1.18(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.18.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/feature-kit@0.1.19(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.16.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.18.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@mtcute/core': 0.27.9
       '@mtcute/markdown-parser': 0.27.9
@@ -7923,7 +7927,7 @@ snapshots:
       fs.realpath: 1.0.0
       inflight: 1.0.6
       inherits: 2.0.4
-      minimatch: 10.2.3
+      minimatch: 10.2.4
       once: 1.4.0
       path-is-absolute: 1.0.1
     optional: true
@@ -8673,6 +8677,11 @@ snapshots:
   minimatch@10.2.3:
     dependencies:
       brace-expansion: 5.0.3
+
+  minimatch@10.2.4:
+    dependencies:
+      brace-expansion: 5.0.3
+    optional: true
 
   minimist@1.2.8: {}
 
