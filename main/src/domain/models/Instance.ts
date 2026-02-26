@@ -466,7 +466,7 @@ export default class Instance {
     return this._workMode as WorkMode
   }
 
-  get botMe() {
+  get botMe(): any {
     return this.tgBot.me
   }
 
@@ -482,45 +482,38 @@ export default class Instance {
     return this._flags
   }
 
+  private updateDb(fields: Record<string, unknown>) {
+    db.update(schema.instance)
+      .set(fields)
+      .where(eq(schema.instance.id, this.id))
+      .then(() => this.log.trace(fields))
+      .catch(err => this.log.error({ err, fields }, 'Failed to update instance in DB'))
+  }
+
   set owner(owner: number) {
     this._owner = owner
-    db.update(schema.instance)
-      .set({ owner: BigInt(owner) })
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(owner))
+    this.updateDb({ owner: BigInt(owner) })
   }
 
   set isSetup(isSetup: boolean) {
     this._isSetup = isSetup
-    db.update(schema.instance)
-      .set({ isSetup })
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(isSetup))
+    this.updateDb({ isSetup })
   }
 
   set workMode(workMode: WorkMode) {
     this._workMode = workMode
-    db.update(schema.instance)
-      .set({ workMode })
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(workMode))
+    this.updateDb({ workMode })
   }
 
   set botSessionId(sessionId: number) {
     this._botSessionId = sessionId
-    db.update(schema.instance)
-      .set({ botSessionId: sessionId })
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(sessionId))
+    this.updateDb({ botSessionId: sessionId })
   }
 
   set qqBotId(id: number) {
     if (this._qq)
       this._qq.id = id
-    db.update(schema.instance)
-      .set({ qqBotId: id })
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(id))
+    this.updateDb({ qqBotId: id })
   }
 
   get qqBotId() {
@@ -529,9 +522,6 @@ export default class Instance {
 
   set flags(value) {
     this._flags = value
-    db.update(schema.instance)
-      .set({ flags: value })
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(value))
+    this.updateDb({ flags: value })
   }
 }
