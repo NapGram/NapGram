@@ -47,17 +47,17 @@ importers:
         specifier: ^4.2.13
         version: 4.2.13
       '@mtcute/core':
-        specifier: ^0.28.1
-        version: 0.28.1
+        specifier: ^0.28.2
+        version: 0.28.2
       '@mtcute/dispatcher':
-        specifier: ^0.28.1
-        version: 0.28.1
+        specifier: ^0.28.2
+        version: 0.28.2
       '@mtcute/markdown-parser':
-        specifier: ^0.28.1
-        version: 0.28.1
+        specifier: ^0.28.2
+        version: 0.28.2
       '@mtcute/node':
-        specifier: ^0.28.1
-        version: 0.28.1(ws@8.19.0)
+        specifier: ^0.28.2
+        version: 0.28.2(ws@8.19.0)
       '@napgram/auth-kit':
         specifier: ^0.1.10
         version: 0.1.10(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.19.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
@@ -827,38 +827,38 @@ packages:
   '@mtcute/core@0.27.9':
     resolution: {integrity: sha512-kbi/ml8H7Asnn5u1yQVRVl8CVZd03WU2Z4Sgd5d3RYqaoqRUA9wgUV9aEhq+bEgsvmnEr+PuwZ+/HKriXhtqlA==}
 
-  '@mtcute/core@0.28.1':
-    resolution: {integrity: sha512-ahpY3HxTfVvhhFao73P7SLF4nUkxfoRRtCGyWgZr8bjcBMs2fcVP0+EiiTZkUc4qJf+9wdUasUxq3caqIqdCHw==}
+  '@mtcute/core@0.28.2':
+    resolution: {integrity: sha512-/NNJbJ8PV0PthC0Xw+7NusWMpK0ECnR8hX9VzMMf/4Sz5KCzZZGHpcwuW5s5Aoegp03no3i+lqcKB9mx1ilOnQ==}
 
   '@mtcute/dispatcher@0.27.9':
     resolution: {integrity: sha512-YqCbH/DNEvIjBGG4GGWXd3MQI6W9RD3TJ+jUj64ADqnOw4FpFlevhcevLUtpyRHOMVjVEm7a4VXk13S+Ujk1UA==}
 
-  '@mtcute/dispatcher@0.28.1':
-    resolution: {integrity: sha512-qRUXVukPlqL8oncNTj0T/3GSNrhLlFE0SY9oAQMNektJTbfiMtRYo305CK/hP1TGmoeq8wk9C5cf/DC7MbdfUQ==}
+  '@mtcute/dispatcher@0.28.2':
+    resolution: {integrity: sha512-8PvT3ZZyty0OExwncSdNFRGAWYuhf/JA4iE+63q7DAZAAeoCglq2o6j/yoLkeHM2MpQHmCcKqxmPU0xnM4AV8w==}
 
   '@mtcute/file-id@0.27.8':
     resolution: {integrity: sha512-clwuBxVZKCSv65HMjxCx0zSnaZypAeNFy0pmnA0Uhvb9zvvB8lbd9Ig2BPieUkk/BbI+z8KZa0jvWOVe929Egw==}
 
-  '@mtcute/file-id@0.28.1':
-    resolution: {integrity: sha512-OtjJEk/NF1+uKxf9D+IYtIrfglUzmg4KYoy21FrnbLgnqHw0EZbocgDDmJy/5/j5GVAHC/SHp7AGw4RkWCd9rw==}
+  '@mtcute/file-id@0.28.2':
+    resolution: {integrity: sha512-Uvxvm7MTaJ48rsq105C2+SrmDWnBrzXb1hL7XUCygG0DQIn9P7WC+ciJNZKbJ0kX6chDzOcFnugVWG6Pzk+2cQ==}
 
   '@mtcute/html-parser@0.27.9':
     resolution: {integrity: sha512-ojq7ah4rwkLWmZP0fZx4glnSA7D75fcrMBS1HsEf6/uyrWy/F74aDZWwdLMrL8EjSVS0JdMKbli+kow+49JPJA==}
 
-  '@mtcute/html-parser@0.28.1':
-    resolution: {integrity: sha512-Kw1mANUtlb6+u1/qj3CItJSI0gb6sSRAaZAOAKDmcYlPo3g1jT0tms3Rxjxd0un5owzCx0W8VpIk3ep7AXyaow==}
+  '@mtcute/html-parser@0.28.2':
+    resolution: {integrity: sha512-7GKSCQVOt6vK0a5/DxpaXaHoJcW5sSlXtEqALig2Aa2tLYRBwPFsq87DvQ3HyV8/ctcnp4lZlB/8l+atLijTHQ==}
 
   '@mtcute/markdown-parser@0.27.9':
     resolution: {integrity: sha512-4roQapd+r3aZtP2BWeYbcPt6rhZUBv1Ua0CJfopGY25XlU3lEDYeqGrn0KuWYKr11dztEDo5M01IBmcyRqUlow==}
 
-  '@mtcute/markdown-parser@0.28.1':
-    resolution: {integrity: sha512-wKNPG9BcuAD9GB3O4FFXhGo2ciM6lioL0uldDMDZm1GugcdBp0mKhT+h8QJyDDrRM9l+XW01MROTc1KZbItAZQ==}
+  '@mtcute/markdown-parser@0.28.2':
+    resolution: {integrity: sha512-dMnaq8BGdSA40w481BpPZvplMkZ/bnNSIg+IdRVzqBgbZ4LMDKY1s8tu0RG68ds4jYqme6gpFySxsB5NDb03WQ==}
 
   '@mtcute/node@0.27.9':
     resolution: {integrity: sha512-Tflz5LRbTG5DE2rSUIRhLlBfey7ibhSQLTLTJD9nsoNpBeOG4ms/bc6VfBTQMHJytb8VCYQOHrXWZb9eYhWOPg==}
 
-  '@mtcute/node@0.28.1':
-    resolution: {integrity: sha512-ygXPuH+YNHfTNnhgr6eDwLFYl9uda7hLNbnsq2YIf20dqmi4H1swb4xrEHSqptwUr/BYRRYFBOGfbQpkvAUaIQ==}
+  '@mtcute/node@0.28.2':
+    resolution: {integrity: sha512-8+slODYtdifMVeja+Xs9KLslbbKrjxsW7lAxkns30QIYvJ4EkQV0hjsol/+gOMyYXsi4GTU3+5FsKDd4HQ1SqQ==}
 
   '@mtcute/tl-runtime@0.24.3':
     resolution: {integrity: sha512-61J3cgYgNOQT532GdIiuezRrSC7v6cc9MfvWv9GO27bRGf7JUKWVbFt4U0KzQ9Tp0J1uMOUfi1EbQKkYKacIKQ==}
@@ -866,8 +866,8 @@ packages:
   '@mtcute/tl@221.0.0':
     resolution: {integrity: sha512-Wp01L9nznTMLl2s9rbKnzQ8pij72eF4HK2XIziOQoJXiObPKZxQdxvMj+C6l0ArxMFmpT0H0/3EL5RB7O6VPwg==}
 
-  '@mtcute/tl@222.0.0':
-    resolution: {integrity: sha512-zg64rX2V7GPrQBJcZ2QX6Z+bLxkF7n1V2HxKQUB+mBkTPElmqMY9dE1lbzcwQw7Dys8lo9h3WlTOnfa1LeNyvw==}
+  '@mtcute/tl@223.0.0':
+    resolution: {integrity: sha512-RBppaVVpp+YsGC5PTsZ2hk1NI4rI0iAj7ll9urbUmII9OCaOMSswiF9ZcjQ1aQhofey8Im87DRhxpiBZQ4OEUg==}
 
   '@mtcute/wasm@0.27.8':
     resolution: {integrity: sha512-3z1v1WtkAAW95l5t8LB3Ul+Y8dQNMez5YF16cHE3mAHX5RRrfgE+rgVk+wRQJHa24CugfuEEBSi6QpdZuTRBIw==}
@@ -3776,8 +3776,8 @@ packages:
   psl@1.15.0:
     resolution: {integrity: sha512-JZd3gMVBAVQkSs6HdNZo9Sdo0LNcQeMNP3CozBJb3JYC/QUYZTnKxP+f8oWRX4rHP5EurWxqAHTSwUCjlNKa1w==}
 
-  pump@3.0.3:
-    resolution: {integrity: sha512-todwxLMY7/heScKmntwQG8CXVkWUOdYxIvY2s0VWAAMh/nd8SoYiRaKjlr7+iCs984f2P8zvrfWcDDYVb73NfA==}
+  pump@3.0.4:
+    resolution: {integrity: sha512-VS7sjc6KR7e1ukRFhQSY5LM2uBWAUPiOPa/A3mkKmiMwSmRFUITt0xuj+/lesgnCv+dPIEYlkzrcyXgquIHMcA==}
 
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
@@ -5055,13 +5055,13 @@ snapshots:
       '@types/events': 3.0.0
       long: 5.2.3
 
-  '@mtcute/core@0.28.1':
+  '@mtcute/core@0.28.2':
     dependencies:
       '@fuman/io': 0.0.19
       '@fuman/net': 0.0.19
       '@fuman/utils': 0.0.19
-      '@mtcute/file-id': 0.28.1
-      '@mtcute/tl': 222.0.0
+      '@mtcute/file-id': 0.28.2
+      '@mtcute/tl': 223.0.0
       '@mtcute/tl-runtime': 0.24.3
       '@types/events': 3.0.0
       long: 5.2.3
@@ -5071,10 +5071,10 @@ snapshots:
       '@fuman/utils': 0.0.19
       '@mtcute/core': 0.27.9
 
-  '@mtcute/dispatcher@0.28.1':
+  '@mtcute/dispatcher@0.28.2':
     dependencies:
       '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.28.1
+      '@mtcute/core': 0.28.2
 
   '@mtcute/file-id@0.27.8':
     dependencies:
@@ -5082,7 +5082,7 @@ snapshots:
       '@mtcute/tl-runtime': 0.24.3
       long: 5.2.3
 
-  '@mtcute/file-id@0.28.1':
+  '@mtcute/file-id@0.28.2':
     dependencies:
       '@fuman/utils': 0.0.19
       '@mtcute/tl-runtime': 0.24.3
@@ -5094,9 +5094,9 @@ snapshots:
       htmlparser2: 10.1.0
       long: 5.2.3
 
-  '@mtcute/html-parser@0.28.1':
+  '@mtcute/html-parser@0.28.2':
     dependencies:
-      '@mtcute/core': 0.28.1
+      '@mtcute/core': 0.28.2
       htmlparser2: 10.1.0
       long: 5.2.3
 
@@ -5105,9 +5105,9 @@ snapshots:
       '@mtcute/core': 0.27.9
       long: 5.2.3
 
-  '@mtcute/markdown-parser@0.28.1':
+  '@mtcute/markdown-parser@0.28.2':
     dependencies:
-      '@mtcute/core': 0.28.1
+      '@mtcute/core': 0.28.2
       long: 5.2.3
 
   '@mtcute/node@0.27.9(ws@8.19.0)':
@@ -5123,14 +5123,14 @@ snapshots:
     transitivePeerDependencies:
       - ws
 
-  '@mtcute/node@0.28.1(ws@8.19.0)':
+  '@mtcute/node@0.28.2(ws@8.19.0)':
     dependencies:
       '@fuman/net': 0.0.19
       '@fuman/node': 0.0.19(ws@8.19.0)
       '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.28.1
-      '@mtcute/html-parser': 0.28.1
-      '@mtcute/markdown-parser': 0.28.1
+      '@mtcute/core': 0.28.2
+      '@mtcute/html-parser': 0.28.2
+      '@mtcute/markdown-parser': 0.28.2
       '@mtcute/wasm': 0.27.8
       better-sqlite3: 12.6.2
     transitivePeerDependencies:
@@ -5145,7 +5145,7 @@ snapshots:
     dependencies:
       long: 5.2.3
 
-  '@mtcute/tl@222.0.0':
+  '@mtcute/tl@223.0.0':
     dependencies:
       long: 5.2.3
 
@@ -9036,7 +9036,7 @@ snapshots:
       mkdirp-classic: 0.5.3
       napi-build-utils: 2.0.0
       node-abi: 3.87.0
-      pump: 3.0.3
+      pump: 3.0.4
       rc: 1.2.8
       simple-get: 4.0.1
       tar-fs: 2.1.4
@@ -9080,7 +9080,7 @@ snapshots:
       punycode: 2.3.1
     optional: true
 
-  pump@3.0.3:
+  pump@3.0.4:
     dependencies:
       end-of-stream: 1.4.5
       once: 1.4.0
@@ -9415,7 +9415,7 @@ snapshots:
     dependencies:
       chownr: 1.1.4
       mkdirp-classic: 0.5.3
-      pump: 3.0.3
+      pump: 3.0.4
       tar-stream: 2.2.0
 
   tar-stream@2.2.0:
