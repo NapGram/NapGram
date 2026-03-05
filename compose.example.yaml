@@ -80,6 +80,12 @@ services:
       # -----------------------------------------------------------------------------
       # 代理（可选）
       # -----------------------------------------------------------------------------
+      # 代理 URL（优先级高于 PROXY_IP/PROXY_PORT）
+      # 例如：socks5://user:pass@host:7891 或 http://user:pass@host:8080
+      PROXY_URL: ""
+      # 代理类型（仅在使用 PROXY_IP/PROXY_PORT 时生效）
+      PROXY_TYPE: "socks5"
+      # 优先级：PROXY_URL/PROXY > PROXY_IP/PROXY_PORT
       # 代理服务器 IP/域名
       PROXY_IP: ""
       # 代理端口
