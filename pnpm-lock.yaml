@@ -65,29 +65,29 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       '@napgram/feature-kit':
-        specifier: ^0.1.19
-        version: 0.1.19(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.1.20
+        version: 0.1.20(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/gateway-kit':
-        specifier: ^0.1.14
-        version: 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
+        specifier: ^0.1.15
+        version: 0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       '@napgram/infra-kit':
         specifier: ^0.1.21
         version: 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/marketplace-kit':
-        specifier: ^0.2.4
-        version: 0.2.4(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.2.5
+        version: 0.2.5(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/media-kit':
         specifier: ^0.1.11
         version: 0.1.11(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/message-kit':
-        specifier: ^0.1.14
-        version: 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.1.15
+        version: 0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/plugin-adapter-qq-napcat':
         specifier: ^0.1.5
         version: 0.1.5
       '@napgram/plugin-adapter-telegram-mtcute':
-        specifier: ^0.1.7
-        version: 0.1.7(ws@8.19.0)
+        specifier: ^0.1.8
+        version: 0.1.8(ws@8.19.0)
       '@napgram/plugin-admin-auth':
         specifier: ^0.1.4
         version: 0.1.4
@@ -131,8 +131,8 @@ importers:
         specifier: ^0.1.4
         version: 0.1.4
       '@napgram/plugin-kit':
-        specifier: ^0.1.21
-        version: 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.1.22
+        version: 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/plugin-media':
         specifier: ^0.1.4
         version: 0.1.4
@@ -176,17 +176,17 @@ importers:
         specifier: ^0.1.5
         version: 0.1.5
       '@napgram/request-kit':
-        specifier: ^0.1.11
-        version: 0.1.11(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.1.12
+        version: 0.1.12(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/runtime-kit':
-        specifier: ^0.1.21
-        version: 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.1.22
+        version: 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/telegram-client':
-        specifier: ^0.1.7
-        version: 0.1.7(ws@8.19.0)
+        specifier: ^0.1.8
+        version: 0.1.8(ws@8.19.0)
       '@napgram/web-interfaces':
-        specifier: ^0.2.5
-        version: 0.2.5(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.2.6
+        version: 0.2.6(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@naplink/naplink':
         specifier: ^0.0.7
         version: 0.0.7
@@ -824,47 +824,26 @@ packages:
     resolution: {integrity: sha512-JwqeCQ1U3fvccttHZq7Tk0m/TMC6WcFAQZdukypW3AzlJYKYTGNVd1ANU2GuhKnv4UQuOFj3oAl0LLG/gxFN1w==}
     engines: {node: '>=16'}
 
-  '@mtcute/core@0.27.9':
-    resolution: {integrity: sha512-kbi/ml8H7Asnn5u1yQVRVl8CVZd03WU2Z4Sgd5d3RYqaoqRUA9wgUV9aEhq+bEgsvmnEr+PuwZ+/HKriXhtqlA==}
-
   '@mtcute/core@0.28.2':
     resolution: {integrity: sha512-/NNJbJ8PV0PthC0Xw+7NusWMpK0ECnR8hX9VzMMf/4Sz5KCzZZGHpcwuW5s5Aoegp03no3i+lqcKB9mx1ilOnQ==}
-
-  '@mtcute/dispatcher@0.27.9':
-    resolution: {integrity: sha512-YqCbH/DNEvIjBGG4GGWXd3MQI6W9RD3TJ+jUj64ADqnOw4FpFlevhcevLUtpyRHOMVjVEm7a4VXk13S+Ujk1UA==}
 
   '@mtcute/dispatcher@0.28.2':
     resolution: {integrity: sha512-8PvT3ZZyty0OExwncSdNFRGAWYuhf/JA4iE+63q7DAZAAeoCglq2o6j/yoLkeHM2MpQHmCcKqxmPU0xnM4AV8w==}
 
-  '@mtcute/file-id@0.27.8':
-    resolution: {integrity: sha512-clwuBxVZKCSv65HMjxCx0zSnaZypAeNFy0pmnA0Uhvb9zvvB8lbd9Ig2BPieUkk/BbI+z8KZa0jvWOVe929Egw==}
-
   '@mtcute/file-id@0.28.2':
     resolution: {integrity: sha512-Uvxvm7MTaJ48rsq105C2+SrmDWnBrzXb1hL7XUCygG0DQIn9P7WC+ciJNZKbJ0kX6chDzOcFnugVWG6Pzk+2cQ==}
-
-  '@mtcute/html-parser@0.27.9':
-    resolution: {integrity: sha512-ojq7ah4rwkLWmZP0fZx4glnSA7D75fcrMBS1HsEf6/uyrWy/F74aDZWwdLMrL8EjSVS0JdMKbli+kow+49JPJA==}
 
   '@mtcute/html-parser@0.28.2':
     resolution: {integrity: sha512-7GKSCQVOt6vK0a5/DxpaXaHoJcW5sSlXtEqALig2Aa2tLYRBwPFsq87DvQ3HyV8/ctcnp4lZlB/8l+atLijTHQ==}
 
-  '@mtcute/markdown-parser@0.27.9':
-    resolution: {integrity: sha512-4roQapd+r3aZtP2BWeYbcPt6rhZUBv1Ua0CJfopGY25XlU3lEDYeqGrn0KuWYKr11dztEDo5M01IBmcyRqUlow==}
-
   '@mtcute/markdown-parser@0.28.2':
     resolution: {integrity: sha512-dMnaq8BGdSA40w481BpPZvplMkZ/bnNSIg+IdRVzqBgbZ4LMDKY1s8tu0RG68ds4jYqme6gpFySxsB5NDb03WQ==}
-
-  '@mtcute/node@0.27.9':
-    resolution: {integrity: sha512-Tflz5LRbTG5DE2rSUIRhLlBfey7ibhSQLTLTJD9nsoNpBeOG4ms/bc6VfBTQMHJytb8VCYQOHrXWZb9eYhWOPg==}
 
   '@mtcute/node@0.28.2':
     resolution: {integrity: sha512-8+slODYtdifMVeja+Xs9KLslbbKrjxsW7lAxkns30QIYvJ4EkQV0hjsol/+gOMyYXsi4GTU3+5FsKDd4HQ1SqQ==}
 
   '@mtcute/tl-runtime@0.24.3':
     resolution: {integrity: sha512-61J3cgYgNOQT532GdIiuezRrSC7v6cc9MfvWv9GO27bRGf7JUKWVbFt4U0KzQ9Tp0J1uMOUfi1EbQKkYKacIKQ==}
-
-  '@mtcute/tl@221.0.0':
-    resolution: {integrity: sha512-Wp01L9nznTMLl2s9rbKnzQ8pij72eF4HK2XIziOQoJXiObPKZxQdxvMj+C6l0ArxMFmpT0H0/3EL5RB7O6VPwg==}
 
   '@mtcute/tl@223.0.0':
     resolution: {integrity: sha512-RBppaVVpp+YsGC5PTsZ2hk1NI4rI0iAj7ll9urbUmII9OCaOMSswiF9ZcjQ1aQhofey8Im87DRhxpiBZQ4OEUg==}
@@ -881,29 +860,29 @@ packages:
   '@napgram/database@0.1.1':
     resolution: {integrity: sha512-jVydZkvbzBp4wXGEenPh8nuuqoiNYMsgkX0QlPK06jRbwQ2kX4CB27dFfQnMICkWocQAP4G5l+xvK3f/HgPQPw==, tarball: https://npm.pkg.github.com/download/@napgram/database/0.1.1/57cb82018fa7bb755e9b8192e37abf39135eeda2}
 
-  '@napgram/feature-kit@0.1.19':
-    resolution: {integrity: sha512-SOUJjfbDMqjYG85KlmK4jgN2uFI8Si1DWEorIaKTEfE7jS5ppz9SQ/VVeWg8b5B6D/aneb9wPg0Tjnrh7ShGMQ==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.1.19/c121957abb9f433ff987e8c26ba91d6aef143e37}
+  '@napgram/feature-kit@0.1.20':
+    resolution: {integrity: sha512-jXz2DFu47FbNiT8Z0J0ALJfqiJGcNk19gj8V6LL9x3P0lm5vEjZAmSe2uqYF+r75ENEJJxrRPxvbPmq5EbC5iA==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.1.20/6d4ca66b09d55d9a8869629addbaed7fcebe22a8}
 
-  '@napgram/gateway-kit@0.1.14':
-    resolution: {integrity: sha512-an1pO8VIF629nfpbgu9S8Wy4p1mAPORN2oytS3ZkpnbLDGejyBJE/kHSP9N6+9kSmwis+1l2mkqGKcJCiJhb1w==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.1.14/8871c9d59cc727082af66d2b4c7903bae0abb9ca}
+  '@napgram/gateway-kit@0.1.15':
+    resolution: {integrity: sha512-+BzyHPiT6hRbR1hMVoXk9RbwPhWiX2xl/YUYusFtK8ctTg/PMQXK5l/iMoW2lohmrtRQMCAj/rmoTY/ufRvYdQ==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.1.15/c01bb87733e3035d569297c77a7ad061ce63bd00}
 
   '@napgram/infra-kit@0.1.21':
     resolution: {integrity: sha512-HB1E/JSKiY3X4PJoi1xigDMjGLOm6i4MZZ8rs5DwLU5YXaFhhDe1te+QhTwTNjIV8Q4bSds5FxfBXkDepgoGfw==, tarball: https://npm.pkg.github.com/download/@napgram/infra-kit/0.1.21/f39fed9609085edeaa51d1b10d39a076aa12180b}
 
-  '@napgram/marketplace-kit@0.2.4':
-    resolution: {integrity: sha512-QWd4MmTrb3/vxGJQaN9Co5zGZFAfIx43WAIU38awpGYdm3Tmvrnb/eGLWgMaQTgWgyTPjqnHXuRuvvx+2WBwuA==, tarball: https://npm.pkg.github.com/download/@napgram/marketplace-kit/0.2.4/584c6502bc4286646b6c5fb6b0818d1c635b1837}
+  '@napgram/marketplace-kit@0.2.5':
+    resolution: {integrity: sha512-Rg5WNc0UcxfnIa72MTVfRCW3sGnnacE9jkdgXYnVZEm0CvptuLidxYKqlSy/uhnozUo/Ol8MJwyOb8C6RzsZXQ==, tarball: https://npm.pkg.github.com/download/@napgram/marketplace-kit/0.2.5/f83d5620c269814a4c4c9eb9e0198e278e3ab927}
 
   '@napgram/media-kit@0.1.11':
     resolution: {integrity: sha512-j2v8EmVDFIX5IKUVM1nAsLrEk3VrthdOFvcQWjaz+qUYxLZxRmD2eiZikljzC33AHUePU5MEmT608JcI9GCV8Q==, tarball: https://npm.pkg.github.com/download/@napgram/media-kit/0.1.11/4a6a795104c38eb00743e44a25714dfe208721b6}
 
-  '@napgram/message-kit@0.1.14':
-    resolution: {integrity: sha512-uNa39Ul4boDmG2foV7jOuPRH2j7U9g5NoGkFxobJsWJNtBei9THV0UKyIhON83tf2SHjRc2VCpVca1VSrwderA==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/0.1.14/93a5423c538f631d22ff05400d2d2fe8997d461c}
+  '@napgram/message-kit@0.1.15':
+    resolution: {integrity: sha512-le1Q90ytSIIUJsHyGzN4GL82PhlnCjpZuO9oFAqBjh/3AU2sWF+mjwKYhh2zvBdzcPVHvIoMMhNqr9bRjJAgWQ==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/0.1.15/d33338d462ac2fe5dd6ad4314e463a7a2550b0d9}
 
   '@napgram/plugin-adapter-qq-napcat@0.1.5':
     resolution: {integrity: sha512-sRqL2ynu11HYK7qKMG2yG2heznpHPzoVidWUWYCg/TOe1oaJRSpW5MC4B2OcOZezpMoj6oSELtg6u3STsYTMoQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-qq-napcat/0.1.5/1fc4617921c331311db46225f8a36d2d22d5c9d1}
 
-  '@napgram/plugin-adapter-telegram-mtcute@0.1.7':
-    resolution: {integrity: sha512-iT3dtahFM1B5nEHH4DOCYSqqir/JcRZ2Gof5qHspFYDOrc8uu+81O/VQbYxdGdGVZVxh0YwvsLh6wCpscqsDTg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-telegram-mtcute/0.1.7/0b533a26b4272ce4236fa290420dc454c65629db}
+  '@napgram/plugin-adapter-telegram-mtcute@0.1.8':
+    resolution: {integrity: sha512-Z0bIGNRjlu7kUkKuuIU1LTTtY0QFZeFwSx+eCVYfVJLREvQi02Urr3mSejxmaZfmuFkRwlsBy49poeSgAadmsw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-telegram-mtcute/0.1.8/959d26488d28621be1e5c51d14cdb094ab508309}
 
   '@napgram/plugin-admin-auth@0.1.4':
     resolution: {integrity: sha512-JmN4DFL4SpOXv9tjlWhjaxQYbFGhtsoBCcurtTcxWhfuud4KkBdFAjnxXICSC3X4LSweeK7qsk+mS7p4Q9Ftbg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-auth/0.1.4/a16ae7cc7971485038d5ccb98e35f0fc86ac8b38}
@@ -947,8 +926,8 @@ packages:
   '@napgram/plugin-group-management@0.1.4':
     resolution: {integrity: sha512-TVLXa5Ke+/DuySpGqAn8L7jFogVShRpUJctQdLhIDlzqaSS2mPUe7w0SQPuVtybseSP4IRjqwnFOipppp1SBDw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-group-management/0.1.4/29170109600a1c27e90dd6488c79152ee5db4457}
 
-  '@napgram/plugin-kit@0.1.21':
-    resolution: {integrity: sha512-MOKxT3oxlCtM83t56rVAK1gmcsFnQ7ldL6n6fatdfrN2FflzqapUCJlP0o81MHAdO5NVdRLVDH3FKmOsFQY5+Q==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-kit/0.1.21/ed577daec5b9f63f589596fa0d31ec9ee25af23a}
+  '@napgram/plugin-kit@0.1.22':
+    resolution: {integrity: sha512-FeXqeHmQ6spfETfsGClqnXgMZ24b6+5j3yeuVMKvY1FmbPuC4AWtWiIMtpQ/dqJTa//jpTcs+57gIHjTB370Lw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-kit/0.1.22/3172fd8ba29466a9866285065d4fd140bc263c25}
 
   '@napgram/plugin-media@0.1.4':
     resolution: {integrity: sha512-c1lLCJRwbkNyWDwnRQrnL94ROaUG3gbs64OBdqZ7S+KzyZMq4NMyFSFBj0aV9EI+rBlHCZl0riyH9Xz8jWDYww==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-media/0.1.4/6e1a6adf18620e3cfe130b64b40dd18f9d9d7233}
@@ -992,23 +971,23 @@ packages:
   '@napgram/qq-client@0.1.5':
     resolution: {integrity: sha512-Qk1Bke3jp/HDPJWfsTyghzgh9pq1VKNoDbpPkGD/sESg80O+MFsvkoxS7LUy8fBzJ/pxR20YSPgS7kx0X7Oqow==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/0.1.5/6d909c4bee25d587e55aa1f0b3dd56976ba925ed}
 
-  '@napgram/request-kit@0.1.11':
-    resolution: {integrity: sha512-6aXS3CrQK66iVRb2tR6IIvAYmin6SZKsIyLgVNNaiUdEdjgTLeAVvkuweooJO4AAE2M34yzpo9BQ3dRc9Iq7GQ==, tarball: https://npm.pkg.github.com/download/@napgram/request-kit/0.1.11/5692ffc593b9a9773a39864836fe7570136ee2c8}
+  '@napgram/request-kit@0.1.12':
+    resolution: {integrity: sha512-nrcZF6lIojuKMg4DVu1ZFCv3g8zPakUuzfIFlktl4MdKEGpzcQsbYNUYTIbaIV0nxObHl05ruZI3wOZXbniZRw==, tarball: https://npm.pkg.github.com/download/@napgram/request-kit/0.1.12/915c508f885a4e2eed3b8f58e95a54b7480ad899}
 
-  '@napgram/runtime-kit@0.1.21':
-    resolution: {integrity: sha512-jQ1DsHdPL2sU2n2JaNTHjqlSpi7IIMVbAwjBL73pT/MFdRIszJnEUwGAlll0rJXBaIbX9qrz69egstmkWYbUvQ==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/0.1.21/d40ad1521622e9bdb36a6c3aa68815c403121107}
+  '@napgram/runtime-kit@0.1.22':
+    resolution: {integrity: sha512-/r2/9L6FywU6Sc2ipRVv2SjN3COuNLxWKyEhBJncSMH4mqzUrr1dFMhqADM5SWPWKOLUh8iDF2BYrGvXJz7yCg==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/0.1.22/c008b52b49abf156164bdc6b34be625cb0b86013}
 
   '@napgram/sdk@0.1.21':
     resolution: {integrity: sha512-epctOFJIPzAVF6mNJvR+10D9RlgWclnIXzCGzlxj9AuHpEF07MDsqMkDsiv8rtzT9bZ1M+BDu77PlIWb0a1rDw==, tarball: https://npm.pkg.github.com/download/@napgram/sdk/0.1.21/862c79469c23448d281cc197888656be037d5131}
 
-  '@napgram/telegram-client@0.1.7':
-    resolution: {integrity: sha512-DLok0MdGVpi+N1q1UQwJRZEicqirVWzgiK4TPGvdfFjfiv7El8bPviHaOUKj+aO0wZFjQzUtUD+ldLrT4EdGbA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.1.7/dfc35bcd27cf1710519eb297a886976ab4dc3e85}
+  '@napgram/telegram-client@0.1.8':
+    resolution: {integrity: sha512-wg5y08pzh7gMRL47e/00ZF6hcGRCvuh5IxQaAV3gg0C6xqmFWfCE1o3cxr/VNqVzV878ySZoifwFq64LyVF0rA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.1.8/5a0a226f1f50172dc19f9162b050adcfbe02ebf9}
 
   '@napgram/utils@0.1.21':
     resolution: {integrity: sha512-rTvNNJAV282BiucQUPlpQ+RnokRjjmAQxVI6veUIEFki1NzbC1B5T5nIXRk2gKcSIlp+tPW7NUqIQe99gslizQ==, tarball: https://npm.pkg.github.com/download/@napgram/utils/0.1.21/5ecb47a855d616442e8e1964d010b30e94b7478e}
 
-  '@napgram/web-interfaces@0.2.5':
-    resolution: {integrity: sha512-ONFIyeyYC9vz4wIlmPjXYAXy5Dp2yg68mTul4A5cwEKiHTyFHKV8TCnrUrgun8KBgN9NMU1Qjyhg9pXdB50DBA==, tarball: https://npm.pkg.github.com/download/@napgram/web-interfaces/0.2.5/f9a36bd587d623a9e18fbee806893f7f45737126}
+  '@napgram/web-interfaces@0.2.6':
+    resolution: {integrity: sha512-tofONDP5pkJdpsrlhKM12Mz4CCokSHrZZJ2ECvwy8uV3Q6K8GFC4q79h4xXC4TQaSUKDCUW0/KyjkSq2HlDPkw==, tarball: https://npm.pkg.github.com/download/@napgram/web-interfaces/0.2.6/896493a10ccb8d71573ebb9e92d1694962640a81}
 
   '@naplink/naplink@0.0.3':
     resolution: {integrity: sha512-Kj9decWNurJyCOQgSMlMZLOYg0xJtdgMVZO+O8nHMDPND7rhwwqqbVX11M7CIRBmHO1mjl5NTuY3OaI2lUCvGw==}
@@ -5047,17 +5026,6 @@ snapshots:
       lilconfig: 2.1.0
     optional: true
 
-  '@mtcute/core@0.27.9':
-    dependencies:
-      '@fuman/io': 0.0.19
-      '@fuman/net': 0.0.19
-      '@fuman/utils': 0.0.19
-      '@mtcute/file-id': 0.27.8
-      '@mtcute/tl': 221.0.0
-      '@mtcute/tl-runtime': 0.24.3
-      '@types/events': 3.0.0
-      long: 5.2.3
-
   '@mtcute/core@0.28.2':
     dependencies:
       '@fuman/io': 0.0.19
@@ -5069,32 +5037,15 @@ snapshots:
       '@types/events': 3.0.0
       long: 5.2.3
 
-  '@mtcute/dispatcher@0.27.9':
-    dependencies:
-      '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.27.9
-
   '@mtcute/dispatcher@0.28.2':
     dependencies:
       '@fuman/utils': 0.0.19
       '@mtcute/core': 0.28.2
 
-  '@mtcute/file-id@0.27.8':
-    dependencies:
-      '@fuman/utils': 0.0.19
-      '@mtcute/tl-runtime': 0.24.3
-      long: 5.2.3
-
   '@mtcute/file-id@0.28.2':
     dependencies:
       '@fuman/utils': 0.0.19
       '@mtcute/tl-runtime': 0.24.3
-      long: 5.2.3
-
-  '@mtcute/html-parser@0.27.9':
-    dependencies:
-      '@mtcute/core': 0.27.9
-      htmlparser2: 10.1.0
       long: 5.2.3
 
   '@mtcute/html-parser@0.28.2':
@@ -5103,28 +5054,10 @@ snapshots:
       htmlparser2: 10.1.0
       long: 5.2.3
 
-  '@mtcute/markdown-parser@0.27.9':
-    dependencies:
-      '@mtcute/core': 0.27.9
-      long: 5.2.3
-
   '@mtcute/markdown-parser@0.28.2':
     dependencies:
       '@mtcute/core': 0.28.2
       long: 5.2.3
-
-  '@mtcute/node@0.27.9(ws@8.19.0)':
-    dependencies:
-      '@fuman/net': 0.0.19
-      '@fuman/node': 0.0.19(ws@8.19.0)
-      '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.27.9
-      '@mtcute/html-parser': 0.27.9
-      '@mtcute/markdown-parser': 0.27.9
-      '@mtcute/wasm': 0.27.8
-      better-sqlite3: 12.6.2
-    transitivePeerDependencies:
-      - ws
 
   '@mtcute/node@0.28.2(ws@8.19.0)':
     dependencies:
@@ -5142,10 +5075,6 @@ snapshots:
   '@mtcute/tl-runtime@0.24.3':
     dependencies:
       '@fuman/utils': 0.0.15
-      long: 5.2.3
-
-  '@mtcute/tl@221.0.0':
-    dependencies:
       long: 5.2.3
 
   '@mtcute/tl@223.0.0':
@@ -5232,19 +5161,19 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@napgram/feature-kit@0.1.19(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/feature-kit@0.1.20(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
-      '@mtcute/core': 0.27.9
-      '@mtcute/markdown-parser': 0.27.9
-      '@mtcute/node': 0.27.9(ws@8.19.0)
+      '@mtcute/core': 0.28.2
+      '@mtcute/markdown-parser': 0.28.2
+      '@mtcute/node': 0.28.2(ws@8.19.0)
       '@napgram/auth-kit': 0.1.10(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/media-kit': 0.1.11(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/message-kit': 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/plugin-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/message-kit': 0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/plugin-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/qq-client': 0.1.5
-      '@napgram/runtime-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/telegram-client': 0.1.7(ws@8.19.0)
+      '@napgram/runtime-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/telegram-client': 0.1.8(ws@8.19.0)
       file-type: 21.3.0
       image-js: 1.4.0
     transitivePeerDependencies:
@@ -5284,14 +5213,14 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/gateway-kit@0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))':
+  '@napgram/gateway-kit@0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))':
     dependencies:
-      '@mtcute/core': 0.27.9
-      '@mtcute/node': 0.27.9(ws@8.19.0)
+      '@mtcute/core': 0.28.2
+      '@mtcute/node': 0.28.2(ws@8.19.0)
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/message-kit': 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/message-kit': 0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/qq-client': 0.1.5
-      '@napgram/telegram-client': 0.1.7(ws@8.19.0)
+      '@napgram/telegram-client': 0.1.8(ws@8.19.0)
       ws: 8.19.0
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -5333,7 +5262,7 @@ snapshots:
     dependencies:
       '@napgram/database': 0.1.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       '@napgram/qq-client': 0.1.5
-      '@napgram/telegram-client': 0.1.7(ws@8.19.0)
+      '@napgram/telegram-client': 0.1.8(ws@8.19.0)
       '@sentry/node': 10.32.1
       drizzle-orm: 0.45.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       fastify: 5.7.4
@@ -5374,11 +5303,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/marketplace-kit@0.2.4(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/marketplace-kit@0.2.5(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@napgram/database': 0.1.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/runtime-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/runtime-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       fflate: 0.8.2
       yaml: 2.8.2
     transitivePeerDependencies:
@@ -5461,13 +5390,13 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/message-kit@0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/message-kit@0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
-      '@mtcute/core': 0.27.9
+      '@mtcute/core': 0.28.2
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/media-kit': 0.1.11(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/qq-client': 0.1.5
-      '@napgram/runtime-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/runtime-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       file-type: 21.3.0
       image-js: 1.4.0
     transitivePeerDependencies:
@@ -5514,9 +5443,9 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@napgram/plugin-adapter-telegram-mtcute@0.1.7(ws@8.19.0)':
+  '@napgram/plugin-adapter-telegram-mtcute@0.1.8(ws@8.19.0)':
     dependencies:
-      '@napgram/telegram-client': 0.1.7(ws@8.19.0)
+      '@napgram/telegram-client': 0.1.8(ws@8.19.0)
     transitivePeerDependencies:
       - ws
 
@@ -5548,12 +5477,12 @@ snapshots:
 
   '@napgram/plugin-group-management@0.1.4': {}
 
-  '@napgram/plugin-kit@0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/plugin-kit@0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/marketplace-kit': 0.2.4(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/message-kit': 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/runtime-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/marketplace-kit': 0.2.5(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/message-kit': 0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/runtime-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/sdk': 0.1.21
       '@sentry/node': 10.32.1
       axios: 1.13.5
@@ -5630,11 +5559,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@napgram/request-kit@0.1.11(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/request-kit@0.1.12(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/qq-client': 0.1.5
-      '@napgram/runtime-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/runtime-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       drizzle-orm: 0.45.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -5673,12 +5602,12 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/runtime-kit@0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/runtime-kit@0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@napgram/infra-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/media-kit': 0.1.11(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/qq-client': 0.1.5
-      '@napgram/telegram-client': 0.1.7(ws@8.19.0)
+      '@napgram/telegram-client': 0.1.8(ws@8.19.0)
       yaml: 2.8.2
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -5722,11 +5651,11 @@ snapshots:
       '@napgram/core': 0.1.21
       '@napgram/utils': 0.1.21
 
-  '@napgram/telegram-client@0.1.7(ws@8.19.0)':
+  '@napgram/telegram-client@0.1.8(ws@8.19.0)':
     dependencies:
-      '@mtcute/core': 0.27.9
-      '@mtcute/dispatcher': 0.27.9
-      '@mtcute/node': 0.27.9(ws@8.19.0)
+      '@mtcute/core': 0.28.2
+      '@mtcute/dispatcher': 0.28.2
+      '@mtcute/node': 0.28.2(ws@8.19.0)
     transitivePeerDependencies:
       - ws
 
@@ -5734,14 +5663,14 @@ snapshots:
     dependencies:
       '@napgram/core': 0.1.21
 
-  '@napgram/web-interfaces@0.2.5(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/web-interfaces@0.2.6(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@fastify/multipart': 9.3.0
       '@kitajs/html': 4.2.13
       '@napgram/auth-kit': 0.1.10(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/message-kit': 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/plugin-kit': 0.1.21(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      '@napgram/telegram-client': 0.1.7(ws@8.19.0)
+      '@napgram/message-kit': 0.1.15(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/plugin-kit': 0.1.22(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.18.0)(better-sqlite3@12.6.2)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.6.2)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+      '@napgram/telegram-client': 0.1.8(ws@8.19.0)
       fastify: 5.7.4
       zod: 4.3.5
     transitivePeerDependencies:
@@ -6508,7 +6437,7 @@ snapshots:
       '@sentry/node-core': 10.32.1(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.208.0(@opentelemetry/api@1.9.0))(@opentelemetry/resources@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.40.0)
       '@sentry/opentelemetry': 10.32.1(@opentelemetry/api@1.9.0)(@opentelemetry/context-async-hooks@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/semantic-conventions@1.40.0)
       import-in-the-middle: 2.0.6
-      minimatch: 10.2.2
+      minimatch: 10.2.4
     transitivePeerDependencies:
       - supports-color
 

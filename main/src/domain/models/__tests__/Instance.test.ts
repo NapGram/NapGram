@@ -642,35 +642,35 @@ describe('instance', () => {
     instance.owner = 999
     expect(setMock).toHaveBeenCalledWith({ owner: BigInt(999) })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith(999)
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ owner: BigInt(999) })
 
     // isSetup
     loggerMocks.trace.mockClear()
     instance.isSetup = false
     expect(setMock).toHaveBeenCalledWith({ isSetup: false })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith(false)
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ isSetup: false })
 
     // workMode
     loggerMocks.trace.mockClear()
     instance.workMode = 'b' as any
     expect(setMock).toHaveBeenCalledWith({ workMode: 'b' })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith('b')
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ workMode: 'b' })
 
     // botSessionId
     loggerMocks.trace.mockClear()
     instance.botSessionId = 555
     expect(setMock).toHaveBeenCalledWith({ botSessionId: 555 })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith(555)
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ botSessionId: 555 })
 
     // qqBotId
     loggerMocks.trace.mockClear()
     instance.qqBotId = 777
     expect(setMock).toHaveBeenCalledWith({ qqBotId: 777 })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith(777)
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ qqBotId: 777 })
     expect(instance.qqBotId).toBe(777)
 
     // flags
@@ -678,7 +678,7 @@ describe('instance', () => {
     instance.flags = 888
     expect(setMock).toHaveBeenCalledWith({ flags: 888 })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith(888)
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ flags: 888 })
     expect(instance.flags).toBe(888)
   })
 
@@ -780,7 +780,7 @@ describe('instance', () => {
 
     expect(setMock).toHaveBeenCalledWith({ qqBotId: 111 })
     await flushPromises()
-    expect(loggerMocks.trace).toHaveBeenCalledWith(111)
+    expect(loggerMocks.trace).toHaveBeenCalledWith({ qqBotId: 111 })
     // instance.qqBotId getter checks this._qq?.id, so it should be undefined
     expect(instance.qqBotId).toBeUndefined()
   })
