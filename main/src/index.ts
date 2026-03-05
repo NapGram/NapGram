@@ -6,6 +6,21 @@ import { builtins } from './builtins'
 import Instance from './domain/models/Instance'
 import api, { registerWebRoutes } from './interfaces'
 
+function maskProxyUrl(rawUrl: string) {
+  try {
+    const parsed = new URL(rawUrl)
+    if (parsed.username || parsed.password) {
+      const username = decodeURIComponent(parsed.username || 'user')
+      parsed.username = encodeURIComponent(username)
+      parsed.password = '***'
+    }
+    return parsed.toString()
+  }
+  catch {
+    return rawUrl.replace(/\/\/([^:/@]+)(?::[^@]*)?@/, '//$1:***@')
+  }
+}
+
 function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
   let lastSampleAt = Date.now()
   let lastTotalMessages = 0
@@ -52,8 +67,13 @@ function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
   log.info(`WEB_ENDPOINT: ${env.WEB_ENDPOINT || 'not set'}`)
   log.info(`LOG_LEVEL: ${env.LOG_LEVEL}`)
   log.info(`TG_LOG_LEVEL: ${env.TG_LOG_LEVEL}`)
-  if (env.PROXY_IP && env.PROXY_PORT) {
-    log.info(`PROXY: socks5://${env.PROXY_IP}:${env.PROXY_PORT}`)
+  const proxyUrl = process.env.PROXY_URL || process.env.PROXY
+  if (proxyUrl) {
+    log.info(`PROXY: ${maskProxyUrl(proxyUrl)}`)
+  }
+  else if (env.PROXY_IP && env.PROXY_PORT) {
+    const proxyType = (process.env.PROXY_TYPE || 'socks5').toLowerCase()
+    log.info(`PROXY: ${proxyType}://${env.PROXY_IP}:${env.PROXY_PORT}`)
   }
   // 打印 Admin Token（如果已配置）
   if (process.env.ADMIN_TOKEN) {
