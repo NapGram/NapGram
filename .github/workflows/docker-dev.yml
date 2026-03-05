@@ -101,7 +101,7 @@ jobs:
 
       - name: OCI meta (arch)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}
@@ -247,7 +247,7 @@ jobs:
 
       - name: OCI meta (arch)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}
@@ -395,7 +395,7 @@ jobs:
 
       - name: OCI meta (arch)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}
@@ -497,7 +497,7 @@ jobs:
 
       - name: OCI meta (manifest)
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/${{ github.repository }}
