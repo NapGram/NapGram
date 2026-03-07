@@ -95,11 +95,13 @@ export default class Instance {
       if (!wsUrl) {
         throw new Error('NapCat WebSocket 地址未配置 (qqBot.wsUrl 或 NAPCAT_WS_URL)')
       }
+      const wsToken = this._qq?.wsToken || (env as any).NAPCAT_WS_TOKEN
 
       this.log.debug('NapCat 客户端 正在初始化')
       this.qqClient = await qqClientFactory.create({
         type: 'napcat',
         wsUrl,
+        ...(wsToken ? { token: wsToken } : {}),
         reconnect: true,
       })
       await this.qqClient.login()
