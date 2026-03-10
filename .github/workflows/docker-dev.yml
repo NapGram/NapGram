@@ -19,6 +19,8 @@ jobs:
     env:
       BUILD_REF: refs/heads/dev
       BUILD_REF_NAME: dev
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
     outputs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
@@ -68,7 +70,7 @@ jobs:
         run: |
           cat <<'EOF' >> ~/.npmrc
           @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
           EOF
 
       - name: Install dependencies
@@ -149,7 +151,7 @@ jobs:
             USE_MIRROR=false
             NODE_VERSION=25-alpine${{ env.ALPINE_BRANCH }}
           secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+            npmrc=//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
 
       - name: Mark pushed
         if: success()
@@ -165,6 +167,8 @@ jobs:
     env:
       BUILD_REF: refs/heads/dev
       BUILD_REF_NAME: dev
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
     outputs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
@@ -214,7 +218,7 @@ jobs:
         run: |
           cat <<'EOF' >> ~/.npmrc
           @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
           EOF
 
       - name: Install dependencies
@@ -295,7 +299,7 @@ jobs:
             USE_MIRROR=false
             NODE_VERSION=25-alpine${{ env.ALPINE_BRANCH }}
           secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
+            npmrc=//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
 
       - name: Mark pushed
         if: success()
