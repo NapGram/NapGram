@@ -857,142 +857,142 @@ packages:
     resolution: {integrity: sha512-3z1v1WtkAAW95l5t8LB3Ul+Y8dQNMez5YF16cHE3mAHX5RRrfgE+rgVk+wRQJHa24CugfuEEBSi6QpdZuTRBIw==}
 
   '@napgram/auth-kit@0.1.11':
-    resolution: {integrity: sha512-rY8YfPqKL4gNxPIpFDkvuIaA1yf0wqQNgHJRvz3lkR6LCcrcHUaXjBxXQ6w/8BEX1sBCHD/hjfDrh4ps25Q1nQ==}
+    resolution: {integrity: sha512-rY8YfPqKL4gNxPIpFDkvuIaA1yf0wqQNgHJRvz3lkR6LCcrcHUaXjBxXQ6w/8BEX1sBCHD/hjfDrh4ps25Q1nQ==, tarball: https://npm.pkg.github.com/download/@napgram/auth-kit/0.1.11/1d520ed4bea33d24043997fd6699c3d334ff1d9b}
 
   '@napgram/core@0.1.21':
-    resolution: {integrity: sha512-StJfW/MaVXB9MALVXhIwBUAHEIGv9Q2COmzgCGkadBRdH3/lsP8MH0JpJuNrAjb3ZdDZ6QLY2v8aIwX9XgJbeQ==}
+    resolution: {integrity: sha512-StJfW/MaVXB9MALVXhIwBUAHEIGv9Q2COmzgCGkadBRdH3/lsP8MH0JpJuNrAjb3ZdDZ6QLY2v8aIwX9XgJbeQ==, tarball: https://npm.pkg.github.com/download/@napgram/core/0.1.21/3573894ade2a6a8edc33a24e5ddd3fdefea1ef97}
 
   '@napgram/database@0.1.1':
-    resolution: {integrity: sha512-jVydZkvbzBp4wXGEenPh8nuuqoiNYMsgkX0QlPK06jRbwQ2kX4CB27dFfQnMICkWocQAP4G5l+xvK3f/HgPQPw==}
+    resolution: {integrity: sha512-jVydZkvbzBp4wXGEenPh8nuuqoiNYMsgkX0QlPK06jRbwQ2kX4CB27dFfQnMICkWocQAP4G5l+xvK3f/HgPQPw==, tarball: https://npm.pkg.github.com/download/@napgram/database/0.1.1/57cb82018fa7bb755e9b8192e37abf39135eeda2}
 
   '@napgram/feature-kit@0.1.23':
-    resolution: {integrity: sha512-wMlTkYKyhtBXuoZlKmD07PpAjfRjBzGYJ0E5+0aK2pDLzQ8lNtu+yUySVev38+q8lFTz6qG/rtjhu/qlso4A9Q==}
+    resolution: {integrity: sha512-wMlTkYKyhtBXuoZlKmD07PpAjfRjBzGYJ0E5+0aK2pDLzQ8lNtu+yUySVev38+q8lFTz6qG/rtjhu/qlso4A9Q==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.1.23/31262431c1015a16920052a0255dec0d7906469f}
 
   '@napgram/gateway-kit@0.1.17':
-    resolution: {integrity: sha512-fIUKQxFOHbrlH1kUldZzpH6aYlfvFUIQI6QJAGU217AK+79oYStVTJ6U5eJJ5dqX66gSLxanBYL2lbKs/btURA==}
+    resolution: {integrity: sha512-fIUKQxFOHbrlH1kUldZzpH6aYlfvFUIQI6QJAGU217AK+79oYStVTJ6U5eJJ5dqX66gSLxanBYL2lbKs/btURA==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.1.17/7e0a9195191774c381aead7f0df3f090a5b14b27}
 
   '@napgram/infra-kit@0.1.24':
-    resolution: {integrity: sha512-3bF11saV1wt+kbyAlkb8YadwODWMJdHpNnTrUyFp+ca2T6p6pbQEnryeNRiquhYNHSD8lBc2A8C4FLIELoghyQ==}
+    resolution: {integrity: sha512-3bF11saV1wt+kbyAlkb8YadwODWMJdHpNnTrUyFp+ca2T6p6pbQEnryeNRiquhYNHSD8lBc2A8C4FLIELoghyQ==, tarball: https://npm.pkg.github.com/download/@napgram/infra-kit/0.1.24/80549a5ce0e0ba0c8d4ef62016018546e1bf8ce9}
 
   '@napgram/marketplace-kit@0.2.7':
-    resolution: {integrity: sha512-eKHpQ+qCH1gatN0UmdxVFpUzVGFtdCqaXpca19cXFfWRC3nON+djlXGdngavgbVqzb5OzD5folVE7MhDONin4w==}
+    resolution: {integrity: sha512-eKHpQ+qCH1gatN0UmdxVFpUzVGFtdCqaXpca19cXFfWRC3nON+djlXGdngavgbVqzb5OzD5folVE7MhDONin4w==, tarball: https://npm.pkg.github.com/download/@napgram/marketplace-kit/0.2.7/022869132fbae71e99fa46fe8c7fe6f8c7be6483}
 
   '@napgram/media-kit@0.1.12':
-    resolution: {integrity: sha512-puYHqUQqwcR9IiT3EPt7u4wr9DCRvF9EhETJ1nCG8ZpgAtGCnmVuFnSagi88AA/wmRuWwlfi5CXOptwcdGNy5Q==}
+    resolution: {integrity: sha512-puYHqUQqwcR9IiT3EPt7u4wr9DCRvF9EhETJ1nCG8ZpgAtGCnmVuFnSagi88AA/wmRuWwlfi5CXOptwcdGNy5Q==, tarball: https://npm.pkg.github.com/download/@napgram/media-kit/0.1.12/9d9f123d7d5c7bb5f8782db547506e0f615f2a28}
 
   '@napgram/message-kit@0.1.17':
-    resolution: {integrity: sha512-RuEpdUI8PEMhxQsYgPTcHdJ9BLx10/aqVaQptecYLYtIGs7uDh2YPqbejoBON2uYIPasZE+coVlUxpMkCXgEsQ==}
+    resolution: {integrity: sha512-RuEpdUI8PEMhxQsYgPTcHdJ9BLx10/aqVaQptecYLYtIGs7uDh2YPqbejoBON2uYIPasZE+coVlUxpMkCXgEsQ==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/0.1.17/bd53648e7a86d8968129c47710674a6a3e55692f}
 
   '@napgram/plugin-adapter-qq-napcat@0.1.6':
-    resolution: {integrity: sha512-puX7vCt9sqemn5B93BoNMbkzkHCEvOgcLDxpRwJ7nEi1yvNXGZElZQ1/MXCqcAioqnGTnQmKa0Uf//CEqSQGEg==}
+    resolution: {integrity: sha512-puX7vCt9sqemn5B93BoNMbkzkHCEvOgcLDxpRwJ7nEi1yvNXGZElZQ1/MXCqcAioqnGTnQmKa0Uf//CEqSQGEg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-qq-napcat/0.1.6/88d775f93aa7c4fba7a4cfbc7abff884982e626e}
 
   '@napgram/plugin-adapter-telegram-mtcute@0.1.8':
-    resolution: {integrity: sha512-Z0bIGNRjlu7kUkKuuIU1LTTtY0QFZeFwSx+eCVYfVJLREvQi02Urr3mSejxmaZfmuFkRwlsBy49poeSgAadmsw==}
+    resolution: {integrity: sha512-Z0bIGNRjlu7kUkKuuIU1LTTtY0QFZeFwSx+eCVYfVJLREvQi02Urr3mSejxmaZfmuFkRwlsBy49poeSgAadmsw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-telegram-mtcute/0.1.8/959d26488d28621be1e5c51d14cdb094ab508309}
 
   '@napgram/plugin-admin-auth@0.1.4':
-    resolution: {integrity: sha512-JmN4DFL4SpOXv9tjlWhjaxQYbFGhtsoBCcurtTcxWhfuud4KkBdFAjnxXICSC3X4LSweeK7qsk+mS7p4Q9Ftbg==}
+    resolution: {integrity: sha512-JmN4DFL4SpOXv9tjlWhjaxQYbFGhtsoBCcurtTcxWhfuud4KkBdFAjnxXICSC3X4LSweeK7qsk+mS7p4Q9Ftbg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-auth/0.1.4/a16ae7cc7971485038d5ccb98e35f0fc86ac8b38}
 
   '@napgram/plugin-admin-database@0.1.4':
-    resolution: {integrity: sha512-kbFnJZrQycGbreVHPs9//TP1pTFXpdWY75x2bHpmuxLQsDOGFQ6UGvPp+Itnu/J4YWyBM5cmKm3Et+Xis5OZJw==}
+    resolution: {integrity: sha512-kbFnJZrQycGbreVHPs9//TP1pTFXpdWY75x2bHpmuxLQsDOGFQ6UGvPp+Itnu/J4YWyBM5cmKm3Et+Xis5OZJw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-database/0.1.4/c4267daa80fb3d8069dd058840bfa5fdd70606ca}
 
   '@napgram/plugin-admin-instances@0.1.4':
-    resolution: {integrity: sha512-BFv45eo+04c5K51/NHkX4vvPBQu2aTK8dyr1XNBDyfbQCpKR04SK2Ronfqcky2qsPcxze68Exnnmka17wT/CXA==}
+    resolution: {integrity: sha512-BFv45eo+04c5K51/NHkX4vvPBQu2aTK8dyr1XNBDyfbQCpKR04SK2Ronfqcky2qsPcxze68Exnnmka17wT/CXA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-instances/0.1.4/9ef5f16e979c3bb5553e0f596370970b340f7089}
 
   '@napgram/plugin-admin-logs@0.1.4':
-    resolution: {integrity: sha512-Xu1e63UwrH/hDfOV9vQOIJMEtH1J50ZJy+YYCooBocxU7Z6RH0Cbj1XNaDLL0HBF36PBGbiy0FrjGpkw2epIUQ==}
+    resolution: {integrity: sha512-Xu1e63UwrH/hDfOV9vQOIJMEtH1J50ZJy+YYCooBocxU7Z6RH0Cbj1XNaDLL0HBF36PBGbiy0FrjGpkw2epIUQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-logs/0.1.4/63005f52b96918fb9b8b41b93832c1085d5d6f64}
 
   '@napgram/plugin-admin-messages@0.1.4':
-    resolution: {integrity: sha512-59PEwSKrxF1OxAQjegFlWzdfaN4pW5LNlZ7duRye72wlWTlSd2/4eXn2eam0VVB2v1Udda5qaJZYa/LpsmLG8Q==}
+    resolution: {integrity: sha512-59PEwSKrxF1OxAQjegFlWzdfaN4pW5LNlZ7duRye72wlWTlSd2/4eXn2eam0VVB2v1Udda5qaJZYa/LpsmLG8Q==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-messages/0.1.4/1ce2b90baff65b7c13624c419ded682aad32038c}
 
   '@napgram/plugin-admin-pairs@0.1.4':
-    resolution: {integrity: sha512-CJIVXAvnIhOq+TCWsLhFyq3N8zuxnW1OwOunin2PDPevMB/H35FK6Y0uTEeiv+tExhlWAkont/Mj0eZ43l6Sgw==}
+    resolution: {integrity: sha512-CJIVXAvnIhOq+TCWsLhFyq3N8zuxnW1OwOunin2PDPevMB/H35FK6Y0uTEeiv+tExhlWAkont/Mj0eZ43l6Sgw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-pairs/0.1.4/1bb54e98a2eb6da8cc2c232694702dcc271c1f43}
 
   '@napgram/plugin-admin-plugins@0.1.5':
-    resolution: {integrity: sha512-LtVbrs50OVMg30vwxzbAquG6Ek3AYme1YIe7bNsaYR63RAWntH+6Dfd/MtqcLa/DCX/wd2dwZmif1Nep+VmZyA==}
+    resolution: {integrity: sha512-LtVbrs50OVMg30vwxzbAquG6Ek3AYme1YIe7bNsaYR63RAWntH+6Dfd/MtqcLa/DCX/wd2dwZmif1Nep+VmZyA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-plugins/0.1.5/58a073fa964c777f19cfcc74061a06cd27450733}
 
   '@napgram/plugin-admin-settings@0.1.4':
-    resolution: {integrity: sha512-Yo+syPzeMv1LdEpHliRuo8u3x+v4yP4USumHbx2B9sz5W8XebVqQujGykznKFdBXVG+40Oi46uITMUPkeCKnDg==}
+    resolution: {integrity: sha512-Yo+syPzeMv1LdEpHliRuo8u3x+v4yP4USumHbx2B9sz5W8XebVqQujGykznKFdBXVG+40Oi46uITMUPkeCKnDg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-settings/0.1.4/edc320baeae2a0babcd976323ad388239208be3c}
 
   '@napgram/plugin-admin-suite@0.1.4':
-    resolution: {integrity: sha512-tYcMoByfdGQaCXQOJfAL0XfzWGGCwndNSQun9SEnr+sqV41LBXD7BL0bS1DgRqq3t2N/Hebk1w0A+23WSTB6Ug==}
+    resolution: {integrity: sha512-tYcMoByfdGQaCXQOJfAL0XfzWGGCwndNSQun9SEnr+sqV41LBXD7BL0bS1DgRqq3t2N/Hebk1w0A+23WSTB6Ug==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-suite/0.1.4/8b76cf3e721edc693924d84bdcefe34129bab475}
 
   '@napgram/plugin-commands@0.1.4':
-    resolution: {integrity: sha512-oqAkpNzUjbELkkzUl1oW5tqU2TmAHqL6dlOKIWNaM006YE1eVdGrDpcc68AySCnI4VgiDgBZLOosVvyLZSrN5A==}
+    resolution: {integrity: sha512-oqAkpNzUjbELkkzUl1oW5tqU2TmAHqL6dlOKIWNaM006YE1eVdGrDpcc68AySCnI4VgiDgBZLOosVvyLZSrN5A==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-commands/0.1.4/990b3f2beeeeeca3106d4dd926ca9427360f8de6}
 
   '@napgram/plugin-flags@0.1.4':
-    resolution: {integrity: sha512-Kuy1im011DmSCmNpeN1vlJ9oLl1SoWzCsDAZs9ESuKgkpzvMrVWsBlW8CXE9rv9mLIV/X+71QC3h2FM/sEx+QQ==}
+    resolution: {integrity: sha512-Kuy1im011DmSCmNpeN1vlJ9oLl1SoWzCsDAZs9ESuKgkpzvMrVWsBlW8CXE9rv9mLIV/X+71QC3h2FM/sEx+QQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-flags/0.1.4/678b4b1b40d38a303b600a6d2acbe55a8c6d4b7f}
 
   '@napgram/plugin-forward@0.1.4':
-    resolution: {integrity: sha512-Z0C6wIco8rW01BBxRluGsXXsxuOlF6SmiPXk91EWcrVUoNtj42XtAT6oEiiQCchcKk9heHlCKjKVRZGqvVEYag==}
+    resolution: {integrity: sha512-Z0C6wIco8rW01BBxRluGsXXsxuOlF6SmiPXk91EWcrVUoNtj42XtAT6oEiiQCchcKk9heHlCKjKVRZGqvVEYag==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-forward/0.1.4/862907dfbffb880e3e6b83e1e4b974448ffb57dc}
 
   '@napgram/plugin-gateway@0.1.4':
-    resolution: {integrity: sha512-uXi3gS98v/AME6FMEWjGjGPhfbt+mMT41rY2slZeYM4/PRGjzRZVnIOM2WECaWVN+zfdohk1n8j8cdGnEb8+cA==}
+    resolution: {integrity: sha512-uXi3gS98v/AME6FMEWjGjGPhfbt+mMT41rY2slZeYM4/PRGjzRZVnIOM2WECaWVN+zfdohk1n8j8cdGnEb8+cA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-gateway/0.1.4/addcce951f9ca5aa34e81fdd56fd5b4c7d8aea27}
 
   '@napgram/plugin-group-management@0.1.4':
-    resolution: {integrity: sha512-TVLXa5Ke+/DuySpGqAn8L7jFogVShRpUJctQdLhIDlzqaSS2mPUe7w0SQPuVtybseSP4IRjqwnFOipppp1SBDw==}
+    resolution: {integrity: sha512-TVLXa5Ke+/DuySpGqAn8L7jFogVShRpUJctQdLhIDlzqaSS2mPUe7w0SQPuVtybseSP4IRjqwnFOipppp1SBDw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-group-management/0.1.4/29170109600a1c27e90dd6488c79152ee5db4457}
 
   '@napgram/plugin-kit@0.1.24':
-    resolution: {integrity: sha512-1NNBgLGufu2aZ1GIYAMdyRfOSHUa32pniVKBUO22KDiGnixM0F0iqUMQeYe36aVNFwJFnPA/IRsCE7DjNW6G9g==}
+    resolution: {integrity: sha512-1NNBgLGufu2aZ1GIYAMdyRfOSHUa32pniVKBUO22KDiGnixM0F0iqUMQeYe36aVNFwJFnPA/IRsCE7DjNW6G9g==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-kit/0.1.24/77b77e131b0675b7f411260b9ae13314e81bb110}
 
   '@napgram/plugin-media@0.1.4':
-    resolution: {integrity: sha512-c1lLCJRwbkNyWDwnRQrnL94ROaUG3gbs64OBdqZ7S+KzyZMq4NMyFSFBj0aV9EI+rBlHCZl0riyH9Xz8jWDYww==}
+    resolution: {integrity: sha512-c1lLCJRwbkNyWDwnRQrnL94ROaUG3gbs64OBdqZ7S+KzyZMq4NMyFSFBj0aV9EI+rBlHCZl0riyH9Xz8jWDYww==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-media/0.1.4/6e1a6adf18620e3cfe130b64b40dd18f9d9d7233}
 
   '@napgram/plugin-monitoring@0.1.4':
-    resolution: {integrity: sha512-CyBUKvm1Kxe8GPP3p7QlvtkqBNzcDewAh1tMmDtS7zN5v4RrdDxM6I3PFnjpofIE3JLyyuHjmAaTe0EA1gqX2w==}
+    resolution: {integrity: sha512-CyBUKvm1Kxe8GPP3p7QlvtkqBNzcDewAh1tMmDtS7zN5v4RrdDxM6I3PFnjpofIE3JLyyuHjmAaTe0EA1gqX2w==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-monitoring/0.1.4/f314ed620bb862da3e3b780c314f89c08d80794e}
 
   '@napgram/plugin-notifications@0.1.4':
-    resolution: {integrity: sha512-ARUC29UQTMSMszWu+NBqQF4bw/iGn3koan/cYv9OjuHgrTWhacf3eat8ReH4As1u9GelJbUhXge8kFVmHLDZtw==}
+    resolution: {integrity: sha512-ARUC29UQTMSMszWu+NBqQF4bw/iGn3koan/cYv9OjuHgrTWhacf3eat8ReH4As1u9GelJbUhXge8kFVmHLDZtw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-notifications/0.1.4/acf54e4f22a79782498a8e1f6da62d6ad91b07e5}
 
   '@napgram/plugin-permission-management@0.1.2':
-    resolution: {integrity: sha512-Ce8CQtQUPtPz4Z2iRI8sKhNH0ggpGLAYGtBx21dD9poTOpALgp3JJ4pDu+hdhE2ENVNGg4w9jPfMPuIGtws28A==}
+    resolution: {integrity: sha512-Ce8CQtQUPtPz4Z2iRI8sKhNH0ggpGLAYGtBx21dD9poTOpALgp3JJ4pDu+hdhE2ENVNGg4w9jPfMPuIGtws28A==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-permission-management/0.1.2/db3d7b2fbc1949fff8258a42daabc75418b26d77}
 
   '@napgram/plugin-ping-pong@0.1.4':
-    resolution: {integrity: sha512-rb/MTAPWzvIKVilHltoT84xUvMf0VShGJhavRti58vXiBxyJcZ8VACxGOKKYrga/0SCchK3m3iz5sYOkYYyj0Q==}
+    resolution: {integrity: sha512-rb/MTAPWzvIKVilHltoT84xUvMf0VShGJhavRti58vXiBxyJcZ8VACxGOKKYrga/0SCchK3m3iz5sYOkYYyj0Q==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-ping-pong/0.1.4/cc04f99fa4d81d687437a75c26e493a55ed634ca}
 
   '@napgram/plugin-qq-interaction@0.1.5':
-    resolution: {integrity: sha512-CP2nk0h4Clc4Zb3cMp2GIBxlPhNMT9wng4wV8U+xEK1kYtUKSt7cPkVHLu7FzdKcC2fv/hw+8gUb5IFLevX2tQ==}
+    resolution: {integrity: sha512-CP2nk0h4Clc4Zb3cMp2GIBxlPhNMT9wng4wV8U+xEK1kYtUKSt7cPkVHLu7FzdKcC2fv/hw+8gUb5IFLevX2tQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-qq-interaction/0.1.5/2a151fca0d708bf7d1379425740779ba47e344c8}
 
   '@napgram/plugin-recall@0.1.4':
-    resolution: {integrity: sha512-hbnvs56wBXzzDRLaGuTvi1MCkPm1kPb4zmOFnSsRI7jnv8sD4HvP2qkuhqMQtbZ0azolo47NbR+q9Ja1bHfxwg==}
+    resolution: {integrity: sha512-hbnvs56wBXzzDRLaGuTvi1MCkPm1kPb4zmOFnSsRI7jnv8sD4HvP2qkuhqMQtbZ0azolo47NbR+q9Ja1bHfxwg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-recall/0.1.4/9ae6d5084b4173c1f5fbd03591928279dc04d4b5}
 
   '@napgram/plugin-refresh@0.1.4':
-    resolution: {integrity: sha512-J8Y0yCRm2WIlJPxkhsC9Xa3sCgef0j5GrOvNu6SCR2nOtdwG697SKSzuw2YYN/kIxlxksvpv4FlJmoVQt76DAA==}
+    resolution: {integrity: sha512-J8Y0yCRm2WIlJPxkhsC9Xa3sCgef0j5GrOvNu6SCR2nOtdwG697SKSzuw2YYN/kIxlxksvpv4FlJmoVQt76DAA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-refresh/0.1.4/23014880c8075de72ae598712fd0f3b4a2700785}
 
   '@napgram/plugin-request-handler@0.1.4':
-    resolution: {integrity: sha512-S51mc7hc/pxJZDL0KRHHKo8j0+MCo894IvT9FznhUzmMES4OFblnh+CcFeIO9VjfwfRQcn4g8K0uoa6nXvmaOg==}
+    resolution: {integrity: sha512-S51mc7hc/pxJZDL0KRHHKo8j0+MCo894IvT9FznhUzmMES4OFblnh+CcFeIO9VjfwfRQcn4g8K0uoa6nXvmaOg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-request-handler/0.1.4/75c85ebc0b01d9fa6cbba3b3aab633b89add16ec}
 
   '@napgram/plugin-request-management@0.1.4':
-    resolution: {integrity: sha512-ZPCcqncwrdfYtwN9nRz4vRhulo5kHzGOyBPxOpnzxbB/G/bXn9XMNb+KkSYkmrAW3jhIyW4U5JH4NMY3IjEbEw==}
+    resolution: {integrity: sha512-ZPCcqncwrdfYtwN9nRz4vRhulo5kHzGOyBPxOpnzxbB/G/bXn9XMNb+KkSYkmrAW3jhIyW4U5JH4NMY3IjEbEw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-request-management/0.1.4/ffa998e16a7f6597c531cde27084437fa974781f}
 
   '@napgram/plugin-statistics@0.1.4':
-    resolution: {integrity: sha512-fyzH5JOF/BpSUpIIGO6RvBvFwqu9JMTWeb7gOf63p7Sma7Hl2ECme6RlnVdUO1bsu6o4xTUrS4RURKnqbOwosQ==}
+    resolution: {integrity: sha512-fyzH5JOF/BpSUpIIGO6RvBvFwqu9JMTWeb7gOf63p7Sma7Hl2ECme6RlnVdUO1bsu6o4xTUrS4RURKnqbOwosQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-statistics/0.1.4/aae6d2b1068d3e169ceff65f79185d4292b2f48e}
 
   '@napgram/plugin-web-assets@0.1.4':
-    resolution: {integrity: sha512-qXZLpRKmkCli9pUcDBofSLIRzks/gIXyW2Zk71b1lETcRKnGTaHV1O00gj39oM+zqz+r7G/CTkl+57LMZQ3pOA==}
+    resolution: {integrity: sha512-qXZLpRKmkCli9pUcDBofSLIRzks/gIXyW2Zk71b1lETcRKnGTaHV1O00gj39oM+zqz+r7G/CTkl+57LMZQ3pOA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-web-assets/0.1.4/fdfb587f7b026f6c373f0cc020733c97a56293c5}
 
   '@napgram/plugin-web-console@0.1.4':
-    resolution: {integrity: sha512-LHWKn09NdNYbNudPBBD5J8AQalO2ZxbsDQFRr8A8zCDjZL+IjrvlgX0JY2h4f0iIhJ2IV0nkLzGW7MM+wiXWDQ==}
+    resolution: {integrity: sha512-LHWKn09NdNYbNudPBBD5J8AQalO2ZxbsDQFRr8A8zCDjZL+IjrvlgX0JY2h4f0iIhJ2IV0nkLzGW7MM+wiXWDQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-web-console/0.1.4/3d36b5cf8da79b9deabb3912ab620e5ba1bf7629}
 
   '@napgram/qq-client@0.1.6':
-    resolution: {integrity: sha512-R97T3nAQAEkKXxyZJ9/k6vFfsjlDkkK0R/WlqV39jNqDG3/USdrEHuci1gN12Wft0aT/EuUwJoC2h4K0p3K+fA==}
+    resolution: {integrity: sha512-R97T3nAQAEkKXxyZJ9/k6vFfsjlDkkK0R/WlqV39jNqDG3/USdrEHuci1gN12Wft0aT/EuUwJoC2h4K0p3K+fA==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/0.1.6/b2fd441e0473e188476e3d54ea9dd142a1ac57fe}
 
   '@napgram/request-kit@0.1.14':
-    resolution: {integrity: sha512-4cECxP4RgCOi6rK4yi49TYRCD+YkpsFDAYRl3Obn0aXGSvFf7IdvRiQDoDsE9y+WXxko0kIw+Th51b4DnbX0nA==}
+    resolution: {integrity: sha512-4cECxP4RgCOi6rK4yi49TYRCD+YkpsFDAYRl3Obn0aXGSvFf7IdvRiQDoDsE9y+WXxko0kIw+Th51b4DnbX0nA==, tarball: https://npm.pkg.github.com/download/@napgram/request-kit/0.1.14/413254010f3b4e055b2bfce843fc5450bc8e371f}
 
   '@napgram/runtime-kit@0.1.24':
-    resolution: {integrity: sha512-j/ZAi/gCxLSaJ4Y9ShF32F9DpS99G/F65tGtT97B/uT+UKyAMJv5dlzPwuoFaGJD8fHy8iAEqlj7rcivDAjEvw==}
+    resolution: {integrity: sha512-j/ZAi/gCxLSaJ4Y9ShF32F9DpS99G/F65tGtT97B/uT+UKyAMJv5dlzPwuoFaGJD8fHy8iAEqlj7rcivDAjEvw==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/0.1.24/23c677e16ea2b06f01f74536752927ad2d8d771a}
 
   '@napgram/sdk@0.1.21':
-    resolution: {integrity: sha512-epctOFJIPzAVF6mNJvR+10D9RlgWclnIXzCGzlxj9AuHpEF07MDsqMkDsiv8rtzT9bZ1M+BDu77PlIWb0a1rDw==}
+    resolution: {integrity: sha512-epctOFJIPzAVF6mNJvR+10D9RlgWclnIXzCGzlxj9AuHpEF07MDsqMkDsiv8rtzT9bZ1M+BDu77PlIWb0a1rDw==, tarball: https://npm.pkg.github.com/download/@napgram/sdk/0.1.21/862c79469c23448d281cc197888656be037d5131}
 
   '@napgram/telegram-client@0.1.8':
-    resolution: {integrity: sha512-wg5y08pzh7gMRL47e/00ZF6hcGRCvuh5IxQaAV3gg0C6xqmFWfCE1o3cxr/VNqVzV878ySZoifwFq64LyVF0rA==}
+    resolution: {integrity: sha512-wg5y08pzh7gMRL47e/00ZF6hcGRCvuh5IxQaAV3gg0C6xqmFWfCE1o3cxr/VNqVzV878ySZoifwFq64LyVF0rA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.1.8/5a0a226f1f50172dc19f9162b050adcfbe02ebf9}
 
   '@napgram/utils@0.1.21':
-    resolution: {integrity: sha512-rTvNNJAV282BiucQUPlpQ+RnokRjjmAQxVI6veUIEFki1NzbC1B5T5nIXRk2gKcSIlp+tPW7NUqIQe99gslizQ==}
+    resolution: {integrity: sha512-rTvNNJAV282BiucQUPlpQ+RnokRjjmAQxVI6veUIEFki1NzbC1B5T5nIXRk2gKcSIlp+tPW7NUqIQe99gslizQ==, tarball: https://npm.pkg.github.com/download/@napgram/utils/0.1.21/5ecb47a855d616442e8e1964d010b30e94b7478e}
 
   '@napgram/web-interfaces@0.2.8':
-    resolution: {integrity: sha512-CBwGdjA4gIyI4MWp0BIPRYPK8hiy8b4s+KOlbXVhqEz7rUy39XFeZpXLkDY97LOe/b1HS2OoxwR4iflye/ZVnw==}
+    resolution: {integrity: sha512-CBwGdjA4gIyI4MWp0BIPRYPK8hiy8b4s+KOlbXVhqEz7rUy39XFeZpXLkDY97LOe/b1HS2OoxwR4iflye/ZVnw==, tarball: https://npm.pkg.github.com/download/@napgram/web-interfaces/0.2.8/74a00646c51160a9aad02456297236f0bd847dd3}
 
   '@naplink/naplink@0.0.7':
     resolution: {integrity: sha512-ndZqUVrUf3OVS+DhQB44bIt6Azx1peC1CTmolxu3j5BWtJbfOrHq/NTwQY5u5frGp+CTa06CUJLfrXkPd8aAyg==}
