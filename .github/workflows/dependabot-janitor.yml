@@ -37,7 +37,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.31.0
+          version: 10.32.0
 
       - name: Janitor Logic
         uses: actions/github-script@v8
