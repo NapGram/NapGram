@@ -20,7 +20,8 @@
             "minimatch": ">=10.2.1",
             "rollup": ">=4.59.0",
             "@hono/node-server": ">=1.19.10",
-            "flatted": ">=3.4.2"
+            "flatted": ">=3.4.2",
+            "effect": ">=3.20.0"
         },
         "onlyBuiltDependencies": [
             "better-sqlite3",
