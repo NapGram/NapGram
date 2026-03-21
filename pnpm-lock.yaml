@@ -67,8 +67,8 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
       '@napgram/feature-kit':
-        specifier: ^0.2.0
-        version: 0.2.0(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
+        specifier: ^0.2.1
+        version: 0.2.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/gateway-kit':
         specifier: ^0.2.0
         version: 0.2.0(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))
@@ -846,8 +846,8 @@ packages:
   '@napgram/env-kit@0.2.0':
     resolution: {integrity: sha512-8C8qAJIj5GgjD4vYwgcrZgdyKVMGgqMehlUlhusV9qPx5L5Ow5AcANFiV6DPGn9nGZxqxgvoi2ZMOZgu+80ASg==, tarball: https://npm.pkg.github.com/download/@napgram/env-kit/0.2.0/71a0c88ae84e1039baa90287a77a2bb5e09b6d9a}
 
-  '@napgram/feature-kit@0.2.0':
-    resolution: {integrity: sha512-aE+ruQfb6G+qJqB38nIS2kTYwvpHyM9aTmSqOd19XO+tkXexUj+eECW3rSGTbs8ol/ZQipjdl122HcCQ6CaRiQ==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.2.0/3da3ffbdfedf5c560576862b8b60a6199e00937e}
+  '@napgram/feature-kit@0.2.1':
+    resolution: {integrity: sha512-Xa5xhSVSqJEMKT4MnryWp7iqko4th8vsqtbC8r2yroKHrdSHQQMJKTg9nl3/m3j4iSzhNGICMZx7p6o838NrrA==, tarball: https://npm.pkg.github.com/download/@napgram/feature-kit/0.2.1/f5d132d4cd2656de5928d9854b4951d4a002ad5d}
 
   '@napgram/gateway-kit@0.2.0':
     resolution: {integrity: sha512-+P3Rw+SKxHGpw2iGOD0496/S0Y/Ck80s5E6EgmJevSCboLAvM6BE9djSmdwUOF1LhzVOhgFzbSFkMCAmkTwevg==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.2.0/a16b68f2092013974186efd470df72c720090688}
@@ -5003,7 +5003,7 @@ snapshots:
     dependencies:
       zod: 4.3.6
 
-  '@napgram/feature-kit@0.2.0(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
+  '@napgram/feature-kit@0.2.1(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)':
     dependencies:
       '@mtcute/core': 0.29.1
       '@mtcute/markdown-parser': 0.29.1
@@ -6909,8 +6909,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.56.1(typescript@5.9.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.57.1(typescript@5.9.3)
-      '@typescript-eslint/types': 8.57.1
+      '@typescript-eslint/tsconfig-utils': 8.56.1(typescript@5.9.3)
+      '@typescript-eslint/types': 8.56.1
       debug: 4.4.3
       typescript: 5.9.3
     transitivePeerDependencies:
