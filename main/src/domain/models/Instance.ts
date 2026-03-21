@@ -1,4 +1,4 @@
-import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '@napgram/feature-kit'
+import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '../../features/runtime/index.js'
 import type { AppLogger } from '@napgram/infra-kit'
 import type { IQQClient } from '../../infrastructure/clients/qq'
 import type Telegram from '../../infrastructure/clients/telegram/client'
