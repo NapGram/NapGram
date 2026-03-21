@@ -9,10 +9,7 @@ import type { MessageSegment } from '../../shared-types.js'
 import type { CommandsFeature } from '../commands/CommandsFeature.js'
 import type { MediaFeature } from '../MediaFeature.js'
 import { messageConverter } from '@napgram/message-kit'
-import { db, env, schema, eq } from '@napgram/infra-kit'
-import { performanceMonitor } from '../../shared-types.js'
-import { getEventPublisher } from '../../shared-types.js'
-import { getLogger } from '@napgram/infra-kit'
+import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor.js'
 import { MediaGroupHandler } from './handlers/MediaGroupHandler.js'
 import { TelegramMessageHandler } from './handlers/TelegramMessageHandler.js'
@@ -525,7 +522,7 @@ export class ForwardFeature {
 
       // Sender Blocklist Filter
       if (pair.ignoreSenders) {
-        const senders = pair.ignoreSenders.split(',').map(s => s.trim())
+        const senders = pair.ignoreSenders.split(',').map((s: string) => s.trim())
         // Check if current sender is in the blocklist
         // Provide fallback for msg.sender.id (though it should exist)
         const senderId = String(msg.sender?.id || '')

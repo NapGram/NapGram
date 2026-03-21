@@ -1,6 +1,8 @@
-import { env, getLogger, temp } from '@napgram/infra-kit'
+import { env } from '@napgram/env-kit'
+import { getLogger } from '@napgram/logger-kit'
 import { configureTelegramClient } from '@napgram/telegram-client'
 import TelegramSession from '../../../domain/models/TelegramSession'
+import * as temp from '../../temp'
 
 configureTelegramClient({
   env,

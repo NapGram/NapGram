@@ -1,5 +1,5 @@
 import type { Instance } from '../../../shared-types.js'
-import { env } from '@napgram/infra-kit'
+import { env } from '../../../shared-types.js'
 
 /**
  * 权限检查服务

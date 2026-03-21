@@ -3,45 +3,67 @@ import path from 'node:path'
 import process from 'node:process'
 import { beforeAll, vi } from 'vitest'
 
-vi.mock('@napgram/infra-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@napgram/infra-kit')>()
-  return {
-    ...actual,
-    env: {
-      DATA_DIR: '/tmp',
-      CACHE_DIR: '/tmp/cache',
-      TG_INITIAL_DCID: 2,
-      TG_INITIAL_SERVER: '149.154.167.50',
-      NAPCAT_WS_URL: 'ws://localhost:3000',
-      TG_BOT_TOKEN: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
-      LOG_LEVEL: 'info',
+const mockedLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), trace: vi.fn() }
+
+vi.mock('@napgram/env-kit', () => ({
+  env: {
+    DATA_DIR: '/tmp',
+    CACHE_DIR: '/tmp/cache',
+    TG_INITIAL_DCID: 2,
+    TG_INITIAL_SERVER: '149.154.167.50',
+    NAPCAT_WS_URL: 'ws://localhost:3000',
+    TG_BOT_TOKEN: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
+    LOG_LEVEL: 'info',
+  },
+  flags: {},
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => mockedLogger),
+  setConsoleLogLevel: vi.fn(),
+  configureInfraKit: vi.fn(),
+  sentry: { captureException: vi.fn() },
+}))
+
+vi.mock('@napgram/db-kit', () => ({
+  db: {
+    session: { create: vi.fn(), findFirst: vi.fn(), upsert: vi.fn() },
+    instance: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn(), upsert: vi.fn() },
+    forwardPair: { findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    forwardMultiple: { findFirst: vi.fn(), create: vi.fn() },
+    query: {
+      adminUser: { findMany: vi.fn(), findFirst: vi.fn() },
+      adminSession: { findFirst: vi.fn() },
     },
-    getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), trace: vi.fn() })),
-    db: {
-      session: { create: vi.fn(), findFirst: vi.fn(), upsert: vi.fn() },
-      instance: { create: vi.fn(), findFirst: vi.fn(), update: vi.fn(), upsert: vi.fn() },
-      forwardPair: { findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-      forwardMultiple: { findFirst: vi.fn(), create: vi.fn() },
-    },
-    // We don't partial mock temp/hashing/qface if actual has them, but actual might rely on db/env.
-    // If we want to force our mocks for these:
-    temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
-    // hashing: actual.hashing, // Use real hashing if possible, or mock it. Real is safer if no dependencies.
-    hashing: { md5Hex: vi.fn((s: string) => `hashed-${s}`), md5: vi.fn((s: string) => `hashed-${s}`) },
-    sentry: { captureException: vi.fn() },
-    ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
-    // qface: actual.qface, // Use real qface
-    qface: {
-      1: '/撇嘴',
-      14: '/微笑',
-      179: '/doge',
-      100: 'mock',
-    },
-    DurationParser: class {
-      static parse(_s: string) { return 1000 }
-    },
-  }
-})
+    select: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  drizzleDb: {
+    select: vi.fn(),
+    insert: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    execute: vi.fn(),
+  },
+  schema: {},
+  eq: vi.fn(),
+  and: vi.fn(),
+  or: vi.fn(),
+  lt: vi.fn(),
+  lte: vi.fn(),
+  gt: vi.fn(),
+  gte: vi.fn(),
+  like: vi.fn(),
+  inArray: vi.fn(),
+  isNull: vi.fn(),
+  isNotNull: vi.fn(),
+  desc: vi.fn(),
+  sql: Object.assign(vi.fn(), { raw: vi.fn() }),
+  count: vi.fn(),
+  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
+}))
 
 // 在测试开始前确保所有需要的目录存在
 beforeAll(() => {

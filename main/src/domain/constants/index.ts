@@ -1,2 +1,3 @@
 export * from './flags'
-export { qface as qfaceMap } from '@napgram/infra-kit'
+export { default as qface } from './qface'
+export { default as qfaceMap } from './qface'

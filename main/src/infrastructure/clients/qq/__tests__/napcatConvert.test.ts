@@ -7,16 +7,10 @@ const { mockWarn } = vi.hoisted(() => {
   return { mockWarn: vi.fn() }
 })
 
-vi.mock('@napgram/infra-kit', () => ({
-  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: () => ({
     warn: mockWarn,
   }),
-  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
-  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
-  sentry: { captureException: vi.fn() },
-  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
-  qface: { 14: '/微笑' },
 }))
 
 describe('napCatForwardMultiple', () => {

@@ -1,7 +1,8 @@
 import cookie from '@fastify/cookie'
 import Fastify, { type FastifyInstance } from 'fastify'
-import { env, getLogger } from '@napgram/infra-kit'
-import { fileManagerRoutes } from '@napgram/web-interfaces'
+import { env } from '@napgram/env-kit'
+import { getLogger } from '@napgram/logger-kit'
+import fileManagerRoutes from './routes/fileManager.js'
 
 const log = getLogger('Web Api')
 const registeredWebPlugins = new Set<string>()

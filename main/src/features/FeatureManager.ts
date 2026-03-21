@@ -1,5 +1,5 @@
 import { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from './runtime/index.js'
-import { getLogger } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/logger-kit'
 import type Instance from '../domain/models/Instance'
 import type { IQQClient } from '../infrastructure/clients/qq'
 import type Telegram from '../infrastructure/clients/telegram/client'

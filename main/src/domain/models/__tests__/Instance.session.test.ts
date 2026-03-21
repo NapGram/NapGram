@@ -1,4 +1,4 @@
-import { db } from '@napgram/infra-kit'
+import { db } from '@napgram/db-kit'
 import { describe, expect, it, vi } from 'vitest'
 import Instance from '../Instance'
 
@@ -16,7 +16,17 @@ const { mockUpdate, mockInsert } = vi.hoisted(() => ({
   })),
 }))
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/env-kit', () => ({
+  env: {
+    TG_BOT_TOKEN: 'fake-token',
+    NAPCAT_WS_URL: 'ws://fake',
+    LOG_FILE: '/tmp/test.log',
+    DATA_DIR: '/tmp/data',
+    CACHE_DIR: '/tmp/cache',
+  },
+}))
+
+vi.mock('@napgram/db-kit', () => ({
   db: {
     query: {
       instance: {
@@ -28,13 +38,12 @@ vi.mock('@napgram/infra-kit', () => ({
   },
   schema: { instance: { id: 'id' } },
   eq: vi.fn(),
-  env: {
-    TG_BOT_TOKEN: 'fake-token',
-    NAPCAT_WS_URL: 'ws://fake',
-    LOG_FILE: '/tmp/test.log',
-    DATA_DIR: '/tmp/data',
-    CACHE_DIR: '/tmp/cache',
+  ForwardMap: {
+    load: vi.fn().mockResolvedValue({ map: true }),
   },
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => ({
     info: vi.fn(),
     debug: vi.fn(),
@@ -42,9 +51,6 @@ vi.mock('@napgram/infra-kit', () => ({
     warn: vi.fn(),
     trace: vi.fn(),
   })),
-  ForwardMap: {
-    load: vi.fn().mockResolvedValue({ map: true }),
-  },
   sentry: {
     captureException: vi.fn(),
   },
@@ -67,8 +73,8 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
   },
 }))
 
-vi.mock('@napgram/runtime-kit', () => ({
-  InstanceRegistry: {
+vi.mock('../../../features/runtime/instance-registry', () => ({
+  instanceRegistry: {
     add: vi.fn(),
     remove: vi.fn(),
   },

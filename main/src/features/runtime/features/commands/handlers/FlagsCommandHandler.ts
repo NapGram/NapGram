@@ -1,7 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { CommandContext } from './CommandContext.js'
-import { db, sql } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { db, getLogger, sql } from '../../../shared-types.js'
 
 const logger = getLogger('FlagsCommandHandler')
 

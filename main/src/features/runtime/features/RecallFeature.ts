@@ -2,9 +2,7 @@ import type { RecallEvent } from '@napgram/message-kit'
 import type { Instance } from '../shared-types.js'
 import type { IQQClient } from '../shared-types.js'
 import type { Telegram } from '../shared-types.js'
-import { db, schema, eq, and } from '@napgram/infra-kit'
-import { env } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { and, db, env, eq, getLogger, schema } from '../shared-types.js'
 
 const logger = getLogger('RecallFeature')
 

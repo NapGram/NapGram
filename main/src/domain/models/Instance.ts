@@ -1,11 +1,13 @@
 import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '../../features/runtime/index.js'
-import type { AppLogger } from '@napgram/infra-kit'
+import type { AppLogger } from '@napgram/logger-kit'
 import type { IQQClient } from '../../infrastructure/clients/qq'
 import type Telegram from '../../infrastructure/clients/telegram/client'
-import { db, env, eq, ForwardMap, getLogger, schema, sentry } from '@napgram/infra-kit'
+import { db, eq, ForwardMap, schema } from '@napgram/db-kit'
+import { env } from '@napgram/env-kit'
+import { getLogger, sentry } from '@napgram/logger-kit'
 import { getEventPublisher } from '@napgram/plugin-kit'
-import { InstanceRegistry } from '@napgram/runtime-kit'
 import { FeatureManager } from '../../features/FeatureManager'
+import { instanceRegistry } from '../../features/runtime/instance-registry'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
 
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
@@ -434,14 +436,14 @@ export default class Instance {
 
   public static async start(instanceId: number, botToken?: string) {
     const instance = new this(instanceId)
-    InstanceRegistry.add(instance as any)
+    instanceRegistry.add(instance as any)
     try {
       await instance.login(botToken)
       return instance
     }
     catch (error) {
       await instance.disposeRuntimeResources()
-      InstanceRegistry.remove(instanceId)
+      instanceRegistry.remove(instanceId)
       throw error
     }
   }
@@ -457,7 +459,7 @@ export default class Instance {
 
     await this.disposeRuntimeResources()
     this.status = 'stopped'
-    InstanceRegistry.remove(this.id)
+    instanceRegistry.remove(this.id)
 
     try {
       getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopped' })

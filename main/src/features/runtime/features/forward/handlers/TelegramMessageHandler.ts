@@ -4,8 +4,7 @@ import type { IQQClient } from '../../../shared-types.js'
 import type { ReplyResolver } from '../services/ReplyResolver.js'
 import type { MediaGroupHandler } from './MediaGroupHandler.js'
 import { messageConverter } from '@napgram/message-kit'
-import { db, performanceMonitor, schema } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { db, getLogger, performanceMonitor, schema } from '../../../shared-types.js'
 
 const logger = getLogger('ForwardFeature')
 

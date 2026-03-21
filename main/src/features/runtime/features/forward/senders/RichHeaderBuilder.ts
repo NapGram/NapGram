@@ -1,7 +1,6 @@
 import type { InputText } from '@mtcute/core'
 import { html } from '@mtcute/node'
-import { env } from '@napgram/infra-kit'
-import { md5Hex } from '../../../shared-types.js'
+import { env, md5Hex } from '../../../shared-types.js'
 
 /**
  * Rich Header URL generation and formatting

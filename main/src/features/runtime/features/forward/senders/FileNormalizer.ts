@@ -8,8 +8,7 @@ import { Readable } from 'node:stream'
 import { fileTypeFromBuffer } from 'file-type'
 import { decode, encode } from 'image-js'
 import { convertWithFfmpeg } from '@napgram/media-kit'
-import { temp } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { getLogger, temp } from '../../../shared-types.js'
 
 export interface NormalizedFile {
   fileName: string

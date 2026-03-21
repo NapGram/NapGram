@@ -7,9 +7,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
 import { fileTypeFromBuffer } from 'file-type'
-import { env } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
-import { silk } from '../../../shared-types.js'
+import { env, getLogger, silk } from '../../../shared-types.js'
 import { renderContent } from '../utils/render.js'
 
 const execFileAsync = promisify(execFile)

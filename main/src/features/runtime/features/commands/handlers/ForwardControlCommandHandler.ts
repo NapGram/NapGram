@@ -1,8 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap } from '../../../shared-types.js'
 import type { CommandContext } from './CommandContext.js'
-import { db, schema, eq } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { db, eq, getLogger, schema } from '../../../shared-types.js'
 
 const logger = getLogger('ForwardControlCommandHandler')
 

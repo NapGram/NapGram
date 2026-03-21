@@ -2,8 +2,7 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { Instance } from '../../../shared-types.js'
 import type { IQQClient } from '../../../shared-types.js'
 import type { Telegram } from '../../../shared-types.js'
-import { env } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { env, getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('MessageUtils')
 

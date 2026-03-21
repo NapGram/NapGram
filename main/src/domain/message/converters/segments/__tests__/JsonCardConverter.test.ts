@@ -1,5 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest'
-import { env, setConsoleLogLevel } from '@napgram/infra-kit'
+import { env } from '@napgram/env-kit'
+import { setConsoleLogLevel } from '@napgram/logger-kit'
 import { JsonCardConverter } from '../JsonCardConverter'
 
 const originalLogLevel = env.LOG_LEVEL
