@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardModeService } from '../services/ForwardModeService.js'
-import { getLogger } from '@napgram/infra-kit'
+import { getLogger } from '../../../shared-types.js'
 import { ThreadIdExtractor } from '../../commands/services/ThreadIdExtractor.js'
 
 const logger = getLogger('ModeCommandHandler')

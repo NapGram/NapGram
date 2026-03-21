@@ -114,18 +114,18 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   }
 })
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/env-kit', () => ({
   env: envMock,
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => loggerMocks),
-  temp: {
-    TEMP_PATH: '/tmp/napgram-temp',
-    file: vi.fn(),
-    createTempFile: vi.fn(),
-  },
-  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
-  sentry: { captureException: vi.fn() },
-  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
-  qface: { 14: '/微笑' },
+}))
+
+vi.mock('../../../temp', () => ({
+  TEMP_PATH: '/tmp/napgram-temp',
+  file: vi.fn(),
+  createTempFile: vi.fn(),
 }))
 
 vi.mock('@mtcute/core', () => ({

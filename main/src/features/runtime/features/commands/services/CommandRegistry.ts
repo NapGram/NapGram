@@ -1,4 +1,4 @@
-import { getLogger } from '@napgram/infra-kit'
+import { getLogger } from '../../../shared-types.js'
 import type { Command } from '../types.js'
 
 const logger = getLogger('CommandRegistry')

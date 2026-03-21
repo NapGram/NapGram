@@ -147,17 +147,8 @@ const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstr
   }
 })
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => mockLogger),
-  temp: {
-    TEMP_PATH: '/tmp/napgram',
-    file: vi.fn(),
-    createTempFile: vi.fn(),
-  },
-  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
-  sentry: { captureException: vi.fn() },
-  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
-  qface: { 14: '/微笑' },
 }))
 
 vi.mock('../../../../domain/message/converter', () => ({

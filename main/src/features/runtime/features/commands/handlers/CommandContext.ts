@@ -6,8 +6,7 @@ import type { Telegram } from '../../../shared-types.js'
 import type { CommandRegistry } from '../services/CommandRegistry.js'
 import type { InteractiveStateManager } from '../services/InteractiveStateManager.js'
 import type { PermissionChecker } from '../services/PermissionChecker.js'
-import { env } from '@napgram/infra-kit'
-import { getLogger } from '@napgram/infra-kit'
+import { env, getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('CommandContext')
 

@@ -5,8 +5,7 @@ import type { TelegramSender } from '../senders/TelegramSender.js'
 import type { ForwardModeService } from '../services/ForwardModeService.js'
 import type { ForwardMapper } from '../services/MessageMapper.js'
 import type { ReplyResolver } from '../services/ReplyResolver.js'
-import { getEventPublisher } from '../../../shared-types.js'
-import { getLogger } from '@napgram/infra-kit'
+import { getEventPublisher, getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('QQMessageHandler')
 

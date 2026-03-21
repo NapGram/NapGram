@@ -7,8 +7,7 @@ import { Buffer } from 'node:buffer'
 import fsP from 'node:fs/promises'
 import { fileTypeFromBuffer } from 'file-type'
 import { decode, encode, Image as ImageJS } from 'image-js'
-import { getLogger } from '@napgram/infra-kit'
-import { temp } from '@napgram/infra-kit'
+import { getLogger, temp } from '../shared-types.js'
 
 const logger = getLogger('MediaFeature')
 

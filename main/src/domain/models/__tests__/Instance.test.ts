@@ -121,27 +121,22 @@ const qqMocks = vi.hoisted(() => {
   return { handlers, client, factory }
 })
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/env-kit', () => ({
   env: envMock,
+}))
+
+vi.mock('@napgram/db-kit', () => ({
   db: dbMocks,
   schema: schemaMocks,
   eq: eqMock,
-  getLogger: vi.fn(() => loggerMocks),
-  temp: {
-    TEMP_PATH: '/tmp/napgram',
-    file: vi.fn(),
-    createTempFile: vi.fn(),
-  },
-  hashing: {
-    md5Hex: vi.fn(s => `hashed-${s}`),
-  },
-  qface: {
-    14: '/微笑',
-  },
-  sentry: sentryMocks,
   ForwardMap: {
     load: vi.fn().mockResolvedValue({ map: true }),
   },
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => loggerMocks),
+  sentry: sentryMocks,
 }))
 
 vi.mock('../sentry', () => ({
@@ -182,8 +177,8 @@ const instanceRegistryMocks = vi.hoisted(() => ({
   get: vi.fn(),
 }))
 
-vi.mock('@napgram/runtime-kit', () => ({
-  InstanceRegistry: instanceRegistryMocks,
+vi.mock('../../../features/runtime/instance-registry', () => ({
+  instanceRegistry: instanceRegistryMocks,
 }))
 
 describe('instance', () => {

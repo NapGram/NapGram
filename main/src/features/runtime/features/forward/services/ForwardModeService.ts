@@ -1,5 +1,5 @@
 import type { ForwardMode, NicknameMode } from '../types.js'
-import { env } from '@napgram/infra-kit'
+import { env } from '../../../shared-types.js'
 
 /**
  * 转发模式管理服务

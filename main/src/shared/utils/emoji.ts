@@ -1,4 +1,4 @@
-import { random } from '@napgram/infra-kit'
+import random from './random'
 
 export default {
   picture: () => random.pick('🎆', '🌃', '🌇', '🎇', '🌌', '🌠', '🌅', '🌉', '🏞', '🌆', '🌄', '🖼', '🗾', '🎑', '🏙', '🌁'),

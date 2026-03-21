@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events'
-import { getLogger } from '@napgram/infra-kit'
+import { getLogger } from '@napgram/logger-kit'
 
 const logger = getLogger('ReconnectingWS')
 

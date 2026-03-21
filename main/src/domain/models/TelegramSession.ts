@@ -1,6 +1,8 @@
-import type { AppLogger } from '@napgram/infra-kit'
+import type { AppLogger } from '@napgram/logger-kit'
 import { Buffer } from 'node:buffer'
-import { db, env, eq, getLogger, schema } from '@napgram/infra-kit'
+import { db, eq, schema } from '@napgram/db-kit'
+import { env } from '@napgram/env-kit'
+import { getLogger } from '@napgram/logger-kit'
 
 export default class TelegramSession {
   private log: AppLogger

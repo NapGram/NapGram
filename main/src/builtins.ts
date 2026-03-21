@@ -1,4 +1,4 @@
-import { env } from '@napgram/infra-kit'
+import { env } from '@napgram/env-kit'
 
 // 使用动态导入避免打包时的路径问题
 const builtinQqNapcatAdapter = () => import('@napgram/plugin-adapter-qq-napcat')

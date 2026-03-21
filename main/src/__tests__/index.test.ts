@@ -8,7 +8,7 @@ const loggerMocks = vi.hoisted(() => ({
   debug: vi.fn(),
 }))
 
-const infraMocks = vi.hoisted(() => ({
+const dbKitMocks = vi.hoisted(() => ({
   db: {
     query: {
       instance: {
@@ -16,6 +16,9 @@ const infraMocks = vi.hoisted(() => ({
       },
     },
   },
+}))
+
+const envKitMocks = vi.hoisted(() => ({
   env: {
     FORWARD_MODE: '11',
     SHOW_NICKNAME_MODE: '11',
@@ -30,19 +33,28 @@ const infraMocks = vi.hoisted(() => ({
     PROXY_PORT: '',
     ADMIN_TOKEN: 'admin-token',
   },
+}))
+
+const loggerKitMocks = vi.hoisted(() => ({
   getLogger: vi.fn(() => loggerMocks),
+  sentry: {
+    init: vi.fn(),
+    captureException: vi.fn(),
+  },
+}))
+
+const performanceMonitorMocks = vi.hoisted(() => ({
   performanceMonitor: {
     getStats: vi.fn(() => ({
       totalMessages: 0,
       errorRate: 0,
     })),
   },
-  random: {
+}))
+
+const randomMocks = vi.hoisted(() => ({
+  default: {
     hex: vi.fn(() => 'generated-admin-token'),
-  },
-  sentry: {
-    init: vi.fn(),
-    captureException: vi.fn(),
   },
 }))
 
@@ -52,8 +64,8 @@ const pluginRuntimeMocks = vi.hoisted(() => ({
   setInstanceResolvers: vi.fn(),
 }))
 
-const runtimeKitMocks = vi.hoisted(() => ({
-  InstanceRegistry: {
+const runtimeRegistryMocks = vi.hoisted(() => ({
+  instanceRegistry: {
     getById: vi.fn(),
     getAll: vi.fn(() => []),
   },
@@ -79,11 +91,13 @@ const instanceMocks = vi.hoisted(() => ({
   start: vi.fn(),
 }))
 
-vi.mock('@napgram/infra-kit', () => infraMocks)
+vi.mock('@napgram/db-kit', () => dbKitMocks)
+vi.mock('@napgram/env-kit', () => envKitMocks)
+vi.mock('@napgram/logger-kit', () => loggerKitMocks)
 vi.mock('@napgram/plugin-kit', () => ({
   PluginRuntime: pluginRuntimeMocks,
 }))
-vi.mock('@napgram/runtime-kit', () => runtimeKitMocks)
+vi.mock('../features/runtime/instance-registry', () => runtimeRegistryMocks)
 vi.mock('@sentry/node', () => sentryNodeMocks)
 vi.mock('../builtins', () => ({
   builtins: [{ id: 'builtin-test' }],
@@ -92,6 +106,8 @@ vi.mock('../interfaces', () => interfaceMocks)
 vi.mock('../domain/models/Instance', () => ({
   default: instanceMocks,
 }))
+vi.mock('../infrastructure/services/PerformanceMonitor', () => performanceMonitorMocks)
+vi.mock('../shared/utils/random', () => randomMocks)
 
 function createInstance(id: number) {
   return {
@@ -125,9 +141,11 @@ describe('main startup flow', () => {
       return process
     }) as any)
     vi.spyOn(process, 'exit').mockImplementation((() => undefined as never))
-    vi.spyOn(globalThis, 'setInterval').mockImplementation((() => 0 as any))
+    vi.spyOn(globalThis, 'setInterval').mockImplementation((() => ({
+      unref: vi.fn(),
+    }) as any))
 
-    infraMocks.db.query.instance.findMany.mockResolvedValue([])
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([])
     pluginRuntimeMocks.start.mockResolvedValue(undefined)
     pluginRuntimeMocks.stop.mockResolvedValue(undefined)
     interfaceMocks.startServer.mockResolvedValue(interfaceMocks.app)
@@ -145,7 +163,7 @@ describe('main startup flow', () => {
   it('starts all instances successfully without exiting', async () => {
     const instanceA = createInstance(1)
     const instanceB = createInstance(2)
-    infraMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }])
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }])
     instanceMocks.start
       .mockResolvedValueOnce(instanceA)
       .mockResolvedValueOnce(instanceB)
@@ -166,7 +184,7 @@ describe('main startup flow', () => {
 
   it('keeps the app running when some instances fail to start', async () => {
     const instance = createInstance(1)
-    infraMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }])
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }])
     instanceMocks.start
       .mockResolvedValueOnce(instance)
       .mockRejectedValueOnce(new Error('instance-2 failed'))
@@ -192,7 +210,7 @@ describe('main startup flow', () => {
   })
 
   it('shuts down with a non-zero exit code when all instances fail', async () => {
-    infraMocks.db.query.instance.findMany.mockResolvedValue([{ id: 9 }])
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 9 }])
     instanceMocks.start.mockRejectedValue(new Error('all failed'))
 
     const { main } = await import('../index')
@@ -206,7 +224,7 @@ describe('main startup flow', () => {
 
   it('handles SIGTERM with ordered shutdown of running instances', async () => {
     const instance = createInstance(7)
-    infraMocks.db.query.instance.findMany.mockResolvedValue([{ id: 7 }])
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 7 }])
     instanceMocks.start.mockResolvedValue(instance)
 
     const { main } = await import('../index')

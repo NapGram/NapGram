@@ -24,7 +24,17 @@ const { mockInstance, mockUpdate, mockInsert } = vi.hoisted(() => ({
   })),
 }))
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/env-kit', () => ({
+  env: {
+    TG_BOT_TOKEN: 'fake-token',
+    NAPCAT_WS_URL: 'ws://fake',
+    LOG_FILE: '/tmp/test.log',
+    DATA_DIR: '/tmp/data',
+    CACHE_DIR: '/tmp/cache',
+  },
+}))
+
+vi.mock('@napgram/db-kit', () => ({
   db: {
     query: {
       instance: {
@@ -36,13 +46,12 @@ vi.mock('@napgram/infra-kit', () => ({
   },
   schema: { instance: { id: 'id' } },
   eq: vi.fn(),
-  env: {
-    TG_BOT_TOKEN: 'fake-token',
-    NAPCAT_WS_URL: 'ws://fake',
-    LOG_FILE: '/tmp/test.log',
-    DATA_DIR: '/tmp/data', // Added
-    CACHE_DIR: '/tmp/cache', // Added
+  ForwardMap: {
+    load: vi.fn().mockResolvedValue({ map: true }),
   },
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => ({
     info: vi.fn(),
     debug: vi.fn(),
@@ -50,19 +59,8 @@ vi.mock('@napgram/infra-kit', () => ({
     warn: vi.fn(),
     trace: vi.fn(),
   })),
-  temp: {
-    TEMP_PATH: '/tmp/napgram',
-    file: vi.fn(),
-    createTempFile: vi.fn(),
-  },
-  hashing: {
-    md5Hex: vi.fn(s => `hashed-${s}`),
-  },
   sentry: {
     captureException: vi.fn(),
-  },
-  ForwardMap: {
-    load: vi.fn().mockResolvedValue({ map: true }),
   },
 }))
 
@@ -84,13 +82,11 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
   },
 }))
 
-vi.mock('@napgram/runtime-kit', () => ({
-  InstanceRegistry: {
+vi.mock('../../../features/runtime/instance-registry', () => ({
+  instanceRegistry: {
     add: vi.fn(),
     remove: vi.fn(),
   },
-  setGlobalRuntime: vi.fn(),
-
 }))
 
 vi.mock('@napgram/plugin-kit', () => ({

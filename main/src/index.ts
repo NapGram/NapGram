@@ -1,11 +1,15 @@
 import process from 'node:process'
 import * as Sentry from '@sentry/node'
-import { db, env, getLogger, performanceMonitor, random, sentry } from '@napgram/infra-kit'
+import { db } from '@napgram/db-kit'
+import { env } from '@napgram/env-kit'
+import { getLogger, sentry } from '@napgram/logger-kit'
 import { PluginRuntime } from '@napgram/plugin-kit'
-import { InstanceRegistry } from '@napgram/runtime-kit'
 import { builtins } from './builtins'
 import Instance from './domain/models/Instance'
+import { instanceRegistry } from './features/runtime/instance-registry'
+import { performanceMonitor } from './infrastructure/services/PerformanceMonitor'
 import { createServer, registerWebRoutes, startServer, stopServer } from './interfaces'
+import random from './shared/utils/random'
 
 function maskProxyUrl(rawUrl: string) {
   try {
@@ -204,8 +208,8 @@ export async function main() {
   const targets = instanceEntries.length ? instanceEntries.map(entry => entry.id) : [0]
 
   PluginRuntime.setInstanceResolvers(
-    id => InstanceRegistry.getById(id) as any,
-    () => InstanceRegistry.getAll() as any,
+    id => instanceRegistry.getById(id) as any,
+    () => instanceRegistry.getAll() as any,
   )
 
   await PluginRuntime.start({ defaultInstances: targets, webRoutes: registerWebRoutes, builtins })

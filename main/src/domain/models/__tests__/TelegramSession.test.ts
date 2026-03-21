@@ -57,17 +57,18 @@ const loggerMocks = vi.hoisted(() => ({
   warn: vi.fn(),
 }))
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/env-kit', () => ({
   env: envMock,
+}))
+
+vi.mock('@napgram/db-kit', () => ({
   db: dbMocks,
   schema: schemaMocks,
   eq: eqMock,
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => loggerMocks),
-  hashing: { md5Hex: vi.fn(s => `hashed-${s}`) },
-  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
-  sentry: { captureException: vi.fn() },
-  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
-  qface: { 14: '/微笑' },
 }))
 
 describe('telegramSession', () => {

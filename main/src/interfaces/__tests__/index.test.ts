@@ -8,14 +8,18 @@ const logger = vi.hoisted(() => ({
   debug: vi.fn(),
 }))
 
-vi.mock('@napgram/infra-kit', () => ({
+vi.mock('@napgram/env-kit', () => ({
   env: {
     LISTEN_PORT: 8080,
   },
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => logger),
 }))
 
-vi.mock('@napgram/web-interfaces', () => ({
+vi.mock('../routes/fileManager', () => ({
+  default: fileManagerRoutes,
   fileManagerRoutes,
 }))
 
