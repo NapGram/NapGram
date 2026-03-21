@@ -11,6 +11,7 @@ import { qqClientFactory } from '../../infrastructure/clients/qq'
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 
 export type WorkMode = 'personal' | 'group' | 'public'
+export type InstanceLifecycleStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
 
 export default class Instance {
   private _owner = 0
@@ -31,6 +32,7 @@ export default class Instance {
   public forwardFeature?: ForwardFeature
   private featureManager?: FeatureManager
   public isInit = false
+  public status: InstanceLifecycleStatus = 'stopped'
   private initPromise?: Promise<void>
   public eventPublisher?: { publishMessageCreated: (...args: any[]) => Promise<void> }
 
@@ -103,6 +105,7 @@ export default class Instance {
       return this.initPromise
 
     this.initPromise = (async () => {
+      this.status = 'starting'
       this.log.debug('TG Bot 正在登录')
       const token = botToken ?? env.TG_BOT_TOKEN
       if (this.botSessionId) {
@@ -289,6 +292,7 @@ export default class Instance {
       this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient)
       await this.featureManager.initialize()
       this.log.info('FeatureManager ✓ 初始化完成')
+      this.status = 'running'
       try {
         getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
       }
@@ -372,11 +376,55 @@ export default class Instance {
     this.initPromise
       .then(() => this.log.info('Instance ✓ 初始化完成'))
       .catch((err) => {
+        this.status = 'error'
         this.log.error('初始化失败', err)
+        try {
+          getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'error', error: err as Error })
+        }
+        catch (publishError) {
+          this.log.warn('Failed to publish instance error status:', publishError)
+        }
         sentry.captureException(err, { stage: 'instance-init', instanceId: this.id })
       })
 
     return this.initPromise
+  }
+
+  private async disposeRuntimeResources() {
+    try {
+      await this.featureManager?.destroy()
+    }
+    catch (error) {
+      this.log.warn('Failed to destroy feature manager during cleanup:', error)
+    }
+    finally {
+      this.featureManager = undefined
+      this.mediaFeature = undefined
+      this.commandsFeature = undefined
+      this.forwardFeature = undefined
+      this.recallFeature = undefined
+    }
+
+    try {
+      await (this.qqClient as any)?.logout?.()
+    }
+    catch (error) {
+      this.log.warn('Failed to disconnect QQ client during cleanup:', error)
+    }
+    finally {
+      this.qqClient = undefined
+    }
+
+    try {
+      await (this.tgBot as any)?.disconnect?.()
+    }
+    catch (error) {
+      this.log.warn('Failed to disconnect Telegram client during cleanup:', error)
+    }
+
+    this.isSetup = false
+    this.isInit = false
+    this.initPromise = undefined
   }
 
   public async login(botToken?: string) {
@@ -387,8 +435,36 @@ export default class Instance {
   public static async start(instanceId: number, botToken?: string) {
     const instance = new this(instanceId)
     InstanceRegistry.add(instance as any)
-    await instance.login(botToken)
-    return instance
+    try {
+      await instance.login(botToken)
+      return instance
+    }
+    catch (error) {
+      await instance.disposeRuntimeResources()
+      InstanceRegistry.remove(instanceId)
+      throw error
+    }
+  }
+
+  public async stop() {
+    this.status = 'stopping'
+    try {
+      getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopping' })
+    }
+    catch (error) {
+      this.log.warn('Failed to publish instance stopping status:', error)
+    }
+
+    await this.disposeRuntimeResources()
+    this.status = 'stopped'
+    InstanceRegistry.remove(this.id)
+
+    try {
+      getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopped' })
+    }
+    catch (error) {
+      this.log.warn('Failed to publish instance stopped status:', error)
+    }
   }
 
   public static async createNew(botToken: string) {

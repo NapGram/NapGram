@@ -5,7 +5,7 @@ import { PluginRuntime } from '@napgram/plugin-kit'
 import { InstanceRegistry } from '@napgram/runtime-kit'
 import { builtins } from './builtins'
 import Instance from './domain/models/Instance'
-import api, { registerWebRoutes } from './interfaces'
+import { createServer, registerWebRoutes, startServer, stopServer } from './interfaces'
 
 function maskProxyUrl(rawUrl: string) {
   try {
@@ -77,10 +77,60 @@ function isTransientConnectionError(message: string): boolean {
   ].some(pattern => pattern.test(message))
 }
 
-(async () => {
+export async function main() {
   const log = getLogger('Main')
+  const app = createServer()
+  const activeInstances = new Map<number, Instance>()
+  let shuttingDown = false
 
-  // 打印环境变量配置（仅在启动时打印一次）
+  const shutdown = async (reason: string, exitCode = 0) => {
+    if (shuttingDown) {
+      return
+    }
+    shuttingDown = true
+
+    log.info({ reason }, 'Shutting down NapGram')
+
+    try {
+      await stopServer()
+    }
+    catch (error) {
+      log.error({ error }, 'Failed to stop web server')
+    }
+
+    try {
+      await PluginRuntime.stop()
+    }
+    catch (error) {
+      log.error({ error }, 'Failed to stop plugin runtime')
+    }
+
+    for (const instance of activeInstances.values()) {
+      try {
+        await instance.stop()
+      }
+      catch (error) {
+        log.error({ error, instanceId: instance.id }, 'Failed to stop instance')
+      }
+    }
+
+    try {
+      await Sentry.flush(3_000)
+    }
+    catch (error) {
+      log.error({ error }, 'Failed to flush Sentry')
+    }
+
+    process.exit(exitCode)
+  }
+
+  process.on('SIGINT', () => {
+    void shutdown('SIGINT', 0)
+  })
+  process.on('SIGTERM', () => {
+    void shutdown('SIGTERM', 0)
+  })
+
   log.info('=== Environment Configuration ===')
   log.info(`FORWARD_MODE: ${env.FORWARD_MODE} (QQ→TG: ${env.FORWARD_MODE[0]}, TG→QQ: ${env.FORWARD_MODE[1]})`)
   log.info(`SHOW_NICKNAME_MODE: ${env.SHOW_NICKNAME_MODE} (QQ→TG: ${env.SHOW_NICKNAME_MODE[0]}, TG→QQ: ${env.SHOW_NICKNAME_MODE[1]})`)
@@ -91,6 +141,7 @@ function isTransientConnectionError(message: string): boolean {
   log.info(`WEB_ENDPOINT: ${env.WEB_ENDPOINT || 'not set'}`)
   log.info(`LOG_LEVEL: ${env.LOG_LEVEL}`)
   log.info(`TG_LOG_LEVEL: ${env.TG_LOG_LEVEL}`)
+
   const proxyUrl = process.env.PROXY_URL || process.env.PROXY
   if (proxyUrl) {
     log.info(`PROXY: ${maskProxyUrl(proxyUrl)}`)
@@ -99,9 +150,8 @@ function isTransientConnectionError(message: string): boolean {
     const proxyType = (process.env.PROXY_TYPE || 'socks5').toLowerCase()
     log.info(`PROXY: ${proxyType}://${env.PROXY_IP}:${env.PROXY_PORT}`)
   }
-  // 打印 Admin Token（如果已配置）
+
   if (process.env.ADMIN_TOKEN) {
-    // 在开发环境或设置了 SHOW_FULL_TOKEN 时显示完整 token
     if (process.env.SHOW_FULL_TOKEN === 'true' || process.env.NODE_ENV === 'development') {
       log.info(`ADMIN_TOKEN (FULL): ${env.ADMIN_TOKEN}`)
       log.info(`Login URL: ${env.WEB_ENDPOINT || 'http://localhost:8080'}/login`)
@@ -115,12 +165,9 @@ function isTransientConnectionError(message: string): boolean {
     }
   }
   else {
-    // Generate random 32-character token
     const randomToken = random.hex(32)
-
-    // Set to both process.env and env object
-    process.env.ADMIN_TOKEN = randomToken;
-    (env as any).ADMIN_TOKEN = randomToken
+    process.env.ADMIN_TOKEN = randomToken
+    ;(env as any).ADMIN_TOKEN = randomToken
 
     log.info('━'.repeat(80))
     log.info('⚠️  ADMIN_TOKEN auto-generated for this session:')
@@ -135,7 +182,7 @@ function isTransientConnectionError(message: string): boolean {
   log.info('=================================')
 
   sentry.init()
-  Sentry.addGlobalEventProcessor((event) => {
+  Sentry.addEventProcessor((event: Sentry.Event) => {
     const message = getSentryMessage(event)
     if (isTransientConnectionError(message))
       return null
@@ -156,22 +203,40 @@ function isTransientConnectionError(message: string): boolean {
   const instanceEntries = await db.query.instance.findMany()
   const targets = instanceEntries.length ? instanceEntries.map(entry => entry.id) : [0]
 
-  // Configure PluginRuntime (Phase 2 Modularization)
   PluginRuntime.setInstanceResolvers(
     id => InstanceRegistry.getById(id) as any,
     () => InstanceRegistry.getAll() as any,
   )
 
-  // 先启动插件运行时（在 Instance 之前，确保插件命令可被 CommandsFeature 发现）
   await PluginRuntime.start({ defaultInstances: targets, webRoutes: registerWebRoutes, builtins })
+  await startServer(app)
 
-  api.startListening()
+  const startupResults = await Promise.allSettled(targets.map(async (id) => {
+    const instance = await Instance.start(id)
+    activeInstances.set(instance.id, instance)
+    return instance
+  }))
 
-  // 再启动实例（包括 FeatureManager 中的 CommandsFeature）
-  const instances = await Promise.all(targets.map(id => Instance.start(id)))
+  const succeeded = startupResults
+    .filter((result): result is PromiseFulfilledResult<Instance> => result.status === 'fulfilled')
+    .map(result => result.value)
+  const failed = startupResults
+    .map((result, index) => result.status === 'rejected'
+      ? { instanceId: targets[index], error: result.reason }
+      : null)
+    .filter(Boolean) as Array<{ instanceId: number, error: unknown }>
 
-  // 确保插件命令在运行时完全启动后再加载一次
-  for (const instance of instances) {
+  log.info({ instances: succeeded.map(instance => instance.id) }, 'Started instances')
+  if (failed.length > 0) {
+    log.error({
+      instances: failed.map(entry => ({
+        instanceId: entry.instanceId,
+        error: String((entry.error as any)?.message || entry.error),
+      })),
+    }, 'Failed instances')
+  }
+
+  for (const instance of succeeded) {
     try {
       await instance.commandsFeature?.reloadCommands?.()
     }
@@ -180,5 +245,33 @@ function isTransientConnectionError(message: string): boolean {
     }
   }
 
-  log.info(`启动完成 (instances=${targets.length})`)
-})()
+  if (succeeded.length === 0) {
+    await shutdown('all-instances-failed', 1)
+    return
+  }
+
+  log.info(`启动完成 (instances=${targets.length}, succeeded=${succeeded.length}, failed=${failed.length})`)
+}
+
+export async function handleFatalStartupError(error: unknown) {
+  const log = getLogger('Main')
+  log.error({ error }, 'Fatal startup error')
+  sentry.captureException(error, { stage: 'main-startup' })
+  try {
+    await stopServer()
+  }
+  catch {}
+  try {
+    await PluginRuntime.stop()
+  }
+  catch {}
+  try {
+    await Sentry.flush(3_000)
+  }
+  catch {}
+  process.exit(1)
+}
+
+if (process.env.NAPGRAM_DISABLE_AUTO_MAIN !== '1' && !(import.meta as any).vitest) {
+  void main().catch(handleFatalStartupError)
+}

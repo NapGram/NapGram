@@ -1,37 +1,48 @@
-import process from 'node:process'
 import cookie from '@fastify/cookie'
+import Fastify, { type FastifyInstance } from 'fastify'
 import { env, getLogger } from '@napgram/infra-kit'
 import { fileManagerRoutes } from '@napgram/web-interfaces'
-import Fastify from 'fastify'
 
 const log = getLogger('Web Api')
 const registeredWebPlugins = new Set<string>()
 
-const fastify = Fastify({
-  logger: false, // We use our own logger
-})
+let server: FastifyInstance | null = null
 
-// Register cookie support
-fastify.register(cookie)
+export type App = FastifyInstance
 
-// Register file manager routes
-fileManagerRoutes(fastify)
+export function createServer() {
+  if (server) {
+    return server
+  }
 
-// Global error handler
-fastify.setErrorHandler((error, request, reply) => {
-  const msg = (error as any).message || String(error)
-  log.error(request.method, request.url, msg)
-  log.debug(error)
-  reply.status(500).send({ message: msg })
-})
+  const app = Fastify({
+    logger: false,
+  })
 
-fastify.get('/', async () => {
-  return { hello: 'NapGram (Fastify)' }
-})
+  registerBaseRoutes(app)
+  server = app
+  return app
+}
 
-// Routes are registered by plugins via registerWebRoutes.
+export function registerBaseRoutes(app: App) {
+  app.register(cookie)
+  fileManagerRoutes(app)
+
+  app.setErrorHandler((error, request, reply) => {
+    const msg = (error as any).message || String(error)
+    log.error(request.method, request.url, msg)
+    log.debug(error)
+    reply.status(500).send({ message: msg })
+  })
+
+  app.get('/', async () => {
+    return { hello: 'NapGram (Fastify)' }
+  })
+}
 
 export function registerWebRoutes(register: (app: App) => void, pluginId?: string) {
+  const app = createServer()
+
   if (pluginId) {
     if (registeredWebPlugins.has(pluginId)) {
       log.warn(`Web routes already registered for plugin: ${pluginId}`)
@@ -39,7 +50,8 @@ export function registerWebRoutes(register: (app: App) => void, pluginId?: strin
     }
     registeredWebPlugins.add(pluginId)
   }
-  register(fastify)
+
+  register(app)
 }
 
 export function getWebApi() {
@@ -48,20 +60,49 @@ export function getWebApi() {
   }
 }
 
-export default {
-  async startListening() {
-    try {
-      await fastify.listen({
-        port: Number(env.LISTEN_PORT),
-        host: '0.0.0.0',
-      })
-      log.info('Listening on', env.LISTEN_PORT)
-    }
-    catch (err) {
-      log.error('Failed to start web server:', err)
-      process.exit(1)
-    }
-  },
+export async function startServer(app = createServer()) {
+  try {
+    await app.listen({
+      port: Number(env.LISTEN_PORT),
+      host: '0.0.0.0',
+    })
+    log.info('Listening on', env.LISTEN_PORT)
+    return app
+  }
+  catch (err) {
+    log.error('Failed to start web server:', err)
+    throw err
+  }
 }
 
-export type App = typeof fastify
+export async function stopServer() {
+  if (!server) {
+    return
+  }
+
+  const app = server
+  server = null
+
+  try {
+    await app.close()
+    log.info('Web server stopped')
+  }
+  catch (error) {
+    const code = (error as NodeJS.ErrnoException)?.code
+    if (code !== 'FST_ERR_REOPENED_CLOSE_SERVER') {
+      throw error
+    }
+  }
+  finally {
+    registeredWebPlugins.clear()
+  }
+}
+
+export default {
+  createServer,
+  registerBaseRoutes,
+  registerWebRoutes,
+  startServer,
+  stopServer,
+  getWebApi,
+}

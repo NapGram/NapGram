@@ -2,6 +2,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { messageConverter } from '../../domain/message'
 import { FeatureManager } from '../FeatureManager'
 
+const lifecycleEvents = vi.hoisted(() => [] as string[])
+
+function createFeatureClass(name: 'media' | 'commands' | 'forward' | 'recall') {
+  return class {
+    destroy = vi.fn(async () => {
+      lifecycleEvents.push(`destroy:${name}`)
+    })
+
+    constructor() {
+      lifecycleEvents.push(`create:${name}`)
+    }
+  }
+}
+
+vi.mock('@napgram/feature-kit', () => ({
+  MediaFeature: createFeatureClass('media'),
+  CommandsFeature: createFeatureClass('commands'),
+  ForwardFeature: createFeatureClass('forward'),
+  RecallFeature: createFeatureClass('recall'),
+}))
+
 vi.mock('../../domain/message', () => ({
   messageConverter: {
     setInstance: vi.fn(),
@@ -9,140 +30,90 @@ vi.mock('../../domain/message', () => ({
 }))
 
 describe('featureManager', () => {
-  const mockInstance = { id: 1 } as any
   const mockTgBot = {} as any
   const mockQqClient = {} as any
+  let mockInstance: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockInstance.mediaFeature = undefined
-    mockInstance.commandsFeature = undefined
-    mockInstance.recallFeature = undefined
-    mockInstance.forwardFeature = undefined
+    lifecycleEvents.length = 0
+    mockInstance = {
+      id: 1,
+      forwardPairs: {},
+      mediaFeature: undefined,
+      commandsFeature: undefined,
+      recallFeature: undefined,
+      forwardFeature: undefined,
+    }
   })
 
-  it('should initialize all features', async () => {
+  it('host-manages the four core features in order', async () => {
     const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
     await manager.initialize()
 
-    const status = manager.getFeatureStatus()
-    expect(status).toEqual({})
-  })
-
-  it('should use plugin-provided forward feature', async () => {
-    const forwardFeature = { destroy: vi.fn() }
-    const instanceWithForward = { id: 1, forwardFeature } as any
-    const manager = new FeatureManager(instanceWithForward, mockTgBot, mockQqClient)
-
-    await manager.initialize()
-
-    expect(manager.forward).toBe(forwardFeature)
-    const status = manager.getFeatureStatus()
-    expect(status).toEqual({
+    expect(lifecycleEvents).toEqual([
+      'create:media',
+      'create:commands',
+      'create:forward',
+      'create:recall',
+    ])
+    expect(messageConverter.setInstance).toHaveBeenCalledWith(mockInstance)
+    expect(manager.getFeatureStatus()).toEqual({
+      media: true,
+      commands: true,
       forward: true,
+      recall: true,
     })
+    expect(mockInstance.mediaFeature).toBeDefined()
+    expect(mockInstance.commandsFeature).toBeDefined()
+    expect(mockInstance.forwardFeature).toBeDefined()
+    expect(mockInstance.recallFeature).toBeDefined()
   })
 
-  it('should use plugin-provided commands feature', async () => {
-    const commandsFeature = { destroy: vi.fn() }
-    const instanceWithCommands = { id: 1, commandsFeature } as any
-    const manager = new FeatureManager(instanceWithCommands, mockTgBot, mockQqClient)
+  it('reuses existing feature instances when already attached', async () => {
+    const existingForward = { destroy: vi.fn() }
+    mockInstance.forwardFeature = existingForward
 
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
     await manager.initialize()
 
-    expect(manager.commands).toBe(commandsFeature)
-    const status = manager.getFeatureStatus()
-    expect(status.commands).toBe(true)
+    expect(manager.forward).toBe(existingForward)
+    expect(lifecycleEvents).not.toContain('create:forward')
   })
 
-  it('should enable and disable features', async () => {
-    const instanceWithMedia = { id: 1, mediaFeature: { destroy: vi.fn() } } as any
-    const manager = new FeatureManager(instanceWithMedia, mockTgBot, mockQqClient)
+  it('destroys features in reverse order', async () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
     await manager.initialize()
 
-    expect(manager.enableFeature('media')).toBe(true)
-    expect(manager.disableFeature('media')).toBe(true)
+    lifecycleEvents.length = 0
+    await manager.destroy()
 
-    expect(manager.enableFeature('unknown')).toBe(false)
-    expect(manager.disableFeature('unknown')).toBe(false)
+    expect(lifecycleEvents).toEqual([
+      'destroy:recall',
+      'destroy:forward',
+      'destroy:commands',
+      'destroy:media',
+    ])
+    expect(mockInstance.mediaFeature).toBeUndefined()
+    expect(mockInstance.commandsFeature).toBeUndefined()
+    expect(mockInstance.forwardFeature).toBeUndefined()
+    expect(mockInstance.recallFeature).toBeUndefined()
   })
 
-  it('should handle errors during initialization', async () => {
+  it('returns false for invalid or duplicate manual registrations', () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+
+    expect(manager.registerFeature('media', undefined)).toBe(false)
+    expect(manager.registerFeature('media', { destroy: vi.fn() } as any)).toBe(true)
+    expect(manager.registerFeature('media', { destroy: vi.fn() } as any)).toBe(false)
+  })
+
+  it('surfaces initialization errors', async () => {
     vi.mocked(messageConverter.setInstance).mockImplementationOnce(() => {
       throw new Error('Init error')
     })
+
     const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
     await expect(manager.initialize()).rejects.toThrow('Init error')
-  })
-
-  it('should destroy all features', async () => {
-    const mockDestroy = vi.fn()
-    const instanceWithFeatures = {
-      id: 1,
-      mediaFeature: { destroy: mockDestroy },
-      commandsFeature: { destroy: mockDestroy },
-      recallFeature: { destroy: mockDestroy },
-    } as any
-    const manager = new FeatureManager(instanceWithFeatures, mockTgBot, mockQqClient)
-    await manager.initialize()
-
-    await manager.destroy()
-    expect(mockDestroy).toHaveBeenCalledTimes(3)
-  })
-
-  it('should skip non-function destroy handlers', async () => {
-    const mockDestroy = vi.fn()
-    const instanceWithFeatures = {
-      id: 1,
-      mediaFeature: { destroy: mockDestroy },
-      commandsFeature: { destroy: 'noop' as any },
-      recallFeature: { destroy: mockDestroy },
-    } as any
-    const manager = new FeatureManager(instanceWithFeatures, mockTgBot, mockQqClient)
-    await manager.initialize()
-
-    await manager.destroy()
-    expect(mockDestroy).toHaveBeenCalledTimes(2)
-  })
-
-  it('should handle errors during destroy', async () => {
-    const failingDestroy = vi.fn().mockImplementation(() => {
-      throw new Error('Destroy failed')
-    })
-    const workingDestroy = vi.fn()
-
-    const instanceWithFeatures = {
-      id: 1,
-      mediaFeature: { destroy: failingDestroy },
-      commandsFeature: { destroy: workingDestroy },
-    } as any
-    const manager = new FeatureManager(instanceWithFeatures, mockTgBot, mockQqClient)
-    await manager.initialize()
-
-    await manager.destroy()
-    expect(workingDestroy).toHaveBeenCalled()
-    expect(failingDestroy).toHaveBeenCalled()
-  })
-
-  it('should return false when registering invalid or duplicate features', () => {
-    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
-
-    // Invalid feature
-    expect(manager.registerFeature('media', undefined)).toBe(false)
-
-    const feat = { destroy: vi.fn() }
-    expect(manager.registerFeature('media', feat as any)).toBe(true)
-
-    // Duplicate
-    expect(manager.registerFeature('media', {} as any)).toBe(false)
-  })
-
-  it('should log update when registering feature after initialization', async () => {
-    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
-    await manager.initialize()
-
-    const feat = { destroy: vi.fn() }
-    // This triggers "FeatureManager 已更新" log branch
-    expect(manager.registerFeature('media', feat as any)).toBe(true)
   })
 })
