@@ -16,7 +16,7 @@ function createFeatureClass(name: 'media' | 'commands' | 'forward' | 'recall') {
   }
 }
 
-vi.mock('@napgram/feature-kit', () => ({
+vi.mock('../runtime/index.js', () => ({
   MediaFeature: createFeatureClass('media'),
   CommandsFeature: createFeatureClass('commands'),
   ForwardFeature: createFeatureClass('forward'),
