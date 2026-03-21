@@ -87,6 +87,7 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
 vi.mock('@napgram/runtime-kit', () => ({
   InstanceRegistry: {
     add: vi.fn(),
+    remove: vi.fn(),
   },
   setGlobalRuntime: vi.fn(),
 
@@ -99,6 +100,13 @@ vi.mock('@napgram/plugin-kit', () => ({
     publishGroupRequest: vi.fn(),
     publishNotice: vi.fn(),
   })),
+}))
+
+vi.mock('../../../features/FeatureManager', () => ({
+  FeatureManager: class {
+    initialize = vi.fn().mockResolvedValue(undefined)
+    destroy = vi.fn().mockResolvedValue(undefined)
+  },
 }))
 
 describe('instance Branches', () => {
