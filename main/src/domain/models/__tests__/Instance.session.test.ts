@@ -68,13 +68,23 @@ vi.mock('../../../infrastructure/clients/telegram', () => ({
 }))
 
 vi.mock('@napgram/runtime-kit', () => ({
-  InstanceRegistry: { add: vi.fn() },
+  InstanceRegistry: {
+    add: vi.fn(),
+    remove: vi.fn(),
+  },
 }))
 
 vi.mock('@napgram/plugin-kit', () => ({
   getEventPublisher: vi.fn(() => ({
     publishInstanceStatus: vi.fn(),
   })),
+}))
+
+vi.mock('../../../features/FeatureManager', () => ({
+  FeatureManager: class {
+    initialize = vi.fn().mockResolvedValue(undefined)
+    destroy = vi.fn().mockResolvedValue(undefined)
+  },
 }))
 
 describe('instance Session Coverage', () => {
