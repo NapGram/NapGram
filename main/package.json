@@ -71,7 +71,7 @@
         "@napgram/request-kit": "^0.2.0",
         "@napgram/runtime-kit": "^0.2.0",
         "@napgram/telegram-client": "^0.2.0",
-        "@napgram/web-interfaces": "^0.3.0",
+        "@napgram/web-interfaces": "^0.3.1",
         "@naplink/naplink": "^0.0.7",
         "@sentry/node": "10.45.0",
         "drizzle-kit": "^0.31.10",
