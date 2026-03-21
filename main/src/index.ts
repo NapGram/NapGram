@@ -1,4 +1,5 @@
 import process from 'node:process'
+import * as Sentry from '@sentry/node'
 import { db, env, getLogger, performanceMonitor, random, sentry } from '@napgram/infra-kit'
 import { PluginRuntime } from '@napgram/plugin-kit'
 import { InstanceRegistry } from '@napgram/runtime-kit'
@@ -51,6 +52,29 @@ function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
       log.warn('Failed to print windowed performance stats:', error)
     }
   }, 60_000)
+}
+
+function getSentryMessage(event: Sentry.Event): string {
+  const parts: string[] = []
+  if (event.message)
+    parts.push(event.message)
+  const values = event.exception?.values ?? []
+  for (const value of values) {
+    if (value?.type)
+      parts.push(value.type)
+    if (value?.value)
+      parts.push(value.value)
+  }
+  return parts.join(' | ')
+}
+
+function isTransientConnectionError(message: string): boolean {
+  return [
+    /ConnectionError: WebSocket 错误/i,
+    /ConnectionClosedError: .*connect\(\)/i,
+    /ConnectionError: 连接超时/i,
+    /WebSocket error/i,
+  ].some(pattern => pattern.test(message))
 }
 
 (async () => {
@@ -111,6 +135,12 @@ function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
   log.info('=================================')
 
   sentry.init()
+  Sentry.addGlobalEventProcessor((event) => {
+    const message = getSentryMessage(event)
+    if (isTransientConnectionError(message))
+      return null
+    return event
+  })
   startWindowedPerformanceLog(log)
 
   process.on('unhandledRejection', (error) => {
@@ -150,5 +180,5 @@ function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
     }
   }
 
-  sentry.captureMessage('启动完成', { instanceCount: targets.length })
+  log.info(`启动完成 (instances=${targets.length})`)
 })()
