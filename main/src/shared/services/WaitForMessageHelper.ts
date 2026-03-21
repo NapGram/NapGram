@@ -5,13 +5,14 @@ export default class WaitForMessageHelper {
   private map = new Map<number, (event: Message) => any>()
 
   constructor(private tg: Telegram) {
-    tg.addNewMessageEventHandler(async (e: Message) => {
-      if (!e.chat || !e.chat.id)
+    tg.addNewMessageEventHandler(async (event: any) => {
+      const message = event as Message
+      if (!message.chat || !message.chat.id)
         return
-      const handler = this.map.get(e.chat.id)
+      const handler = this.map.get(message.chat.id)
       if (handler) {
-        this.map.delete(e.chat.id)
-        handler(e)
+        this.map.delete(message.chat.id)
+        handler(message)
       }
     })
   }

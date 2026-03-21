@@ -13,17 +13,13 @@ const builtinAdminPlugins = () => import('@napgram/plugin-admin-plugins')
 const builtinAdminSettings = () => import('@napgram/plugin-admin-settings')
 const builtinAdminSuite = () => import('@napgram/plugin-admin-suite')
 const builtinPermissionManagement = () => import('@napgram/plugin-permission-management')
-const builtinCommands = () => import('@napgram/plugin-commands')
 const builtinFlags = () => import('@napgram/plugin-flags')
-const builtinForward = () => import('@napgram/plugin-forward')
 const builtinGateway = () => import('@napgram/plugin-gateway')
 const builtinGroupManagement = () => import('@napgram/plugin-group-management')
-const builtinMedia = () => import('@napgram/plugin-media')
 const builtinMonitoring = () => import('@napgram/plugin-monitoring')
 const builtinNotifications = () => import('@napgram/plugin-notifications')
 const builtinPingPong = () => import('@napgram/plugin-ping-pong')
 const builtinQQInteraction = () => import('@napgram/plugin-qq-interaction')
-const builtinRecall = () => import('@napgram/plugin-recall')
 const builtinRefresh = () => import('@napgram/plugin-refresh')
 const builtinRequestHandler = () => import('@napgram/plugin-request-handler')
 const builtinRequestManagement = () => import('@napgram/plugin-request-management')
@@ -49,12 +45,6 @@ export const builtins = [
     module: '@builtin/ping-pong',
     enabled: true,
     load: builtinPingPong,
-  },
-  {
-    id: 'commands',
-    module: '@builtin/commands',
-    enabled: true,
-    load: builtinCommands,
   },
   {
     id: 'qq-interaction',
@@ -91,24 +81,6 @@ export const builtins = [
     module: '@builtin/group-management',
     enabled: true,
     load: builtinGroupManagement,
-  },
-  {
-    id: 'media',
-    module: '@builtin/media',
-    enabled: true,
-    load: builtinMedia,
-  },
-  {
-    id: 'recall',
-    module: '@builtin/recall',
-    enabled: true,
-    load: builtinRecall,
-  },
-  {
-    id: 'forward',
-    module: '@builtin/forward',
-    enabled: true,
-    load: builtinForward,
   },
   {
     id: 'monitoring',

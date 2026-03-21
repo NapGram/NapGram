@@ -82,6 +82,7 @@ const forwardMapMocks = vi.hoisted(() => ({
 
 const featureManagerMocks = vi.hoisted(() => ({
   initialize: vi.fn().mockResolvedValue(undefined),
+  destroy: vi.fn().mockResolvedValue(undefined),
 }))
 
 const telegramMocks = vi.hoisted(() => ({
@@ -89,10 +90,24 @@ const telegramMocks = vi.hoisted(() => ({
   create: vi.fn(),
 }))
 
+const telegramBotMocks = vi.hoisted(() => ({
+  connected: {
+    sessionId: 10,
+    me: { id: 1 },
+    disconnect: vi.fn().mockResolvedValue(undefined),
+  },
+  created: {
+    sessionId: 20,
+    me: { id: 2 },
+    disconnect: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+
 const qqMocks = vi.hoisted(() => {
   const handlers = new Map<string, any>()
   const client = {
     login: vi.fn().mockResolvedValue(undefined),
+    logout: vi.fn().mockResolvedValue(undefined),
     on: vi.fn((event: string, handler: any) => {
       handlers.set(event, handler)
     }),
@@ -146,6 +161,7 @@ vi.mock('../ForwardMap', () => ({
 vi.mock('../../../features/FeatureManager', () => ({
   FeatureManager: class {
     initialize = featureManagerMocks.initialize
+    destroy = featureManagerMocks.destroy
   },
 }))
 
@@ -183,8 +199,10 @@ describe('instance', () => {
     envMock.OFFLINE_NOTIFICATION_COOLDOWN = 60
     envMock.ADMIN_QQ = 123
     envMock.ADMIN_TG = 456
-    telegramMocks.connect.mockResolvedValue({ sessionId: 10, me: { id: 1 } })
-    telegramMocks.create.mockResolvedValue({ sessionId: 20, me: { id: 2 } })
+    telegramBotMocks.connected.disconnect.mockClear()
+    telegramBotMocks.created.disconnect.mockClear()
+    telegramMocks.connect.mockResolvedValue(telegramBotMocks.connected)
+    telegramMocks.create.mockResolvedValue(telegramBotMocks.created)
     forwardMapMocks.load.mockResolvedValue({ map: true })
     dbMocks.query.instance.findFirst.mockResolvedValue(null)
     dbMocks.insert.mockReturnValue({
@@ -577,21 +595,19 @@ describe('instance', () => {
   it('handles FeatureManager initialization failure', async () => {
     const error = new Error('Feature Init Failed')
     featureManagerMocks.initialize.mockRejectedValueOnce(error)
+    featureManagerMocks.destroy.mockClear()
+    qqMocks.client.logout.mockClear()
+    telegramBotMocks.created.disconnect.mockClear()
 
     dbMocks.query.instance.findFirst.mockResolvedValue({})
-    // Should pass but maybe log error?
-    // In Instance.ts: await this.featureManager.initialize() is NOT wrapped in try/catch inside init()
-    // except the whole init IIFE... wait.
-    // The IIFE catches errors at the end.
-
-    // Instance.start calls init(), which returns initPromise.
-    // Init promise catch block logs '初始化失败'
-    // But initPromise itself rejects, so start() throws
 
     await expect(Instance.start(16, 'token')).rejects.toThrow('Feature Init Failed')
 
-    // Check that the internal catch block also logged the error
     expect(loggerMocks.error).toHaveBeenCalledWith('初始化失败', error)
+    expect(featureManagerMocks.destroy).toHaveBeenCalled()
+    expect(qqMocks.client.logout).toHaveBeenCalled()
+    expect(telegramBotMocks.created.disconnect).toHaveBeenCalled()
+    expect(instanceRegistryMocks.remove).toHaveBeenCalledWith(16)
   })
 
   it('handles connection listeners and feature manager correctly', async () => {
@@ -842,5 +858,23 @@ describe('instance', () => {
     const onlineHandler = qqMocks.handlers.get('online')
     await onlineHandler()
     expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish connection-restored notice:', expect.any(Error))
+  })
+
+  it('stops instances with ordered lifecycle transitions', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue({})
+    const instance = await Instance.start(25, 'token')
+
+    eventPublisherMocks.publishInstanceStatus.mockClear()
+    featureManagerMocks.destroy.mockClear()
+    qqMocks.client.logout.mockClear()
+
+    await instance.stop()
+
+    expect(featureManagerMocks.destroy).toHaveBeenCalled()
+    expect(qqMocks.client.logout).toHaveBeenCalled()
+    expect(instance.status).toBe('stopped')
+    expect(instanceRegistryMocks.remove).toHaveBeenCalledWith(25)
+    expect(eventPublisherMocks.publishInstanceStatus).toHaveBeenCalledWith({ instanceId: 25, status: 'stopping' })
+    expect(eventPublisherMocks.publishInstanceStatus).toHaveBeenCalledWith({ instanceId: 25, status: 'stopped' })
   })
 })
