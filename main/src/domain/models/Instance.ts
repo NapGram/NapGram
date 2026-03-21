@@ -38,11 +38,46 @@ export default class Instance {
     this.log = getLogger(`Instance - ${this.id}`)
   }
 
+  private isTransientDbError(error: unknown) {
+    const message = String((error as any)?.message || error)
+    return [
+      'terminating connection due to administrator command',
+      'server closed the connection unexpectedly',
+      'Connection terminated',
+      'Connection terminated unexpectedly',
+      'ECONNRESET',
+      '57P01',
+      '57P02',
+      '57P03',
+    ].some(fragment => message.includes(fragment))
+  }
+
+  private async withDbRetry<T>(action: () => Promise<T>, context: string) {
+    const maxAttempts = 3
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        return await action()
+      }
+      catch (error) {
+        if (!this.isTransientDbError(error) || attempt === maxAttempts) {
+          throw error
+        }
+        const delay = 250 * attempt
+        this.log.warn({ error, attempt, delay }, `Transient DB error during ${context}, retrying...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+    throw new Error(`Failed to execute ${context}`)
+  }
+
   private async load() {
-    const dbEntry = await db.query.instance.findFirst({
-      where: eq(schema.instance.id, this.id),
-      with: { qqBot: true },
-    })
+    const dbEntry = await this.withDbRetry(
+      () => db.query.instance.findFirst({
+        where: eq(schema.instance.id, this.id),
+        with: { qqBot: true },
+      }),
+      'load instance',
+    )
 
     if (!dbEntry) {
       if (this.id === 0) {
@@ -485,11 +520,13 @@ export default class Instance {
   }
 
   private updateDb(fields: Record<string, unknown>) {
-    db.update(schema.instance)
-      .set(fields)
-      .where(eq(schema.instance.id, this.id))
-      .then(() => this.log.trace(fields))
-      .catch(err => this.log.error({ err, fields }, 'Failed to update instance in DB'))
+    void this.withDbRetry(
+      () => db.update(schema.instance)
+        .set(fields)
+        .where(eq(schema.instance.id, this.id))
+        .then(() => this.log.trace(fields)),
+      'update instance',
+    ).catch(err => this.log.error({ err, fields }, 'Failed to update instance in DB'))
   }
 
   set owner(owner: number) {

@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
+import { env, setConsoleLogLevel } from '@napgram/infra-kit'
 import { JsonCardConverter } from '../JsonCardConverter'
+
+const originalLogLevel = env.LOG_LEVEL
+setConsoleLogLevel('off')
+afterAll(() => setConsoleLogLevel(originalLogLevel))
 
 describe('jsonCardConverter', () => {
   const converter = new JsonCardConverter()
