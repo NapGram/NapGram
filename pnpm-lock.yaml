@@ -193,8 +193,8 @@ importers:
         specifier: ^0.8.2
         version: 0.8.2
       file-type:
-        specifier: ^21.3.3
-        version: 21.3.3
+        specifier: ^21.3.4
+        version: 21.3.4
       image-js:
         specifier: ^1.4.0
         version: 1.4.0
@@ -2564,8 +2564,8 @@ packages:
     resolution: {integrity: sha512-uzk64HRpUZyTGZtVuvrjP0FYxzQrBf4rojot6J65YMEbwBLB0CWm0CLojVpwpmFmxcE/lkvYICgfcGozbBq6rw==}
     engines: {node: '>=6'}
 
-  file-type@21.3.3:
-    resolution: {integrity: sha512-pNwbwz8c3aZ+GvbJnIsCnDjKvgCZLHxkFWLEFxU3RMa+Ey++ZSEfisvsWQMcdys6PpxQjWUOIDi1fifXsW3YRg==}
+  file-type@21.3.4:
+    resolution: {integrity: sha512-Ievi/yy8DS3ygGvT47PjSfdFoX+2isQueoYP1cntFW1JLYAuS4GD7NUPGg4zv2iZfV52uDyk5w5Z0TdpRS6Q1g==}
     engines: {node: '>=20'}
 
   file-uri-to-path@1.0.0:
@@ -3862,8 +3862,8 @@ packages:
     resolution: {integrity: sha512-4gB8na07fecVVkOI6Rs4e7T6NOTki5EmL7TUduTs6bu3EdnSycntVJ4re8kgZA+wx9IueI2Y11bfbgwtzuE0KQ==}
     engines: {node: '>=0.10.0'}
 
-  strtok3@10.3.4:
-    resolution: {integrity: sha512-KIy5nylvC5le1OdaaoCJ07L+8iQzJHGH6pWDuzS+d07Cu7n1MZ2x26P8ZKIWfbK02+XIL8Mp4RkWeqdUCrDMfg==}
+  strtok3@10.3.5:
+    resolution: {integrity: sha512-ki4hZQfh5rX0QDLLkOCj+h+CVNkqmp/CMf8v8kZpkNVK6jGQooMytqzLZYUVYIZcFZ6yDB70EfD8POcFXiF5oA==}
     engines: {node: '>=18'}
 
   supports-color@7.2.0:
@@ -5145,7 +5145,7 @@ snapshots:
       '@napgram/env-kit': 0.2.0
       '@napgram/infra-kit': 0.2.0(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/logger-kit': 0.2.0
-      file-type: 21.3.3
+      file-type: 21.3.4
       image-js: 1.4.0
       silk-wasm: 3.7.1
     transitivePeerDependencies:
@@ -5195,7 +5195,7 @@ snapshots:
       '@napgram/media-kit': 0.1.14(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
       '@napgram/qq-client': 0.1.7
       '@napgram/runtime-kit': 0.5.0(@electric-sql/pglite@0.3.2)(@opentelemetry/api@1.9.0)(@prisma/client@7.2.0(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(typescript@5.9.3))(@types/pg@8.20.0)(better-sqlite3@12.8.0)(mysql2@3.15.3)(pg@8.20.0)(postgres@3.4.7)(prisma@7.2.0(@types/react@19.2.7)(better-sqlite3@12.8.0)(magicast@0.3.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3))(ws@8.19.0)
-      file-type: 21.3.3
+      file-type: 21.3.4
       image-js: 1.4.0
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -7935,10 +7935,10 @@ snapshots:
 
   file-type@10.11.0: {}
 
-  file-type@21.3.3:
+  file-type@21.3.4:
     dependencies:
       '@tokenizer/inflate': 0.4.1
-      strtok3: 10.3.4
+      strtok3: 10.3.5
       token-types: 6.1.2
       uint8array-extras: 1.5.0
     transitivePeerDependencies:
@@ -9536,7 +9536,7 @@ snapshots:
 
   strip-json-comments@2.0.1: {}
 
-  strtok3@10.3.4:
+  strtok3@10.3.5:
     dependencies:
       '@tokenizer/token': 0.3.0
 
