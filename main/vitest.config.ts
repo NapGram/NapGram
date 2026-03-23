@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@naplink/naplink': fileURLToPath(new URL('./test/mocks/naplink.ts', import.meta.url)),
+      '@mtcute/core/tl/api-schema.json': fileURLToPath(new URL('./test/mocks/mtcute-api-schema.ts', import.meta.url)),
     },
   },
   test: {
@@ -19,6 +20,8 @@ export default defineConfig({
         '@mtcute/node',
         '@mtcute/dispatcher',
         '@mtcute/core',
+        '@mtcute/test',
+        '@mtcute/web',
       ],
     },
     server: {
@@ -30,6 +33,8 @@ export default defineConfig({
           '@mtcute/node',
           '@mtcute/dispatcher',
           '@mtcute/core',
+          '@mtcute/test',
+          '@mtcute/web',
         ],
       },
     },
