@@ -1,4 +1,5 @@
 import type { Telegram } from '../../shared-types.js'
+import { telegramMessage, telegramSend } from '../../../../shared/utils/index.js'
 import { getLogger } from '../../shared-types.js'
 
 const logger = getLogger('TelegramReply')
@@ -19,22 +20,10 @@ export class TelegramReply {
    */
   async send(chatId: string | number, text: string, threadId?: number, raw?: any): Promise<void> {
     try {
-      // 尝试将数字字符串转换为数字，避免 mtcute 将其误认为 username
-      let peer: string | number = chatId
-      if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
-        peer = Number(chatId)
-      }
-
+      const peer = telegramSend.normalizeTelegramChatId(chatId)
       const rawThread = this.getThreadIdFromRaw(raw)
       const rawIdCandidate = raw as any
-      const rawId
-        = typeof rawIdCandidate?.id === 'number'
-          ? rawIdCandidate.id
-          : typeof rawIdCandidate?.messageId === 'number'
-            ? rawIdCandidate.messageId
-            : typeof rawIdCandidate?.msgId === 'number'
-              ? rawIdCandidate.msgId
-              : undefined
+      const rawId = telegramMessage.getTelegramMessageId(raw)
 
       // 如果未解析到话题 ID，兜底用当前命令消息 ID 回复，保证留在同一话题
       const effectiveThread = threadId ?? rawThread ?? rawId
@@ -57,11 +46,7 @@ export class TelegramReply {
       }, 'TelegramReply params')
 
       const chat = await this.tgBot.getChat(peer as any)
-      const params: any = { linkPreview: { disable: true } }
-      if (effectiveThread) {
-        params.replyTo = effectiveThread
-      }
-      await chat.sendMessage(text, params)
+      await chat.sendMessage(text, telegramSend.buildTelegramTextSendParams(effectiveThread))
     }
     catch (error) {
       logger.warn(error, 'Failed to send reply:')
@@ -72,28 +57,6 @@ export class TelegramReply {
    * 从原始 TG 消息中提取话题 ID
    */
   private getThreadIdFromRaw(raw: any): number | undefined {
-    if (!raw)
-      return undefined
-    const replyTo = raw?.replyTo
-    const candidates = [
-      replyTo?.replyToTopId,
-      replyTo?.replyToMsgId,
-      replyTo?.forumTopicId,
-      replyTo?.topicId,
-      replyTo?.replyToTopicId,
-      (raw as any).replyToTopId,
-      (raw as any).replyToMsgId,
-      (raw as any).topicId,
-      (raw as any).forumTopicId,
-      (raw as any).threadId,
-      (raw as any).replyToThreadId,
-      (raw as any).replyToTopMsgId,
-      (raw as any).messageThreadId,
-    ]
-    for (const c of candidates) {
-      if (typeof c === 'number' && c > 0)
-        return c
-    }
-    return undefined
+    return telegramSend.normalizeTelegramMessageId(telegramMessage.getTelegramThreadId(raw))
   }
 }

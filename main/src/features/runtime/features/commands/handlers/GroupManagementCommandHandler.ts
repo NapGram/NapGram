@@ -1,4 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 import type { ForwardMap } from '../../../shared-types.js'
 import type { CommandContext } from './CommandContext.js'
 import { DurationParser, PermissionChecker, getLogger } from '../../../shared-types.js'
@@ -343,11 +344,9 @@ export class GroupManagementCommandHandler {
     const raw = (msg.metadata as any)?.raw as any
 
     // 先尝试从TG结构提取reply sender
-    if (raw?.replyToMessage || raw?.replyTo) {
-      const replyMsg = raw.replyToMessage || raw.replyTo
-      if (replyMsg?.senderId) {
-        return String(replyMsg.senderId)
-      }
+    const tgSenderId = telegramMessage.getTelegramReplySenderId(raw)
+    if (tgSenderId) {
+      return tgSenderId
     }
 
     // 尝试从QQ结构（content中的reply段）提取
@@ -373,7 +372,7 @@ export class GroupManagementCommandHandler {
    */
   private hasReplyMessage(msg: UnifiedMessage): boolean {
     const raw = (msg.metadata as any)?.raw as any
-    if (raw?.replyToMessage || raw?.replyTo) {
+    if (telegramMessage.hasTelegramReply(raw)) {
       return true
     }
     return msg.content.some(c => c.type === 'reply')

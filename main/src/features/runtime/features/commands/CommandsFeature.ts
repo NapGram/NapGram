@@ -7,6 +7,7 @@ import type { Telegram } from '../../shared-types.js'
 import type { Command } from './types.js'
 import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '@napgram/message-kit'
+import { telegramSend } from '../../../../shared/utils/index.js'
 import { getEventPublisher, getLogger } from '../../shared-types.js'
 import { BindCommandHandler } from './handlers/BindCommandHandler.js'
 import { CommandContext } from './handlers/CommandContext.js'
@@ -904,24 +905,31 @@ export class CommandsFeature {
           },
           raw: tgMsg,
           reply: async (content) => {
-            const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
+            const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
             const textContent = contentToText(content)
-            const params: any = { replyTo: Number(tgMsg.id) }
+            const params: any = {}
+            const replyTo = telegramSend.normalizeTelegramMessageId(tgMsg.id)
+            if (replyTo)
+              params.replyTo = replyTo
             const sent = await chat.sendMessage(textContent, params)
             return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           send: async (content) => {
-            const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
+            const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
             const textContent = contentToText(content)
             const params: any = {}
-            if (threadId)
-              params.replyTo = Number(threadId)
+            const replyTo = telegramSend.normalizeTelegramMessageId(threadId)
+            if (replyTo)
+              params.replyTo = replyTo
             const sent = await chat.sendMessage(textContent, params)
             return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           recall: async () => {
-            const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
-            await chat.deleteMessages([Number(tgMsg.id)])
+            const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
+            const messageId = telegramSend.normalizeTelegramMessageId(tgMsg.id)
+            if (!messageId)
+              return
+            await chat.deleteMessages([messageId])
           },
         })
       }
@@ -1043,22 +1051,7 @@ export class CommandsFeature {
 
   private async replyTG(chatId: string | number | bigint, text: any, threadId?: bigint | number) {
     try {
-      const normalizedChatId
-        = typeof chatId === 'bigint'
-          ? Number(chatId)
-          : (typeof chatId === 'string' && /^-?\d+$/.test(chatId))
-              ? Number(chatId)
-              : chatId
-      const chat = await this.tgBot.getChat(normalizedChatId as any)
-      const params: any = {
-        linkPreview: { disable: true },
-      }
-      if (threadId !== undefined && threadId !== null) {
-        const normalizedThreadId = Number(threadId)
-        if (Number.isFinite(normalizedThreadId) && normalizedThreadId > 0) {
-          params.replyTo = normalizedThreadId
-        }
-      }
+      const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(chatId) as any)
 
       // 使用 parseMode: 'markdown' 并不稳定，我们直接使用 mtcute 的 md 解析器
       // 能够将包含 markdown 语法的动态字符串解析为 InputText
@@ -1069,7 +1062,7 @@ export class CommandsFeature {
         msgContent = md(parts as TemplateStringsArray)
       }
 
-      await chat.sendMessage(msgContent, params)
+      await chat.sendMessage(msgContent, telegramSend.buildTelegramTextSendParams(threadId))
     }
     catch (error) {
       logger.warn(`Failed to send reply to ${chatId}: ${error}`)

@@ -2,6 +2,7 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { Instance } from '../../../shared-types.js'
 import type { IQQClient } from '../../../shared-types.js'
 import type { Telegram } from '../../../shared-types.js'
+import { telegramSend } from '../../../../../shared/utils/index.js'
 import { env, getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('MessageUtils')
@@ -81,24 +82,8 @@ export class MessageUtils {
     replyTo?: string | number | bigint,
   ): Promise<void> {
     try {
-      // Ensure numeric chat IDs are passed correctly
-      let resolvedChatId: string | number | bigint = chatId
-      if (typeof chatId === 'string' && /^-?\d+$/.test(chatId)) {
-        resolvedChatId = Number(chatId)
-      }
-      else if (typeof chatId === 'bigint') {
-        resolvedChatId = Number(chatId)
-      }
-
-      const chat = await tgBot.getChat(resolvedChatId as any)
-      const params: any = { linkPreview: { disable: true } }
-      if (replyTo !== undefined && replyTo !== null) {
-        const normalizedReplyTo = Number(replyTo)
-        if (Number.isFinite(normalizedReplyTo) && normalizedReplyTo > 0) {
-          params.replyTo = normalizedReplyTo
-        }
-      }
-      await chat.sendMessage(text, params)
+      const chat = await tgBot.getChat(telegramSend.normalizeTelegramChatId(chatId) as any)
+      await chat.sendMessage(text, telegramSend.buildTelegramTextSendParams(replyTo))
     }
     catch (error) {
       logger.warn('Failed to send TG reply:', error)

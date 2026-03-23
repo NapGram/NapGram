@@ -1,6 +1,7 @@
 import type { MessageContent } from '@napgram/message-kit'
 import type { FileNormalizer } from './FileNormalizer.js'
 import type { RichHeaderBuilder } from './RichHeaderBuilder.js'
+import { telegramSend } from '../../../../../shared/utils/index.js'
 import { env, getLogger } from '../../../shared-types.js'
 
 const ALLOWED_TELEGRAM_DICE = new Set(['🎲', '🎯', '🏀', '⚽️', '🎳', '🎰'])
@@ -66,10 +67,9 @@ export class MediaSender {
     if (richHeaderUsed && richHeaderUrl) {
       const actionText = '发来一组图文消息：'
       const { text, params } = this.richHeaderBuilder.applyRichHeader(actionText, richHeaderUrl)
-      params.replyTo = this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)
 
       try {
-        await chat.sendMessage(text, params)
+        await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)))
         this.logger.info('[Forward] Sent Rich Header before Media Group')
         richHeaderUsed = false // Mark as consumed
       }
@@ -143,11 +143,7 @@ export class MediaSender {
     }
 
     // Build send parameters
-    const sendParams: any = {
-      replyTo: this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId),
-    }
-    if (!sendParams.replyTo)
-      delete sendParams.replyTo
+    const sendParams: any = telegramSend.applyTelegramReplyTo({}, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId))
 
     try {
       let sentMessages: any
@@ -202,12 +198,9 @@ export class MediaSender {
         }
 
     const captionText = header && header.trim() ? header : undefined
-    const sendParams: any = {
-      replyTo: replyTo ?? messageThreadId,
+    const sendParams: any = telegramSend.applyTelegramReplyTo({
       caption: captionText,
-    }
-    if (!sendParams.replyTo)
-      delete sendParams.replyTo
+    }, replyTo ?? messageThreadId)
     if (!captionText)
       delete sendParams.caption
 
@@ -233,15 +226,10 @@ export class MediaSender {
       const choice = value && rpsMap[value] ? rpsMap[value] : `${emoji}`
       const text = `发来一个石头剪刀布：${choice}`
       const { text: msgText, params } = this.richHeaderBuilder.applyRichHeader(header ? `${header}${text}` : text, richHeaderUsed ? richHeaderUrl : undefined)
-      params.replyTo = replyTo ?? messageThreadId
-      return await chat.sendMessage(msgText, params)
+      return await chat.sendMessage(msgText, telegramSend.applyTelegramReplyTo(params, replyTo ?? messageThreadId))
     }
 
-    const params: any = {
-      replyTo: replyTo ?? messageThreadId,
-    }
-    if (!params.replyTo)
-      delete params.replyTo
+    const params: any = telegramSend.applyTelegramReplyTo({}, replyTo ?? messageThreadId)
 
     return await chat.client.sendMedia(chat.id, { type: 'dice', emoji }, params)
   }

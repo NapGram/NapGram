@@ -1,4 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 import type { CommandContext } from './CommandContext.js'
 import { and, db, desc, env, eq, getLogger, lt, schema } from '../../../shared-types.js'
 
@@ -153,10 +154,7 @@ export class RecallCommandHandler {
     let replyToId: bigint | undefined
 
     // 先尝试 TG 结构
-    replyToId = raw?.replyTo?.replyToMsgId
-      || raw?.replyTo?.id
-      || raw?.replyTo?.replyToTopId
-      || raw?.replyToMessage?.id
+    replyToId = telegramMessage.getTelegramReplyMessageId(raw)
 
     // 如果 TG 结构没找到，尝试 QQ 结构
     if (!replyToId) {

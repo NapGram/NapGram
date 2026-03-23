@@ -1,5 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap } from '../../../shared-types.js'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 import type { CommandContext } from './CommandContext.js'
 import { md } from '@mtcute/markdown-parser'
 import { getLogger } from '../../../shared-types.js'
@@ -86,12 +87,12 @@ export class InfoCommandHandler {
 
     // 检查是否回复了某条消息
     const raw = (msg.metadata as any)?.raw
-    if (raw?.replyTo) {
-      const replyId = (raw.replyTo.replyToMsgId || raw.replyTo).toString()
+    const replyId = telegramMessage.getTelegramReplyMessageId(raw)
+    if (replyId) {
       info = md`${info}
 
 **📬 回复的消息信息**
-消息 ID: \`${replyId}\``
+消息 ID: \`${replyId.toString()}\``
     }
 
     await this.context.replyTG(chatId, info, threadId)
