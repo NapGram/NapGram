@@ -1,5 +1,6 @@
 import type { InputText } from '@mtcute/core'
 import { html } from '@mtcute/node'
+import { telegramSend } from '../../../../../shared/utils/index.js'
 import { env, md5Hex } from '../../../shared-types.js'
 
 /**
@@ -38,14 +39,14 @@ export class RichHeaderBuilder {
       const messageText = html`<a href="${richHeaderUrl}">\u200B</a>${text.replace(/\\n/g, '\n')}`
 
       params.invertMedia = true
-      params.disableWebPreview = false
+      params.linkPreview = { disable: false }
 
       return { text: messageText, params }
     }
     else {
       // Plain text mode
       const messageText = text.replace(/\\n/g, '\n')
-      params.disableWebPreview = true
+      params.linkPreview = { disable: true }
       return { text: messageText, params }
     }
   }
@@ -54,23 +55,12 @@ export class RichHeaderBuilder {
    * Build reply parameters for message
    */
   buildReplyTo(pair?: any, replyToMsgId?: number | bigint): number | undefined {
-    const normalizedReplyToMsgId = this.normalizePositiveMessageId(replyToMsgId)
+    const normalizedReplyToMsgId = telegramSend.normalizeTelegramMessageId(replyToMsgId)
     if (normalizedReplyToMsgId)
       return normalizedReplyToMsgId
 
     // mtcute routes forum topic sends through replyTo using the topic's top message ID.
-    return this.normalizePositiveMessageId(pair?.tgThreadId)
-  }
-
-  private normalizePositiveMessageId(value: unknown): number | undefined {
-    if (value === undefined || value === null)
-      return undefined
-
-    const normalized = Number(value)
-    if (!Number.isFinite(normalized) || normalized <= 0)
-      return undefined
-
-    return normalized
+    return telegramSend.normalizeTelegramMessageId(pair?.tgThreadId)
   }
 
   /**

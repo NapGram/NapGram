@@ -1,4 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 import type { ForwardMapper } from './MessageMapper.js'
 import { getLogger } from '../../../shared-types.js'
 
@@ -42,13 +43,12 @@ export class ReplyResolver {
     instanceId: number,
     tgChatId: bigint,
   ): Promise<{ seq?: number, qqRoomId?: bigint, senderUin?: string, time?: number } | undefined> {
-    // mtcute uses replyToMessage, not replyTo
-    const replyToMsgId = tgMsg.replyToMessage?.id
+    const replyToMsgId = telegramMessage.getTelegramReplyMessageId(tgMsg)
     if (!replyToMsgId) {
       return undefined
     }
 
-    const qqSource = await this.mapper.findQqSource(instanceId, tgChatId, BigInt(replyToMsgId))
+    const qqSource = await this.mapper.findQqSource(instanceId, tgChatId, replyToMsgId)
     if (qqSource) {
       logger.debug(`Resolved TG reply: TG msg ${replyToMsgId} -> QQ seq ${qqSource.seq}`)
       return {

@@ -9,6 +9,7 @@ import type { MessageSegment } from '../../shared-types.js'
 import type { CommandsFeature } from '../commands/CommandsFeature.js'
 import type { MediaFeature } from '../MediaFeature.js'
 import { messageConverter } from '@napgram/message-kit'
+import { telegramSend } from '../../../../shared/utils/index.js'
 import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor.js'
 import { MediaGroupHandler } from './handlers/MediaGroupHandler.js'
@@ -374,24 +375,31 @@ export class ForwardFeature {
         },
         raw: tgMsg,
         reply: async (content) => {
-          const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
+          const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
           const replyText = this.contentToText(content)
-          const params: any = { replyTo: tgMsg.id }
+          const params: any = {}
+          const replyTo = telegramSend.normalizeTelegramMessageId(tgMsg.id)
+          if (replyTo)
+            params.replyTo = replyTo
           const sent = await chat.sendMessage(replyText, params)
           return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
         },
         send: async (content) => {
-          const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
+          const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
           const sendText = this.contentToText(content)
           const params: any = {}
-          if (threadId)
-            params.replyTo = Number(threadId)
+          const replyTo = telegramSend.normalizeTelegramMessageId(threadId)
+          if (replyTo)
+            params.replyTo = replyTo
           const sent = await chat.sendMessage(sendText, params)
           return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
         },
         recall: async () => {
-          const chat = await this.tgBot.getChat(Number(tgMsg.chat.id))
-          await chat.deleteMessages([tgMsg.id])
+          const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
+          const messageId = telegramSend.normalizeTelegramMessageId(tgMsg.id)
+          if (!messageId)
+            return
+          await chat.deleteMessages([messageId])
         },
       })
     }

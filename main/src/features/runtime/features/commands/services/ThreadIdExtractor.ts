@@ -1,4 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 import { getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('ThreadIdExtractor')
@@ -53,46 +54,6 @@ export class ThreadIdExtractor {
    * 适配 mtcute 的字段命名
    */
   extractFromRaw(raw: any): bigint | undefined {
-    if (!raw)
-      return undefined
-    const replyTo = raw?.replyTo
-
-    // For forum topics, replyToTopId is the correct field
-    // This is the topic/thread ID according to mtcute's Message structure
-    const candidates = [
-      replyTo?.replyToTopId,
-      (raw as any).replyToTopId,
-      replyTo?.forumTopicId,
-      replyTo?.topicId,
-      replyTo?.replyToTopicId,
-      replyTo?.replyToMsgId,
-      (raw as any).replyToMsgId,
-      (raw as any).topicId,
-      (raw as any).forumTopicId,
-      (raw as any).threadId,
-      (raw as any).replyToThreadId,
-      (raw as any).replyToTopMsgId,
-      (raw as any).messageThreadId,
-    ]
-
-    // Also check the TL layer raw object if it exists
-    if (raw.raw) {
-      const tlReplyTo = raw.raw.replyTo
-      candidates.push(
-        tlReplyTo?.replyToTopId,
-        tlReplyTo?.replyToMsgId,
-        tlReplyTo?.forumTopicId,
-        tlReplyTo?.topicId,
-        (raw.raw as any).replyToTopId,
-        (raw.raw as any).topicId,
-        (raw.raw as any).messageThreadId,
-      )
-    }
-
-    for (const c of candidates) {
-      if ((typeof c === 'number' || typeof c === 'bigint') && Number(c) > 0)
-        return BigInt(c)
-    }
-    return undefined
+    return telegramMessage.getTelegramThreadId(raw)
   }
 }

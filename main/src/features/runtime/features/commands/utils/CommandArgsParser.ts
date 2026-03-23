@@ -1,4 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 
 /**
  * 命令参数解析工具
@@ -128,11 +129,9 @@ export class CommandArgsParser {
     const raw = (msg.metadata as any)?.raw as any
 
     // 尝试从TG结构提取
-    if (raw?.replyToMessage || raw?.replyTo) {
-      const replyMsg = raw.replyToMessage || raw.replyTo
-      if (replyMsg?.senderId) {
-        return String(replyMsg.senderId)
-      }
+    const tgSenderId = telegramMessage.getTelegramReplySenderId(raw)
+    if (tgSenderId) {
+      return tgSenderId
     }
 
     // 尝试从QQ结构提取
@@ -173,23 +172,8 @@ export class CommandArgsParser {
     const raw = (msg.metadata as any)?.raw as any
 
     // 检查TG的replyToMessage或replyTo字段
-    if (raw) {
-      // 必须有实际的replyToMessage对象
-      // 但要排除 isForumTopic=true 的情况（那是thread context，不是reply）
-      if (raw.replyToMessage && raw.replyToMessage.id) {
-        // 如果是 forum topic 的 thread 上下文，不算 reply
-        if (raw.replyToMessage.isForumTopic) {
-          return false
-        }
-        // 检查是否有实际的sender（真正的reply会有）
-        if (raw.replyToMessage.sender || raw.replyToMessage.chat) {
-          return true
-        }
-      }
-      if (raw.replyTo && raw.replyTo.replyToMsgId) {
-        return true
-      }
-    }
+    if (telegramMessage.hasTelegramReply(raw, { excludeForumTopicContext: true }))
+      return true
 
     // 检查content中的reply类型
     return msg.content.some(c => c.type === 'reply')

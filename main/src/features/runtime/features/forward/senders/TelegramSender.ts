@@ -2,6 +2,7 @@ import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import type { Instance } from '../../../shared-types.js'
 import type { MediaFeature } from '../../MediaFeature.js'
 import path from 'node:path'
+import { telegramSend } from '../../../../../shared/utils/index.js'
 import { db, env, flags, getLogger, schema } from '../../../shared-types.js'
 import { renderContent } from '../utils/render.js'
 import { AudioConverter } from './AudioConverter.js'
@@ -120,8 +121,7 @@ export class TelegramSender {
           // Send any pending text first
           if (textParts.length > 0) {
             const { text, params } = this.richHeaderBuilder.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined)
-            params.replyTo = replyTo
-            await chat.sendMessage(text, params)
+            await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
             textParts = []
             richHeaderUsed = false
             header = ''
@@ -138,8 +138,7 @@ export class TelegramSender {
 
           if (textParts.length > 0) {
             const { text, params } = this.richHeaderBuilder.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined)
-            params.replyTo = replyTo
-            await chat.sendMessage(text, params)
+            await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
             textParts = []
             richHeaderUsed = false
             header = ''
@@ -162,9 +161,8 @@ export class TelegramSender {
             const headerText = actionText
 
             const { text, params } = this.richHeaderBuilder.applyRichHeader(headerText, richHeaderUrl)
-            params.replyTo = replyTo
             try {
-              await chat.sendMessage(text, params)
+              await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
             }
             catch (e) {
               this.logger.warn(e, 'Failed to send separate Rich Header message:')
@@ -182,8 +180,7 @@ export class TelegramSender {
 
           if (textParts.length > 0) {
             const { text, params } = this.richHeaderBuilder.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined)
-            params.replyTo = replyTo
-            await chat.sendMessage(text, params)
+            await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
             textParts = []
             richHeaderUsed = false
             header = ''
@@ -196,8 +193,7 @@ export class TelegramSender {
 
           if (textParts.length > 0) {
             const { text, params } = this.richHeaderBuilder.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined)
-            params.replyTo = replyTo
-            await chat.sendMessage(text, params)
+            await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
             textParts = []
             richHeaderUsed = false
             header = ''
@@ -213,8 +209,7 @@ export class TelegramSender {
 
           if (textParts.length > 0) {
             const { text, params } = this.richHeaderBuilder.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined)
-            params.replyTo = replyTo
-            await chat.sendMessage(text, params)
+            await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
             textParts = []
             richHeaderUsed = false
             header = ''
@@ -236,9 +231,7 @@ export class TelegramSender {
 
     if (textParts.length > 0) {
       const { text, params } = this.richHeaderBuilder.applyRichHeader(header + textParts.join(' '), richHeaderUsed ? richHeaderUrl : undefined)
-      if (replyTo)
-        params.replyTo = replyTo
-      lastSent = await chat.sendMessage(text, params)
+      lastSent = await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, replyTo))
       return lastSent
     }
     return lastSent
@@ -261,9 +254,7 @@ export class TelegramSender {
       (content as any).data.fileName = fileName
     }
 
-    const commonParams: any = {
-      replyTo: this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId),
-    }
+    const commonParams: any = telegramSend.applyTelegramReplyTo({}, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId))
 
     // 准备 caption - 将 header（昵称/头像）作为媒体说明
     let captionText: any
@@ -361,9 +352,8 @@ export class TelegramSender {
         if (!ALLOWED_TELEGRAM_DICE.has(emoji)) {
           // 不支持的 emoji，退回文本
           const { text, params } = this.richHeaderBuilder.applyRichHeader(`${header}${emoji}${value ? ` ${value}` : ''}`, richHeaderUsed ? richHeaderUrl : undefined)
-          params.replyTo = this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)
           try {
-            return await chat.sendMessage(text, params)
+            return await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)))
           }
           catch (e) {
             this.logger.error(e, 'Failed to send fallback text for dice:')
@@ -388,8 +378,6 @@ export class TelegramSender {
           ...formattingParams,
           caption: captionText, // 使用 caption 传递 header
         }
-        if (!params.replyTo)
-          delete params.replyTo
 
         // mtcute handles string (path) and Buffer automatically
         let sentMsg: any
@@ -418,9 +406,10 @@ export class TelegramSender {
 
   private async sendForwardToTG(chat: any, content: MessageContent, pair: any, replyToMsgId?: number, header: string = '', richHeaderUsed?: boolean) {
     if (content.type !== 'forward' || !content.data.id) {
-      return await chat.sendMessage(this.contentRenderer(content).replace(/\\n/g, '\n'), {
-        replyTo: this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId),
-      })
+      return await chat.sendMessage(
+        this.contentRenderer(content).replace(/\\n/g, '\n'),
+        telegramSend.applyTelegramReplyTo({}, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)),
+      )
     }
 
     try {
@@ -438,26 +427,25 @@ export class TelegramSender {
         const webAppUrl = `${baseUrl}/chatRecord?tgWebAppStartParam=${entry.id}&uuid=${entry.id}`
         // mtcute 期望 { type: 'inline', buttons: [[{_: 'keyboardButtonUrl', ...}]] }
         const buttons = [[{ _: 'keyboardButtonUrl', text: '查看合并转发', url: webAppUrl }]]
-        return await chat.sendMessage(messageText, {
+        return await chat.sendMessage(messageText, telegramSend.applyTelegramReplyTo({
           replyMarkup: { type: 'inline', buttons },
-          replyTo: this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId),
-          disableWebPreview: true,
-        })
+          linkPreview: { disable: true },
+        }, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)))
       }
       else {
         this.logger.warn('WEB_ENDPOINT is not set, sending forward link as plain text.')
         messageText += '\n(未配置 WEB_ENDPOINT，无法生成查看按钮)'
-        return await chat.sendMessage(messageText, {
-          replyTo: this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId),
-          disableWebPreview: true,
-        })
+        return await chat.sendMessage(messageText, telegramSend.applyTelegramReplyTo({
+          linkPreview: { disable: true },
+        }, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)))
       }
     }
     catch (e) {
       this.logger.error(e, 'Failed to send forward message:')
-      return await chat.sendMessage(this.contentRenderer(content).replace(/\\n/g, '\n'), {
-        replyTo: this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId),
-      })
+      return await chat.sendMessage(
+        this.contentRenderer(content).replace(/\\n/g, '\n'),
+        telegramSend.applyTelegramReplyTo({}, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)),
+      )
     }
   }
 }

@@ -4,6 +4,8 @@ import * as date from './date.js'
 import * as flagControl from './flagControl.js'
 import * as hashing from './hashing.js'
 import * as highLevel from './highLevelFunces.js'
+import * as telegramMessage from './telegramMessage.js'
+import * as telegramSend from './telegramSend.js'
 import * as urls from './urls.js'
 import random from './random.js'
 import processNestedForward from './processNestedForward.js'
@@ -16,4 +18,4 @@ export { PermissionChecker } from './permission-checker.js'
 
 export const arrays = { pagination }
 export const pastebin = { upload }
-export { cache, date, flagControl, hashing, highLevel, processNestedForward, random, urls }
+export { cache, date, flagControl, hashing, highLevel, processNestedForward, random, telegramMessage, telegramSend, urls }
