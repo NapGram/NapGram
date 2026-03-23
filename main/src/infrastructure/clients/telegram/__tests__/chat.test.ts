@@ -4,6 +4,7 @@ import type Telegram from '../client'
 import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TelegramChat from '../chat'
+import { createMockChat } from './mtcuteTestHelpers'
 
 
 describe('telegramChat', () => {
@@ -29,9 +30,7 @@ describe('telegramChat', () => {
     mockParent = {} as Telegram
 
     // Create mock chat
-    mockChat = {
-      id: 123456789,
-    } as Chat
+    mockChat = createMockChat(123456789, 'NapGram Test Chat')
 
     // Create TelegramChat instance
     telegramChat = new TelegramChat(mockParent, mockClient as any, mockChat as any)

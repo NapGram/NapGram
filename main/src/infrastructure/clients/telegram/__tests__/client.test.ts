@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
-import { Message } from '@mtcute/core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Telegram from '../client'
+import { createMockChat, createMockMessage } from './mtcuteTestHelpers'
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks (evaluated before any imports)
@@ -86,24 +86,31 @@ const FakeTelegramChat = vi.hoisted(() => {
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('node:fs', () => ({
-  default: {
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>()
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      existsSync: fsMocks.existsSync,
+      mkdirSync: fsMocks.mkdirSync,
+      createWriteStream: fsMocks.createWriteStream,
+      promises: {
+        ...actual.promises,
+        mkdir: fsPromMocks.mkdir,
+        rm: fsPromMocks.rm,
+      },
+    },
     existsSync: fsMocks.existsSync,
     mkdirSync: fsMocks.mkdirSync,
     createWriteStream: fsMocks.createWriteStream,
     promises: {
+      ...actual.promises,
       mkdir: fsPromMocks.mkdir,
       rm: fsPromMocks.rm,
     },
-  },
-  existsSync: fsMocks.existsSync,
-  mkdirSync: fsMocks.mkdirSync,
-  createWriteStream: fsMocks.createWriteStream,
-  promises: {
-    mkdir: fsPromMocks.mkdir,
-    rm: fsPromMocks.rm,
-  },
-}))
+  }
+})
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>()
@@ -128,16 +135,10 @@ vi.mock('../../../temp', () => ({
   createTempFile: vi.fn(),
 }))
 
-vi.mock('@mtcute/core', () => ({
-  Message: class MessageMock {
-    media?: any
-    chat: any
-    id!: number
-    constructor(props: any = {}) {
-      Object.assign(this, props)
-    }
-  },
-}))
+vi.mock('@mtcute/core', async (importOriginal) => {
+  const { createMtcuteCoreMock } = await import('./mtcuteVitestMocks')
+  return createMtcuteCoreMock(importOriginal)
+})
 
 vi.mock('@mtcute/dispatcher', () => ({
   Dispatcher: {
@@ -536,7 +537,7 @@ describe('telegram client', () => {
 
   it('downloads media buffer from message or object', async () => {
     const bot = await Telegram.connect(3, 'NapGram')
-    const msg = new Message({ media: { id: 'm' }, chat: { id: 1 }, id: 1 } as any, bot as any)
+    const msg = createMockMessage(1, { chatId: 1, media: { id: 'm' } })
 
     const bufferFromMessage = await bot.downloadMedia(msg)
     const bufferFromObject = await bot.downloadMedia({ id: 'x' })
@@ -580,7 +581,7 @@ describe('telegram client', () => {
 
   it('wraps getChat with TelegramChat', async () => {
     const bot = await Telegram.connect(7, 'NapGram')
-    const chatObj = { id: 123 }
+    const chatObj = createMockChat(123)
     clientMethods.getChat.mockResolvedValueOnce(chatObj)
 
     const chat = await bot.getChat(123)
@@ -617,7 +618,7 @@ describe('telegram client', () => {
     bot.addNewMessageEventHandler(handler1)
     bot.addNewMessageEventHandler(handler2)
 
-    await (bot as any).onMessage(new Message({ id: 1, chat: { id: 1 } } as any, bot as any))
+    await (bot as any).onMessage(createMockMessage(1, { chatId: 1 }))
 
     expect(handler1).toHaveBeenCalled()
     expect(handler2).not.toHaveBeenCalled()
@@ -630,7 +631,7 @@ describe('telegram client', () => {
     bot.addNewMessageEventHandler(handler)
     bot.removeNewMessageEventHandler(handler)
 
-    await (bot as any).onMessage(new Message({ id: 2, chat: { id: 2 } } as any, bot as any))
+    await (bot as any).onMessage(createMockMessage(2, { chatId: 2 }))
 
     expect(handler).not.toHaveBeenCalled()
   })
@@ -640,9 +641,9 @@ describe('telegram client', () => {
     const handler = vi.fn().mockResolvedValue(undefined)
 
     bot.addEditedMessageEventHandler(handler)
-    await (bot as any).onEditedMessage(new Message({ id: 3, chat: { id: 3 } } as any, bot as any))
+    await (bot as any).onEditedMessage(createMockMessage(3, { chatId: 3 }))
     bot.removeEditedMessageEventHandler(handler)
-    await (bot as any).onEditedMessage(new Message({ id: 4, chat: { id: 4 } } as any, bot as any))
+    await (bot as any).onEditedMessage(createMockMessage(4, { chatId: 4 }))
 
     expect(handler).toHaveBeenCalledTimes(1)
   })
@@ -680,7 +681,7 @@ describe('telegram client', () => {
     const bot = await Telegram.connect(18, 'NapGram')
 
     // Case: media is Message with media
-    const msg = new Message({ media: { id: 'm', fileName: 'msg.png' } } as any, bot as any)
+    const msg = createMockMessage(5, { media: { id: 'm', fileName: 'msg.png' } })
     const path1 = await bot.downloadMediaToTempFile(msg, { returnType: 'path' })
     expect(path1).toContain('msg.png')
 
