@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it, vi } from 'vitest'
 import { env } from '@napgram/env-kit'
 import { setConsoleLogLevel } from '@napgram/logger-kit'
 import { JsonCardConverter } from '../JsonCardConverter'
@@ -14,6 +14,15 @@ describe('jsonCardConverter', () => {
     expect(converter.convertJsonCard({ data: '{' })).toBeNull()
     expect(converter.convertJsonCard({ data: 123 })).toBeNull()
     expect(converter.convertJsonCard({})).toBeNull()
+  })
+
+  it('does not warn for malformed json payloads', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect(converter.convertJsonCard({ data: '{' })).toBeNull()
+    expect(warnSpy).not.toHaveBeenCalled()
+
+    warnSpy.mockRestore()
   })
 
   it('returns null for empty card payload', () => {
