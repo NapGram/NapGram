@@ -15,7 +15,6 @@
         "jsxFragmentFactory": "Html.Fragment",
         "resolveJsonModule": true,
         "declaration": true,
-        "baseUrl": ".",
         "types": [
             "node"
         ],
