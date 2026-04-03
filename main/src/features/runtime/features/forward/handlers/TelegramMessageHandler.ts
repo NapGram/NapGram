@@ -76,7 +76,7 @@ export class TelegramMessageHandler {
       }
 
       const hasMedia = unified.content.some(c => ['video', 'file'].includes(c.type))
-      const hasSplitMedia = unified.content.some(c => ['audio', 'image'].includes(c.type))
+      const hasSplitMedia = unified.content.some(c => c.type === 'audio')
       const nicknameMode = this.getNicknameMode(pair)
       const showTGToQQNickname = nicknameMode[1] === '1'
 
@@ -134,12 +134,10 @@ export class TelegramMessageHandler {
         receipt = await this.qqClient.sendGroupForwardMsg(String(pair.qqRoomId), [node])
       }
       else if (hasSplitMedia) {
-        // 语音和图片消息特殊处理：分两次调用 API 发送
+        // 语音消息特殊处理：分两次调用 API 发送
         let actionText = ''
         if (showTGToQQNickname) {
-          if (unified.content.some(c => c.type === 'image'))
-            actionText = '发来一张图片'
-          else if (unified.content.some(c => c.type === 'audio'))
+          if (unified.content.some(c => c.type === 'audio'))
             actionText = '发来一条语音'
         }
 
@@ -147,7 +145,7 @@ export class TelegramMessageHandler {
           ? (actionText ? `${unified.sender.name}：\n${actionText}` : `${unified.sender.name}：\n`)
           : ''
         const textSegments = unified.content.filter(c =>
-          !['audio', 'image'].includes(c.type)
+          c.type !== 'audio'
           && !(c.type === 'text' && !c.data.text),
         )
 
@@ -178,8 +176,8 @@ export class TelegramMessageHandler {
           await this.qqClient.sendMessage(String(pair.qqRoomId), headerMsg)
         }
 
-        // 2. 发送媒体 (Audio, Image)
-        const mediaSegments = unified.content.filter(c => ['audio', 'image'].includes(c.type))
+        // 2. 发送媒体 (Audio)
+        const mediaSegments = unified.content.filter(c => c.type === 'audio')
         const mediaMsg: UnifiedMessage = {
           ...unified,
           content: mediaSegments,
