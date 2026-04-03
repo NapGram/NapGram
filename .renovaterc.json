@@ -23,6 +23,15 @@
             "matchPackageNames": [
                 "/^@napgram//"
             ]
+        },
+        {
+            "matchManagers": [
+                "npm"
+            ],
+            "matchPackageNames": [
+                "@mtcute/**"
+            ],
+            "rangeStrategy": "bump"
         }
     ]
 }
