@@ -53,17 +53,17 @@ importers:
         specifier: ^4.2.13
         version: 4.2.13
       '@mtcute/core':
-        specifier: ^0.29.5
-        version: 0.29.5
+        specifier: ^0.29.6
+        version: 0.29.6
       '@mtcute/dispatcher':
-        specifier: ^0.29.5
-        version: 0.29.5
+        specifier: ^0.29.6
+        version: 0.29.6
       '@mtcute/markdown-parser':
-        specifier: ^0.29.5
-        version: 0.29.5
+        specifier: ^0.29.6
+        version: 0.29.6
       '@mtcute/node':
-        specifier: ^0.29.5
-        version: 0.29.5(ws@8.20.0)
+        specifier: ^0.29.6
+        version: 0.29.6(ws@8.20.0)
       '@napgram/auth-kit':
         specifier: ^0.1.13
         version: 0.1.13(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
@@ -222,11 +222,11 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@kitajs/html@4.2.13)(typescript@6.0.2)
       '@mtcute/test':
-        specifier: ^0.29.5
-        version: 0.29.5(@mtcute/core@0.29.5)(@mtcute/node@0.29.5(ws@8.20.0))(@mtcute/web@0.29.5)(vitest@4.1.3)
+        specifier: ^0.29.6
+        version: 0.29.6(@mtcute/core@0.29.6)(@mtcute/node@0.29.6(ws@8.20.0))(@mtcute/web@0.29.6)(vitest@4.1.3)
       '@mtcute/web':
-        specifier: ^0.29.5
-        version: 0.29.5
+        specifier: ^0.29.6
+        version: 0.29.6
       '@types/ejs':
         specifier: ^3.1.5
         version: 3.1.5
@@ -728,30 +728,30 @@ packages:
     resolution: {integrity: sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==}
     engines: {node: '>=8'}
 
-  '@mtcute/core@0.29.5':
-    resolution: {integrity: sha512-VLwUdVXyc0KrqCFyJMLjCthoZ7O4UsMLRsr57+sG98h6KuQIYW9fPfmoWckQBFkrnfSiUJazZuuPk9GERMhcgA==}
+  '@mtcute/core@0.29.6':
+    resolution: {integrity: sha512-CYSruSaVOeFvTj51TphoNRyyJAXFsrXH/cYAsTzJx6/m4Ql0rGLfJ0ozOt6c4QVp8ro7v/gCu8bnnnA9UfbUOg==}
 
-  '@mtcute/dispatcher@0.29.5':
-    resolution: {integrity: sha512-/FvjHoDWiL5KXz7UYKSOFLF6sGEKSSZYby6V4gj0N2lMAIrQP30n67K2lSaq3/jwSQJDe9CTlkKlLdWj4+4BNg==}
+  '@mtcute/dispatcher@0.29.6':
+    resolution: {integrity: sha512-3fb264XVBS/2oOgVUTw35fr+enaWw3xPs4jtJvFl5VmUCbYZdBNnqE6cgTtnDzl7AZDDa3P40D4dp1YLj99Elg==}
 
   '@mtcute/file-id@0.29.0':
     resolution: {integrity: sha512-kfNFKjdfFoo9YIl823EJ068u0djgK6MsqfIHIcb6iwmKOxnCFTLRvBGnJUaO+SbOejg63Tz5lzQxKnt03kEV6A==}
 
-  '@mtcute/html-parser@0.29.5':
-    resolution: {integrity: sha512-Zskc5HbbRImoZOiQgeOXmwJ9KmOFPHRRvOA7w1I4VxXsKT9YcaPYfMm+OLv+z5+1ndcBFnEKebAHRs94bq+fCQ==}
+  '@mtcute/html-parser@0.29.6':
+    resolution: {integrity: sha512-0ZpyQjzw6DsYr6aou8skVGT424JKJpPmXWU6+9uTuUgDQl0nV5YTYZyNEZjWw+XpW6fd8GDueVc0KpZKxOOL3A==}
 
-  '@mtcute/markdown-parser@0.29.5':
-    resolution: {integrity: sha512-V6A2CtVe41SFBr0rtjWc5iHZDPYgSwb8XKOOa210DXQfuCe/VzpRd6WuKntkE1f+Gh15N8NlFGWsarJGbnk5xQ==}
+  '@mtcute/markdown-parser@0.29.6':
+    resolution: {integrity: sha512-ORwNStlFApk5HSDvCo2XfoXmGLp/G0+1HlX1A2U3BZ1ma2RzkBEiWe8ylDWUWP0Qs2ds79H0A2XFIkr6QYSqog==}
 
-  '@mtcute/node@0.29.5':
-    resolution: {integrity: sha512-AAMx45ty6bv2B/928X7+BOo/gjNy01IdpkKIpeq7QBE6g8xOx+OSRlAsVwv689mu6H5mpyZMyEyTJKmRMpuH+A==}
+  '@mtcute/node@0.29.6':
+    resolution: {integrity: sha512-yf6gogaeltQjNQt88GwXPh+kftQgtogE6t3AvpkWVhQaRlMeBRZp56DpHbFkA6tpQKP4r6ueoAU01cLg3K/gHA==}
 
-  '@mtcute/test@0.29.5':
-    resolution: {integrity: sha512-5squf39CNieGjFScawBCnD7yoWl4NhRjteYxMXqGyDlHKvZSYDJ/hiBisidCAI3kji5mB9OSA1UrvuY0RsGceA==}
+  '@mtcute/test@0.29.6':
+    resolution: {integrity: sha512-dE+ProRcwE4n9+XiE3iwX6gfqv6auZQbOZ2fkplqxJW0fN/GzhGi8uoU45zy1levtjZRXYq0/z5a4hflWxGR1A==}
     peerDependencies:
-      '@mtcute/core': ^0.29.5
-      '@mtcute/node': ^0.29.5
-      '@mtcute/web': ^0.29.5
+      '@mtcute/core': ^0.29.6
+      '@mtcute/node': ^0.29.6
+      '@mtcute/web': ^0.29.6
       vitest: '*'
     peerDependenciesMeta:
       '@mtcute/node':
@@ -765,8 +765,8 @@ packages:
   '@mtcute/wasm@0.29.0':
     resolution: {integrity: sha512-PFZ60ufUIt3BW1FFkCqcaEvEcezaTK+KyMVs3A/aXA19aFhDpu6HCSI8FJ6iOfGsIMGaNGYrwH3CZ7XxLn24XA==}
 
-  '@mtcute/web@0.29.5':
-    resolution: {integrity: sha512-dqsL+o0DwTRe89nW9yvZrDVwuBr/fLz3taXiNXm2ArOCaF+v5YEarh0fTto0/x9qJoBsXkN+pafv2yHMLSIshg==}
+  '@mtcute/web@0.29.6':
+    resolution: {integrity: sha512-7Nfr6Jee+RO4vDDLb192H5/jCHp8T2IyviDeqf/3LWU7cqTi1e4SSfobiEP8LlHDNhjy8jOpfbYjTZ1spgOkyg==}
 
   '@napgram/auth-kit@0.1.13':
     resolution: {integrity: sha512-HYD9H+1AhKTP0Z9IpO6f7wu6JTkaGqpjHo/OjxinBMJqqytfQq6vICIO+9zkGa2m00goMzN/QuyWkFuqsQRAvA==, tarball: https://npm.pkg.github.com/download/@napgram/auth-kit/0.1.13/8cbd86fea2949a3690cd77f7a03cac76b17d4f78}
@@ -4218,7 +4218,7 @@ snapshots:
 
   '@lukeed/ms@2.0.2': {}
 
-  '@mtcute/core@0.29.5':
+  '@mtcute/core@0.29.6':
     dependencies:
       '@fuman/io': 0.0.19
       '@fuman/net': 0.0.19
@@ -4228,10 +4228,10 @@ snapshots:
       '@types/events': 3.0.0
       long: 5.3.2
 
-  '@mtcute/dispatcher@0.29.5':
+  '@mtcute/dispatcher@0.29.6':
     dependencies:
       '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.29.5
+      '@mtcute/core': 0.29.6
 
   '@mtcute/file-id@0.29.0':
     dependencies:
@@ -4239,40 +4239,40 @@ snapshots:
       '@mtcute/tl-runtime': 0.29.0
       long: 5.3.2
 
-  '@mtcute/html-parser@0.29.5':
+  '@mtcute/html-parser@0.29.6':
     dependencies:
-      '@mtcute/core': 0.29.5
+      '@mtcute/core': 0.29.6
       htmlparser2: 10.1.0
       long: 5.3.2
 
-  '@mtcute/markdown-parser@0.29.5':
+  '@mtcute/markdown-parser@0.29.6':
     dependencies:
-      '@mtcute/core': 0.29.5
+      '@mtcute/core': 0.29.6
       long: 5.3.2
 
-  '@mtcute/node@0.29.5(ws@8.20.0)':
+  '@mtcute/node@0.29.6(ws@8.20.0)':
     dependencies:
       '@fuman/net': 0.0.19
       '@fuman/node': 0.0.19(ws@8.20.0)
       '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.29.5
-      '@mtcute/html-parser': 0.29.5
-      '@mtcute/markdown-parser': 0.29.5
+      '@mtcute/core': 0.29.6
+      '@mtcute/html-parser': 0.29.6
+      '@mtcute/markdown-parser': 0.29.6
       '@mtcute/wasm': 0.29.0
       better-sqlite3: 12.8.0
     transitivePeerDependencies:
       - ws
 
-  '@mtcute/test@0.29.5(@mtcute/core@0.29.5)(@mtcute/node@0.29.5(ws@8.20.0))(@mtcute/web@0.29.5)(vitest@4.1.3)':
+  '@mtcute/test@0.29.6(@mtcute/core@0.29.6)(@mtcute/node@0.29.6(ws@8.20.0))(@mtcute/web@0.29.6)(vitest@4.1.3)':
     dependencies:
       '@fuman/net': 0.0.19
       '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.29.5
+      '@mtcute/core': 0.29.6
       long: 5.3.2
       vitest: 4.1.3(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(@vitest/coverage-v8@4.1.3)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(esbuild@0.28.0)(tsx@4.21.0)(yaml@2.8.3))
     optionalDependencies:
-      '@mtcute/node': 0.29.5(ws@8.20.0)
-      '@mtcute/web': 0.29.5
+      '@mtcute/node': 0.29.6(ws@8.20.0)
+      '@mtcute/web': 0.29.6
 
   '@mtcute/tl-runtime@0.29.0':
     dependencies:
@@ -4281,11 +4281,11 @@ snapshots:
 
   '@mtcute/wasm@0.29.0': {}
 
-  '@mtcute/web@0.29.5':
+  '@mtcute/web@0.29.6':
     dependencies:
       '@fuman/net': 0.0.19
       '@fuman/utils': 0.0.19
-      '@mtcute/core': 0.29.5
+      '@mtcute/core': 0.29.6
       '@mtcute/wasm': 0.29.0
 
   '@napgram/auth-kit@0.1.13(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)':
@@ -4418,8 +4418,8 @@ snapshots:
 
   '@napgram/gateway-kit@0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)':
     dependencies:
-      '@mtcute/core': 0.29.5
-      '@mtcute/node': 0.29.5(ws@8.20.0)
+      '@mtcute/core': 0.29.6
+      '@mtcute/node': 0.29.6(ws@8.20.0)
       '@napgram/message-kit': 0.2.3(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
       '@napgram/qq-client': 0.1.7
       '@napgram/telegram-client': 0.2.0(ws@8.20.0)
@@ -4604,7 +4604,7 @@ snapshots:
 
   '@napgram/message-kit@0.2.3(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)':
     dependencies:
-      '@mtcute/core': 0.29.5
+      '@mtcute/core': 0.29.6
       '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
       '@napgram/env-kit': 0.2.0
       '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
@@ -5511,9 +5511,9 @@ snapshots:
 
   '@napgram/telegram-client@0.2.0(ws@8.20.0)':
     dependencies:
-      '@mtcute/core': 0.29.5
-      '@mtcute/dispatcher': 0.29.5
-      '@mtcute/node': 0.29.5(ws@8.20.0)
+      '@mtcute/core': 0.29.6
+      '@mtcute/dispatcher': 0.29.6
+      '@mtcute/node': 0.29.6(ws@8.20.0)
     transitivePeerDependencies:
       - ws
 
@@ -6427,8 +6427,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.58.0(typescript@6.0.2)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.58.1(typescript@6.0.2)
-      '@typescript-eslint/types': 8.58.1
+      '@typescript-eslint/tsconfig-utils': 8.58.0(typescript@6.0.2)
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3
       typescript: 6.0.2
     transitivePeerDependencies:
