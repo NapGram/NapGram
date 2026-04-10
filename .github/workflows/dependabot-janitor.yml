@@ -40,7 +40,7 @@ jobs:
           version: 10.33.0
 
       - name: Janitor Logic
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           # GITHUB_TOKEN is still useful for other things if needed, but script will use PAT.
           # actually 'github' client uses the input 'github-token'.
