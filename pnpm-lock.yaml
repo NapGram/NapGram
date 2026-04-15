@@ -190,7 +190,7 @@ importers:
         version: 0.31.10
       fastify:
         specifier: '>=5.7.2'
-        version: 5.8.4
+        version: 5.8.5
       fflate:
         specifier: ^0.8.2
         version: 0.8.2
@@ -2458,8 +2458,8 @@ packages:
   fastify-plugin@5.1.0:
     resolution: {integrity: sha512-FAIDA8eovSt5qcDgcBvDuX/v0Cjz0ohGhENZ/wpc3y+oZCY2afZ9Baqql3g/lC+OHRnciQol4ww7tuthOb9idw==}
 
-  fastify@5.8.4:
-    resolution: {integrity: sha512-sa42J1xylbBAYUWALSBoyXKPDUvM3OoNOibIefA+Oha57FryXKKCZarA1iDntOCWp3O35voZLuDg2mdODXtPzQ==}
+  fastify@5.8.5:
+    resolution: {integrity: sha512-Yqptv59pQzPgQUSIm87hMqHJmdkb1+GPxdE6vW6FRyVE9G86mt7rOghitiU4JHRaTyDUk9pfeKmDeu70lAwM4Q==}
 
   fastq@1.20.1:
     resolution: {integrity: sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw==}
@@ -4309,7 +4309,7 @@ snapshots:
       '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
       '@napgram/logger-kit': 0.2.0
       '@napgram/qq-client': 0.1.7
-      fastify: 5.8.4
+      fastify: 5.8.5
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -4482,7 +4482,7 @@ snapshots:
       '@napgram/logger-kit': 0.2.0
       '@napgram/qq-client': 0.1.7
       '@napgram/telegram-client': 0.2.0(ws@8.20.0)
-      fastify: 5.8.4
+      fastify: 5.8.5
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5549,7 +5549,7 @@ snapshots:
       '@napgram/plugin-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
       '@napgram/runtime-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.8.0)(pg@8.20.0)(ws@8.20.0)
       '@napgram/telegram-client': 0.2.0(ws@8.20.0)
-      fastify: 5.8.4
+      fastify: 5.8.5
       zod: 4.3.6
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -6432,8 +6432,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.58.0(typescript@6.0.2)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.58.1(typescript@6.0.2)
-      '@typescript-eslint/types': 8.58.1
+      '@typescript-eslint/tsconfig-utils': 8.58.0(typescript@6.0.2)
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3
       typescript: 6.0.2
     transitivePeerDependencies:
@@ -7319,7 +7319,7 @@ snapshots:
 
   fastify-plugin@5.1.0: {}
 
-  fastify@5.8.4:
+  fastify@5.8.5:
     dependencies:
       '@fastify/ajv-compiler': 4.0.5
       '@fastify/error': 4.2.0
