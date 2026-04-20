@@ -25,7 +25,7 @@
         "@fastify/cookie": "^11.0.2",
         "@fastify/cors": "^11.2.0",
         "@fastify/multipart": "^10.0.0",
-        "@fastify/static": "9.1.1",
+        "@fastify/static": "9.1.2",
         "@kitajs/html": "^4.2.13",
         "@mtcute/core": "^0.29.6",
         "@mtcute/dispatcher": "^0.29.6",
