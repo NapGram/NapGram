@@ -50,6 +50,47 @@ jobs:
             echo "DOCKERHUB_IMAGE=" >> "$GITHUB_ENV"
           fi
 
+      - name: Debug UI token access
+        env:
+          UI_SRC_TOKEN: ${{ secrets.UI_SRC_TOKEN }}
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+          GITHUB_TOKEN_FALLBACK: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          test_token() {
+            name="$1"
+            token="$2"
+
+            if [ -z "${token:-}" ]; then
+              echo "$name empty"
+              return
+            fi
+
+            echo "::add-mask::$token"
+            len=$(printf %s "$token" | wc -c | tr -d ' ')
+            fp=$(printf %s "$token" | sha256sum | awk '{print $1}' | cut -c1-12)
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer $token" \
+              https://api.github.com/repos/magisk317/napgram-ui-dist)
+
+            if git ls-remote --exit-code "https://x-access-token:${token}@github.com/magisk317/napgram-ui-dist.git" refs/heads/dev >/dev/null 2>&1; then
+              git_ok=yes
+            else
+              git_ok=no
+            fi
+
+            echo "$name len=$len fp=$fp api=$code git=$git_ok"
+          }
+
+          test_token UI_SRC_TOKEN "$UI_SRC_TOKEN"
+          test_token SUBMODULE_TOKEN "$SUBMODULE_TOKEN"
+          test_token GH_PAT "$GH_PAT"
+          test_token GH_PACKAGES_TOKEN "$GH_PACKAGES_TOKEN"
+          test_token GITHUB_TOKEN_FALLBACK "$GITHUB_TOKEN_FALLBACK"
+
       - name: Resolve UI checkout token
         id: ui-token
         env:
@@ -225,6 +266,47 @@ jobs:
             echo "DOCKERHUB_ENABLED=0" >> "$GITHUB_ENV"
             echo "DOCKERHUB_IMAGE=" >> "$GITHUB_ENV"
           fi
+
+      - name: Debug UI token access
+        env:
+          UI_SRC_TOKEN: ${{ secrets.UI_SRC_TOKEN }}
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+          GITHUB_TOKEN_FALLBACK: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          test_token() {
+            name="$1"
+            token="$2"
+
+            if [ -z "${token:-}" ]; then
+              echo "$name empty"
+              return
+            fi
+
+            echo "::add-mask::$token"
+            len=$(printf %s "$token" | wc -c | tr -d ' ')
+            fp=$(printf %s "$token" | sha256sum | awk '{print $1}' | cut -c1-12)
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+              -H "Authorization: Bearer $token" \
+              https://api.github.com/repos/magisk317/napgram-ui-dist)
+
+            if git ls-remote --exit-code "https://x-access-token:${token}@github.com/magisk317/napgram-ui-dist.git" refs/heads/dev >/dev/null 2>&1; then
+              git_ok=yes
+            else
+              git_ok=no
+            fi
+
+            echo "$name len=$len fp=$fp api=$code git=$git_ok"
+          }
+
+          test_token UI_SRC_TOKEN "$UI_SRC_TOKEN"
+          test_token SUBMODULE_TOKEN "$SUBMODULE_TOKEN"
+          test_token GH_PAT "$GH_PAT"
+          test_token GH_PACKAGES_TOKEN "$GH_PACKAGES_TOKEN"
+          test_token GITHUB_TOKEN_FALLBACK "$GITHUB_TOKEN_FALLBACK"
 
       - name: Resolve UI checkout token
         id: ui-token
