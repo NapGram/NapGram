@@ -83,7 +83,7 @@
         "zod": "^4.4.3"
     },
     "devDependencies": {
-        "@antfu/eslint-config": "^8.2.0",
+        "@antfu/eslint-config": "^9.0.0",
         "@kitajs/ts-html-plugin": "^4.1.4",
         "@mtcute/test": "^0.29.7",
         "@mtcute/web": "^0.29.7",
