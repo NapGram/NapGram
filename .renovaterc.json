@@ -70,6 +70,16 @@
                 "x-managedPnpmOverrides"
             ],
             "enabled": false
+        },
+        {
+            "description": "Workspace pnpm overrides are maintained by dependency-force-manager.",
+            "matchManagers": [
+                "npm"
+            ],
+            "matchFileNames": [
+                "pnpm-workspace.yaml"
+            ],
+            "enabled": false
         }
     ],
     "osvVulnerabilityAlerts": true,

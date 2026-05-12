@@ -19,10 +19,10 @@
         ]
     },
     "x-managedPnpmOverrides": {
-        "axios": "1.15.2",
+        "axios": "1.16.0",
         "esbuild": "0.28.0",
         "fastify": "5.8.5",
-        "vite": "8.0.5"
+        "vite": "8.0.12"
     },
     "devDependencies": {
         "typescript": "6.0.3",
