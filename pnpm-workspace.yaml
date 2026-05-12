@@ -1,2 +1,6 @@
 packages:
   - 'main'
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  skia-canvas: true
