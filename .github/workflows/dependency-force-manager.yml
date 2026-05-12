@@ -1,0 +1,147 @@
+name: Dependency Force Manager
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  push:
+    branches:
+      - dev
+  pull_request_target:
+    branches:
+      - dev
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  security-events: read
+
+jobs:
+  dependency-force:
+    name: Attempt dependency remediation
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    concurrency:
+      group: dependency-force-manager-${{ github.ref }}
+      cancel-in-progress: false
+    if: |
+      !(
+        github.event_name == 'push' &&
+        github.ref == 'refs/heads/dev' &&
+        (
+          (
+            startsWith(github.event.head_commit.message, 'Merge pull request #') &&
+            contains(github.event.head_commit.message, 'from NapGram/chore/dependency-force-update')
+          ) ||
+          startsWith(github.event.head_commit.message, 'build: update forced dependencies')
+        )
+      ) &&
+      !(
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.head.ref == 'chore/dependency-force-update'
+      )
+    env:
+      DEPENDENCY_FORCE_HISTORICAL_ALERT_COOLDOWN_HOURS: 168
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 25
+
+      - name: Enable corepack
+        run: corepack enable
+
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          @naplink:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
+          EOF
+
+      - name: Fetch Dependabot alerts
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT != '' && secrets.GH_PAT || github.token }}
+        run: |
+          gh api \
+            --paginate \
+            -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/dependabot/alerts?per_page=100" \
+            | jq -s '[.[][]]' \
+            > /tmp/dependabot-alerts.json
+
+      - name: Determine removable managed overrides
+        run: |
+          python3 scripts/manage_dependency_overrides.py determine-removable \
+            --package-file package.json \
+            --workspace-file pnpm-workspace.yaml \
+            --lockfile pnpm-lock.yaml \
+            --alerts-json /tmp/dependabot-alerts.json \
+            --historical-alert-cooldown-hours "$DEPENDENCY_FORCE_HISTORICAL_ALERT_COOLDOWN_HOURS" \
+            --verify-pnpm \
+            --output /tmp/removable-overrides.json
+
+      - name: Apply managed override updates
+        run: |
+          python3 scripts/manage_dependency_overrides.py apply-updates \
+            --package-file package.json \
+            --workspace-file pnpm-workspace.yaml \
+            --alerts-json /tmp/dependabot-alerts.json \
+            --removable-json /tmp/removable-overrides.json
+
+      - name: Check whether dependency inputs changed
+        id: changes
+        run: |
+          if git diff --quiet -- package.json pnpm-workspace.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Refresh pnpm lockfile
+        if: steps.changes.outputs.changed == 'true'
+        run: pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+
+      - name: Create PR with dependency force updates
+        id: cpr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GH_PAT != '' && secrets.GH_PAT || github.token }}
+          base: dev
+          branch: chore/dependency-force-update
+          delete-branch: true
+          title: "build: update forced dependencies"
+          commit-message: "build: update forced dependencies"
+          labels: |
+            dependencies
+            javascript
+            security
+          body: |
+            Automated dependency override maintenance:
+            - Removed managed pnpm overrides after alert cooldown and audit checks.
+            - Added or updated managed pnpm overrides for open Dependabot npm alerts.
+            - Refreshed the pnpm lockfile after dependency graph changes.
+
+      - name: Write remediation summary
+        if: always()
+        run: |
+          {
+            echo "## Dependency remediation"
+            echo ""
+            echo "- Trigger: ${{ github.event_name }}"
+            echo "- Base ref: ${{ github.base_ref || github.ref_name }}"
+            echo "- Auto PR operation: ${{ steps.cpr.outputs.pull-request-operation || 'none' }}"
+            echo "- Auto PR number: ${{ steps.cpr.outputs.pull-request-number || 'none' }}"
+          } >> "$GITHUB_STEP_SUMMARY"
