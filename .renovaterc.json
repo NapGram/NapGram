@@ -6,7 +6,7 @@
     "forkProcessing": "enabled",
     "pruneStaleBranches": true,
     "pruneBranchAfterAutomerge": true,
-    "baseBranches": [
+    "baseBranchPatterns": [
         "dev"
     ],
     "packageRules": [
