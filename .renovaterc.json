@@ -3,7 +3,10 @@
     "extends": [
         "config:recommended"
     ],
-    "baseBranchPatterns": [
+    "forkProcessing": "enabled",
+    "pruneStaleBranches": true,
+    "pruneBranchAfterAutomerge": true,
+    "baseBranches": [
         "dev"
     ],
     "packageRules": [
@@ -12,6 +15,8 @@
                 "minor",
                 "patch"
             ],
+            "automerge": true,
+            "automergeType": "pr",
             "groupName": "all non-major dependencies",
             "groupSlug": "all-minor-patch",
             "matchPackageNames": [
@@ -21,7 +26,26 @@
         {
             "enabled": false,
             "matchPackageNames": [
-                "/^@napgram//"
+                "/^@napgram\\//",
+                "/^@naplink\\//"
+            ]
+        },
+        {
+            "matchManagers": [
+                "npm"
+            ],
+            "addLabels": [
+                "dependencies",
+                "javascript"
+            ]
+        },
+        {
+            "matchManagers": [
+                "github-actions"
+            ],
+            "addLabels": [
+                "dependencies",
+                "github_actions"
             ]
         },
         {
@@ -32,6 +56,27 @@
                 "@mtcute/**"
             ],
             "rangeStrategy": "bump"
+        },
+        {
+            "description": "Root pnpm overrides are maintained by dependency-force-manager.",
+            "matchManagers": [
+                "npm"
+            ],
+            "matchFileNames": [
+                "package.json"
+            ],
+            "matchDepTypes": [
+                "pnpm.overrides",
+                "x-managedPnpmOverrides"
+            ],
+            "enabled": false
         }
-    ]
+    ],
+    "osvVulnerabilityAlerts": true,
+    "vulnerabilityAlerts": {
+        "enabled": true,
+        "labels": [
+            "security"
+        ]
+    }
 }
