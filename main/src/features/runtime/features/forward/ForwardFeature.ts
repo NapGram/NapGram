@@ -416,6 +416,11 @@ export class ForwardFeature {
       .join('')
       .trim()
 
+    if (this.isSelfQQMessage(msg)) {
+      logger.debug(`[Forward] Ignored self QQ message: ${msg.id}`)
+      return
+    }
+
     // Deduplication check
     if (this.processedMsgIds.has(String(msg.id))) {
       logger.info(`[Forward] Duplicate QQ message ignored: ${msg.id}`)
@@ -685,6 +690,12 @@ export class ForwardFeature {
       default:
         return `[${content.type}]`
     }
+  }
+
+  private isSelfQQMessage(msg: UnifiedMessage): boolean {
+    const senderId = String(msg.sender?.id || '')
+    const selfId = String(this.qqClient?.uin || '')
+    return !!senderId && !!selfId && senderId === selfId
   }
 
   private handlePokeEvent = async (groupId: string, operatorId: string, targetId: string) => {
