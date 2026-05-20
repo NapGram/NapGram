@@ -9,6 +9,9 @@
     "baseBranchPatterns": [
         "dev"
     ],
+    "dependencyDashboard": true,
+    "internalChecksFilter": "strict",
+    "minimumReleaseAgeBehaviour": "timestamp-required",
     "packageRules": [
         {
             "matchUpdateTypes": [
@@ -22,6 +25,13 @@
             "matchPackageNames": [
                 "*"
             ]
+        },
+        {
+            "description": "Match pnpm's default 24h package cooldown before opening or automerging npm updates.",
+            "matchDatasources": [
+                "npm"
+            ],
+            "minimumReleaseAge": "1 day"
         },
         {
             "enabled": false,
