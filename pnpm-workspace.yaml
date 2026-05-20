@@ -2,8 +2,13 @@ packages:
   - 'main'
 allowBuilds:
   better-sqlite3: true
+  cpu-features: true
   esbuild: true
+  protobufjs: true
+  sharp: true
+  silk-sdk: true
   skia-canvas: true
+  ssh2: true
 
 minimumReleaseAgeExclude:
   - '@types/node@25.9.0'
