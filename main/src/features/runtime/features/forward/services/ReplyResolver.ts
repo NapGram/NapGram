@@ -19,6 +19,7 @@ export class ReplyResolver {
     msg: UnifiedMessage,
     instanceId: number,
     qqRoomId: bigint,
+    qqChatType: 'private' | 'group' = 'group',
   ): Promise<bigint | undefined> {
     const replyContent = msg.content.find(c => c.type === 'reply')
     if (!replyContent || replyContent.type !== 'reply') {
@@ -26,7 +27,7 @@ export class ReplyResolver {
     }
 
     const qqMsgId = replyContent.data.messageId
-    const tgMsgId = await this.mapper.findTgMsgId(instanceId, qqRoomId, qqMsgId)
+    const tgMsgId = await this.mapper.findTgMsgId(instanceId, qqRoomId, qqMsgId, qqChatType)
 
     if (tgMsgId) {
       logger.debug(`Resolved QQ reply: QQ msg ${qqMsgId} -> TG msg ${tgMsgId}`)
@@ -42,7 +43,7 @@ export class ReplyResolver {
     tgMsg: any,
     instanceId: number,
     tgChatId: bigint,
-  ): Promise<{ seq?: number, qqRoomId?: bigint, senderUin?: string, time?: number } | undefined> {
+  ): Promise<{ seq?: number, qqRoomId?: bigint, qqChatType?: 'private' | 'group', senderUin?: string, time?: number } | undefined> {
     const replyToMsgId = telegramMessage.getTelegramReplyMessageId(tgMsg)
     if (!replyToMsgId) {
       return undefined
@@ -54,6 +55,7 @@ export class ReplyResolver {
       return {
         seq: qqSource.seq,
         qqRoomId: qqSource.qqRoomId,
+        qqChatType: qqSource.qqChatType === 'private' ? 'private' : 'group',
         senderUin: qqSource.qqSenderId?.toString(),
         time: qqSource.time,
       }

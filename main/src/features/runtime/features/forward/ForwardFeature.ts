@@ -12,6 +12,7 @@ import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor.js'
+import { findPairByQQWithChatType, findPairByTGWithChatType } from '../commands/utils/ForwardPairChatType.js'
 import { MediaGroupHandler } from './handlers/MediaGroupHandler.js'
 import { TelegramMessageHandler } from './handlers/TelegramMessageHandler.js'
 import { ForwardMediaPreparer } from './senders/MediaPreparer.js'
@@ -55,7 +56,8 @@ export class ForwardFeature {
 
     const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg)
 
-    const pair = this.forwardMap.findByTG(
+    const pair = await findPairByTGWithChatType(
+      this.forwardMap,
       BigInt(tgMsg.chat.id),
       threadId,
       !threadId, // 如果有 threadId，禁用 fallback，避免落到 general
@@ -240,6 +242,8 @@ export class ForwardFeature {
    * 优先使用 pair 的配置，若为 null 则使用环境变量默认值
    */
   private getNicknameMode(pair: ForwardPairRecord): string {
+    if (!pair.nicknameMode && (this.instance as any).workMode === 'personal')
+      return '10'
     return pair.nicknameMode || env.SHOW_NICKNAME_MODE
   }
 
@@ -506,7 +510,8 @@ export class ForwardFeature {
         return
       }
 
-      const pair = this.forwardMap.findByQQ(msg.chat.id)
+      const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
       if (!pair) {
         logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`)
         return
@@ -572,7 +577,12 @@ export class ForwardFeature {
       const chat = await this.instance.tgBot.getChat(tgChatId)
 
       // 处理回复 - 使用 ReplyResolver
-      const replyToMsgId = await this.replyResolver.resolveQQReply(msg, pair.instanceId, pair.qqRoomId)
+      const replyToMsgId = await this.replyResolver.resolveQQReply(
+        msg,
+        pair.instanceId,
+        pair.qqRoomId,
+        pair.qqChatType === 'private' ? 'private' : 'group',
+      )
 
       const sentMsg = await this.enqueueTelegramSend(() =>
         this.telegramSender.sendToTelegram(
@@ -701,7 +711,7 @@ export class ForwardFeature {
   private handlePokeEvent = async (groupId: string, operatorId: string, targetId: string) => {
     try {
       // Find mapping for this group
-      const pair = this.forwardMap.findByQQ(groupId)
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, groupId, 'group')
       if (!pair)
         return
 
