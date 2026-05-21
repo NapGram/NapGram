@@ -25,6 +25,10 @@ export class MediaGroupHandler {
     private readonly getNicknameMode: (pair: any) => string,
   ) { }
 
+  private getQqChatType(pair: any): 'private' | 'group' {
+    return pair?.qqChatType === 'private' ? 'private' : 'group'
+  }
+
   /**
    * Handle Media Group batching for TG->QQ
    * @returns true if the message is part of a media group and is buffered
@@ -124,7 +128,7 @@ export class MediaGroupHandler {
       const msgWithSegments: UnifiedMessage = {
         id: String(lastMsg.id),
         platform: 'telegram' as const,
-        chat: { id: String(buffer.pair.qqRoomId), type: 'group' as const, name: '' },
+        chat: { id: String(buffer.pair.qqRoomId), type: this.getQqChatType(buffer.pair), name: '' },
         sender: { id: String(lastMsg.sender?.id || '0'), name: '', avatar: '' },
         timestamp: Math.floor(lastMsg.date.getTime() / 1000),
         content: napCatSegments as any,

@@ -4,7 +4,7 @@ import type { IQQClient } from '../../../shared-types.js'
 import type { ReplyResolver } from '../services/ReplyResolver.js'
 import type { MediaGroupHandler } from './MediaGroupHandler.js'
 import { messageConverter } from '@napgram/message-kit'
-import { db, getLogger, performanceMonitor, schema } from '../../../shared-types.js'
+import { db, getLogger, performanceMonitor, sql } from '../../../shared-types.js'
 
 const logger = getLogger('ForwardFeature')
 
@@ -20,6 +20,60 @@ export class TelegramMessageHandler {
     private readonly renderContent: (content: any) => string,
     private readonly getNicknameMode: (pair: any) => string,
   ) { }
+
+  private getQqChatType(pair: any): 'private' | 'group' {
+    return pair?.qqChatType === 'private' ? 'private' : 'group'
+  }
+
+  private getReplyChatType(pair: any) {
+    return this.getQqChatType(pair) === 'private' ? 1 : 2
+  }
+
+  private createQqMessage(base: UnifiedMessage, pair: any, content: any[]): UnifiedMessage {
+    const qqChatType = this.getQqChatType(pair)
+    const msg: UnifiedMessage = {
+      ...base,
+      platform: 'qq',
+      chat: {
+        ...(base.chat || {}),
+        id: String(pair.qqRoomId),
+        type: qqChatType,
+      },
+      content: content as any,
+    }
+    ;(msg as any).__napCatSegments = true
+    return msg
+  }
+
+  private normalizeReceipt(result: any) {
+    if (!result)
+      return { success: false, messageId: '', error: 'empty result' }
+    if (typeof result.success === 'boolean')
+      return result
+    return {
+      success: true,
+      messageId: String(result.message_id || result.messageId || result.id || ''),
+      timestamp: Date.now(),
+    }
+  }
+
+  private async sendForwardSegments(pair: any, node: any, fallbackMsg: UnifiedMessage) {
+    const qqRoomId = String(pair.qqRoomId)
+    if (this.getQqChatType(pair) === 'group') {
+      return this.qqClient.sendGroupForwardMsg(qqRoomId, [node])
+    }
+
+    const sendPrivateForwardMessage = (this.qqClient as any).sendPrivateForwardMessage
+    if (typeof sendPrivateForwardMessage === 'function') {
+      const result = await sendPrivateForwardMessage.call(this.qqClient, {
+        user_id: qqRoomId,
+        messages: [node],
+      })
+      return this.normalizeReceipt(result)
+    }
+
+    return this.qqClient.sendMessage(qqRoomId, fallbackMsg)
+  }
 
   async handleTGMessage(tgMsg: Message, pair: any, preUnified?: UnifiedMessage): Promise<void> {
     const startTime = Date.now()
@@ -50,7 +104,7 @@ export class TelegramMessageHandler {
             time: qqReply.time,
             senderUin: qqReply.senderUin,
             peer: {
-              chatType: 2, // Group chat
+              chatType: qqReply.qqChatType === 'private' ? 1 : this.getReplyChatType(pair),
               peerUid: String(qqReply.qqRoomId),
             },
           },
@@ -76,7 +130,7 @@ export class TelegramMessageHandler {
       }
 
       const hasMedia = unified.content.some(c => ['video', 'file'].includes(c.type))
-      const hasSplitMedia = unified.content.some(c => c.type === 'audio')
+      const hasSplitMedia = unified.content.some(c => ['audio', 'image'].includes(c.type))
       const nicknameMode = this.getNicknameMode(pair)
       const showTGToQQNickname = nicknameMode[1] === '1'
 
@@ -111,7 +165,7 @@ export class TelegramMessageHandler {
               id: `${unified.id}_hint`,
               platform: 'qq',
               sender: unified.sender,
-              chat: { id: String(pair.qqRoomId), type: 'group' },
+              chat: { id: String(pair.qqRoomId), type: this.getQqChatType(pair) },
               content: [{ type: 'text', data: { text: hintText } }],
               timestamp: Date.now(),
             }
@@ -131,13 +185,16 @@ export class TelegramMessageHandler {
           },
         }
 
-        receipt = await this.qqClient.sendGroupForwardMsg(String(pair.qqRoomId), [node])
+        const fallbackMsg = this.createQqMessage(unified, pair, mediaSegments)
+        receipt = await this.sendForwardSegments(pair, node, fallbackMsg)
       }
       else if (hasSplitMedia) {
-        // 语音消息特殊处理：分两次调用 API 发送
+        // 语音和图片消息特殊处理：分两次调用 API 发送
         let actionText = ''
         if (showTGToQQNickname) {
-          if (unified.content.some(c => c.type === 'audio'))
+          if (unified.content.some(c => c.type === 'image'))
+            actionText = '发来一张图片'
+          else if (unified.content.some(c => c.type === 'audio'))
             actionText = '发来一条语音'
         }
 
@@ -145,7 +202,7 @@ export class TelegramMessageHandler {
           ? (actionText ? `${unified.sender.name}：\n${actionText}` : `${unified.sender.name}：\n`)
           : ''
         const textSegments = unified.content.filter(c =>
-          c.type !== 'audio'
+          !['audio', 'image'].includes(c.type)
           && !(c.type === 'text' && !c.data.text),
         )
 
@@ -165,21 +222,17 @@ export class TelegramMessageHandler {
             ...textNapCatSegments,
           ]
 
-          const headerMsg: UnifiedMessage = {
-            ...unified,
-            content: headerSegments as any,
-          };
-          // Mark as pre-converted to skip toNapCat in sendMessage
-          (headerMsg as any).__napCatSegments = true
+          const headerMsg = this.createQqMessage(unified, pair, headerSegments)
 
           // 发送 Header
           await this.qqClient.sendMessage(String(pair.qqRoomId), headerMsg)
         }
 
-        // 2. 发送媒体 (Audio)
-        const mediaSegments = unified.content.filter(c => c.type === 'audio')
+        // 2. 发送媒体 (Audio, Image)
+        const mediaSegments = unified.content.filter(c => ['audio', 'image'].includes(c.type))
         const mediaMsg: UnifiedMessage = {
           ...unified,
+          chat: { ...unified.chat, id: String(pair.qqRoomId), type: this.getQqChatType(pair) },
           content: mediaSegments,
         }
 
@@ -199,15 +252,8 @@ export class TelegramMessageHandler {
           ...baseSegments,
         ]
 
-        // Create message with NapCat segments
-        unified.content = segments as any;
-        // Mark as pre-converted to skip toNapCat conversion in sendMessage
-        (unified as any).__napCatSegments = true
-
-        unified.chat.id = String(pair.qqRoomId)
-        unified.chat.type = 'group'
-
-        receipt = await this.qqClient.sendMessage(String(pair.qqRoomId), unified)
+        const qqMsg = this.createQqMessage(unified, pair, segments)
+        receipt = await this.qqClient.sendMessage(String(pair.qqRoomId), qqMsg)
       }
 
       if (receipt.success) {
@@ -221,20 +267,38 @@ export class TelegramMessageHandler {
           // Save mapping for reply lookup (QQ -> TG reply)
           try {
             const tgSenderName = unified.sender?.name || tgMsg?.sender?.displayName || tgMsg?.sender?.username || null
-            await db.insert(schema.message).values({
-              qqRoomId: pair.qqRoomId,
-              qqSenderId: BigInt(0), // Self sent
-              time: Math.floor(Date.now() / 1000),
-              seq: Number(msgId), // Store message_id as seq
-              rand: BigInt(0),
-              pktnum: 0,
-              tgChatId: BigInt(pair.tgChatId),
-              tgMsgId: BigInt(tgMsg.id),
-              tgSenderId: BigInt(tgMsg.sender.id || 0),
-              instanceId: pair.instanceId,
-              nick: tgSenderName,
-              brief: unified.content.map(c => this.renderContent(c)).join(' ').slice(0, 50),
-            })
+            await db.execute(sql`
+              INSERT INTO "Message" (
+                "qqChatType",
+                "qqRoomId",
+                "qqSenderId",
+                "time",
+                "seq",
+                "rand",
+                "pktnum",
+                "tgChatId",
+                "tgMsgId",
+                "tgSenderId",
+                "instanceId",
+                "nick",
+                "brief"
+              )
+              VALUES (
+                ${this.getQqChatType(pair)},
+                ${pair.qqRoomId},
+                ${BigInt(0)},
+                ${Math.floor(Date.now() / 1000)},
+                ${Number(msgId)},
+                ${BigInt(0)},
+                ${0},
+                ${BigInt(pair.tgChatId)},
+                ${BigInt(tgMsg.id)},
+                ${BigInt(tgMsg.sender?.id || 0)},
+                ${pair.instanceId},
+                ${tgSenderName},
+                ${unified.content.map(c => this.renderContent(c)).join(' ').slice(0, 50)}
+              )
+            `)
             logger.debug(`Saved TG->QQ mapping: seq=${msgId} <-> tgMsgId=${tgMsg.id}`)
           }
           catch (e) {
