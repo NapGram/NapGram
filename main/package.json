@@ -40,7 +40,7 @@
     "@napgram/marketplace-kit": "^2.0.0",
     "@napgram/media-kit": "^2.0.0",
     "@napgram/message-kit": "^2.0.0",
-    "@napgram/plugin-adapter-qq-napcat": "^2.0.0",
+    "@napgram/plugin-adapter-qq-napcat": "^2.0.1",
     "@napgram/plugin-adapter-telegram-mtcute": "^2.0.0",
     "@napgram/plugin-admin-auth": "^2.0.0",
     "@napgram/plugin-admin-database": "^2.0.0",
