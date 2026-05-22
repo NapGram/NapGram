@@ -66,7 +66,7 @@
     "@napgram/plugin-statistics": "^2.0.0",
     "@napgram/plugin-web-assets": "^2.0.0",
     "@napgram/plugin-web-console": "^2.0.0",
-    "@napgram/qq-client": "^2.0.0",
+    "@napgram/qq-client": "^2.0.1",
     "@napgram/request-kit": "^2.0.0",
     "@napgram/telegram-client": "^2.0.0",
     "@naplink/naplink": "^1.0.0",
