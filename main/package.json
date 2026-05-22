@@ -69,7 +69,7 @@
     "@napgram/qq-client": "^2.0.0",
     "@napgram/request-kit": "^2.0.0",
     "@napgram/telegram-client": "^2.0.0",
-    "@naplink/naplink": "^0.0.10",
+    "@naplink/naplink": "^1.0.0",
     "@sentry/node": "10.53.1",
     "drizzle-kit": "^0.31.10",
     "fastify": "^5.8.5",
