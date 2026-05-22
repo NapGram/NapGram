@@ -19,6 +19,7 @@ import { ForwardMediaPreparer } from './senders/MediaPreparer.js'
 import { TelegramSender } from './senders/TelegramSender.js'
 import { ForwardMapper } from './services/MessageMapper.js'
 import { PersonalPairProvisioner } from './services/PersonalPairProvisioner.js'
+import { PersonalSyncService } from './services/PersonalSyncService.js'
 import { ReplyResolver } from './services/ReplyResolver.js'
 import { MessageUtils } from './utils/MessageUtils.js'
 
@@ -43,6 +44,7 @@ export class ForwardFeature {
   private tgMessageHandler: TelegramMessageHandler
   private mediaPreparer: ForwardMediaPreparer
   private personalPairProvisioner: PersonalPairProvisioner
+  private personalSyncService: PersonalSyncService
   private processedMsgIds = new Set<string>()
   private telegramSendQueue: TelegramSendQueueState = {
     chain: Promise.resolve(),
@@ -127,6 +129,8 @@ export class ForwardFeature {
     this.mapper = new ForwardMapper()
     this.replyResolver = new ReplyResolver(this.mapper)
     this.personalPairProvisioner = new PersonalPairProvisioner(instance, this.forwardMap, this.qqClient)
+    this.personalSyncService = new PersonalSyncService(instance, this.forwardMap, this.qqClient)
+    this.personalSyncService.start()
     this.mediaPreparer = new ForwardMediaPreparer(instance, media)
     this.mediaGroupHandler = new MediaGroupHandler(
       this.qqClient,
@@ -756,6 +760,7 @@ export class ForwardFeature {
 
 
   destroy() {
+    this.personalSyncService?.stop()
     this.mediaGroupHandler.destroy()
     this.qqClient.removeListener('message', this.handleQQMessage)
     this.qqClient.removeListener('poke', this.handlePokeEvent)
