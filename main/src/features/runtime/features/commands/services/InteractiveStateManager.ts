@@ -1,5 +1,8 @@
+import type { QqChatType } from '../utils/ForwardPairChatType.js'
+
 interface BindingState {
   threadId?: bigint
+  qqChatType?: QqChatType
   userId: string
   timestamp: number
 }
@@ -15,10 +18,11 @@ export class InteractiveStateManager {
   /**
    * 设置绑定状态
    */
-  setBindingState(chatId: string, userId: string, threadId?: bigint) {
+  setBindingState(chatId: string, userId: string, threadId?: bigint, qqChatType: QqChatType = 'group') {
     const key = `${chatId}:${userId}`
     this.bindingStates.set(key, {
       threadId,
+      qqChatType,
       userId,
       timestamp: Date.now(),
     })

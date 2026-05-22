@@ -14,18 +14,35 @@ import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 
 export type WorkMode = 'personal' | 'group' | 'public'
 export type InstanceLifecycleStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
+export type PersonalUserBotStatus = 'disabled' | 'not-configured' | 'starting' | 'running' | 'stopped' | 'error'
+
+export interface PersonalModeDiagnostics {
+  workMode: WorkMode
+  userBotRequired: boolean
+  userSessionId: number | null
+  userBotStatus: PersonalUserBotStatus
+  hasTgUserBot: boolean
+  canAutoProvisionPairs: boolean
+  manualPairingAvailable: boolean
+  reason?: string
+  error?: string
+}
 
 export default class Instance {
   private _owner = 0
   private _isSetup = false
   private _workMode = ''
   private _botSessionId = 0
+  private _userSessionId: number | null = null
   private _qq: any
   private _flags = 0
+  private _userBotStatus: PersonalUserBotStatus = 'disabled'
+  private _userBotError?: string
 
   private readonly log: AppLogger
 
   public tgBot!: Telegram
+  public tgUserBot?: Telegram
   public qqClient?: IQQClient
   public forwardPairs!: ForwardMap
   public mediaFeature?: MediaFeature
@@ -97,9 +114,74 @@ export default class Instance {
     this._owner = Number(dbEntry.owner)
     this._qq = dbEntry.qqBot
     this._botSessionId = dbEntry.botSessionId ?? 0
+    this._userSessionId = dbEntry.userSessionId ?? null
     this._isSetup = dbEntry.isSetup
     this._workMode = dbEntry.workMode
     this._flags = dbEntry.flags
+  }
+
+  private formatError(error: unknown) {
+    return String((error as any)?.message || error)
+  }
+
+  private async initPersonalUserBotIfNeeded() {
+    this._userBotError = undefined
+
+    if (this.workMode !== 'personal') {
+      this._userBotStatus = 'disabled'
+      return
+    }
+
+    if (!this._userSessionId) {
+      this._userBotStatus = 'not-configured'
+      this.log.warn('Personal mode enabled but userSessionId is not configured; auto pair provisioning is disabled, manual binding remains available')
+      return
+    }
+
+    this._userBotStatus = 'starting'
+    this.log.debug('TG UserBot 正在登录')
+    try {
+      this.tgUserBot = await telegramClientFactory.connect({
+        type: 'mtcute',
+        sessionId: this._userSessionId,
+        authMode: 'user',
+        appName: 'NapGram User',
+      })
+      this._userBotStatus = 'running'
+      this.log.info('TG UserBot ✓ 登录完成')
+    }
+    catch (error) {
+      this._userBotStatus = 'error'
+      this._userBotError = this.formatError(error)
+      this.log.warn({ error, userSessionId: this._userSessionId }, 'TG UserBot 登录失败；自动建群不可用，手动绑定仍可使用')
+      sentry.captureException(error, { stage: 'personal-userbot-init', instanceId: this.id })
+    }
+  }
+
+  public async startUserBot() {
+    if (this.tgUserBot) {
+      try {
+        await (this.tgUserBot as any).disconnect?.()
+      }
+      catch (error) {
+        this.log.debug({ error }, 'Error disconnecting existing UserBot')
+      }
+      this.tgUserBot = undefined
+    }
+    await this.initPersonalUserBotIfNeeded()
+  }
+
+  public async stopUserBot() {
+    if (this.tgUserBot) {
+      try {
+        await (this.tgUserBot as any).disconnect?.()
+      }
+      catch (error) {
+        this.log.debug({ error }, 'Error disconnecting UserBot')
+      }
+      this.tgUserBot = undefined
+    }
+    this._userBotStatus = this.workMode === 'personal' && this._userSessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
   }
 
   private async init(botToken?: string) {
@@ -114,6 +196,7 @@ export default class Instance {
         this.tgBot = await telegramClientFactory.connect({
           type: 'mtcute',
           sessionId: this._botSessionId,
+          authMode: 'bot',
           botToken: token,
           appName: 'NapGram',
         })
@@ -124,12 +207,15 @@ export default class Instance {
         }
         this.tgBot = await telegramClientFactory.create({
           type: 'mtcute',
+          authMode: 'bot',
           botToken: token,
           appName: 'NapGram',
         })
         this.botSessionId = this.tgBot.sessionId ?? 0
       }
       this.log.info('TG Bot ✓ 登录完成')
+
+      await this.initPersonalUserBotIfNeeded()
 
       const wsUrl = this._qq?.wsUrl || env.NAPCAT_WS_URL
       if (!wsUrl) {
@@ -418,6 +504,17 @@ export default class Instance {
     }
 
     try {
+      await (this.tgUserBot as any)?.disconnect?.()
+    }
+    catch (error) {
+      this.log.warn('Failed to disconnect Telegram user bot during cleanup:', error)
+    }
+    finally {
+      this.tgUserBot = undefined
+      this._userBotStatus = this.workMode === 'personal' && this._userSessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
+    }
+
+    try {
       await (this.tgBot as any)?.disconnect?.()
     }
     catch (error) {
@@ -593,6 +690,40 @@ export default class Instance {
     return this._botSessionId
   }
 
+  get userSessionId() {
+    return this._userSessionId
+  }
+
+  get userBotStatus() {
+    return this._userBotStatus
+  }
+
+  get userBotError() {
+    return this._userBotError
+  }
+
+  getPersonalModeDiagnostics(): PersonalModeDiagnostics {
+    const workMode = this.workMode
+    const userBotRequired = workMode === 'personal'
+    const hasTgUserBot = Boolean(this.tgUserBot?.isOnline)
+    const userBotStatus = userBotRequired ? this._userBotStatus : 'disabled'
+    const manualPairingAvailable = Boolean(this.tgBot && this.qqClient)
+
+    return {
+      workMode,
+      userBotRequired,
+      userSessionId: this._userSessionId,
+      userBotStatus,
+      hasTgUserBot,
+      canAutoProvisionPairs: userBotStatus === 'running',
+      manualPairingAvailable,
+      ...(userBotRequired && !this._userSessionId
+        ? { reason: 'personal 模式未配置 TG User session，自动建群不可用；手动绑定仍可使用' }
+        : {}),
+      ...(this._userBotError ? { error: this._userBotError } : {}),
+    }
+  }
+
   get flags() {
     return this._flags
   }
@@ -625,6 +756,12 @@ export default class Instance {
   set botSessionId(sessionId: number) {
     this._botSessionId = sessionId
     this.updateDb({ botSessionId: sessionId })
+  }
+
+  set userSessionId(sessionId: number | null) {
+    this._userSessionId = sessionId
+    this._userBotStatus = this.workMode === 'personal' && sessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
+    this.updateDb({ userSessionId: sessionId })
   }
 
   set qqBotId(id: number) {

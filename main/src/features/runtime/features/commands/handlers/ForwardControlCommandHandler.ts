@@ -2,6 +2,7 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap } from '../../../shared-types.js'
 import type { CommandContext } from './CommandContext.js'
 import { db, eq, getLogger, schema } from '../../../shared-types.js'
+import { findPairByTGWithChatType, formatQqChatTypeLabel } from '../utils/ForwardPairChatType.js'
 
 const logger = getLogger('ForwardControlCommandHandler')
 
@@ -26,10 +27,10 @@ export class ForwardControlCommandHandler {
 
     // 查找当前绑定
     const forwardMap = this.context.instance.forwardPairs as ForwardMap
-    const pair = forwardMap.findByTG(chatId, threadId, true)
+    const pair = await findPairByTGWithChatType(forwardMap, chatId, threadId, true)
 
     if (!pair) {
-      await this.context.replyTG(chatId, '当前聊天未绑定任何 QQ 群', threadId)
+      await this.context.replyTG(chatId, '当前聊天未绑定任何 QQ 聊天', threadId)
       return
     }
 
@@ -75,7 +76,7 @@ export class ForwardControlCommandHandler {
       // 更新内存中的记录
       pair.forwardMode = newMode
 
-      const bindingInfo = `QQ ${pair.qqRoomId} ↔ TG ${pair.tgChatId}${threadId ? ` (话题 ${threadId})` : ''}`
+      const bindingInfo = `${formatQqChatTypeLabel(pair.qqChatType)} ${pair.qqRoomId} ↔ TG ${pair.tgChatId}${threadId ? ` (话题 ${threadId})` : ''}`
       await this.context.replyTG(chatId, `${message}\n\n绑定信息：${bindingInfo}`, threadId)
 
       logger.info(`Forward control: ${commandName} for ${bindingInfo}, new mode: ${newMode || 'normal'}`)

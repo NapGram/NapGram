@@ -44,6 +44,7 @@ const schemaMocks = vi.hoisted(() => ({
     isSetup: 'isSetup',
     workMode: 'workMode',
     botSessionId: 'botSessionId',
+    userSessionId: 'userSessionId',
     qqBotId: 'qqBotId',
     flags: 'flags',
   },
@@ -94,11 +95,13 @@ const telegramBotMocks = vi.hoisted(() => ({
   connected: {
     sessionId: 10,
     me: { id: 1 },
+    isOnline: true,
     disconnect: vi.fn().mockResolvedValue(undefined),
   },
   created: {
     sessionId: 20,
     me: { id: 2 },
+    isOnline: true,
     disconnect: vi.fn().mockResolvedValue(undefined),
   },
 }))
@@ -239,6 +242,7 @@ describe('instance', () => {
     expect(telegramMocks.connect).toHaveBeenCalledWith({
       type: 'mtcute',
       sessionId: 55,
+      authMode: 'bot',
       botToken: 'token',
       appName: 'NapGram',
     })
@@ -302,6 +306,121 @@ describe('instance', () => {
       .map(call => call[0])
       .find(call => call.noticeType === 'connection-restored')
     expect(restoreNotice).toEqual(expect.objectContaining({ noticeType: 'connection-restored' }))
+  })
+
+  it('keeps personal mode running without a configured user session', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue({
+      owner: 100,
+      qqBot: { wsUrl: 'ws://db', id: 5 },
+      botSessionId: 55,
+      userSessionId: null,
+      isSetup: false,
+      workMode: 'personal',
+      flags: 2,
+    })
+
+    const instance = await Instance.start(26, 'token')
+
+    expect(telegramMocks.connect).toHaveBeenCalledTimes(1)
+    expect(telegramMocks.connect).toHaveBeenCalledWith({
+      type: 'mtcute',
+      sessionId: 55,
+      authMode: 'bot',
+      botToken: 'token',
+      appName: 'NapGram',
+    })
+    expect(instance.tgUserBot).toBeUndefined()
+    expect(instance.getPersonalModeDiagnostics()).toEqual(expect.objectContaining({
+      workMode: 'personal',
+      userBotRequired: true,
+      userSessionId: null,
+      userBotStatus: 'not-configured',
+      hasTgUserBot: false,
+      canAutoProvisionPairs: false,
+      manualPairingAvailable: true,
+    }))
+    expect(instance.getPersonalModeDiagnostics().reason).toContain('未配置 TG User session')
+  })
+
+  it('connects a TG UserBot for personal mode when user session is configured', async () => {
+    const userBot = {
+      sessionId: 66,
+      me: { id: 66 },
+      isOnline: true,
+      disconnect: vi.fn().mockResolvedValue(undefined),
+    }
+    telegramMocks.connect
+      .mockResolvedValueOnce(telegramBotMocks.connected)
+      .mockResolvedValueOnce(userBot)
+    dbMocks.query.instance.findFirst.mockResolvedValue({
+      owner: 100,
+      qqBot: { wsUrl: 'ws://db', id: 5 },
+      botSessionId: 55,
+      userSessionId: 66,
+      isSetup: false,
+      workMode: 'personal',
+      flags: 2,
+    })
+
+    const instance = await Instance.start(27, 'token')
+
+    expect(telegramMocks.connect).toHaveBeenNthCalledWith(1, {
+      type: 'mtcute',
+      sessionId: 55,
+      authMode: 'bot',
+      botToken: 'token',
+      appName: 'NapGram',
+    })
+    expect(telegramMocks.connect).toHaveBeenNthCalledWith(2, {
+      type: 'mtcute',
+      sessionId: 66,
+      authMode: 'user',
+      appName: 'NapGram User',
+    })
+    expect(instance.tgUserBot).toBe(userBot)
+    expect(instance.getPersonalModeDiagnostics()).toEqual(expect.objectContaining({
+      workMode: 'personal',
+      userBotRequired: true,
+      userSessionId: 66,
+      userBotStatus: 'running',
+      hasTgUserBot: true,
+      canAutoProvisionPairs: true,
+      manualPairingAvailable: true,
+    }))
+  })
+
+  it('records UserBot login failure as personal diagnostics without stopping manual pairing', async () => {
+    const error = new Error('user login failed')
+    telegramMocks.connect
+      .mockResolvedValueOnce(telegramBotMocks.connected)
+      .mockRejectedValueOnce(error)
+    dbMocks.query.instance.findFirst.mockResolvedValue({
+      owner: 100,
+      qqBot: { wsUrl: 'ws://db', id: 5 },
+      botSessionId: 55,
+      userSessionId: 66,
+      isSetup: false,
+      workMode: 'personal',
+      flags: 2,
+    })
+
+    const instance = await Instance.start(28, 'token')
+
+    expect(instance.isInit).toBe(true)
+    expect(instance.getPersonalModeDiagnostics()).toEqual(expect.objectContaining({
+      workMode: 'personal',
+      userBotRequired: true,
+      userSessionId: 66,
+      userBotStatus: 'error',
+      hasTgUserBot: false,
+      canAutoProvisionPairs: false,
+      manualPairingAvailable: true,
+      error: 'user login failed',
+    }))
+    expect(sentryMocks.captureException).toHaveBeenCalledWith(error, {
+      stage: 'personal-userbot-init',
+      instanceId: 28,
+    })
   })
 
   it('reports init failure when bot token missing', async () => {
@@ -400,6 +519,7 @@ describe('instance', () => {
     expect(returningMock).toHaveBeenCalledWith({ id: schemaMocks.instance.id })
     expect(telegramMocks.create).toHaveBeenCalledWith({
       type: 'mtcute',
+      authMode: 'bot',
       botToken: 'newtoken',
       appName: 'NapGram',
     })

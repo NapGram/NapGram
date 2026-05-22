@@ -21,8 +21,21 @@ import { CommandRegistry } from './services/CommandRegistry.js'
 import { InteractiveStateManager } from './services/InteractiveStateManager.js'
 import { PermissionChecker } from './services/PermissionChecker.js'
 import { ThreadIdExtractor } from './services/ThreadIdExtractor.js'
+import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage } from './utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandsFeature')
+
+const GROUP_MANAGEMENT_COMMANDS = new Set([
+  'ban',
+  'unban',
+  'kick',
+  'card',
+  'muteall',
+  'unmuteall',
+  'admin',
+  'groupname',
+  'title',
+])
 
 /**
  * 命令类型
@@ -250,12 +263,32 @@ export class CommandsFeature {
       adminOnly: true, // 保持向后兼容
     })
 
+    this.registerCommand({
+      name: 'bindgroup',
+      aliases: ['绑定群'],
+      description: '绑定指定 QQ 群到当前 TG 聊天',
+      usage: '/bindgroup <qq_group_id> [thread_id]',
+      permission: { level: 1 }, // ADMIN
+      handler: (msg, args) => this.bindHandler.execute(msg, args, 'group'),
+      adminOnly: true, // 保持向后兼容
+    })
+
+    this.registerCommand({
+      name: 'bindfriend',
+      aliases: ['绑定好友'],
+      description: '绑定指定 QQ 好友到当前 TG 聊天',
+      usage: '/bindfriend <qq_user_id> [thread_id]',
+      permission: { level: 1 }, // ADMIN
+      handler: (msg, args) => this.bindHandler.execute(msg, args, 'private'),
+      adminOnly: true, // 保持向后兼容
+    })
+
     // 解绑命令
     this.registerCommand({
       name: 'unbind',
       aliases: ['解绑'],
       description: '解除当前 TG 聊天的绑定',
-      usage: '/unbind',
+      usage: '/unbind [group|friend] [qq_id]',
       permission: { level: 1 }, // ADMIN
       handler: (msg, args) => this.unbindHandler.execute(msg, args),
       adminOnly: true, // 保持向后兼容
@@ -390,6 +423,12 @@ export class CommandsFeature {
               permission: (config as any).permission,
               adminOnly: config.adminOnly,
               handler: async (msg, args) => {
+                if (GROUP_MANAGEMENT_COMMANDS.has(config.name) && await this.isFriendPairCommand(msg)) {
+                  const threadId = this.commandContext.extractThreadId(msg, [])
+                  await this.commandContext.replyTG(msg.chat.id, '❌ 当前绑定是 QQ 好友，群管理命令不适用', threadId)
+                  return
+                }
+
                 // 将 UnifiedMessage 转换为 MessageEvent
                 const event = this.convertToMessageEvent(msg, (context as any).logger)
                 await config.handler(event, args)
@@ -418,6 +457,16 @@ export class CommandsFeature {
     }
 
     return loadedCommands
+  }
+
+  private async isFriendPairCommand(msg: UnifiedMessage): Promise<boolean> {
+    if (msg.platform !== 'telegram')
+      return false
+
+    const forwardMap = this.instance.forwardPairs as ForwardMap
+    const threadId = this.commandContext.extractThreadId(msg, [])
+    const pair = await findPairByTGWithChatType(forwardMap, msg.chat.id, threadId, true)
+    return pair?.qqChatType === 'private'
   }
 
   /**
@@ -572,13 +621,14 @@ export class CommandsFeature {
     segmentsToText: (segments: any[]) => string,
   ) {
     const chatId = msg.chat.id
+    const qqChatType = qqChatTypeFromMessage(msg)
     if (typeof content === 'string') {
-      await this.commandContext.replyQQ(chatId, content)
+      await this.commandContext.replyQQ(chatId, content, qqChatType)
       return
     }
 
     if (!Array.isArray(content) || content.length === 0) {
-      await this.commandContext.replyQQ(chatId, '')
+      await this.commandContext.replyQQ(chatId, '', qqChatType)
       return
     }
 
@@ -588,7 +638,7 @@ export class CommandsFeature {
     if (normalSegments.length) {
       const text = segmentsToText(normalSegments)
       if (text)
-        await this.commandContext.replyQQ(chatId, text)
+        await this.commandContext.replyQQ(chatId, text, qqChatType)
     }
 
     if (!forwardSegments.length)
@@ -597,7 +647,7 @@ export class CommandsFeature {
     if (msg.chat.type !== 'group') {
       const fallbackText = segmentsToText(content)
       if (fallbackText)
-        await this.commandContext.replyQQ(chatId, fallbackText)
+        await this.commandContext.replyQQ(chatId, fallbackText, qqChatType)
       return
     }
 
@@ -693,31 +743,33 @@ export class CommandsFeature {
           return true // 即使超时也视为已处理（防止误触其他逻辑）
         }
 
-        // 尝试解析 QQ 群号
+        // 尝试解析 QQ 号
         if (/^-?\d+$/.test(text.trim())) {
-          const qqGroupId = text.trim()
+          const qqTargetId = text.trim()
           const threadId = bindingState.threadId
+          const qqChatType = bindingState.qqChatType ?? 'group'
+          const qqLabel = formatQqChatTypeLabel(qqChatType)
 
           // 执行绑定逻辑
           const forwardMap = this.instance.forwardPairs as ForwardMap
 
           // 检查冲突
-          const tgOccupied = forwardMap.findByTG(chatId, threadId, false)
-          if (tgOccupied && tgOccupied.qqRoomId.toString() !== qqGroupId) {
-            await this.replyTG(chatId, `绑定失败：该 TG 话题已绑定到其他 QQ 群 (${tgOccupied.qqRoomId})`, threadId)
+          const tgOccupied = await findPairByTGWithChatType(forwardMap, chatId, threadId, false)
+          if (tgOccupied && (tgOccupied.qqRoomId.toString() !== qqTargetId || tgOccupied.qqChatType !== qqChatType)) {
+            await this.replyTG(chatId, `绑定失败：该 TG 话题已绑定到其他 ${formatQqChatTypeLabel(tgOccupied.qqChatType)} (${tgOccupied.qqRoomId})`, threadId)
             this.stateManager.deleteBindingState(String(chatId), String(senderId))
             return true
           }
 
           try {
-            const rec = await forwardMap.add(qqGroupId, chatId, threadId)
-            if (rec && rec.qqRoomId.toString() !== qqGroupId) {
+            const rec = await addForwardPairWithChatType(forwardMap, this.instance.id, qqTargetId, chatId, threadId, qqChatType)
+            if (rec && (rec.qqRoomId.toString() !== qqTargetId || rec.qqChatType !== qqChatType)) {
               await this.replyTG(chatId, '绑定失败：检测到冲突，请检查现有绑定', threadId)
             }
             else {
               const threadInfo = threadId ? ` (话题 ${threadId})` : ''
-              await this.replyTG(chatId, `绑定成功：QQ ${qqGroupId} <-> TG ${chatId}${threadId ? ` (话题 ${threadId})` : ''}`, threadId)
-              logger.info(`Interactive Bind: QQ ${qqGroupId} <-> TG ${chatId}${threadInfo}`)
+              await this.replyTG(chatId, `绑定成功：${qqLabel} ${qqTargetId} <-> TG ${chatId}${threadInfo}`, threadId)
+              logger.info(`Interactive Bind: ${qqLabel} ${qqTargetId} <-> TG ${chatId}${threadInfo}`)
             }
           }
           catch (e) {
