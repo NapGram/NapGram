@@ -158,6 +158,32 @@ export default class Instance {
     }
   }
 
+  public async startUserBot() {
+    if (this.tgUserBot) {
+      try {
+        await (this.tgUserBot as any).disconnect?.()
+      }
+      catch (error) {
+        this.log.debug({ error }, 'Error disconnecting existing UserBot')
+      }
+      this.tgUserBot = undefined
+    }
+    await this.initPersonalUserBotIfNeeded()
+  }
+
+  public async stopUserBot() {
+    if (this.tgUserBot) {
+      try {
+        await (this.tgUserBot as any).disconnect?.()
+      }
+      catch (error) {
+        this.log.debug({ error }, 'Error disconnecting UserBot')
+      }
+      this.tgUserBot = undefined
+    }
+    this._userBotStatus = this.workMode === 'personal' && this._userSessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
+  }
+
   private async init(botToken?: string) {
     if (this.initPromise)
       return this.initPromise
