@@ -12,11 +12,14 @@ import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor.js'
+import { findPairByQQWithChatType, findPairByTGWithChatType } from '../commands/utils/ForwardPairChatType.js'
 import { MediaGroupHandler } from './handlers/MediaGroupHandler.js'
 import { TelegramMessageHandler } from './handlers/TelegramMessageHandler.js'
 import { ForwardMediaPreparer } from './senders/MediaPreparer.js'
 import { TelegramSender } from './senders/TelegramSender.js'
 import { ForwardMapper } from './services/MessageMapper.js'
+import { PersonalPairProvisioner } from './services/PersonalPairProvisioner.js'
+import { PersonalSyncService } from './services/PersonalSyncService.js'
 import { ReplyResolver } from './services/ReplyResolver.js'
 import { MessageUtils } from './utils/MessageUtils.js'
 
@@ -40,6 +43,8 @@ export class ForwardFeature {
   private mediaGroupHandler: MediaGroupHandler
   private tgMessageHandler: TelegramMessageHandler
   private mediaPreparer: ForwardMediaPreparer
+  private personalPairProvisioner: PersonalPairProvisioner
+  private personalSyncService: PersonalSyncService
   private processedMsgIds = new Set<string>()
   private telegramSendQueue: TelegramSendQueueState = {
     chain: Promise.resolve(),
@@ -55,7 +60,8 @@ export class ForwardFeature {
 
     const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg)
 
-    const pair = this.forwardMap.findByTG(
+    const pair = await findPairByTGWithChatType(
+      this.forwardMap,
       BigInt(tgMsg.chat.id),
       threadId,
       !threadId, // 如果有 threadId，禁用 fallback，避免落到 general
@@ -122,6 +128,9 @@ export class ForwardFeature {
     this.telegramSender = new TelegramSender(instance, media)
     this.mapper = new ForwardMapper()
     this.replyResolver = new ReplyResolver(this.mapper)
+    this.personalPairProvisioner = new PersonalPairProvisioner(instance, this.forwardMap, this.qqClient)
+    this.personalSyncService = new PersonalSyncService(instance, this.forwardMap, this.qqClient)
+    this.personalSyncService.start()
     this.mediaPreparer = new ForwardMediaPreparer(instance, media)
     this.mediaGroupHandler = new MediaGroupHandler(
       this.qqClient,
@@ -223,6 +232,8 @@ export class ForwardFeature {
   private setupListeners() {
     this.qqClient.on('message', this.handleQQMessage)
     this.qqClient.on('poke', this.handlePokeEvent)
+    this.qqClient.on('friend.increase', this.handleFriendIncrease)
+    this.qqClient.on('group.increase', this.handleGroupIncrease)
     this.tgBot.addNewMessageEventHandler(this.handleTgMessage)
     logger.debug('[ForwardFeature] listeners attached')
   }
@@ -240,6 +251,8 @@ export class ForwardFeature {
    * 优先使用 pair 的配置，若为 null 则使用环境变量默认值
    */
   private getNicknameMode(pair: ForwardPairRecord): string {
+    if (!pair.nicknameMode && (this.instance as any).workMode === 'personal')
+      return '10'
     return pair.nicknameMode || env.SHOW_NICKNAME_MODE
   }
 
@@ -506,7 +519,10 @@ export class ForwardFeature {
         return
       }
 
-      const pair = this.forwardMap.findByQQ(msg.chat.id)
+      const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
+      let pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
+      if (!pair && qqChatType === 'private')
+        pair = await this.personalPairProvisioner.ensurePairForQQMessage(msg, qqChatType)
       if (!pair) {
         logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`)
         return
@@ -572,7 +588,12 @@ export class ForwardFeature {
       const chat = await this.instance.tgBot.getChat(tgChatId)
 
       // 处理回复 - 使用 ReplyResolver
-      const replyToMsgId = await this.replyResolver.resolveQQReply(msg, pair.instanceId, pair.qqRoomId)
+      const replyToMsgId = await this.replyResolver.resolveQQReply(
+        msg,
+        pair.instanceId,
+        pair.qqRoomId,
+        pair.qqChatType === 'private' ? 'private' : 'group',
+      )
 
       const sentMsg = await this.enqueueTelegramSend(() =>
         this.telegramSender.sendToTelegram(
@@ -701,7 +722,7 @@ export class ForwardFeature {
   private handlePokeEvent = async (groupId: string, operatorId: string, targetId: string) => {
     try {
       // Find mapping for this group
-      const pair = this.forwardMap.findByQQ(groupId)
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, groupId, 'group')
       if (!pair)
         return
 
@@ -740,10 +761,58 @@ export class ForwardFeature {
   }
 
 
+  private handleFriendIncrease = async (friend: { id: string; name?: string }) => {
+    try {
+      const isPersonal = (this.instance as any).workMode === 'personal' ||
+                         (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+      if (!isPersonal) return
+
+      const ownerId = this.instance.owner
+      if (!ownerId) return
+
+      const friendName = friend.name || await this.qqClient.getFriendInfo(friend.id).then(f => f?.name).catch(() => '') || '未知好友'
+      const text = `👤 【个人模式】发现新 QQ 好友：\nQQ: ${friend.id}\n昵称: ${friendName}\n\n点击一键建群并绑定：\n/bindfriend ${friend.id}`
+      await MessageUtils.replyTG(this.tgBot, ownerId, text)
+      logger.info({ friendId: friend.id, friendName }, 'Notified owner of new QQ friend')
+    }
+    catch (error) {
+      logger.error('Failed to notify friend increase:', error)
+    }
+  }
+
+  private handleGroupIncrease = async (groupId: string, member?: any) => {
+    try {
+      const isPersonal = (this.instance as any).workMode === 'personal' ||
+                         (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+      if (!isPersonal) return
+
+      // member?.id === uin 说明是机器人自己加入了新群
+      const selfUin = String(this.qqClient.uin)
+      if (member?.id && String(member.id) !== selfUin) {
+        return // 只是普通群成员增加，不提示建群
+      }
+
+      const ownerId = this.instance.owner
+      if (!ownerId) return
+
+      const groupInfo = await this.qqClient.getGroupInfo(groupId).catch(() => null)
+      const groupName = groupInfo?.name || '未知群聊'
+      const text = `👥 【个人模式】发现新 QQ 群：\n群号: ${groupId}\n群名: ${groupName}\n\n点击一键建群并绑定：\n/bindgroup ${groupId}`
+      await MessageUtils.replyTG(this.tgBot, ownerId, text)
+      logger.info({ groupId, groupName }, 'Notified owner of robot joining new QQ group')
+    }
+    catch (error) {
+      logger.error('Failed to notify group increase:', error)
+    }
+  }
+
   destroy() {
+    this.personalSyncService?.stop()
     this.mediaGroupHandler.destroy()
     this.qqClient.removeListener('message', this.handleQQMessage)
     this.qqClient.removeListener('poke', this.handlePokeEvent)
+    this.qqClient.removeListener('friend.increase', this.handleFriendIncrease)
+    this.qqClient.removeListener('group.increase', this.handleGroupIncrease)
     this.tgBot.removeNewMessageEventHandler(this.handleTgMessage)
     logger.info('ForwardFeature destroyed')
   }

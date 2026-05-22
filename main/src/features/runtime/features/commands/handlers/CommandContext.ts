@@ -7,6 +7,7 @@ import type { CommandRegistry } from '../services/CommandRegistry.js'
 import type { InteractiveStateManager } from '../services/InteractiveStateManager.js'
 import type { PermissionChecker } from '../services/PermissionChecker.js'
 import { env, getLogger } from '../../../shared-types.js'
+import { findPairByQQWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage, qqChatTypeToMessageChatType, type QqChatType } from '../utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandContext')
 
@@ -28,7 +29,7 @@ export class CommandContext {
   /**
    * 回复到QQ
    */
-  async replyQQ(roomId: string, text: string): Promise<void> {
+  async replyQQ(roomId: string, text: string, qqChatType: QqChatType = 'group'): Promise<void> {
     try {
       const msg: UnifiedMessage = {
         id: `bot_reply_${Date.now()}`,
@@ -39,7 +40,7 @@ export class CommandContext {
         },
         chat: {
           id: roomId,
-          type: 'group',
+          type: qqChatTypeToMessageChatType(qqChatType),
         },
         content: [
           {
@@ -53,7 +54,7 @@ export class CommandContext {
       await this.qqClient.sendMessage(roomId, msg)
     }
     catch (error) {
-      logger.error(`Failed to reply to QQ ${roomId}:`, error)
+      logger.error(`Failed to reply to ${formatQqChatTypeLabel(qqChatType)} ${roomId}:`, error)
     }
   }
 
@@ -89,8 +90,8 @@ export class CommandContext {
       const threadId = this.extractThreadId(msg, [])
       await this.replyTG(msg.chat.id, text, threadId)
 
-      // 查找配对的 QQ 群
-      const pair = forwardMap.findByTG(msg.chat.id, threadId, !threadId)
+      // 查找配对的 QQ 聊天
+      const pair = await findPairByTGWithChatType(forwardMap, msg.chat.id, threadId, !threadId)
       if (pair && this.shouldReplyBothSides(pair)) {
         // 检查命令过滤
         if (commandName && !this.isCommandAllowed(pair, commandName)) {
@@ -98,11 +99,11 @@ export class CommandContext {
           return
         }
 
-        logger.debug(`Replying to paired QQ group: ${pair.qqRoomId}`)
-        await this.replyQQ(String(pair.qqRoomId), text)
+        logger.debug(`Replying to paired ${formatQqChatTypeLabel(pair.qqChatType)}: ${pair.qqRoomId}`)
+        await this.replyQQ(String(pair.qqRoomId), text, pair.qqChatType)
       }
       else if (!pair) {
-        logger.debug('No paired QQ group found, reply to TG only')
+        logger.debug('No paired QQ chat found, reply to TG only')
       }
       else {
         logger.debug(`Command reply mode disabled for pair ${pair.id}`)
@@ -110,10 +111,11 @@ export class CommandContext {
     }
     else if (platform === 'qq') {
       // 来自 QQ，回复到 QQ
-      await this.replyQQ(msg.chat.id, text)
+      const qqChatType = qqChatTypeFromMessage(msg)
+      await this.replyQQ(msg.chat.id, text, qqChatType)
 
       // 查找配对的 TG 群
-      const pair = forwardMap.findByQQ(msg.chat.id)
+      const pair = await findPairByQQWithChatType(forwardMap, this.instance.id, msg.chat.id, qqChatType)
       if (pair && this.shouldReplyBothSides(pair)) {
         // 检查命令过滤
         if (commandName && !this.isCommandAllowed(pair, commandName)) {

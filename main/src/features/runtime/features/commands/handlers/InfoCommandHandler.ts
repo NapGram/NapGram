@@ -4,6 +4,7 @@ import { telegramMessage } from '../../../../../shared/utils/index.js'
 import type { CommandContext } from './CommandContext.js'
 import { md } from '@mtcute/markdown-parser'
 import { getLogger } from '../../../shared-types.js'
+import { findPairByTGWithChatType, formatQqChatTypeLabel } from '../utils/ForwardPairChatType.js'
 
 const logger = getLogger('InfoCommandHandler')
 
@@ -25,15 +26,16 @@ export class InfoCommandHandler {
 
     // 查找绑定关系
     const forwardMap = this.context.instance.forwardPairs as ForwardMap
-    const pair = forwardMap.findByTG(chatId, threadId, true)
+    const pair = await findPairByTGWithChatType(forwardMap, chatId, threadId, true)
 
     if (!pair) {
-      await this.context.replyTG(chatId, '❌ 当前聊天未绑定任何 QQ 群', threadId)
+      await this.context.replyTG(chatId, '❌ 当前聊天未绑定任何 QQ 聊天', threadId)
       return
     }
 
     // 构建绑定信息 - 使用 mtcute 的 md 标签模板（Markdown格式）
     const qqRoomId = pair.qqRoomId.toString()
+    const qqLabel = formatQqChatTypeLabel(pair.qqChatType)
     const tgChatId = pair.tgChatId.toString()
     const tgThreadId = pair.tgThreadId?.toString()
 
@@ -57,7 +59,7 @@ export class InfoCommandHandler {
     // 使用 md 标签模板构建消息（Markdown格式）
     let info = md`**📊 绑定信息**
 
-🔗 QQ 群号: \`${qqRoomId}\`
+🔗 ${qqLabel}: \`${qqRoomId}\`
 🔗 TG 聊天 ID: \`${tgChatId}\``
 
     if (tgThreadId) {

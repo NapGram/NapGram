@@ -6,6 +6,7 @@ import type { ForwardModeService } from '../services/ForwardModeService.js'
 import type { ForwardMapper } from '../services/MessageMapper.js'
 import type { ReplyResolver } from '../services/ReplyResolver.js'
 import { getEventPublisher, getLogger } from '../../../shared-types.js'
+import { findPairByQQWithChatType } from '../../commands/utils/ForwardPairChatType.js'
 
 const logger = getLogger('QQMessageHandler')
 
@@ -33,7 +34,8 @@ export class QQMessageHandler {
     }
 
     try {
-      const pair = this.forwardMap.findByQQ(msg.chat.id)
+      const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
       if (!pair) {
         logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`)
         return
@@ -44,7 +46,12 @@ export class QQMessageHandler {
       const chat = await this.instance.tgBot.getChat(tgChatId)
 
       // 处理回复
-      const replyToMsgId = await this.replyResolver.resolveQQReply(msg, pair.instanceId, pair.qqRoomId)
+      const replyToMsgId = await this.replyResolver.resolveQQReply(
+        msg,
+        pair.instanceId,
+        pair.qqRoomId,
+        pair.qqChatType === 'private' ? 'private' : 'group',
+      )
 
       const sentMsg = await this.telegramSender.sendToTelegram(chat, msg, pair, replyToMsgId ? Number(replyToMsgId) : undefined, this.modeService.nicknameMode)
 
