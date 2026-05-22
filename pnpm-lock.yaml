@@ -162,8 +162,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/qq-client':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.0.1
+        version: 2.0.1
       '@napgram/request-kit':
         specifier: ^2.0.0
         version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
@@ -171,8 +171,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(ws@8.20.1)
       '@naplink/naplink':
-        specifier: ^0.0.10
-        version: 0.0.10
+        specifier: ^1.0.0
+        version: 1.0.0
       '@sentry/node':
         specifier: 10.53.1
         version: 10.53.1
@@ -876,6 +876,9 @@ packages:
   '@napgram/qq-client@2.0.0':
     resolution: {integrity: sha512-tI0RoX543fWeSwRWzBQ7mL8wEQ0eEMf0ugTnzedwM4xCV/hVF6Rf4c1ncJTZCqzfPCA/tp3RmaDhFwEDxt/heQ==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/2.0.0/bcbcd590ad9a60103a78d73c03b3c858c1424d0f}
 
+  '@napgram/qq-client@2.0.1':
+    resolution: {integrity: sha512-+NiFkoKzh8dQ4wB2nubJbtt0DrxJEp73Z068wUZPvaVWxsvgiEmTcyN1Lpx9tKGAgBFeim8zrs1Z08swGf6grw==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/2.0.1/40a6b07cc20c4247e3a5b91aa28986368787cc9e}
+
   '@napgram/request-kit@2.0.0':
     resolution: {integrity: sha512-rR/R+9b+ALrJN8de8j/Pwib4A2M+IAO4fjSFB/m8fXtQh0ZxfcE7leQlleAAQAMhwU7MDWtrGp2r7u2z6cNjCA==, tarball: https://npm.pkg.github.com/download/@napgram/request-kit/2.0.0/715509be5cafb093443f057a211ef748fffb8751}
 
@@ -901,7 +904,11 @@ packages:
       '@emnapi/runtime': ^1.7.1
 
   '@naplink/naplink@0.0.10':
-    resolution: {integrity: sha512-aJAFTNhmF3PADzGwahyk6nuCeWicvMUfOlupl6sCEtQdDzWLUVUxpNyBtMRlcAPM495rNiwXFbLOMBK6E4IqNw==, tarball: https://npm.pkg.github.com/download/@naplink/naplink/0.0.10/f3812699e2c541be5337d7f9cce3297579c003d6}
+    resolution: {integrity: sha512-+ygiV1NblKxfBOc/8rDv7UH28WVT1PiBZ1KEJZeKlt9kpb2v/ooGosdf9MKLHDBmZcoKAykD6ydRd/A5tJ40dQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@naplink/naplink@1.0.0':
+    resolution: {integrity: sha512-/S0Rw90KR9BqtqDx8+pdyy8atfXrC0ZI22df2g4aGcQN1L+hRrkwauMe4pO6yM3KnaH6NQg+W7dWwjsWHHgY3g==}
     engines: {node: '>=18.0.0'}
 
   '@opentelemetry/api-logs@0.207.0':
@@ -4206,7 +4213,7 @@ snapshots:
       '@napgram/database': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
       '@napgram/env-kit': 2.0.0
       '@napgram/logger-kit': 2.0.0
-      '@napgram/qq-client': 2.0.0
+      '@napgram/qq-client': 2.0.1
       '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
     transitivePeerDependencies:
@@ -4300,7 +4307,7 @@ snapshots:
       '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/env-kit': 2.0.0
       '@napgram/logger-kit': 2.0.0
-      '@napgram/qq-client': 2.0.0
+      '@napgram/qq-client': 2.0.1
       '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       fastify: 5.8.5
     transitivePeerDependencies:
@@ -5274,6 +5281,13 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@napgram/qq-client@2.0.1':
+    dependencies:
+      '@naplink/naplink': 1.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@napgram/request-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
       '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
@@ -5442,6 +5456,14 @@ snapshots:
     optional: true
 
   '@naplink/naplink@0.0.10':
+    dependencies:
+      isomorphic-ws: 5.0.0(ws@8.20.1)
+      ws: 8.20.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@naplink/naplink@1.0.0':
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.20.1)
       ws: 8.20.1
@@ -6015,8 +6037,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.58.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.59.2(typescript@6.0.3)
-      '@typescript-eslint/types': 8.59.2
+      '@typescript-eslint/tsconfig-utils': 8.58.0(typescript@6.0.3)
+      '@typescript-eslint/types': 8.58.0
       debug: 4.4.3
       typescript: 6.0.3
     transitivePeerDependencies:
