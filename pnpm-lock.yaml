@@ -7,7 +7,6 @@ settings:
 overrides:
   brace-expansion: 5.0.6
   esbuild: 0.28.0
-  fastify: 5.8.5
   ws: 8.20.1
 
 importers:
@@ -15,11 +14,11 @@ importers:
   .:
     dependencies:
       '@napgram/plugin-adapter-qq-napcat':
-        specifier: 0.1.8
-        version: 0.1.8
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/sdk':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/node':
         specifier: 25.9.1
@@ -58,119 +57,119 @@ importers:
         specifier: ^0.29.7
         version: 0.29.7(ws@8.20.1)
       '@napgram/auth-kit':
-        specifier: ^0.1.14
-        version: 0.1.14(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/database':
-        specifier: ^0.1.2
-        version: 0.1.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
       '@napgram/db-kit':
-        specifier: ^0.3.0
-        version: 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/env-kit':
-        specifier: ^0.2.1
-        version: 0.2.1
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/gateway-kit':
-        specifier: ^0.2.5
-        version: 0.2.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
       '@napgram/logger-kit':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/marketplace-kit':
-        specifier: ^0.2.12
-        version: 0.2.12(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/media-kit':
-        specifier: ^0.1.15
-        version: 0.1.15(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/message-kit':
-        specifier: ^0.2.4
-        version: 0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-adapter-qq-napcat':
-        specifier: ^0.1.8
-        version: 0.1.8
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-adapter-telegram-mtcute':
-        specifier: ^0.1.11
-        version: 0.1.11(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(ws@8.20.1)
       '@napgram/plugin-admin-auth':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-database':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-instances':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-logs':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-messages':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-pairs':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-plugins':
-        specifier: ^0.1.11
-        version: 0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-settings':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-admin-suite':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-flags':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-gateway':
-        specifier: ^0.1.9
-        version: 0.1.9(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
       '@napgram/plugin-group-management':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-kit':
-        specifier: ^0.6.0
-        version: 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-monitoring':
-        specifier: ^0.1.10
-        version: 0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-notifications':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-permission-management':
-        specifier: ^0.1.6
-        version: 0.1.6(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-ping-pong':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-qq-interaction':
-        specifier: ^0.1.6
-        version: 0.1.6
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-refresh':
-        specifier: ^0.1.5
-        version: 0.1.5
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/plugin-request-handler':
-        specifier: ^0.1.9
-        version: 0.1.9(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-request-management':
-        specifier: ^0.1.9
-        version: 0.1.9(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-statistics':
-        specifier: ^0.1.11
-        version: 0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-web-assets':
-        specifier: ^0.1.11
-        version: 0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-web-console':
-        specifier: ^0.1.11
-        version: 0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/qq-client':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^2.0.0
+        version: 2.0.0
       '@napgram/request-kit':
-        specifier: ^0.4.1
-        version: 0.4.1(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/telegram-client':
-        specifier: ^0.4.0
-        version: 0.4.0(ws@8.20.1)
+        specifier: ^2.0.0
+        version: 2.0.0(ws@8.20.1)
       '@naplink/naplink':
         specifier: ^0.0.10
         version: 0.0.10
@@ -181,7 +180,7 @@ importers:
         specifier: ^0.31.10
         version: 0.31.10
       fastify:
-        specifier: 5.8.5
+        specifier: ^5.8.5
         version: 5.8.5
       fflate:
         specifier: ^0.8.2
@@ -647,14 +646,6 @@ packages:
   '@fastify/multipart@10.0.0':
     resolution: {integrity: sha512-pUx3Z1QStY7E7kwvDTIvB6P+rF5lzP+iqPgZyJyG3yBJVPvQaZxzDHYbQD89rbY0ciXrMOyGi8ezHDVexLvJDA==}
 
-  '@fastify/multipart@9.4.0':
-    resolution: {integrity: sha512-Z404bzZeLSXTBmp/trCBuoVFX28pM7rhv849Q5TsbTFZHuk1lc4QjQITTPK92DKVpXmNtJXeHSSc7GYvqFpxAQ==}
-
-  '@fastify/otel@0.17.1':
-    resolution: {integrity: sha512-K4wyxfUZx2ux5o+b6BtTqouYFVILohLZmSbA2tKUueJstNcBnoGPVhllCaOvbQ3ZrXdUxUC/fyrSWSCqHhdOPg==}
-    peerDependencies:
-      '@opentelemetry/api': ^1.9.0
-
   '@fastify/otel@0.18.0':
     resolution: {integrity: sha512-3TASCATfw+ctICSb4ymrv7iCm0qJ0N9CarB+CZ7zIJ7KqNbwI5JjyDL1/sxoC0ccTO1Zyd1iQ+oqncPg5FJXaA==}
     peerDependencies:
@@ -771,179 +762,137 @@ packages:
   '@mtcute/web@0.29.7':
     resolution: {integrity: sha512-DpQTGjhaEropaqJ0zOCDYRHwobK5E0qGO2Hj5bwQQ7dzc3olEuWkNE9XUHK0OW0H0kJozEStFCai0ph4NiLFdQ==}
 
-  '@napgram/auth-kit@0.1.13':
-    resolution: {integrity: sha512-HYD9H+1AhKTP0Z9IpO6f7wu6JTkaGqpjHo/OjxinBMJqqytfQq6vICIO+9zkGa2m00goMzN/QuyWkFuqsQRAvA==, tarball: https://npm.pkg.github.com/download/@napgram/auth-kit/0.1.13/8cbd86fea2949a3690cd77f7a03cac76b17d4f78}
+  '@napgram/auth-kit@2.0.0':
+    resolution: {integrity: sha512-Q1BK117q0XgTiECdIcDuvfyOhvPnF1mVgns35qM2qirSG9YNvpL7qKa7aszWMGqjSx5stm/kpN7aGLTfQnr+gg==, tarball: https://npm.pkg.github.com/download/@napgram/auth-kit/2.0.0/3387ce0c9b8fb36e3438888fae0c3f0357708a83}
 
-  '@napgram/auth-kit@0.1.14':
-    resolution: {integrity: sha512-wKg0QbCIEkCH2ei5AiJ5K26PBvmu6knnMvrU3EwFuoZnsCnbCOCKQIYAk7A72ofAinrH+teHgp0QzvkHJHJZ6A==, tarball: https://npm.pkg.github.com/download/@napgram/auth-kit/0.1.14/d9a404fe9d145aca61fc0972d19d427e3108209c}
+  '@napgram/core@2.0.0':
+    resolution: {integrity: sha512-Fsh5z0CPifAm7YGplhwhM1wBUxvgTs1Pgp6l/Jwg4+suOWy7ni32vUymv1x9QxlQ7EwSuf99SSn+X1vuU4Wirw==, tarball: https://npm.pkg.github.com/download/@napgram/core/2.0.0/e31f7ec9ad33578427782ac596acf2c234854447}
 
-  '@napgram/core@0.2.0':
-    resolution: {integrity: sha512-+Mfc5S4G4YQ28505D4JqwRf3WwKwmZIpKp40QzF6gfJhsztsUZ+qPkmjesBhHakrwM/1QG4hqujCJUPQTm47AA==, tarball: https://npm.pkg.github.com/download/@napgram/core/0.2.0/0b8a97930bb4d202e84d58812bb82d78ec225081}
+  '@napgram/database@2.0.0':
+    resolution: {integrity: sha512-5tA34kUGBAlVv8le7ylnMrVHAgoFqmIRXZUXMCJdIf1EPZIPG1L8PwzwxebM6Eu+qnQTl8/Fui+ZDma9G/RAug==, tarball: https://npm.pkg.github.com/download/@napgram/database/2.0.0/8e239368f1c1e6e2717e6dd20d01afc0d4efbc14}
 
-  '@napgram/database@0.1.2':
-    resolution: {integrity: sha512-C1iam+wS9ZySE3vzZTj1fDIxG++SMVRXbNTty5quDXt649aC91DZ1x3ZvxylO3xGmTsHHfAOxYlH1/27f/QWrQ==, tarball: https://npm.pkg.github.com/download/@napgram/database/0.1.2/c3a84e41e993e814c9931a9a9614d7f0b72bcf11}
+  '@napgram/db-kit@2.0.0':
+    resolution: {integrity: sha512-8y/kIXJxYBW1Jj7QSV92VXJi5Vun5a/VzIlXacKQcbt6BVHzl2Hn84x67YXnzpEvVivQgWfS07isjxYaKBgfvw==, tarball: https://npm.pkg.github.com/download/@napgram/db-kit/2.0.0/274da06eab5f9264e4471a7e3356ad225616298e}
 
-  '@napgram/db-kit@0.2.0':
-    resolution: {integrity: sha512-ZgKALd92ZktNJOjGArEXdfkQdcP8TLm6kT2wFAp7zc5AudW1aN7sf5r7w4YhxxfsS/hzN5NOzXzxn9sfCf/Q/Q==, tarball: https://npm.pkg.github.com/download/@napgram/db-kit/0.2.0/c1c4347e6a96de3bcde927db6643fa2171ee3f20}
+  '@napgram/env-kit@2.0.0':
+    resolution: {integrity: sha512-BHxNdJJ3wOG79i0zJC79Sx+W4othULBIeIrIZv9HBHL+ZdGH9LEFgsyQxkO43ElgjlWr7PKpoOYKZJNSgonSLw==, tarball: https://npm.pkg.github.com/download/@napgram/env-kit/2.0.0/d1f61713de37b37cf412986b953f1a932b07e0be}
 
-  '@napgram/db-kit@0.3.0':
-    resolution: {integrity: sha512-7PMPGfxCXChpVLXp8X5FwGfHhT+VD7FgNJDJaIqfks5GH3QyMloceqxx/HpDHjpz4514K+D4ci7xCDaYXEzUKA==, tarball: https://npm.pkg.github.com/download/@napgram/db-kit/0.3.0/a4a86bdf553476a106bc7837cbde6424442c4139}
+  '@napgram/gateway-kit@2.0.0':
+    resolution: {integrity: sha512-sRbpQTlXa5r7iJjMs6e44GZzq+wmCJi0nivDgeXI8VJjjCN86HYHXCsliEYdDdQf0zxRIynYJnt9/1afFnLa2A==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/2.0.0/2b0ba5f5a90ceefc3e6eefc0136791d25bfec895}
 
-  '@napgram/env-kit@0.2.0':
-    resolution: {integrity: sha512-8C8qAJIj5GgjD4vYwgcrZgdyKVMGgqMehlUlhusV9qPx5L5Ow5AcANFiV6DPGn9nGZxqxgvoi2ZMOZgu+80ASg==, tarball: https://npm.pkg.github.com/download/@napgram/env-kit/0.2.0/71a0c88ae84e1039baa90287a77a2bb5e09b6d9a}
+  '@napgram/infra-kit@2.0.0':
+    resolution: {integrity: sha512-vhJH52PeiF0JpUCLAv24diz7mpmLLe1M7qzvCuaZ63U39Kfi7gy49Hem5mmzYN1uOb+dx9hukhOROlq1mhYCDQ==, tarball: https://npm.pkg.github.com/download/@napgram/infra-kit/2.0.0/563b4e510a9b7b0b2647b778aca1eef15c33647e}
 
-  '@napgram/env-kit@0.2.1':
-    resolution: {integrity: sha512-AimK3cWZvyYVxDT0TNCkUb/NxyE4zuV7OXE6IaQnz6jhU2n3dgb8o6wdU7RkDiZXg3Dzeu4+FU+Yat9qBt4upg==, tarball: https://npm.pkg.github.com/download/@napgram/env-kit/0.2.1/084489c73c0abcab004b4f8325efa46bfaf155c3}
+  '@napgram/logger-kit@2.0.0':
+    resolution: {integrity: sha512-1eEYansgrLxEG3xd6nIYNFywGedJ8EIig46zXRy0XD93K6+nXq4AFSHUZ2l2bZ0YDf8nDvT0S5TIV8GV5Sl90A==, tarball: https://npm.pkg.github.com/download/@napgram/logger-kit/2.0.0/95ce65cc25c6f4441eeda74dbf05c5def805c3d8}
 
-  '@napgram/gateway-kit@0.2.4':
-    resolution: {integrity: sha512-w/Ty86XIVjtA/B6ECaPTpdI9FDRrjD9f52oDa7lDi7LyzZEafdTCIu+wYoDqZNEWWCZMn0zDRvKkBxIP7UpTXA==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.2.4/8bd6656bfa38d3939460fd739b6d0fca59d7dbbf}
+  '@napgram/marketplace-kit@2.0.0':
+    resolution: {integrity: sha512-qlal/QtzCA3zojGTxkK3qKLe9vsbgBSe8NFuyzJa106GkXaUhudLzH7wNArvpIFq4YvLaJ/Y1Aud8gZL+9Mjkg==, tarball: https://npm.pkg.github.com/download/@napgram/marketplace-kit/2.0.0/72cc0d8f9157800a5e6a2bf34ac85c4d7f66dbe5}
 
-  '@napgram/gateway-kit@0.2.5':
-    resolution: {integrity: sha512-y3n1x4upcg0T20RWrh5v257Se516+QGoGF4TSeRvVqfcsReh6TjxeqDoU5oE1jRoX+wqkH6HMErBKc72ghs6Dg==, tarball: https://npm.pkg.github.com/download/@napgram/gateway-kit/0.2.5/288beb978aa67fa0dd5f74ce253eabb7202adfd0}
+  '@napgram/media-kit@2.0.0':
+    resolution: {integrity: sha512-zMy3kNwZtnMJ3aLSI0S97/UIprEtTSyAwj15O3vJDk5FwdPdo/GfawZds0RfDQBX/uu9pIKnUrXsosRkDpYnJQ==, tarball: https://npm.pkg.github.com/download/@napgram/media-kit/2.0.0/a743cd074df51d40977b586e6f39fcb6ceb5a275}
 
-  '@napgram/infra-kit@0.2.0':
-    resolution: {integrity: sha512-UsKjRGfuqc8GuaWwY3zBi1Iw+P+X4ZEyDnMKgD6DJbw+xozUCSQCH8GTZW37lajd3Xk77eSHyfYSxxviK8xHLg==, tarball: https://npm.pkg.github.com/download/@napgram/infra-kit/0.2.0/228d56fe7a1ca8e786c005357b9fb5eb514c4a7f}
+  '@napgram/message-kit@2.0.0':
+    resolution: {integrity: sha512-0N18Kpq2C6/pwwBKPhZ6b1vV5IbT6E2hbEtFT+thrlOBxj2Cay9q6/eFLsK2I1P4DJewfsZAhMAeSJ0Et8mASQ==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/2.0.0/8756249f680961ce9de4cf1d4de98d40d235b4bc}
 
-  '@napgram/infra-kit@0.6.0':
-    resolution: {integrity: sha512-D20faeiKzurxcvm56k1sMpQrosvKvfU5cF3hCpNP8RUvT/iikzwI7YD+WlJ5ighj/r4v+EjgU5qr6jqj0nsWkQ==, tarball: https://npm.pkg.github.com/download/@napgram/infra-kit/0.6.0/842e2c27edb99d3214f4b9fc7dd4c1e82e4c52e1}
+  '@napgram/plugin-adapter-qq-napcat@2.0.0':
+    resolution: {integrity: sha512-9EVtyyX655JHPDF3qb4MxZvXMyyQHGVnO1UFiUudyxNwZPQWHz9MqyehMPuGJ/y19xYk+4rNK/VWEdthc5HRBw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-qq-napcat/2.0.0/402eaca5a8af9cdead60f241f32598fd2125778e}
 
-  '@napgram/logger-kit@0.2.0':
-    resolution: {integrity: sha512-uO9oQlbSIO2ud4yMrgeubVzcGQ5RAOmBLpVzSziJhnfCwkiHwhOo8idoOkLK/fgEJno89Y/cVBhm4S1ZtCmLOA==, tarball: https://npm.pkg.github.com/download/@napgram/logger-kit/0.2.0/497bba6d0d167b5fae1fbbd20af7adc216f96d00}
+  '@napgram/plugin-adapter-telegram-mtcute@2.0.0':
+    resolution: {integrity: sha512-ig47Uxy14TNRnKi+GfEEbfB7RyGH6i0WfMGcQJ2Pf19yw4c0uKxFMuC9lU8R0dALGds1Lq4ZUOMxQQcpy4XkXg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-telegram-mtcute/2.0.0/15904f43245349d9d87c5c5a5284a908dfefb7af}
 
-  '@napgram/logger-kit@0.2.1':
-    resolution: {integrity: sha512-6/kCqSsVEoNfMRfvEuMBV+JQ7z+9INEqo/pK2K8xdLvWyRZ0+glSSd1eXb23FycwE7oaGbnTpTU2QMCz/E9aqw==, tarball: https://npm.pkg.github.com/download/@napgram/logger-kit/0.2.1/6b0cdae3fe8dfd586675bff890fb8346e90b36be}
+  '@napgram/plugin-admin-auth@2.0.0':
+    resolution: {integrity: sha512-93AcD3AcOGfdJSMxbWbBlHAyRIa+bVUTSM8ZSCHma84aYp7rZdrRNvvfSTfMwECnNQ1tA5Twzi1aQP36dE9ykA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-auth/2.0.0/042287dde49baa0d4adf4a7e89e6918dcdb64bf6}
 
-  '@napgram/marketplace-kit@0.2.12':
-    resolution: {integrity: sha512-EhbamHwICDe6e+uHb2gsXlnoJRE4l+ybXydIJTbMMW/y1SNEXLvC7dTm7rhQUZ6FunNMeZVVaOflB1DgVrI0bA==, tarball: https://npm.pkg.github.com/download/@napgram/marketplace-kit/0.2.12/dc69913ef007f3808e6bd7e84453329067ed98c5}
+  '@napgram/plugin-admin-database@2.0.0':
+    resolution: {integrity: sha512-PHL9uK26l4Zg1LVI0gINgB9ZZxWauU169FA4S4J5ETh3bLcO2TlZHu/2q0XNszUZMLYXQWxjZ1kFfZnlSdbQyw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-database/2.0.0/6c2c36f69919816afdc23c0d28d2db472a3f6334}
 
-  '@napgram/media-kit@0.1.14':
-    resolution: {integrity: sha512-L8qCurLFW5AiaHJ1t7CUviV6wiCA+kAl5CFjIDInpAVclETg/IJEmrWq+emOa22AAbLwPh3kdn2HUewad426Lw==, tarball: https://npm.pkg.github.com/download/@napgram/media-kit/0.1.14/8a70110046357e08db35db28e4189338db026657}
+  '@napgram/plugin-admin-instances@2.0.0':
+    resolution: {integrity: sha512-iz8cRQgg+iFO4YxYVv3rV8+SP3E0Va+q0UwooMjerq311R2k3DyZmpzi2Uc7d4rVTFpgPql4W4KCgTDchCneIw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-instances/2.0.0/8335210cef4ef78d04798080aa223b9ce0c703ea}
 
-  '@napgram/media-kit@0.1.15':
-    resolution: {integrity: sha512-JbFSCUFyX+X8JBJ80xAbWFehmLWf9T/4qJgpm+978ffYR9vzGjRgKEk/kO4/IMC7yiJEeEYRlf6anpbhsOq4Sg==, tarball: https://npm.pkg.github.com/download/@napgram/media-kit/0.1.15/45019a2951bdcd1521d8932626aec556abead59c}
+  '@napgram/plugin-admin-logs@2.0.0':
+    resolution: {integrity: sha512-0oclRsfjjeVeDaruj352vVKrMzZRUZBrykeROTiGCddRZlFnuZpuU5iSiNgt7XksEAzdcmniUXpKX/iOUHuTyw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-logs/2.0.0/22f9422ddbc130d2c370a8c62e78097b6a0727d8}
 
-  '@napgram/message-kit@0.2.3':
-    resolution: {integrity: sha512-XxApn5/l1U7k64rwUly5c6pQUGpUAb1M7qbhz+xuIPPE9U0+6xegFP4tYcARJhJq22Vuf8O9avizPn4bwpferw==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/0.2.3/a7f32988aabfed4a909525338d955d79b6b6353f}
+  '@napgram/plugin-admin-messages@2.0.0':
+    resolution: {integrity: sha512-RYe9HEp7OYRzqzVwfzMH4GMe7oYNthFUNW70s2hR6nygysaGHZkZb/AuZ1TchYI2TYk8qd6CJFU3PFU8yQD9Eg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-messages/2.0.0/209239a267af24060fad365724b752268cf196bb}
 
-  '@napgram/message-kit@0.2.4':
-    resolution: {integrity: sha512-d/uzwWINWC+Fouuhxab7oOVVhs6EIugfqVdpd7v3BHTGYnh+sbTeJH/K0ZtFo0MK2zGmQtNRqi+sjMrv6D+1Mw==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/0.2.4/b725f4c10df0c98bf08ca1d951947a803bf864c8}
+  '@napgram/plugin-admin-pairs@2.0.0':
+    resolution: {integrity: sha512-gcoK/FPTnEeH5obAWB/otyrT1Vas0ambXN3T1soXGkrAv5OpCONJu7rQ3yTHElpaRZiexNsTdl+Q6UbB/A7EVg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-pairs/2.0.0/3776ea7dcf773851f4507b85018e2eb5e84bb141}
 
-  '@napgram/plugin-adapter-qq-napcat@0.1.8':
-    resolution: {integrity: sha512-btx3DDtsgH6YXo8NYgf3d0QQXI7gxGZyyAOi8Em978LqCVwVinkJuogJ0czbAnZhtUeRm0BDa5Bnnqd8XJ/diA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-qq-napcat/0.1.8/ce4411d0d5ffba79c9c78c35c1229862d5aced66}
+  '@napgram/plugin-admin-plugins@2.0.0':
+    resolution: {integrity: sha512-HwJSJF2BhB6Pg90xLPmasGGQEcjLGk0UXYiwtQGUUxRz7fXUZgkQWYBRS8TekvUwyiNSAnQNr0+x4UjPVrP6ug==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-plugins/2.0.0/71a468340f066a787d36d59fe90053958a1d696c}
 
-  '@napgram/plugin-adapter-telegram-mtcute@0.1.11':
-    resolution: {integrity: sha512-CNkcfkkLcoxHBwg2TJco/y4DpaJhoJFEmcpHSYAGvU+rxXemc6IsSQfl/dIg/MCQvz96Fc4k40wUrYLfsAn9pg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-telegram-mtcute/0.1.11/624d92e8fc1e90aa6d9368836cda0a0588185ec0}
+  '@napgram/plugin-admin-settings@2.0.0':
+    resolution: {integrity: sha512-uiLSZlzWN8r40g/W+8bFuraKgWdFo7mGYUvkJpg9nN5TOTRFUNPPlnYPJe3m1Au4pE++IbLQzx27mQa7tyZfRg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-settings/2.0.0/d726196c4224fb0731244398ed499c9d83b438e3}
 
-  '@napgram/plugin-admin-auth@0.1.10':
-    resolution: {integrity: sha512-C+sdCX3FDH/3jNAZOrKfGVuQI6R5XaCWkSbXlKU04CmCr3ylCPHXa+LgA0+o7K1lpEJk/hEFFYj6xATfoRtJzQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-auth/0.1.10/3ce499ffd8e0115558a37454e9d15e64f67a4439}
+  '@napgram/plugin-admin-suite@2.0.0':
+    resolution: {integrity: sha512-ut60cNN6UyQ4Zg7CSGBIUxKLATbeeSNCv1nWZ3qERJnf9CJFxoYkqdTkerX9f8qHOLFwG2RpFdX1bx9szYLi7A==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-suite/2.0.0/ededc81909986972f160d72c2216aab89ec680f6}
 
-  '@napgram/plugin-admin-database@0.1.10':
-    resolution: {integrity: sha512-YK1Xw3oLRwNAmJOgIl3sCzBbQhMuSqTZiIlNEJLAT/062OdWBohhjAfo1jXDyO7IrvBi66BUkI5ATz7tswxFqg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-database/0.1.10/7c0cd953df419733df0be44f94aa5a21b1eab395}
+  '@napgram/plugin-flags@2.0.0':
+    resolution: {integrity: sha512-w0aL9ZINevZYfRHUjyrJYCEIWr9kPLu9lc4VrzASudjbc/pRnnMenNUCR4/VOgish1PxuCLgE9GaSD5O1i7ehg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-flags/2.0.0/bf521ae6f3b1c83c576dd561dd8187b2c9bc0001}
 
-  '@napgram/plugin-admin-instances@0.1.10':
-    resolution: {integrity: sha512-P4IwI8B2fvfkhGwjzcgs1rA9AqmrxGAXKM2RPHAhuc3PVI0MRBaobt2xBTcQDvcr4f55xhgaB4PS/BY20oqeVg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-instances/0.1.10/e0e947b828569f936396cc1d5b1368035cf7c667}
+  '@napgram/plugin-gateway@2.0.0':
+    resolution: {integrity: sha512-zNeV4eGDaSFfTljhkuv3Z8Ou1I6WSrppkJh015AaUnCsbDneDo54YI4B6phPNJ02fP06dlGREqW+OaeOo7heDw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-gateway/2.0.0/cbe7895d774e656c4a2aef33ee0ea6ea256048fd}
 
-  '@napgram/plugin-admin-logs@0.1.10':
-    resolution: {integrity: sha512-eY2B6FSRO6Fui1VR5cZgFMZTFWWcTeYfygzs1nPem/0qV02UDctKQnICLhJ99PL4FP93Ia2WvDXfk72HL10plQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-logs/0.1.10/f602ffde660ee85010422520c255f74909f7204f}
+  '@napgram/plugin-group-management@2.0.0':
+    resolution: {integrity: sha512-DUp0jgsUOG430XLyfoS4aHRo1huAEGTxoNJEZXKQF5VIRWgiWFoojlASNjPa2fF7aPVUATPFo2OQmUq3dIyv1w==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-group-management/2.0.0/52ed038938bd29bae948b9e2fefdcdd2690c63a1}
 
-  '@napgram/plugin-admin-messages@0.1.10':
-    resolution: {integrity: sha512-pdobbAq1rPfInTZE/3OI847YqA62Io0NTNECB5FoCzFct7Kg6ClaLfWjEwuohtSYbErB5bfSL5jg6+O4iuigvQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-messages/0.1.10/bf263ea84ef3cd65e447b66b43bda1e95d08f208}
+  '@napgram/plugin-kit@2.0.0':
+    resolution: {integrity: sha512-g+osv3C1AYksQxJWilbX8zeYN7wqGLqAmYLzMyRc1SROTy6m0H48qxeXdEV5XWBMKXWNE97at8lkejQvAsNlHA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-kit/2.0.0/00c022b5e91a124e8cb627f422cfcd5a2ddb95e0}
 
-  '@napgram/plugin-admin-pairs@0.1.10':
-    resolution: {integrity: sha512-kATY+jFRbz967Eod9MOdXi4qPxwtya+WO6PXVk/jL0tKV8INsI8pJX6JVrkmyrO7Zxh//KWpein5xkEDs6mrlw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-pairs/0.1.10/71372d1d39901ba2874bfcf711c0af514efae167}
+  '@napgram/plugin-monitoring@2.0.0':
+    resolution: {integrity: sha512-F69cKiAF1NkwuuiyYs6/JzQHsRyoxW101SY2vU8VuLA6OIu7pWBiOMOZ6g/VQFSBqAEPfpCg+ma1fOvjEtDOnQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-monitoring/2.0.0/9505cd70cb813b145f49051f7546b84955915b1d}
 
-  '@napgram/plugin-admin-plugins@0.1.11':
-    resolution: {integrity: sha512-2yMgiVL1iR6Yaq7SdE56obq+m84hx6xe673Jenf+WPPKC0T1F5s+yUVKBRweFPyTY/vCNywYZ/A6wILmZnPZGw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-plugins/0.1.11/04932590ea69d9493e15afe555383cea32ab8a37}
+  '@napgram/plugin-notifications@2.0.0':
+    resolution: {integrity: sha512-G/5EWKok4yz/G4QFVsnKvwEv3QvRtGPGBx326dA7LvXiybSLvI+nyexMYCWtk/wWMpOyeNFdpmQIRyZfmXCHiQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-notifications/2.0.0/a3d8268d2c4178cca74c4ff478f28f86192687e0}
 
-  '@napgram/plugin-admin-settings@0.1.10':
-    resolution: {integrity: sha512-tglY3r3lUix9/mlr9JJvV3YTtdNfKDDf7Y6+usi7MdKZIAtF96Bb8xG/AKI74TVNqfvv8F6tHGne4sQlLYx92Q==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-settings/0.1.10/da31511ae2a454861f32234294209fda313858e5}
+  '@napgram/plugin-permission-management@2.0.0':
+    resolution: {integrity: sha512-nnVzWUm2oXGW6y7I/NjE/3fP77qoX9/QctrZP2B+Xd2OdvGBBvYKkjB0mGZvby3ATZzZ//gH1ncAOW6FQkRO/w==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-permission-management/2.0.0/c361da84a036ce5fd8c302e9f28845e78c3726f1}
 
-  '@napgram/plugin-admin-suite@0.1.10':
-    resolution: {integrity: sha512-HTYPtpLp+I+eFA5XIUUnW5QaMwyUko6UyPbpNld03r0oIERWYICDugLYdsnNFqnXsWCIV4sIyekiwm+HbPgFvw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-admin-suite/0.1.10/d9e828649bade40b3735b6fb54a5e2dcf36b9274}
+  '@napgram/plugin-ping-pong@2.0.0':
+    resolution: {integrity: sha512-etobN3b3ECH9lO895hVJzmqcBdC/RembZEPXZtRgkB0ut6RinTkcCkIvmZ3GWp7MBu+ptYXqbY/Rhr0AaoqTBA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-ping-pong/2.0.0/cde2db39afa9f3e75f8c14bd526fdd7c8964924e}
 
-  '@napgram/plugin-flags@0.1.5':
-    resolution: {integrity: sha512-ZmE2cKBxkBag15VV9xCDyVXM/zXGAxQENJKRT6n9qWlRJMXjE8K7tBxFlWsEBsTxiIEBEkthON/NIoOl7ztwpQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-flags/0.1.5/0e302dc50f2550f4943fa8cb535a091dff27959c}
+  '@napgram/plugin-qq-interaction@2.0.0':
+    resolution: {integrity: sha512-a7VtjN9bpXUez1pby0Qc3q9elz6ccAvJC7dCfJoercbEalRcDVh36RSyryjlF0lf2JmewcQ2TRfVE8d1U490+Q==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-qq-interaction/2.0.0/16dfba5e811c327c2c4a22eb789beed58bbf4dfa}
 
-  '@napgram/plugin-gateway@0.1.9':
-    resolution: {integrity: sha512-7liXTKo/pIOIn5PUYNRIrwZkuwVglaaTnuStKVWkRnUgDzoWTB6DtN9KFJlNyB9m/UFVXDajyak0IihrVDECUw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-gateway/0.1.9/74351124189bec23840df77916aa79114665f580}
+  '@napgram/plugin-refresh@2.0.0':
+    resolution: {integrity: sha512-BmL3cBc50nNWEsEsWNz10dmrqX8/PI3QY4tshEkGWIq63sekALBSeGtmXC4/rXz1C5jKGFczLCIUaB+KbDgWeA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-refresh/2.0.0/a56d2e8cdab6b15340b01becb173f2167be444aa}
 
-  '@napgram/plugin-group-management@0.1.5':
-    resolution: {integrity: sha512-DIalErJe2/Wdkj3fGeGIkshPxyzhK3SEDCm3qyspxn6WOmo8O5UYWQ2EDt2uqAu5+btKf+s1FnjVR5ZmhEDIbQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-group-management/0.1.5/433cc6c33336e0cdaa5799a98d03c1564fd645b2}
+  '@napgram/plugin-request-handler@2.0.0':
+    resolution: {integrity: sha512-/KPpCRAvoBkN1FZV0spyuVn8jt3Z0AldOXQgbrZJfNcgm7yPNwRxyatW9HFN6HPBR7o/d2pAmrbGkJSPp32ifg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-request-handler/2.0.0/52bfbe8c1cc66133853a133ef3f695bb3b76089e}
 
-  '@napgram/plugin-kit@0.5.0':
-    resolution: {integrity: sha512-hgabR/tdbuSxcZ1Tp3+q77laMh2tgBNOb4HNOrWcEorNoqVlrrEfuIUHilAZovjiscx+eM5LF13mfHi642dvvQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-kit/0.5.0/74a065cff9ac392416495e6fc188b65952ccc8b1}
+  '@napgram/plugin-request-management@2.0.0':
+    resolution: {integrity: sha512-xz6U/NbVpJ9swMytyLa/KZMj/Oxy2z+MlFJPqCo5Bp/xVZ8q5XDJBlhq46QHmttV8D+5kL19c+VoKMdm16mEYw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-request-management/2.0.0/27766a11f4db1762d4777b925ed8ecbe2f2bcb80}
 
-  '@napgram/plugin-kit@0.6.0':
-    resolution: {integrity: sha512-+sI3i4kY2qNDMLk4RnCFgThpoV47IBugDwhpZY7H1NmGcDEtPw5wqGknj81hanHwBFzfebmzcmPImaQ6Y17euA==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-kit/0.6.0/31c4333de41d30b070a346d400ce466a0ae11046}
+  '@napgram/plugin-statistics@2.0.0':
+    resolution: {integrity: sha512-z/PGi0aZb3ReYs7NIX5FYV7tV8oTCSQPQ8VlL0kunauLa2TnzhbDJMYUPuzkwSENRc4XOzDzrSDFFWv5Jrwj5Q==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-statistics/2.0.0/e49ab104779ea8ddd5e47c62cd6b3b76dbf1092a}
 
-  '@napgram/plugin-monitoring@0.1.10':
-    resolution: {integrity: sha512-85KwS0WIbDTvquJRohjZ/2QH2HF2F/qUYvHmSZDklsQTL8S1pj4ccN3tFcRG1Ocr9sKUqLhltbt5ykSCZSFxDQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-monitoring/0.1.10/b28d705e854452f8313f3b36b043246703617b68}
+  '@napgram/plugin-web-assets@2.0.0':
+    resolution: {integrity: sha512-f2bb8h+wVj4rZTIrvDHxRVb39zQRJJQ33QazQfdLD7PiVkudrs0nKPxVEue5ZhqRFl7e6cLkR4KxQailRxuhYw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-web-assets/2.0.0/bfeccbfe7d463825f24977ef49864f4bfcd4dae6}
 
-  '@napgram/plugin-notifications@0.1.5':
-    resolution: {integrity: sha512-o+oxNe5DYBzSnjPvcxU1p9l1gmqlrjd/DuPUXYBc1kVZlEzG0HLh3fKmE36ntIbVzNH0d4Bq4vFxj2szsDCPLw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-notifications/0.1.5/31a7679df3fa6b940cc1b2d03a391d966dc92e46}
+  '@napgram/plugin-web-console@2.0.0':
+    resolution: {integrity: sha512-mB9rnSbr7gaNjW0B7x8nPiveWOun2aHL2iOQxABgZELbgkRTL7hTDumX9K247E+fXEpkiZ+HjwrYlmBhleRPcw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-web-console/2.0.0/101c1d18a51dd5b3c5ee2a3a1c18487b0be8344e}
 
-  '@napgram/plugin-permission-management@0.1.6':
-    resolution: {integrity: sha512-NQWJSU+PJJvednRRgPZiGamsf6ox+tL2VcpGB9rbz33WqQ8WjQr0fpL4GbA/yfrnSQzCtycq7wvyX51p0dW7UQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-permission-management/0.1.6/5412dab1b3f3acff4bb78f3a263ed75f664aeba7}
+  '@napgram/qq-client@2.0.0':
+    resolution: {integrity: sha512-tI0RoX543fWeSwRWzBQ7mL8wEQ0eEMf0ugTnzedwM4xCV/hVF6Rf4c1ncJTZCqzfPCA/tp3RmaDhFwEDxt/heQ==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/2.0.0/bcbcd590ad9a60103a78d73c03b3c858c1424d0f}
 
-  '@napgram/plugin-ping-pong@0.1.5':
-    resolution: {integrity: sha512-aARZR2hEHNJP4Dw4JWIzvw9yFxfbG61mIW4HVS7QF+S4Xsn9gaC27EVebQc5vVelKnvH7OqHSFy59z8SVTV7ww==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-ping-pong/0.1.5/f3fd3ae78ac4d05102be29fd1aaf2e7f49e0de63}
+  '@napgram/request-kit@2.0.0':
+    resolution: {integrity: sha512-rR/R+9b+ALrJN8de8j/Pwib4A2M+IAO4fjSFB/m8fXtQh0ZxfcE7leQlleAAQAMhwU7MDWtrGp2r7u2z6cNjCA==, tarball: https://npm.pkg.github.com/download/@napgram/request-kit/2.0.0/715509be5cafb093443f057a211ef748fffb8751}
 
-  '@napgram/plugin-qq-interaction@0.1.6':
-    resolution: {integrity: sha512-29uvASFHoZqlqPQfQgyr4bD7VcVSGJuazQ3P6KD3yxoe0f7PTqFZpzay5T94bI+2JiMAufI4pFREl/76Ioxbyw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-qq-interaction/0.1.6/6954afe5fd625475a3525de24f286514cdf097b6}
+  '@napgram/runtime-kit@2.0.0':
+    resolution: {integrity: sha512-jGmWlEAIiB7FG1+dKlkQZJmDr59jDSJ4Gq+Tbis1MGNX3WextpulT5hhZASVBVbR7gyYrHHSm8C6EVm7HnZ97A==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/2.0.0/c00aa21b5c766afe04b6480cfc57f6905003956c}
 
-  '@napgram/plugin-refresh@0.1.5':
-    resolution: {integrity: sha512-1lcnLodMyenOQQYov/dvNNsC6NSz8icgyfagyxYX3mYtZetcRLqe04xzMBJMMKcRnopj1vv0IG1I8tYWBhNNqw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-refresh/0.1.5/5ddd17a97c997a478655711d302c41018ef98f1e}
+  '@napgram/sdk@2.0.0':
+    resolution: {integrity: sha512-QKjDIWLRKTvpocKo88up/qvcl0c4TWzHWtreqZAd5MHSd/n22UVRnZNZZa2O9/ZY79fvdAf26y04Z0EuETDf1Q==, tarball: https://npm.pkg.github.com/download/@napgram/sdk/2.0.0/f8ed154b3fb65850685afe079b3f61b11049fe50}
 
-  '@napgram/plugin-request-handler@0.1.9':
-    resolution: {integrity: sha512-1psDPKVveXjxWSPZGwzY5/xf4m2kfQpkhDUMAo/OrKvrF1ynbafoYziGQo7riOQXoswKyvtFl2GWbw7lQXiq2A==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-request-handler/0.1.9/f28f80a5474792299ca1ec58f4497d76d0b9c1ab}
+  '@napgram/telegram-client@2.0.0':
+    resolution: {integrity: sha512-XUzkUWqy5a9d6baRQNuROyZZ1sE/g4pSYiPhi5XmFp3zSivcsk+dRnYP8E0O3zHPpC/zmZzbEuO8rXyN7RXf2A==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/2.0.0/d4c3ae79b8bebc5a207fed5774f44769f88be8ee}
 
-  '@napgram/plugin-request-management@0.1.9':
-    resolution: {integrity: sha512-qum7claEb0SA50dI196KS1v4y8Y89BcWLpPtjZVZA1Etcb41PvwdJhjSiBneQqFr83UeK++mKZ5UxSc/W1aI7w==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-request-management/0.1.9/b61614267ecc4ee8ddaedcd4921a67423b71eb86}
+  '@napgram/utils@2.0.0':
+    resolution: {integrity: sha512-svBbOzeotlIi0KEmD0j4IFNC5Z89Fj+uEtroo8gdrT+c3D4L5BROVi+atu0GzIK19z2Nb/8fpLgGzNy1+cdF+g==, tarball: https://npm.pkg.github.com/download/@napgram/utils/2.0.0/791215cb6a7b24cbe2a49a691e5784ca46bf9c8c}
 
-  '@napgram/plugin-statistics@0.1.11':
-    resolution: {integrity: sha512-nsbH8CzYdMzPVaAdNkkBmZUOf+eHzxROqu8WZPikam4m1cEBWRiYGJvpVeD9AS9MGhPsSNyCl8vrjalRA9kzbg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-statistics/0.1.11/8a1c3c541ff69dd81d758638b919a9bb26770394}
-
-  '@napgram/plugin-web-assets@0.1.11':
-    resolution: {integrity: sha512-/uQ6yUICht7IWNIjo6gF2gUU4kapNOFWNST9/Sx/iF4TlbOAn+HpA4mObDEJmmcEa2NFlE1l0RPaklpewAhxAQ==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-web-assets/0.1.11/73035a15d6e73c722ff0ac04c3664e06e7db593d}
-
-  '@napgram/plugin-web-console@0.1.11':
-    resolution: {integrity: sha512-Es4u8sMAjgFNSkmjiKZKIQCF6CF5wAekfmFa4jUn+vvy4bEydDxQogilo6SHPabLZZvMSACmPjNO2xak7wSTWw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-web-console/0.1.11/469b8c7b191a1301e80413837b08a88cdd2702ce}
-
-  '@napgram/qq-client@0.1.7':
-    resolution: {integrity: sha512-YYnPM2MrEWLeaEvEpfpQxScqG6fnmtjW6xJ5HRWtiVbtc77v73k/mF8TKJBHxBX81oiH1gt/YHFD/y6HCQwn/A==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/0.1.7/ba5fc95e210fb3637aecf793e18177b21f2be437}
-
-  '@napgram/qq-client@0.2.0':
-    resolution: {integrity: sha512-GCgqtBTgVFMf8Vy0S6jC7pw6JxpetkWDktPSmxThoNev7cuzcC/4L+6dn6wfgcDTVsQ/cwv41OjXaMH/LA1TSg==, tarball: https://npm.pkg.github.com/download/@napgram/qq-client/0.2.0/c9ceea598ddc46094ecca1929b987c7e7c391146}
-
-  '@napgram/request-kit@0.4.1':
-    resolution: {integrity: sha512-QUeIkH/YVmh6f93x7NeW/9hxp4VmgOJ8tx4OuAXBs+ZOMLqzascSQ/iVdRcGn92BeQjoDHjJXyW+EtVQAT620g==, tarball: https://npm.pkg.github.com/download/@napgram/request-kit/0.4.1/bb6e7d4a6daec7683b7c2fa6d544aecb7991be0e}
-
-  '@napgram/runtime-kit@0.5.0':
-    resolution: {integrity: sha512-1YPziJQrKkY8GK7JdBf15r7ZjyKbcYy395klpB4a4EPYB+C0vCyh+GQ9jC7Rl1rOJ47UV1xtOAzdSzTl2fCYgg==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/0.5.0/93dd203e904ef8ae358c914224fc6caf4474ea66}
-
-  '@napgram/runtime-kit@0.6.0':
-    resolution: {integrity: sha512-OMlHaLOWQu5AC1m2VvXme1J3aBLU2N7Dz66FHgSJkuCJPcPQNfJJvA6HXNRar4o2zxCCje5k4LSngQ7mIo8aMg==, tarball: https://npm.pkg.github.com/download/@napgram/runtime-kit/0.6.0/a21d49e2b584b477747cc76dcbbb0319bec8db71}
-
-  '@napgram/sdk@0.2.0':
-    resolution: {integrity: sha512-4nRDb7yPwceU5i8fe8g1P4KJBmpsVaxk7WiRGFZCk7EnlfU/5qQ4SrfkgmkCIvmnH9qjohDyIgv4qxZDjjMUDg==, tarball: https://npm.pkg.github.com/download/@napgram/sdk/0.2.0/93fcafd81a6b8a5ea9721920c436a47b2aa35c6b}
-
-  '@napgram/telegram-client@0.2.0':
-    resolution: {integrity: sha512-0alzSMZpD3tpiKnPtP2IM/ibQYHUcNoot9QyFMAnjrhd3NBsqwGxBuC8Dgl4fnvlAL0l77jNSJvG3QnHyp+vRA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.2.0/a5f697a413f305fcf0a05dd7ae7aa875d38cfb62}
-
-  '@napgram/telegram-client@0.3.0':
-    resolution: {integrity: sha512-JKHbeInsGNsvSk51FZVAht4dbHqcNoBZikXdI8yh+XkJK2uln0xsDhZCIewuI67295SJ4t2UqJFkoP9ow6YYqA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.3.0/22b4f4ba517845f47170bc1cbe1aa6c1bfeb342c}
-
-  '@napgram/telegram-client@0.4.0':
-    resolution: {integrity: sha512-1pFFs2F0LpHbl7rKujTdc15woNLIFuKnNDArkEiiLeheePYcxK4cUWN1xyTSWyJwn3x0QrsSGKHyDNt3CaBMOA==, tarball: https://npm.pkg.github.com/download/@napgram/telegram-client/0.4.0/3bd521bbe8432135134e1957287075aca8acf27e}
-
-  '@napgram/utils@0.2.0':
-    resolution: {integrity: sha512-CWNy3c208CmwuKSUSGaawgrjZx0/PbN0bomc0l0r16pTfWVCdq7TXrmq1N39u9sWz0MRwDgg+9Y0QIzjNUJKbQ==, tarball: https://npm.pkg.github.com/download/@napgram/utils/0.2.0/b0239a577a127b80f2f405f5a84bff3af956380d}
-
-  '@napgram/web-interfaces@0.3.5':
-    resolution: {integrity: sha512-EhsOMjA2pyR759Bk1RYnyj2bgUzYLKPPsYadad5DSX3kR3y/M/Vz2jA84cMbYyUXlDl0lYVbFYgkg0RVjXQDTg==, tarball: https://npm.pkg.github.com/download/@napgram/web-interfaces/0.3.5/7a47245d414d0c2a9301cc62416bcf9d30bda83e}
-
-  '@napgram/web-interfaces@0.4.0':
-    resolution: {integrity: sha512-YL62PQXV6vG94+Vt3xYk6ZLeSopJvxmx208pU8gVE05OvEMnV7tMkp8XJwm2Wq2objPmfC/W3hBxbMufCJA9xw==, tarball: https://npm.pkg.github.com/download/@napgram/web-interfaces/0.4.0/31d93badae7e5f87e6b0b504683685db9494ec85}
+  '@napgram/web-interfaces@2.0.0':
+    resolution: {integrity: sha512-UGeh3Lo+L7czl5WLFn/rEBABIZ09aZkx1TmmB4QYywZG4FXYlMEb6G7AM8iKCEbulbb3kSfbfjWh9cviY/BaIw==, tarball: https://npm.pkg.github.com/download/@napgram/web-interfaces/2.0.0/758786e234e1c485c0ad45acd7671595c327df30}
 
   '@napi-rs/wasm-runtime@1.1.4':
     resolution: {integrity: sha512-3NQNNgA1YSlJb/kMH1ildASP9HW7/7kYnRI2szWJaofaS1hWmbGI4H+d3+22aGzXXN9IJ+n+GiFVcGipJP18ow==}
@@ -952,11 +901,7 @@ packages:
       '@emnapi/runtime': ^1.7.1
 
   '@naplink/naplink@0.0.10':
-    resolution: {integrity: sha512-+ygiV1NblKxfBOc/8rDv7UH28WVT1PiBZ1KEJZeKlt9kpb2v/ooGosdf9MKLHDBmZcoKAykD6ydRd/A5tJ40dQ==}
-    engines: {node: '>=18.0.0'}
-
-  '@naplink/naplink@0.0.7':
-    resolution: {integrity: sha512-ndZqUVrUf3OVS+DhQB44bIt6Azx1peC1CTmolxu3j5BWtJbfOrHq/NTwQY5u5frGp+CTa06CUJLfrXkPd8aAyg==}
+    resolution: {integrity: sha512-aJAFTNhmF3PADzGwahyk6nuCeWicvMUfOlupl6sCEtQdDzWLUVUxpNyBtMRlcAPM495rNiwXFbLOMBK6E4IqNw==, tarball: https://npm.pkg.github.com/download/@naplink/naplink/0.0.10/f3812699e2c541be5337d7f9cce3297579c003d6}
     engines: {node: '>=18.0.0'}
 
   '@opentelemetry/api-logs@0.207.0':
@@ -967,10 +912,6 @@ packages:
     resolution: {integrity: sha512-TEEVrLbNROUkYY51sBJGk7lO/OLjuepch8+hmpM6ffMJQ2z/KVCjdHuCFX6fJj8OkJP2zckPjrJzQtXU3IAsFg==}
     engines: {node: '>=8.0.0'}
 
-  '@opentelemetry/api-logs@0.213.0':
-    resolution: {integrity: sha512-zRM5/Qj6G84Ej3F1yt33xBVY/3tnMxtL1fiDIxYbDWYaZ/eudVw3/PBiZ8G7JwUxXxjW8gU4g6LnOyfGKYHYgw==}
-    engines: {node: '>=8.0.0'}
-
   '@opentelemetry/api-logs@0.214.0':
     resolution: {integrity: sha512-40lSJeqYO8Uz2Yj7u94/SJWE/wONa7rmMKjI1ZcIjgf3MHNHv1OZUCrCETGuaRF62d5pQD1wKIW+L4lmSMTzZA==}
     engines: {node: '>=8.0.0'}
@@ -978,18 +919,6 @@ packages:
   '@opentelemetry/api@1.9.1':
     resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
     engines: {node: '>=8.0.0'}
-
-  '@opentelemetry/context-async-hooks@2.6.1':
-    resolution: {integrity: sha512-XHzhwRNkBpeP8Fs/qjGrAf9r9PRv67wkJQ/7ZPaBQQ68DYlTBBx5MF9LvPx7mhuXcDessKK2b+DcxqwpgkcivQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.10.0'
-
-  '@opentelemetry/core@2.6.0':
-    resolution: {integrity: sha512-HLM1v2cbZ4TgYN6KEOj+Bbj8rAKriOdkF9Ed3tG25FoprSiQl7kYc+RRT6fUZGOvx0oMi5U67GoFdT+XUn8zEg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
   '@opentelemetry/core@2.6.1':
     resolution: {integrity: sha512-8xHSGWpJP9wBxgBpnqGL0R3PbdWQndL1Qp50qrg71+B28zK5OQmUgcDKLJgzyAAV38t4tOyLMGDD60LneR5W8g==}
@@ -1003,20 +932,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0 <1.10.0'
 
-  '@opentelemetry/instrumentation-amqplib@0.60.0':
-    resolution: {integrity: sha512-q/B2IvoVXRm1M00MvhnzpMN6rKYOszPXVsALi6u0ss4AYHe+TidZEtLW9N1ZhrobI1dSriHnBqqtAOZVAv07sg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-amqplib@0.61.0':
     resolution: {integrity: sha512-mCKoyTGfRNisge4br0NpOFSy2Z1NnEW8hbCJdUDdJFHrPqVzc4IIBPA/vX0U+LUcQqrQvJX+HMIU0dbDRe0i0Q==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-connect@0.56.0':
-    resolution: {integrity: sha512-PKp+sSZ7AfzMvGgO3VCyo1inwNu+q7A1k9X88WK4PQ+S6Hp7eFk8pie+sWHDTaARovmqq5V2osav3lQej2B0nw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1027,26 +944,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-dataloader@0.30.0':
-    resolution: {integrity: sha512-MXHP2Q38cd2OhzEBKAIXUi9uBlPEYzF6BNJbyjUXBQ6kLaf93kRC41vNMIz0Nl5mnuwK7fDvKT+/lpx7BXRwdg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-dataloader@0.31.0':
     resolution: {integrity: sha512-f654tZFQXS5YeLDNb9KySrwtg7SnqZN119FauD7acBoTzuLduaiGTNz88ixcVSOOMGZ+EjJu/RFtx5klObC95g==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-express@0.61.0':
-    resolution: {integrity: sha512-Xdmqo9RZuZlL29Flg8QdwrrX7eW1CZ7wFQPKHyXljNymgKhN1MCsYuqQ/7uxavhSKwAl7WxkTzKhnqpUApLMvQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-fs@0.32.0':
-    resolution: {integrity: sha512-koR6apx0g0wX6RRiPpjA4AFQUQUbXrK16kq4/SZjVp7u5cffJhNkY4TnITxcGA4acGSPYAfx3NHRIv4Khn1axQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1057,20 +956,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-generic-pool@0.56.0':
-    resolution: {integrity: sha512-fg+Jffs6fqrf0uQS0hom7qBFKsbtpBiBl8+Vkc63Gx8xh6pVh+FhagmiO6oM0m3vyb683t1lP7yGYq22SiDnqg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-generic-pool@0.57.0':
     resolution: {integrity: sha512-orhmlaK+ZIW9hKU+nHTbXrCSXZcH83AescTqmpamHRobRmYSQwRbD0a1odc0yAzuzOtxYiHiXAnpnIpaSSY7Ow==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-graphql@0.61.0':
-    resolution: {integrity: sha512-pUiVASv6nh2XrerTvlbVHh7vKFzscpgwiQ/xvnZuAIzQ5lRjWVdRPUuXbvZJ/Yq79QsE81TZdJ7z9YsXiss1ew==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1081,20 +968,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-hapi@0.59.0':
-    resolution: {integrity: sha512-33wa4mEr+9+ztwdgLor1SeBu4Opz4IsmpcLETXAd3VmBrOjez8uQtrsOhPCa5Vhbm5gzDlMYTgFRLQzf8/YHFA==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-hapi@0.60.0':
     resolution: {integrity: sha512-aNljZKYrEa7obLAxd1bCEDxF7kzCLGXTuTJZ8lMR9rIVEjmuKBXN1gfqpm/OB//Zc2zP4iIve1jBp7sr3mQV6w==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-http@0.213.0':
-    resolution: {integrity: sha512-B978Xsm5XEPGhm1P07grDoaOFLHapJPkOG9h016cJsyWWxmiLnPu2M/4Nrm7UCkHSiLnkXgC+zVGUAIahy8EEA==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1105,26 +980,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-ioredis@0.61.0':
-    resolution: {integrity: sha512-hsHDadUtAFbws1YSDc1XW0svGFKiUbqv2td1Cby+UAiwvojm1NyBo/taifH0t8CuFZ0x/2SDm0iuTwrM5pnVOg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-kafkajs@0.22.0':
-    resolution: {integrity: sha512-wJU4IBQMUikdJAcTChLFqK5lo+flo7pahqd8DSLv7uMxsdOdAHj6RzKYAm8pPfUS6ItKYutYyuicwKaFwQKsoA==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-kafkajs@0.23.0':
     resolution: {integrity: sha512-4K+nVo+zI+aDz0Z85SObwbdixIbzS9moIuKJaYsdlzcHYnKOPtB7ya8r8Ezivy/GVIBHiKJVq4tv+BEkgOMLaQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-knex@0.57.0':
-    resolution: {integrity: sha512-vMCSh8kolEm5rRsc+FZeTZymWmIJwc40hjIKnXH4O0Dv/gAkJJIRXCsPX5cPbe0c0j/34+PsENd0HqKruwhVYw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1135,32 +992,14 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-koa@0.61.0':
-    resolution: {integrity: sha512-lvrfWe9ShK/D2X4brmx8ZqqeWPfRl8xekU0FCn7C1dHm5k6+rTOOi36+4fnaHAP8lig9Ux6XQ1D4RNIpPCt1WQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.9.0
-
   '@opentelemetry/instrumentation-koa@0.62.0':
     resolution: {integrity: sha512-uVip0VuGUQXZ+vFxkKxAUNq8qNl+VFlyHDh/U6IQ8COOEDfbEchdaHnpFrMYF3psZRUuoSIgb7xOeXj00RdwDA==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.9.0
 
-  '@opentelemetry/instrumentation-lru-memoizer@0.57.0':
-    resolution: {integrity: sha512-cEqpUocSKJfwDtLYTTJehRLWzkZ2eoePCxfVIgGkGkb83fMB71O+y4MvRHJPbeV2bdoWdOVrl8uO0+EynWhTEA==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-lru-memoizer@0.58.0':
     resolution: {integrity: sha512-6grM3TdMyHzlGY1cUA+mwoPueB1F3dYKgKtZIH6jOFXqfHAByyLTc+6PFjGM9tKh52CFBJaDwodNlL/Td39z7Q==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-mongodb@0.66.0':
-    resolution: {integrity: sha512-d7m9QnAY+4TCWI4q1QRkfrc6fo/92VwssaB1DzQfXNRvu51b78P+HJlWP7Qg6N6nkwdb9faMZNBCZJfftmszkw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1171,20 +1010,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-mongoose@0.59.0':
-    resolution: {integrity: sha512-6/jWU+c1NgznkVLDU/2y0bXV2nJo3o9FWZ9mZ9nN6T/JBNRoMnVXZl2FdBmgH+a5MwaWLs5kmRJTP5oUVGIkPw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-mongoose@0.60.0':
     resolution: {integrity: sha512-8BahAZpKsOoc+lrZGb7Ofn4g3z8qtp5IxDfvAVpKXsEheQN7ONMH5djT5ihy6yf8yyeQJGS0gXFfpEAEeEHqQg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-mysql2@0.59.0':
-    resolution: {integrity: sha512-n9/xrVCRBfG9egVbffnlU1uhr+HX0vF4GgtAB/Bvm48wpFgRidqD8msBMiym1kRYzmpWvJqTxNT47u1MkgBEdw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1195,20 +1022,8 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-mysql@0.59.0':
-    resolution: {integrity: sha512-r+V/Fh0sm7Ga8/zk/TI5H5FQRAjwr0RrpfPf8kNIehlsKf12XnvIaZi8ViZkpX0gyPEpLXqzqWD6QHlgObgzZw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-mysql@0.60.0':
     resolution: {integrity: sha512-08pO8GFPEIz2zquKDGteBZDNmwketdgH8hTe9rVYgW9kCJXq1Psj3wPQGx+VaX4ZJKCfPeoLMYup9+cxHvZyVQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-pg@0.65.0':
-    resolution: {integrity: sha512-W0zpHEIEuyZ8zvb3njaX9AAbHgPYOsSWVOoWmv1sjVRSF6ZpBqtlxBWbU+6hhq1TFWBeWJOXZ8nZS/PUFpLJYQ==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
@@ -1219,29 +1034,11 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation-redis@0.61.0':
-    resolution: {integrity: sha512-JnPexA034/0UJRsvH96B0erQoNOqKJZjE2ZRSw9hiTSC23LzE0nJE/u6D+xqOhgUhRnhhcPHq4MdYtmUdYTF+Q==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-tedious@0.32.0':
-    resolution: {integrity: sha512-BQS6gG8RJ1foEqfEZ+wxoqlwfCAzb1ZVG0ad8Gfe4x8T658HJCLGLd4E4NaoQd8EvPfLqOXgzGaE/2U4ytDSWA==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation-tedious@0.33.0':
     resolution: {integrity: sha512-Q6WQwAD01MMTub31GlejoiFACYNw26J426wyjvU7by7fDIr2nZXNW4vhTGs7i7F0TnXBO3xN688g1tdUgYwJ5w==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
-
-  '@opentelemetry/instrumentation-undici@0.23.0':
-    resolution: {integrity: sha512-LL0VySzKVR2cJSFVZaTYpZl1XTpBGnfzoQPe2W7McS2267ldsaEIqtQY6VXs2KCXN0poFjze5110PIpxHDaDGg==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.7.0
 
   '@opentelemetry/instrumentation@0.207.0':
     resolution: {integrity: sha512-y6eeli9+TLKnznrR8AZlQMSJT7wILpXH+6EYq5Vf/4Ao+huI7EedxQHwRgVUOMLFbe7VFDvHJrX9/f4lcwnJsA==}
@@ -1255,36 +1052,14 @@ packages:
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/instrumentation@0.213.0':
-    resolution: {integrity: sha512-3i9NdkET/KvQomeh7UaR/F4r9P25Rx6ooALlWXPIjypcEOUxksCmVu0zA70NBJWlrMW1rPr/LRidFAflLI+s/w==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': ^1.3.0
-
   '@opentelemetry/instrumentation@0.214.0':
     resolution: {integrity: sha512-MHqEX5Dk59cqVah5LiARMACku7jXSVk9iVDWOea4x3cr7VfdByeDCURK6o1lntT1JS/Tsovw01UJrBhN3/uC5w==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': ^1.3.0
 
-  '@opentelemetry/redis-common@0.38.3':
-    resolution: {integrity: sha512-VCghU1JYs/4gP6Gqf/xro9MEsZ7LrMv2uONVsaESKL38ZOB9BqnI98FfS23wjMnHlpuE+TTaWSoAVNpTwYXzjw==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-
-  '@opentelemetry/resources@2.6.1':
-    resolution: {integrity: sha512-lID/vxSuKWXM55XhAKNoYXu9Cutoq5hFdkbTdI/zDKQktXzcWBVhNsOkiZFTMU9UtEWuGRNe0HUgmsFldIdxVA==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.3.0 <1.10.0'
-
   '@opentelemetry/resources@2.7.1':
     resolution: {integrity: sha512-DeT6KKolmC4e/dRQvMQ/RwlnzhaqeiFOXY5ngoOPJ07GgVVKxZOg9EcrNZb5aTzUn+iCrJldAgOfQm1O/QfPAQ==}
-    engines: {node: ^18.19.0 || >=20.6.0}
-    peerDependencies:
-      '@opentelemetry/api': '>=1.3.0 <1.10.0'
-
-  '@opentelemetry/sdk-trace-base@2.6.1':
-    resolution: {integrity: sha512-r86ut4T1e8vNwB35CqCcKd45yzqH6/6Wzvpk2/cZB8PsPLlZFTvrh8yfOS3CYZYcUmAx4hHTZJ8AO8Dj8nrdhw==}
     engines: {node: ^18.19.0 || >=20.6.0}
     peerDependencies:
       '@opentelemetry/api': '>=1.3.0 <1.10.0'
@@ -1322,11 +1097,6 @@ packages:
   '@pkgr/core@0.2.9':
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
-
-  '@prisma/instrumentation@7.4.2':
-    resolution: {integrity: sha512-r9JfchJF1Ae6yAxcaLu/V1TGqBhAuSDe3mRNOssBfx1rMzfZ4fdNvrgUBwyb/TNTGXFxlH9AZix5P257x07nrg==}
-    peerDependencies:
-      '@opentelemetry/api': ^1.8
 
   '@prisma/instrumentation@7.6.0':
     resolution: {integrity: sha512-ZPW2gRiwpPzEfgeZgaekhqXrbW+Y2RJKHVqUmlhZhKzRNCcvR6DykzylDrynpArKKRQtLxoZy36fK7U0p3pdgQ==}
@@ -1431,10 +1201,6 @@ packages:
   '@rolldown/pluginutils@1.0.0':
     resolution: {integrity: sha512-aKs/3GSWyV0mrhNmt/96/Z3yczC3yvrzYATCiCXQebBsGyYzjNdUphRVLeJQ67ySKVXRfMxt2lm12pmXvbPFQQ==}
 
-  '@sentry/core@10.45.0':
-    resolution: {integrity: sha512-s69UXxvefeQxuZ5nY7/THtTrIEvJxNVCp3ns4kwoCw1qMpgpvn/296WCKVmM7MiwnaAdzEKnAvLAwaxZc2nM7Q==}
-    engines: {node: '>=18'}
-
   '@sentry/core@10.52.0':
     resolution: {integrity: sha512-VA/kAqLhkMnRWY2RXdBLyTemR9D4m7MVRy/gyapoq9yvllVPx9WXbvKgnMP2LQp7mFgT/oLFvw58aQKaYTGn3A==}
     engines: {node: '>=18'}
@@ -1442,33 +1208,6 @@ packages:
   '@sentry/core@10.53.1':
     resolution: {integrity: sha512-XG4ezlkyuAPjBC5+9kXC94rXXuqYTw9NRhfaDHssbTFaGnqBR8vQX2UUgZfY7ucbeelRDGfBu1sywoU+mB04uA==}
     engines: {node: '>=18'}
-
-  '@sentry/node-core@10.45.0':
-    resolution: {integrity: sha512-KQZEvLKM344+EqXiA9HIzWbW5hzq6/9nnFUQ8niaBPoOgR9AiJhrccfIscfgb8vjkriiEtzE03OW/4h1CTgZ3Q==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@opentelemetry/api': ^1.9.0
-      '@opentelemetry/context-async-hooks': ^1.30.1 || ^2.1.0
-      '@opentelemetry/core': ^1.30.1 || ^2.1.0
-      '@opentelemetry/instrumentation': '>=0.57.1 <1'
-      '@opentelemetry/resources': ^1.30.1 || ^2.1.0
-      '@opentelemetry/sdk-trace-base': ^1.30.1 || ^2.1.0
-      '@opentelemetry/semantic-conventions': ^1.39.0
-    peerDependenciesMeta:
-      '@opentelemetry/api':
-        optional: true
-      '@opentelemetry/context-async-hooks':
-        optional: true
-      '@opentelemetry/core':
-        optional: true
-      '@opentelemetry/instrumentation':
-        optional: true
-      '@opentelemetry/resources':
-        optional: true
-      '@opentelemetry/sdk-trace-base':
-        optional: true
-      '@opentelemetry/semantic-conventions':
-        optional: true
 
   '@sentry/node-core@10.52.0':
     resolution: {integrity: sha512-IG7MBtLRPQ2LuU+kbD14AFZroZgAeUmJQTP1FI/F8n56O31+p+9R703LuBTpvZr6sm+eRYDMWcGYYkfLHRVjwg==}
@@ -1518,10 +1257,6 @@ packages:
       '@opentelemetry/semantic-conventions':
         optional: true
 
-  '@sentry/node@10.45.0':
-    resolution: {integrity: sha512-Kpiq9lRGnJc1ex8SwxOBl+FLQNl4Y137BydVooP7AFiAYZ6ftwHsIEF1bcYXaipHMT1YHS2bdhC2UQaaB2jkuQ==}
-    engines: {node: '>=18'}
-
   '@sentry/node@10.52.0':
     resolution: {integrity: sha512-9+p3KJUk3rHO1HOEZuSknP2RgKCJZONDm4HWgkVDtVBtocb66KLtVlMjc59d2/bWP7tM3wc877tpG30quFfU9g==}
     engines: {node: '>=18'}
@@ -1529,16 +1264,6 @@ packages:
   '@sentry/node@10.53.1':
     resolution: {integrity: sha512-rxHVil0tJAmz+keFcZCj1LaUdgdkK66E/l0gqh2p1209PNCGoD3lnClFr6vusy1aF3zF8O9JPtuMEJzXOKhs+w==}
     engines: {node: '>=18'}
-
-  '@sentry/opentelemetry@10.45.0':
-    resolution: {integrity: sha512-PmuGO+p/gC3ZQ8ddOeJ5P9ApnTTm35i12Bpuyb13AckCbNSJFvG2ggZda35JQOmiFU0kKYiwkoFAa8Mvj9od3Q==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@opentelemetry/api': ^1.9.0
-      '@opentelemetry/context-async-hooks': ^1.30.1 || ^2.1.0
-      '@opentelemetry/core': ^1.30.1 || ^2.1.0
-      '@opentelemetry/sdk-trace-base': ^1.30.1 || ^2.1.0
-      '@opentelemetry/semantic-conventions': ^1.39.0
 
   '@sentry/opentelemetry@10.52.0':
     resolution: {integrity: sha512-Sc7StsvC0bwhMcgDfTRWUIexO5cNzzKUurvUwtpgQUnxO7AzexU3lkY3yHYDsCbWYAEQMXAgQYQtbcqoh+Ie7g==}
@@ -1909,9 +1634,6 @@ packages:
 
   avvio@9.2.0:
     resolution: {integrity: sha512-2t/sy01ArdHHE0vRH5Hsay+RtCZt3dLPji7W7/MMOCEgze5b7SNDC4j5H6FnVgPkI1MTNFGzHdHrVXDDl7QSSQ==}
-
-  axios@1.16.0:
-    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
 
   axios@1.16.1:
     resolution: {integrity: sha512-caYkukvroVPO8KrzuJEb50Hm07KwfBZPEC3VeFHTsqWHvKTsy54hjJz9BS/cdaypROE2rH6xvm9mHX4fgWkr3A==}
@@ -2582,10 +2304,6 @@ packages:
     resolution: {integrity: sha512-uzk64HRpUZyTGZtVuvrjP0FYxzQrBf4rojot6J65YMEbwBLB0CWm0CLojVpwpmFmxcE/lkvYICgfcGozbBq6rw==}
     engines: {node: '>=6'}
 
-  file-type@21.3.4:
-    resolution: {integrity: sha512-Ievi/yy8DS3ygGvT47PjSfdFoX+2isQueoYP1cntFW1JLYAuS4GD7NUPGg4zv2iZfV52uDyk5w5Z0TdpRS6Q1g==}
-    engines: {node: '>=20'}
-
   file-type@22.0.1:
     resolution: {integrity: sha512-ww5Mhre0EE+jmBvOXTmXAbEMuZE7uX4a3+oRCQFNj8w++g3ev913N6tXQz0XTXbueQ5TWQfm6BdaViEHHn8bhA==}
     engines: {node: '>=22'}
@@ -2754,10 +2472,6 @@ packages:
 
   import-in-the-middle@2.0.6:
     resolution: {integrity: sha512-3vZV3jX0XRFW3EJDTwzWoZa+RH1b8eTTx6YOCjglrLyPuepwoBti1k3L2dKwdCUrnVEfc5CuRuGstaC/uQJJaw==}
-
-  import-in-the-middle@3.0.0:
-    resolution: {integrity: sha512-OnGy+eYT7wVejH2XWgLRgbmzujhhVIATQH0ztIeRilwHBjTeG3pD+XnH3PKX0r9gJ0BuJmJ68q/oh9qgXnNDQg==}
-    engines: {node: '>=18'}
 
   import-in-the-middle@3.0.1:
     resolution: {integrity: sha512-pYkiyXVL2Mf3pozdlDGV6NAObxQx13Ae8knZk1UJRJ6uRW/ZRmTGHlQYtrsSl7ubuE5F8CD1z+s1n4RHNuTtuA==}
@@ -3506,11 +3220,6 @@ packages:
   secure-json-parse@4.1.0:
     resolution: {integrity: sha512-l4KnYfEyqYJxDwlNVyRfO2E4NTHfMKAWdUuA8J0yve2Dz/E/PdBepY03RvyJpssIpRFwJoCD55wA+mEDs6ByWA==}
 
-  semver@7.7.4:
-    resolution: {integrity: sha512-vFKC2IEtQnVhpT78h1Yp8wzwrf8CM+MzKMHGJZfBtzhZNycRFnXsHk6E5TxIkkMsgNS7mdX3AGB7x2QM2di4lA==}
-    engines: {node: '>=10'}
-    hasBin: true
-
   semver@7.8.0:
     resolution: {integrity: sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==}
     engines: {node: '>=10'}
@@ -3917,9 +3626,6 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod@4.3.6:
-    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
-
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
@@ -4254,24 +3960,6 @@ snapshots:
       fastify-plugin: 5.1.0
       secure-json-parse: 4.1.0
 
-  '@fastify/multipart@9.4.0':
-    dependencies:
-      '@fastify/busboy': 3.2.0
-      '@fastify/deepmerge': 3.2.1
-      '@fastify/error': 4.2.0
-      fastify-plugin: 5.1.0
-      secure-json-parse: 4.1.0
-
-  '@fastify/otel@0.17.1(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.212.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      minimatch: 10.2.5
-    transitivePeerDependencies:
-      - supports-color
-
   '@fastify/otel@0.18.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -4432,55 +4120,12 @@ snapshots:
       '@mtcute/core': 0.29.7
       '@mtcute/wasm': 0.29.0
 
-  '@napgram/auth-kit@0.1.13(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/auth-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/qq-client': 0.1.7
-      fastify: 5.8.5
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/auth-kit@0.1.14(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/infra-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/qq-client': 0.1.7
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/infra-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/qq-client': 2.0.0
       fastify: 5.8.5
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -4519,9 +4164,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/core@0.2.0': {}
+  '@napgram/core@2.0.0': {}
 
-  '@napgram/database@0.1.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)':
+  '@napgram/database@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)':
     dependencies:
       drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
       pg: 8.20.0
@@ -4556,57 +4201,13 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@napgram/db-kit@0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/db-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/database': 0.1.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.2.0(ws@8.20.1)
-      drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/db-kit@0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/database': 0.1.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.3.0(ws@8.20.1)
+      '@napgram/database': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/qq-client': 2.0.0
+      '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -4645,65 +4246,17 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/env-kit@0.2.0':
+  '@napgram/env-kit@2.0.0':
     dependencies:
       zod: 4.4.3
 
-  '@napgram/env-kit@0.2.1':
-    dependencies:
-      zod: 4.4.3
-
-  '@napgram/gateway-kit@0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)':
+  '@napgram/gateway-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)':
     dependencies:
       '@mtcute/core': 0.29.7
       '@mtcute/node': 0.29.7(ws@8.20.1)
-      '@napgram/message-kit': 0.2.3(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.2.0(ws@8.20.1)
-      ws: 8.20.1
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-
-  '@napgram/gateway-kit@0.2.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)':
-    dependencies:
-      '@mtcute/core': 0.29.7
-      '@mtcute/node': 0.29.7(ws@8.20.1)
-      '@napgram/message-kit': 0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.3.0(ws@8.20.1)
+      '@napgram/message-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/qq-client': 2.0.0
+      '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       ws: 8.20.1
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -4742,57 +4295,13 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@napgram/infra-kit@0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/infra-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.2.0(ws@8.20.1)
-      fastify: 5.8.5
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/infra-kit@0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.3.0(ws@8.20.1)
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/qq-client': 2.0.0
+      '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       fastify: 5.8.5
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -4831,30 +4340,23 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/logger-kit@0.2.0':
+  '@napgram/logger-kit@2.0.0':
     dependencies:
-      '@napgram/env-kit': 0.2.0
-      '@sentry/node': 10.45.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@napgram/logger-kit@0.2.1':
-    dependencies:
-      '@napgram/env-kit': 0.2.1
+      '@napgram/env-kit': 2.0.0
       '@sentry/node': 10.52.0
     transitivePeerDependencies:
       - '@opentelemetry/exporter-trace-otlp-http'
       - supports-color
 
-  '@napgram/marketplace-kit@0.2.12(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/marketplace-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/database': 0.1.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/infra-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/runtime-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/database': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/infra-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/runtime-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       fflate: 0.8.2
-      yaml: 2.8.4
+      yaml: 2.9.0
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -4893,56 +4395,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/media-kit@0.1.14(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/media-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/env-kit': 0.2.0
-      '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.0
-      file-type: 21.3.4
-      image-js: 1.6.0
-      silk-wasm: 3.7.1
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/media-kit@0.1.15(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/env-kit': 0.2.1
-      '@napgram/infra-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.1
+      '@napgram/env-kit': 2.0.0
+      '@napgram/infra-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
       file-type: 22.0.1
       image-js: 1.6.0
       silk-wasm: 3.7.1
@@ -4984,65 +4441,16 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/message-kit@0.2.3(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/message-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
       '@mtcute/core': 0.29.7
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/media-kit': 0.1.14(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/qq-client': 0.1.7
-      '@napgram/runtime-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      file-type: 21.3.4
-      image-js: 1.6.0
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/message-kit@0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@mtcute/core': 0.29.7
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/infra-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/media-kit': 0.1.15(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/qq-client': 0.1.7
-      '@napgram/runtime-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/infra-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/media-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/qq-client': 2.0.0
+      '@napgram/runtime-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       file-type: 22.0.1
       image-js: 1.6.0
     transitivePeerDependencies:
@@ -5083,22 +4491,22 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-adapter-qq-napcat@0.1.8':
+  '@napgram/plugin-adapter-qq-napcat@2.0.0':
     dependencies:
-      '@napgram/qq-client': 0.2.0
+      '@napgram/qq-client': 2.0.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@napgram/plugin-adapter-telegram-mtcute@0.1.11(ws@8.20.1)':
+  '@napgram/plugin-adapter-telegram-mtcute@2.0.0(ws@8.20.1)':
     dependencies:
-      '@napgram/telegram-client': 0.4.0(ws@8.20.1)
+      '@napgram/telegram-client': 2.0.0(ws@8.20.1)
     transitivePeerDependencies:
       - ws
 
-  '@napgram/plugin-admin-auth@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-auth@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5137,9 +4545,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-database@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-database@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5178,9 +4586,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-instances@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-instances@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5219,9 +4627,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-logs@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-logs@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5260,9 +4668,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-messages@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-messages@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5301,9 +4709,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-pairs@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-pairs@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5342,9 +4750,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-plugins@0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-plugins@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5383,9 +4791,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-settings@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-settings@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5424,9 +4832,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-admin-suite@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-admin-suite@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5465,63 +4873,11 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-flags@0.1.5': {}
+  '@napgram/plugin-flags@2.0.0': {}
 
-  '@napgram/plugin-gateway@0.1.9(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)':
+  '@napgram/plugin-gateway@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)':
     dependencies:
-      '@napgram/gateway-kit': 0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-
-  '@napgram/plugin-group-management@0.1.5': {}
-
-  '@napgram/plugin-kit@0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/marketplace-kit': 0.2.12(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/message-kit': 0.2.3(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/runtime-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/sdk': 0.2.0
-      '@sentry/node': 10.45.0
-      axios: 1.16.0
-      semver: 7.7.4
-      yaml: 2.8.4
-      zod: 4.3.6
+      '@napgram/gateway-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5558,17 +4914,18 @@ snapshots:
       - sqlite3
       - supports-color
       - utf-8-validate
-      - ws
 
-  '@napgram/plugin-kit@0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-group-management@2.0.0': {}
+
+  '@napgram/plugin-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/marketplace-kit': 0.2.12(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/message-kit': 0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/runtime-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/sdk': 0.2.0
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/marketplace-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/message-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/runtime-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/sdk': 2.0.0
       '@sentry/node': 10.52.0
       axios: 1.16.1
       semver: 7.8.1
@@ -5612,9 +4969,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-monitoring@0.1.10(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-monitoring@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5653,142 +5010,16 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-notifications@0.1.5': {}
+  '@napgram/plugin-notifications@2.0.0': {}
 
-  '@napgram/plugin-permission-management@0.1.6(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-permission-management@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/runtime-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/sdk': 0.2.0
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/plugin-ping-pong@0.1.5': {}
-
-  '@napgram/plugin-qq-interaction@0.1.6': {}
-
-  '@napgram/plugin-refresh@0.1.5': {}
-
-  '@napgram/plugin-request-handler@0.1.9(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/request-kit': 0.4.1(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@opentelemetry/exporter-trace-otlp-http'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/plugin-request-management@0.1.9(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/request-kit': 0.4.1(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@opentelemetry/exporter-trace-otlp-http'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/plugin-statistics@0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/web-interfaces': 0.4.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/infra-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/runtime-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/sdk': 2.0.0
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5827,9 +5058,95 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-web-assets@0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-ping-pong@2.0.0': {}
+
+  '@napgram/plugin-qq-interaction@2.0.0': {}
+
+  '@napgram/plugin-refresh@2.0.0': {}
+
+  '@napgram/plugin-request-handler@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.4.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/request-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - better-sqlite3
+      - bufferutil
+      - bun-types
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg
+      - pg-native
+      - postgres
+      - prisma
+      - sql.js
+      - sqlite3
+      - supports-color
+      - utf-8-validate
+      - ws
+
+  '@napgram/plugin-request-management@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+    dependencies:
+      '@napgram/request-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+    transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - better-sqlite3
+      - bufferutil
+      - bun-types
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg
+      - pg-native
+      - postgres
+      - prisma
+      - sql.js
+      - sqlite3
+      - supports-color
+      - utf-8-validate
+      - ws
+
+  '@napgram/plugin-statistics@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+    dependencies:
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5868,9 +5185,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-web-console@0.1.11(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/plugin-web-assets@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/web-interfaces': 0.4.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
       - '@cloudflare/workers-types'
@@ -5909,25 +5226,59 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/qq-client@0.1.7':
+  '@napgram/plugin-web-console@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@naplink/naplink': 0.0.7
+      '@napgram/web-interfaces': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
     transitivePeerDependencies:
+      - '@aws-sdk/client-rds-data'
+      - '@cloudflare/workers-types'
+      - '@electric-sql/pglite'
+      - '@libsql/client'
+      - '@libsql/client-wasm'
+      - '@neondatabase/serverless'
+      - '@op-engineering/op-sqlite'
+      - '@opentelemetry/api'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - '@planetscale/database'
+      - '@prisma/client'
+      - '@tidbcloud/serverless'
+      - '@types/better-sqlite3'
+      - '@types/pg'
+      - '@types/sql.js'
+      - '@upstash/redis'
+      - '@vercel/postgres'
+      - '@xata.io/client'
+      - better-sqlite3
       - bufferutil
+      - bun-types
+      - debug
+      - expo-sqlite
+      - gel
+      - knex
+      - kysely
+      - mysql2
+      - pg
+      - pg-native
+      - postgres
+      - prisma
+      - sql.js
+      - sqlite3
+      - supports-color
       - utf-8-validate
+      - ws
 
-  '@napgram/qq-client@0.2.0':
+  '@napgram/qq-client@2.0.0':
     dependencies:
       '@naplink/naplink': 0.0.10
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@napgram/request-kit@0.4.1(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/request-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/qq-client': 0.1.7
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/qq-client': 2.0.0
       drizzle-orm: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -5966,60 +5317,14 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/runtime-kit@0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/runtime-kit@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/media-kit': 0.1.14(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.2.0(ws@8.20.1)
-      yaml: 2.9.0
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/runtime-kit@0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/media-kit': 0.1.15(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/qq-client': 0.1.7
-      '@napgram/telegram-client': 0.3.0(ws@8.20.1)
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/media-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/qq-client': 2.0.0
+      '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       yaml: 2.9.0
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -6059,20 +5364,12 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/sdk@0.2.0':
+  '@napgram/sdk@2.0.0':
     dependencies:
-      '@napgram/core': 0.2.0
-      '@napgram/utils': 0.2.0
+      '@napgram/core': 2.0.0
+      '@napgram/utils': 2.0.0
 
-  '@napgram/telegram-client@0.2.0(ws@8.20.1)':
-    dependencies:
-      '@mtcute/core': 0.29.7
-      '@mtcute/dispatcher': 0.29.7
-      '@mtcute/node': 0.29.7(ws@8.20.1)
-    transitivePeerDependencies:
-      - ws
-
-  '@napgram/telegram-client@0.3.0(ws@8.20.1)':
+  '@napgram/telegram-client@2.0.0(ws@8.20.1)':
     dependencies:
       '@mtcute/core': 0.29.7
       '@mtcute/dispatcher': 0.29.7
@@ -6080,84 +5377,23 @@ snapshots:
     transitivePeerDependencies:
       - ws
 
-  '@napgram/telegram-client@0.4.0(ws@8.20.1)':
+  '@napgram/utils@2.0.0':
     dependencies:
-      '@mtcute/core': 0.29.7
-      '@mtcute/dispatcher': 0.29.7
-      '@mtcute/node': 0.29.7(ws@8.20.1)
-    transitivePeerDependencies:
-      - ws
+      '@napgram/core': 2.0.0
 
-  '@napgram/utils@0.2.0':
-    dependencies:
-      '@napgram/core': 0.2.0
-
-  '@napgram/web-interfaces@0.3.5(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
-    dependencies:
-      '@fastify/multipart': 9.4.0
-      '@kitajs/html': 4.2.13
-      '@napgram/auth-kit': 0.1.13(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/db-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.0
-      '@napgram/infra-kit': 0.2.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.0
-      '@napgram/message-kit': 0.2.3(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/plugin-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/runtime-kit': 0.5.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/telegram-client': 0.2.0(ws@8.20.1)
-      fastify: 5.8.5
-      zod: 4.3.6
-    transitivePeerDependencies:
-      - '@aws-sdk/client-rds-data'
-      - '@cloudflare/workers-types'
-      - '@electric-sql/pglite'
-      - '@libsql/client'
-      - '@libsql/client-wasm'
-      - '@neondatabase/serverless'
-      - '@op-engineering/op-sqlite'
-      - '@opentelemetry/api'
-      - '@opentelemetry/exporter-trace-otlp-http'
-      - '@planetscale/database'
-      - '@prisma/client'
-      - '@tidbcloud/serverless'
-      - '@types/better-sqlite3'
-      - '@types/pg'
-      - '@types/sql.js'
-      - '@upstash/redis'
-      - '@vercel/postgres'
-      - '@xata.io/client'
-      - better-sqlite3
-      - bufferutil
-      - bun-types
-      - debug
-      - expo-sqlite
-      - gel
-      - knex
-      - kysely
-      - mysql2
-      - pg
-      - pg-native
-      - postgres
-      - prisma
-      - sql.js
-      - sqlite3
-      - supports-color
-      - utf-8-validate
-      - ws
-
-  '@napgram/web-interfaces@0.4.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
+  '@napgram/web-interfaces@2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)':
     dependencies:
       '@fastify/multipart': 10.0.0
       '@kitajs/html': 4.2.13
-      '@napgram/auth-kit': 0.1.14(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/db-kit': 0.3.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/env-kit': 0.2.1
-      '@napgram/infra-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/logger-kit': 0.2.1
-      '@napgram/message-kit': 0.2.4(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/plugin-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/runtime-kit': 0.6.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
-      '@napgram/telegram-client': 0.3.0(ws@8.20.1)
+      '@napgram/auth-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/db-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/env-kit': 2.0.0
+      '@napgram/infra-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/logger-kit': 2.0.0
+      '@napgram/message-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/plugin-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/runtime-kit': 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
+      '@napgram/telegram-client': 2.0.0(ws@8.20.1)
       fastify: 5.8.5
       zod: 4.4.3
     transitivePeerDependencies:
@@ -6213,23 +5449,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@naplink/naplink@0.0.7':
-    dependencies:
-      isomorphic-ws: 5.0.0(ws@8.20.1)
-      ws: 8.20.1
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@opentelemetry/api-logs@0.207.0':
     dependencies:
       '@opentelemetry/api': 1.9.1
 
   '@opentelemetry/api-logs@0.212.0':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-
-  '@opentelemetry/api-logs@0.213.0':
     dependencies:
       '@opentelemetry/api': 1.9.1
 
@@ -6239,33 +5463,15 @@ snapshots:
 
   '@opentelemetry/api@1.9.1': {}
 
-  '@opentelemetry/context-async-hooks@2.6.1(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-
-  '@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/semantic-conventions': 1.40.0
-
   '@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
-      '@opentelemetry/semantic-conventions': 1.40.0
+      '@opentelemetry/semantic-conventions': 1.41.1
 
   '@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.40.0
-
-  '@opentelemetry/instrumentation-amqplib@0.60.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
 
   '@opentelemetry/instrumentation-amqplib@0.61.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -6273,16 +5479,6 @@ snapshots:
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-connect@0.56.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@types/connect': 3.4.38
     transitivePeerDependencies:
       - supports-color
 
@@ -6296,34 +5492,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-dataloader@0.30.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-dataloader@0.31.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-express@0.61.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-fs@0.32.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6335,24 +5507,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-generic-pool@0.56.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-generic-pool@0.57.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-graphql@0.61.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -6363,31 +5521,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-hapi@0.59.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-hapi@0.60.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-http@0.213.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.6.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      forwarded-parse: 2.1.2
     transitivePeerDependencies:
       - supports-color
 
@@ -6401,23 +5540,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-ioredis@0.61.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/redis-common': 0.38.3
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-kafkajs@0.22.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-kafkajs@0.23.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -6426,27 +5548,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-knex@0.57.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-knex@0.58.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-koa@0.61.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
     transitivePeerDependencies:
       - supports-color
@@ -6460,13 +5565,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-lru-memoizer@0.57.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-lru-memoizer@0.58.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -6474,27 +5572,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-mongodb@0.66.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-mongodb@0.67.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-mongoose@0.59.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
     transitivePeerDependencies:
       - supports-color
@@ -6508,15 +5589,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-mysql2@0.59.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@opentelemetry/sql-common': 0.41.2(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-mysql2@0.60.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -6526,33 +5598,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-mysql@0.59.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@types/mysql': 2.15.27
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-mysql@0.60.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
       '@types/mysql': 2.15.27
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-pg@0.65.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@opentelemetry/sql-common': 0.41.2(@opentelemetry/api@1.9.1)
-      '@types/pg': 8.15.6
-      '@types/pg-pool': 2.0.7
     transitivePeerDependencies:
       - supports-color
 
@@ -6568,39 +5619,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation-redis@0.61.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/redis-common': 0.38.3
-      '@opentelemetry/semantic-conventions': 1.40.0
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-tedious@0.32.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@types/tedious': 4.0.14
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation-tedious@0.33.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
       '@types/tedious': 4.0.14
-    transitivePeerDependencies:
-      - supports-color
-
-  '@opentelemetry/instrumentation-undici@0.23.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
     transitivePeerDependencies:
       - supports-color
 
@@ -6622,15 +5646,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/instrumentation@0.213.0(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/api-logs': 0.213.0
-      import-in-the-middle: 3.0.1
-      require-in-the-middle: 8.0.1
-    transitivePeerDependencies:
-      - supports-color
-
   '@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
@@ -6640,26 +5655,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opentelemetry/redis-common@0.38.3': {}
-
-  '@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-
   '@opentelemetry/resources@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/core': 2.7.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-
-  '@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/core': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
+      '@opentelemetry/semantic-conventions': 1.41.1
 
   '@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -6684,13 +5684,6 @@ snapshots:
   '@pinojs/redact@0.4.0': {}
 
   '@pkgr/core@0.2.9': {}
-
-  '@prisma/instrumentation@7.4.2(@opentelemetry/api@1.9.1)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/instrumentation': 0.207.0(@opentelemetry/api@1.9.1)
-    transitivePeerDependencies:
-      - supports-color
 
   '@prisma/instrumentation@7.6.0(@opentelemetry/api@1.9.1)':
     dependencies:
@@ -6750,25 +5743,9 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.0': {}
 
-  '@sentry/core@10.45.0': {}
-
   '@sentry/core@10.52.0': {}
 
   '@sentry/core@10.53.1': {}
-
-  '@sentry/node-core@10.45.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.213.0(@opentelemetry/api@1.9.1))(@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.40.0)':
-    dependencies:
-      '@sentry/core': 10.45.0
-      '@sentry/opentelemetry': 10.45.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.40.0)
-      import-in-the-middle: 3.0.1
-    optionalDependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/context-async-hooks': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/core': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
 
   '@sentry/node-core@10.52.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.214.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1)':
     dependencies:
@@ -6793,46 +5770,6 @@ snapshots:
       '@opentelemetry/instrumentation': 0.214.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/sdk-trace-base': 2.7.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
-
-  '@sentry/node@10.45.0':
-    dependencies:
-      '@fastify/otel': 0.17.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/context-async-hooks': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/core': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-amqplib': 0.60.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-connect': 0.56.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-dataloader': 0.30.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-express': 0.61.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-fs': 0.32.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-generic-pool': 0.56.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-graphql': 0.61.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-hapi': 0.59.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-http': 0.213.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-ioredis': 0.61.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-kafkajs': 0.22.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-knex': 0.57.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-koa': 0.61.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-lru-memoizer': 0.57.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-mongodb': 0.66.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-mongoose': 0.59.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-mysql': 0.59.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-mysql2': 0.59.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-pg': 0.65.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-redis': 0.61.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-tedious': 0.32.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/instrumentation-undici': 0.23.0(@opentelemetry/api@1.9.1)
-      '@opentelemetry/resources': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@prisma/instrumentation': 7.4.2(@opentelemetry/api@1.9.1)
-      '@sentry/core': 10.45.0
-      '@sentry/node-core': 10.45.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.213.0(@opentelemetry/api@1.9.1))(@opentelemetry/resources@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.40.0)
-      '@sentry/opentelemetry': 10.45.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.40.0)
-      import-in-the-middle: 3.0.0
-    transitivePeerDependencies:
-      - supports-color
 
   '@sentry/node@10.52.0':
     dependencies:
@@ -6903,15 +5840,6 @@ snapshots:
     transitivePeerDependencies:
       - '@opentelemetry/exporter-trace-otlp-http'
       - supports-color
-
-  '@sentry/opentelemetry@10.45.0(@opentelemetry/api@1.9.1)(@opentelemetry/context-async-hooks@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/core@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.6.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.40.0)':
-    dependencies:
-      '@opentelemetry/api': 1.9.1
-      '@opentelemetry/context-async-hooks': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/core': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/sdk-trace-base': 2.6.1(@opentelemetry/api@1.9.1)
-      '@opentelemetry/semantic-conventions': 1.40.0
-      '@sentry/core': 10.45.0
 
   '@sentry/opentelemetry@10.52.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1)':
     dependencies:
@@ -7174,7 +6102,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.59.2
       debug: 4.4.3
       minimatch: 10.2.5
-      semver: 7.8.0
+      semver: 7.8.1
       tinyglobby: 0.2.16
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
@@ -7375,14 +6303,6 @@ snapshots:
     dependencies:
       '@fastify/error': 4.2.0
       fastq: 1.20.1
-
-  axios@1.16.0:
-    dependencies:
-      follow-redirects: 1.16.0
-      form-data: 4.0.5
-      proxy-from-env: 2.1.0
-    transitivePeerDependencies:
-      - debug
 
   axios@1.16.1:
     dependencies:
@@ -7661,7 +6581,7 @@ snapshots:
   eslint-compat-utils@0.5.1(eslint@10.4.0):
     dependencies:
       eslint: 10.4.0
-      semver: 7.8.0
+      semver: 7.8.1
 
   eslint-config-flat-gitignore@2.3.0(eslint@10.4.0):
     dependencies:
@@ -8003,7 +6923,7 @@ snapshots:
       process-warning: 5.0.0
       rfdc: 1.4.1
       secure-json-parse: 4.1.0
-      semver: 7.8.0
+      semver: 7.8.1
       toad-cache: 3.7.0
 
   fastq@1.20.1:
@@ -8027,15 +6947,6 @@ snapshots:
       flat-cache: 4.0.1
 
   file-type@10.11.0: {}
-
-  file-type@21.3.4:
-    dependencies:
-      '@tokenizer/inflate': 0.4.1
-      strtok3: 10.3.5
-      token-types: 6.1.2
-      uint8array-extras: 1.5.0
-    transitivePeerDependencies:
-      - supports-color
 
   file-type@22.0.1:
     dependencies:
@@ -8235,13 +7146,6 @@ snapshots:
       cjs-module-lexer: 2.2.0
       module-details-from-path: 1.0.4
 
-  import-in-the-middle@3.0.0:
-    dependencies:
-      acorn: 8.16.0
-      acorn-import-attributes: 1.9.5(acorn@8.16.0)
-      cjs-module-lexer: 2.2.0
-      module-details-from-path: 1.0.4
-
   import-in-the-middle@3.0.1:
     dependencies:
       acorn: 8.16.0
@@ -8322,7 +7226,7 @@ snapshots:
     dependencies:
       acorn: 8.16.0
       eslint-visitor-keys: 5.0.1
-      semver: 7.8.0
+      semver: 7.8.1
 
   katex@0.16.45:
     dependencies:
@@ -8422,7 +7326,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.8.0
+      semver: 7.8.1
 
   markdown-table@3.0.4: {}
 
@@ -8880,7 +7784,7 @@ snapshots:
 
   node-abi@3.92.0:
     dependencies:
-      semver: 7.8.0
+      semver: 7.8.1
 
   node-releases@2.0.38: {}
 
@@ -9176,8 +8080,6 @@ snapshots:
       regexp-ast-analysis: 0.7.1
 
   secure-json-parse@4.1.0: {}
-
-  semver@7.7.4: {}
 
   semver@7.8.0: {}
 
@@ -9517,8 +8419,6 @@ snapshots:
       yargs-parser: 22.0.0
 
   yocto-queue@0.1.0: {}
-
-  zod@4.3.6: {}
 
   zod@4.4.3: {}
 
