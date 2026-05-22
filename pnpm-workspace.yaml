@@ -1,5 +1,6 @@
 packages:
   - 'main'
+minimumReleaseAge: 0
 allowBuilds:
   better-sqlite3: true
   cpu-features: true

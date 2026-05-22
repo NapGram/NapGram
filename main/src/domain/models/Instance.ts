@@ -228,9 +228,26 @@ export default class Instance {
         type: 'napcat',
         wsUrl,
         ...(wsToken ? { token: wsToken } : {}),
-        reconnect: true,
+        reconnect: false,
       })
-      await this.qqClient.login()
+
+      // 重试连接 NapCat，等待其就绪（如扫码登录）
+      const maxRetries = 3
+      const retryDelay = 5000
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await this.qqClient.login()
+          break
+        }
+        catch (err) {
+          if (attempt >= maxRetries) {
+            throw err
+          }
+          this.log.warn(`NapCat 连接失败 (${attempt}/${maxRetries})，${retryDelay / 1000}s 后重试...`)
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        }
+      }
+
       this.enableQQMediaDownloadDiagnostics()
       this.log.info('NapCat 客户端 ✓ 初始化完成')
 
