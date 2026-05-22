@@ -70,6 +70,7 @@ export class PersonalPairProvisioner {
 
     await this.inviteBot(userBot, tgChat.id)
     await this.ensureBotCanSeeChat(tgChat.id)
+    await this.hideSettingsBarAndAddToFolder(userBot, tgChat.id)
 
     const pair = await addForwardPairWithChatType(
       this.forwardMap,
@@ -94,6 +95,79 @@ export class PersonalPairProvisioner {
     }, 'Personal pair auto provisioned')
 
     return pair
+  }
+
+  private async hideSettingsBarAndAddToFolder(userBot: Telegram, chatId: number | bigint): Promise<void> {
+    const client = (userBot as any).client
+    if (!client || typeof client.resolvePeer !== 'function' || typeof client.call !== 'function')
+      return
+
+    try {
+      const inputPeer = await client.resolvePeer(chatId)
+
+      // 1. Hide peer settings bar
+      try {
+        await client.call({
+          _: 'messages.hidePeerSettingsBar',
+          peer: inputPeer,
+        })
+        logger.info({ chatId }, 'Successfully hid peer settings bar')
+      }
+      catch (error) {
+        logger.warn({ error, chatId }, 'Failed to hide peer settings bar')
+      }
+
+      // 2. Add chat to DialogFilter/"QQ" folder
+      try {
+        const foldersResult = await client.call({ _: 'messages.getDialogFilters' })
+        const filters = foldersResult.filters || []
+        
+        let qqFilter = filters.find((f: any) => f._ === 'dialogFilter' && f.title === 'QQ')
+        if (qqFilter) {
+          const includePeers = qqFilter.includePeers || []
+          const exists = includePeers.some((p: any) => {
+            return (p.userId && String(p.userId) === String(inputPeer.userId)) ||
+                   (p.chatId && String(p.chatId) === String(inputPeer.chatId)) ||
+                   (p.channelId && String(p.channelId) === String(inputPeer.channelId))
+          })
+
+          if (!exists) {
+            await client.call({
+              _: 'messages.updateDialogFilter',
+              id: qqFilter.id,
+              filter: {
+                ...qqFilter,
+                includePeers: [...includePeers, inputPeer],
+              },
+            })
+            logger.info({ chatId, folderId: qqFilter.id }, 'Added chat to existing QQ folder')
+          }
+        }
+        else {
+          const nextId = Math.max(2, ...filters.map((f: any) => f.id || 0)) + 1
+          await client.call({
+            _: 'messages.updateDialogFilter',
+            id: nextId,
+            filter: {
+              _: 'dialogFilter',
+              id: nextId,
+              title: 'QQ',
+              emoticon: '💬',
+              includePeers: [inputPeer],
+              excludePeers: [],
+              pinnedPeers: [],
+            },
+          })
+          logger.info({ chatId, folderId: nextId }, 'Created new QQ folder and added chat')
+        }
+      }
+      catch (error) {
+        logger.warn({ error, chatId }, 'Failed to update QQ folder')
+      }
+    }
+    catch (error) {
+      logger.warn({ error, chatId }, 'Failed to resolve input peer or call userbot RPC APIs')
+    }
   }
 
   private async resolveQQInfo(msg: UnifiedMessage, qqChatType: QqChatType): Promise<ProvisionedQQInfo> {

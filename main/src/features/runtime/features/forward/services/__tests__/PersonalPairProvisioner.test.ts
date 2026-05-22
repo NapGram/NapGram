@@ -51,6 +51,8 @@ function createRuntime(overrides: Record<string, unknown> = {}) {
     createSupergroup: vi.fn().mockResolvedValue({ id: -10020002 }),
     addChatMembers: vi.fn().mockResolvedValue([]),
     editAdminRights: vi.fn().mockResolvedValue(undefined),
+    resolvePeer: vi.fn().mockResolvedValue({ _: 'inputPeerChannel', channelId: 10020002, accessHash: 0 }),
+    call: vi.fn().mockResolvedValue({ filters: [] }),
   }
   const tgBot = {
     isOnline: true,
@@ -138,6 +140,26 @@ describe('PersonalPairProvisioner', () => {
       rank: 'NapGram',
     }))
     expect(runtime.tgBot.getChat).toHaveBeenCalledWith(-10020002)
+    expect(runtime.tgUserClient.resolvePeer).toHaveBeenCalledWith(-10020002)
+    expect(runtime.tgUserClient.call).toHaveBeenCalledWith(expect.objectContaining({
+      _: 'messages.hidePeerSettingsBar',
+    }))
+    expect(runtime.tgUserClient.call).toHaveBeenCalledWith({
+      _: 'messages.getDialogFilters',
+    })
+    expect(runtime.tgUserClient.call).toHaveBeenCalledWith({
+      _: 'messages.updateDialogFilter',
+      id: 3,
+      filter: {
+        _: 'dialogFilter',
+        id: 3,
+        title: 'QQ',
+        emoticon: '💬',
+        includePeers: [{ _: 'inputPeerChannel', channelId: 10020002, accessHash: 0 }],
+        excludePeers: [],
+        pinnedPeers: [],
+      },
+    })
     expect(addForwardPairWithChatType).toHaveBeenCalledWith(
       runtime.forwardMap,
       7,
