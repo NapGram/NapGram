@@ -13,13 +13,13 @@ importers:
 
   .:
     dependencies:
-      '@napgram/plugin-adapter-qq-napcat':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@napgram/sdk':
         specifier: ^2.0.0
         version: 2.0.0
     devDependencies:
+      '@napgram/plugin-adapter-qq-napcat':
+        specifier: 2.0.1
+        version: 2.0.1
       '@types/node':
         specifier: 25.9.1
         version: 25.9.1
@@ -84,8 +84,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.9.0)(pg@8.20.0)(ws@8.20.1)
       '@napgram/plugin-adapter-qq-napcat':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.0.1
+        version: 2.0.1
       '@napgram/plugin-adapter-telegram-mtcute':
         specifier: ^2.0.0
         version: 2.0.0(ws@8.20.1)
@@ -795,8 +795,8 @@ packages:
   '@napgram/message-kit@2.0.0':
     resolution: {integrity: sha512-0N18Kpq2C6/pwwBKPhZ6b1vV5IbT6E2hbEtFT+thrlOBxj2Cay9q6/eFLsK2I1P4DJewfsZAhMAeSJ0Et8mASQ==, tarball: https://npm.pkg.github.com/download/@napgram/message-kit/2.0.0/8756249f680961ce9de4cf1d4de98d40d235b4bc}
 
-  '@napgram/plugin-adapter-qq-napcat@2.0.0':
-    resolution: {integrity: sha512-9EVtyyX655JHPDF3qb4MxZvXMyyQHGVnO1UFiUudyxNwZPQWHz9MqyehMPuGJ/y19xYk+4rNK/VWEdthc5HRBw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-qq-napcat/2.0.0/402eaca5a8af9cdead60f241f32598fd2125778e}
+  '@napgram/plugin-adapter-qq-napcat@2.0.1':
+    resolution: {integrity: sha512-ts97d3GNJnFDa7ciLIYxIGyhfu3dypngZ7wLOAQgH9KzmprJFzavxodfk9CAr4ggpP9LkqkpznPArlZO1D+dQw==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-qq-napcat/2.0.1/6d3eb9c9ed0412af82beb7d9263a587efb055279}
 
   '@napgram/plugin-adapter-telegram-mtcute@2.0.0':
     resolution: {integrity: sha512-ig47Uxy14TNRnKi+GfEEbfB7RyGH6i0WfMGcQJ2Pf19yw4c0uKxFMuC9lU8R0dALGds1Lq4ZUOMxQQcpy4XkXg==, tarball: https://npm.pkg.github.com/download/@napgram/plugin-adapter-telegram-mtcute/2.0.0/15904f43245349d9d87c5c5a5284a908dfefb7af}
@@ -4498,9 +4498,9 @@ snapshots:
       - utf-8-validate
       - ws
 
-  '@napgram/plugin-adapter-qq-napcat@2.0.0':
+  '@napgram/plugin-adapter-qq-napcat@2.0.1':
     dependencies:
-      '@napgram/qq-client': 2.0.0
+      '@napgram/qq-client': 2.0.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -6037,8 +6037,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.58.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.58.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.58.0
+      '@typescript-eslint/tsconfig-utils': 8.59.2(typescript@6.0.3)
+      '@typescript-eslint/types': 8.59.2
       debug: 4.4.3
       typescript: 6.0.3
     transitivePeerDependencies:
