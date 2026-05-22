@@ -5,8 +5,8 @@
     "packageManager": "pnpm@11.2.1",
     "scripts": {},
     "dependencies": {
-        "@napgram/plugin-adapter-qq-napcat": "^1.0.0",
-        "@napgram/sdk": "^1.0.0"
+        "@napgram/plugin-adapter-qq-napcat": "^2.0.0",
+        "@napgram/sdk": "^2.0.0"
     },
     "x-managedPnpmOverrides": {
         "brace-expansion": "5.0.6",
