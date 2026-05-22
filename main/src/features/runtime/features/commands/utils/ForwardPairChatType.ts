@@ -14,6 +14,14 @@ export interface TypedForwardPair extends ForwardPairRecord {
   autoCreated?: boolean
 }
 
+export interface ForwardPairMetadata {
+  qqDisplayName?: string | null
+  tgProvisionedByUserSessionId?: number | null
+  autoCreated?: boolean
+  forwardMode?: string | null
+  nicknameMode?: string | null
+}
+
 const CHAT_TYPE_ALIASES: Record<string, QqChatType> = {
   group: 'group',
   groups: 'group',
@@ -28,9 +36,10 @@ const CHAT_TYPE_ALIASES: Record<string, QqChatType> = {
   私聊: 'private',
 }
 
-function isMissingQqChatTypeColumn(error: unknown): boolean {
+function isMissingPersonalModeColumn(error: unknown): boolean {
   const message = String((error as any)?.message || error)
-  return /qqChatType/i.test(message) && /does not exist|不存在|no such column/i.test(message)
+  return /qqChatType|qqDisplayName|tgProvisionedByUserSessionId|autoCreated/i.test(message)
+    && /does not exist|不存在|no such column/i.test(message)
 }
 
 function bigintOrNull(value: unknown): bigint | null {
@@ -183,7 +192,7 @@ export async function getForwardPairChatType(pair: ForwardPairRecord | undefined
       return attachChatType(pair, typed.qqChatType).qqChatType
   }
   catch (error) {
-    if (!isMissingQqChatTypeColumn(error))
+    if (!isMissingPersonalModeColumn(error))
       logger.debug(error, `Failed to read qqChatType for pair ${pair.id}`)
   }
 
@@ -218,7 +227,7 @@ export async function findPairByQQWithChatType(
     }
   }
   catch (error) {
-    if (!isMissingQqChatTypeColumn(error))
+    if (!isMissingPersonalModeColumn(error))
       logger.debug(error, `Failed to find ${chatType} pair by QQ ${qqRoomId}`)
   }
 
@@ -236,6 +245,7 @@ export async function addForwardPairWithChatType(
   tgChatId: string | number | bigint,
   tgThreadId: bigint | undefined,
   chatType: QqChatType,
+  metadata: ForwardPairMetadata = {},
 ): Promise<TypedForwardPair> {
   const normalizedThreadId = tgThreadId ?? null
   const existingByTG = await findPairByTGWithChatType(forwardMap, tgChatId, tgThreadId, false)
@@ -252,7 +262,12 @@ export async function addForwardPairWithChatType(
         SET
           "tgChatId" = ${BigInt(tgChatId)},
           "tgThreadId" = ${normalizedThreadId},
-          "qqChatType" = ${chatType}
+          "qqChatType" = ${chatType},
+          "qqDisplayName" = ${metadata.qqDisplayName ?? existingByQQ.qqDisplayName ?? null},
+          "tgProvisionedByUserSessionId" = ${metadata.tgProvisionedByUserSessionId ?? existingByQQ.tgProvisionedByUserSessionId ?? null},
+          "autoCreated" = ${metadata.autoCreated ?? existingByQQ.autoCreated ?? false},
+          "forwardMode" = ${metadata.forwardMode ?? existingByQQ.forwardMode ?? null},
+          "nicknameMode" = ${metadata.nicknameMode ?? existingByQQ.nicknameMode ?? null}
         WHERE "id" = ${existingByQQ.id}
       `)
     }
@@ -264,6 +279,11 @@ export async function addForwardPairWithChatType(
           "tgThreadId",
           "instanceId",
           "qqChatType",
+          "qqDisplayName",
+          "tgProvisionedByUserSessionId",
+          "autoCreated",
+          "forwardMode",
+          "nicknameMode",
           "apiKey"
         )
         VALUES (
@@ -272,6 +292,11 @@ export async function addForwardPairWithChatType(
           ${normalizedThreadId},
           ${instanceId},
           ${chatType},
+          ${metadata.qqDisplayName ?? null},
+          ${metadata.tgProvisionedByUserSessionId ?? null},
+          ${metadata.autoCreated ?? false},
+          ${metadata.forwardMode ?? null},
+          ${metadata.nicknameMode ?? null},
           ${randomUUID()}
         )
       `)
@@ -284,7 +309,7 @@ export async function addForwardPairWithChatType(
     return rec
   }
   catch (error) {
-    if (isMissingQqChatTypeColumn(error)) {
+    if (isMissingPersonalModeColumn(error)) {
       if (chatType === 'group') {
         const rec = await forwardMap.add(qqRoomId, tgChatId, tgThreadId)
         return attachChatType(rec, 'group')
