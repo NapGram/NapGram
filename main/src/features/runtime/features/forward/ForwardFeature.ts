@@ -232,6 +232,8 @@ export class ForwardFeature {
   private setupListeners() {
     this.qqClient.on('message', this.handleQQMessage)
     this.qqClient.on('poke', this.handlePokeEvent)
+    this.qqClient.on('friend.increase', this.handleFriendIncrease)
+    this.qqClient.on('group.increase', this.handleGroupIncrease)
     this.tgBot.addNewMessageEventHandler(this.handleTgMessage)
     logger.debug('[ForwardFeature] listeners attached')
   }
@@ -759,11 +761,58 @@ export class ForwardFeature {
   }
 
 
+  private handleFriendIncrease = async (friend: { id: string; name?: string }) => {
+    try {
+      const isPersonal = (this.instance as any).workMode === 'personal' ||
+                         (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+      if (!isPersonal) return
+
+      const ownerId = this.instance.owner
+      if (!ownerId) return
+
+      const friendName = friend.name || await this.qqClient.getFriendInfo(friend.id).then(f => f?.name).catch(() => '') || '未知好友'
+      const text = `👤 【个人模式】发现新 QQ 好友：\nQQ: ${friend.id}\n昵称: ${friendName}\n\n点击一键建群并绑定：\n/bindfriend ${friend.id}`
+      await MessageUtils.replyTG(this.tgBot, ownerId, text)
+      logger.info({ friendId: friend.id, friendName }, 'Notified owner of new QQ friend')
+    }
+    catch (error) {
+      logger.error('Failed to notify friend increase:', error)
+    }
+  }
+
+  private handleGroupIncrease = async (groupId: string, member?: any) => {
+    try {
+      const isPersonal = (this.instance as any).workMode === 'personal' ||
+                         (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+      if (!isPersonal) return
+
+      // member?.id === uin 说明是机器人自己加入了新群
+      const selfUin = String(this.qqClient.uin)
+      if (member?.id && String(member.id) !== selfUin) {
+        return // 只是普通群成员增加，不提示建群
+      }
+
+      const ownerId = this.instance.owner
+      if (!ownerId) return
+
+      const groupInfo = await this.qqClient.getGroupInfo(groupId).catch(() => null)
+      const groupName = groupInfo?.name || '未知群聊'
+      const text = `👥 【个人模式】发现新 QQ 群：\n群号: ${groupId}\n群名: ${groupName}\n\n点击一键建群并绑定：\n/bindgroup ${groupId}`
+      await MessageUtils.replyTG(this.tgBot, ownerId, text)
+      logger.info({ groupId, groupName }, 'Notified owner of robot joining new QQ group')
+    }
+    catch (error) {
+      logger.error('Failed to notify group increase:', error)
+    }
+  }
+
   destroy() {
     this.personalSyncService?.stop()
     this.mediaGroupHandler.destroy()
     this.qqClient.removeListener('message', this.handleQQMessage)
     this.qqClient.removeListener('poke', this.handlePokeEvent)
+    this.qqClient.removeListener('friend.increase', this.handleFriendIncrease)
+    this.qqClient.removeListener('group.increase', this.handleGroupIncrease)
     this.tgBot.removeNewMessageEventHandler(this.handleTgMessage)
     logger.info('ForwardFeature destroyed')
   }
