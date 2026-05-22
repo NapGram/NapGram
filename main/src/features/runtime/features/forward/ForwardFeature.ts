@@ -18,6 +18,7 @@ import { TelegramMessageHandler } from './handlers/TelegramMessageHandler.js'
 import { ForwardMediaPreparer } from './senders/MediaPreparer.js'
 import { TelegramSender } from './senders/TelegramSender.js'
 import { ForwardMapper } from './services/MessageMapper.js'
+import { PersonalPairProvisioner } from './services/PersonalPairProvisioner.js'
 import { ReplyResolver } from './services/ReplyResolver.js'
 import { MessageUtils } from './utils/MessageUtils.js'
 
@@ -41,6 +42,7 @@ export class ForwardFeature {
   private mediaGroupHandler: MediaGroupHandler
   private tgMessageHandler: TelegramMessageHandler
   private mediaPreparer: ForwardMediaPreparer
+  private personalPairProvisioner: PersonalPairProvisioner
   private processedMsgIds = new Set<string>()
   private telegramSendQueue: TelegramSendQueueState = {
     chain: Promise.resolve(),
@@ -124,6 +126,7 @@ export class ForwardFeature {
     this.telegramSender = new TelegramSender(instance, media)
     this.mapper = new ForwardMapper()
     this.replyResolver = new ReplyResolver(this.mapper)
+    this.personalPairProvisioner = new PersonalPairProvisioner(instance, this.forwardMap, this.qqClient)
     this.mediaPreparer = new ForwardMediaPreparer(instance, media)
     this.mediaGroupHandler = new MediaGroupHandler(
       this.qqClient,
@@ -511,7 +514,9 @@ export class ForwardFeature {
       }
 
       const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
-      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
+      let pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
+      if (!pair && qqChatType === 'private')
+        pair = await this.personalPairProvisioner.ensurePairForQQMessage(msg, qqChatType)
       if (!pair) {
         logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`)
         return
