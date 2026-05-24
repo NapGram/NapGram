@@ -20,7 +20,7 @@ RUN if [ "$USE_MIRROR" = "true" ]; then \
     # 中文字体
     font-wqy-zenhei \
     # 图像处理库 (Alpine 包名不同)
-    pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg \
+    pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg yt-dlp \
     # PostgreSQL 客户端 (可选)
     $(if [ "$INSTALL_PG_CLIENT" = "true" ]; then echo postgresql-client; fi)
 
