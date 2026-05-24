@@ -7,17 +7,25 @@ interface EventPublisher {
   publishNotice: (event: any) => void
 }
 
+interface WorkModeAware {
+  hasConfiguredWorkMode(): boolean
+}
+
 /**
  * QQ 客户端事件 → 插件 EventBus 桥接器。
  * 将 NapCat SDK 的原始事件规范化后转发给 NapGram 插件系统。
+ * 仅在实例已配置工作模式时才转发事件。
  */
 export function bridgeQQEvents(
   instanceId: number,
   qqClient: IQQClient,
   eventPublisher: EventPublisher,
   log: AppLogger,
+  instance?: WorkModeAware,
 ): void {
   (qqClient as any).on('request.friend', async (e: any) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     const requestId = String(e?.flag ?? '')
     if (!requestId)
       return
@@ -47,6 +55,8 @@ export function bridgeQQEvents(
   });
 
   (qqClient as any).on('request.group', async (e: any) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     const requestId = String(e?.flag ?? '')
     if (!requestId)
       return
@@ -80,6 +90,8 @@ export function bridgeQQEvents(
   })
 
   qqClient.on('group.increase', (groupId: string, member: any) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     eventPublisher.publishNotice({
       instanceId,
       platform: 'qq',
@@ -92,6 +104,8 @@ export function bridgeQQEvents(
   })
 
   qqClient.on('group.decrease', (groupId: string, uin: string) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     eventPublisher.publishNotice({
       instanceId,
       platform: 'qq',
@@ -104,6 +118,8 @@ export function bridgeQQEvents(
   })
 
   qqClient.on('friend.increase', (friend: any) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     eventPublisher.publishNotice({
       instanceId,
       platform: 'qq',
@@ -115,6 +131,8 @@ export function bridgeQQEvents(
   })
 
   qqClient.on('recall', (evt: any) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     const chatId = String(evt?.chatId ?? '')
     const operatorId = String(evt?.operatorId ?? '')
     const noticeType = chatId && operatorId && chatId === operatorId ? 'friend-recall' : 'group-recall'
@@ -131,6 +149,8 @@ export function bridgeQQEvents(
   })
 
   qqClient.on('poke', (chatId: string, operatorId: string, targetId: string) => {
+    if (instance && !instance.hasConfiguredWorkMode())
+      return
     eventPublisher.publishNotice({
       instanceId,
       platform: 'qq',

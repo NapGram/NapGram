@@ -3,6 +3,7 @@ import type { ForwardMap } from '../../../shared-types.js'
 import type { CommandContext } from './CommandContext.js'
 import { Buffer } from 'node:buffer'
 import { getLogger } from '../../../shared-types.js'
+import { findPairByTGWithChatType } from '../utils/ForwardPairChatType.js'
 
 const logger = getLogger('RefreshCommandHandler')
 
@@ -63,10 +64,14 @@ export class RefreshCommandHandler {
    */
   private async handleRefresh(chatId: string, threadId: bigint | undefined) {
     const forwardMap = this.context.instance.forwardPairs as ForwardMap
-    const pair = forwardMap.findByTG(chatId, threadId, true)
+    const pair = await findPairByTGWithChatType(forwardMap, chatId, threadId, true)
 
     if (!pair) {
       await this.context.replyTG(chatId, '❌ 当前聊天未绑定任何 QQ 群', threadId)
+      return
+    }
+    if (pair.qqChatType !== 'group') {
+      await this.context.replyTG(chatId, '❌ 当前聊天绑定的是 QQ 好友，不能刷新 QQ 群信息', threadId)
       return
     }
 
@@ -146,11 +151,12 @@ export class RefreshCommandHandler {
 
       const forwardMap = this.context.instance.forwardPairs as ForwardMap
       const allPairs = forwardMap.getAll()
+      const groupPairs = allPairs.filter(pair => pair.qqChatType !== 'private')
 
       let successCount = 0
       let failCount = 0
 
-      for (const pair of allPairs) {
+      for (const pair of groupPairs) {
         try {
           const qqGroupId = pair.qqRoomId.toString()
           const tgChatId = pair.tgChatId.toString()
@@ -181,7 +187,7 @@ export class RefreshCommandHandler {
 
       await this.context.replyTG(
         chatId,
-        `✅ 刷新完成\n\n成功: ${successCount}\n失败: ${failCount}\n总计: ${allPairs.length}`,
+        `✅ 刷新完成\n\n成功: ${successCount}\n失败: ${failCount}\n总计: ${groupPairs.length}`,
         threadId,
       )
     }

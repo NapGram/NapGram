@@ -7,6 +7,7 @@ import process from 'node:process'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
+import { hasConfiguredWorkMode } from '../../work-mode-gate.js'
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor.js'
 import { findPairByQQWithChatType, findPairByTGWithChatType } from '../commands/utils/ForwardPairChatType.js'
 import { MediaGroupHandler } from './handlers/MediaGroupHandler.js'
@@ -48,6 +49,9 @@ export class ForwardFeature {
   }
 
   private handleTgMessage = async (tgMsg: Message) => {
+    if (!hasConfiguredWorkMode(this.instance))
+      return
+
     const rawText = tgMsg.text || ''
     logger.debug('[Forward][TG->QQ] incoming', {
       id: tgMsg.id,
@@ -253,6 +257,20 @@ export class ForwardFeature {
     return pair.nicknameMode || env.SHOW_NICKNAME_MODE
   }
 
+  async sendPluginMessageToTelegram(
+    chat: any,
+    msg: UnifiedMessage,
+    options: { threadId?: number, replyToMsgId?: number } = {},
+  ) {
+    const pair = {
+      id: 0,
+      apiKey: '',
+      flags: (this.instance as any).flags ?? 0,
+      tgThreadId: options.threadId,
+    }
+    return await this.telegramSender.sendToTelegram(chat, msg, pair, options.replyToMsgId, '00')
+  }
+
   private toPluginSegments(contents: MessageContent[], platform: 'qq' | 'tg'): MessageSegment[] {
     const out: MessageSegment[] = []
     for (const c of contents || []) {
@@ -419,6 +437,9 @@ export class ForwardFeature {
   }
 
   private handleQQMessage = async (msg: UnifiedMessage) => {
+    if (!hasConfiguredWorkMode(this.instance))
+      return
+
     const startTime = Date.now() // 📊 开始计时
     const text = (msg.content || [])
       .filter(c => c.type === 'text')
@@ -718,6 +739,9 @@ export class ForwardFeature {
 
   private handlePokeEvent = async (groupId: string, operatorId: string, targetId: string) => {
     try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
       // Find mapping for this group
       const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, groupId, 'group')
       if (!pair)
@@ -759,6 +783,9 @@ export class ForwardFeature {
 
   private handleFriendIncrease = async (friend: { id: string, name?: string }) => {
     try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
       const isPersonal = (this.instance as any).workMode === 'personal'
         || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
       if (!isPersonal)
@@ -769,7 +796,7 @@ export class ForwardFeature {
         return
 
       const friendName = friend.name || await this.qqClient.getFriendInfo(friend.id).then(f => f?.name).catch(() => '') || '未知好友'
-      const text = `👤 【个人模式】发现新 QQ 好友：\nQQ: ${friend.id}\n昵称: ${friendName}\n\n点击一键建群并绑定：\n/bindfriend ${friend.id}`
+      const text = `👤 【个人模式】发现新 QQ 好友：\nQQ: ${friend.id}\n昵称: ${friendName}\n\n点击一键建群并绑定：\n/addfriend ${friend.id}`
       await MessageUtils.replyTG(this.tgBot, ownerId, text)
       logger.info({ friendId: friend.id, friendName }, 'Notified owner of new QQ friend')
     }
@@ -780,6 +807,9 @@ export class ForwardFeature {
 
   private handleGroupIncrease = async (groupId: string, member?: any) => {
     try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
       const isPersonal = (this.instance as any).workMode === 'personal'
         || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
       if (!isPersonal)
@@ -797,7 +827,7 @@ export class ForwardFeature {
 
       const groupInfo = await this.qqClient.getGroupInfo(groupId).catch(() => null)
       const groupName = groupInfo?.name || '未知群聊'
-      const text = `👥 【个人模式】发现新 QQ 群：\n群号: ${groupId}\n群名: ${groupName}\n\n点击一键建群并绑定：\n/bindgroup ${groupId}`
+      const text = `👥 【个人模式】发现新 QQ 群：\n群号: ${groupId}\n群名: ${groupName}\n\n点击一键建群并绑定：\n/addgroup ${groupId}`
       await MessageUtils.replyTG(this.tgBot, ownerId, text)
       logger.info({ groupId, groupName }, 'Notified owner of robot joining new QQ group')
     }

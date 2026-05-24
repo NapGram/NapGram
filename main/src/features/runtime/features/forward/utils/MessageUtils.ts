@@ -9,6 +9,16 @@ const logger = getLogger('MessageUtils')
  * Utility functions for message processing
  */
 export class MessageUtils {
+  private static normalizeUserId(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .replace(/^(?:tg|qq):u:/i, '')
+  }
+
+  private static isConfiguredAdmin(value: unknown): boolean {
+    return value !== undefined && value !== null && String(value).trim() !== ''
+  }
+
   /**
    * Populate @mention display names in QQ messages.
    * Priority: group card > nickname > QQ ID
@@ -63,11 +73,10 @@ export class MessageUtils {
    * Check if a user is an admin
    */
   static isAdmin(userId: string, instance: Instance): boolean {
-    const envAdminQQ = env.ADMIN_QQ ? String(env.ADMIN_QQ) : null
-    const envAdminTG = env.ADMIN_TG ? String(env.ADMIN_TG) : null
-    return userId === String(instance.owner)
-      || !!(envAdminQQ && userId === envAdminQQ)
-      || !!(envAdminTG && userId === envAdminTG)
+    const normalizedUserId = MessageUtils.normalizeUserId(userId)
+    return [instance.owner, env.ADMIN_QQ, env.ADMIN_TG]
+      .filter(value => MessageUtils.isConfiguredAdmin(value))
+      .some(value => normalizedUserId === MessageUtils.normalizeUserId(value))
   }
 
   /**

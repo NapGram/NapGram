@@ -11,6 +11,12 @@ interface ProvisionedQQInfo {
   description: string
 }
 
+interface ProvisionedQQTarget {
+  qqRoomId: string
+  qqChatType: QqChatType
+  fallbackName?: string
+}
+
 const logger = getLogger('PersonalPairProvisioner')
 
 export class PersonalPairProvisioner {
@@ -23,17 +29,29 @@ export class PersonalPairProvisioner {
   ) { }
 
   async ensurePairForQQMessage(msg: UnifiedMessage, qqChatType: QqChatType): Promise<TypedForwardPair | undefined> {
+    const fallbackName = qqChatType === 'private'
+      ? msg.sender?.name || msg.chat?.name
+      : msg.chat?.name
+    return this.ensurePairForQQTarget(msg.chat.id, qqChatType, fallbackName)
+  }
+
+  async ensurePairForQQTarget(qqRoomId: string | number | bigint, qqChatType: QqChatType, fallbackName?: string): Promise<TypedForwardPair | undefined> {
     if (!this.canProvision())
       return undefined
 
-    const key = `${qqChatType}:${msg.chat.id}`
+    const target: ProvisionedQQTarget = {
+      qqRoomId: String(qqRoomId),
+      qqChatType,
+      fallbackName,
+    }
+    const key = `${target.qqChatType}:${target.qqRoomId}`
     const pending = this.inFlight.get(key)
     if (pending)
       return pending
 
-    const task = this.provision(msg, qqChatType)
+    const task = this.provision(target)
       .catch((error) => {
-        logger.warn({ error, instanceId: this.instance.id, qqChatType, qqRoomId: msg.chat.id }, 'Personal pair auto provisioning failed')
+        logger.warn({ error, instanceId: this.instance.id, qqChatType: target.qqChatType, qqRoomId: target.qqRoomId }, 'Personal pair auto provisioning failed')
         return undefined
       })
       .finally(() => {
@@ -56,8 +74,8 @@ export class PersonalPairProvisioner {
       && Boolean(this.instance.userSessionId)
   }
 
-  private async provision(msg: UnifiedMessage, qqChatType: QqChatType): Promise<TypedForwardPair | undefined> {
-    const existing = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
+  private async provision(target: ProvisionedQQTarget): Promise<TypedForwardPair | undefined> {
+    const existing = await findPairByQQWithChatType(this.forwardMap, this.instance.id, target.qqRoomId, target.qqChatType)
     if (existing)
       return existing
 
@@ -65,7 +83,7 @@ export class PersonalPairProvisioner {
     if (!userBot)
       return undefined
 
-    const qqInfo = await this.resolveQQInfo(msg, qqChatType)
+    const qqInfo = await this.resolveQQInfo(target)
     const tgChat = await this.createTelegramGroup(userBot, qqInfo)
     const tgChatId = BigInt(tgChat.id)
 
@@ -76,21 +94,23 @@ export class PersonalPairProvisioner {
     const pair = await addForwardPairWithChatType(
       this.forwardMap,
       this.instance.id,
-      msg.chat.id,
+      target.qqRoomId,
       tgChatId,
       undefined,
-      qqChatType,
+      target.qqChatType,
       {
         qqDisplayName: qqInfo.displayName,
         tgProvisionedByUserSessionId: this.instance.userSessionId,
         autoCreated: true,
       },
     )
+    if (!pair)
+      throw new Error('Personal pair auto provisioning did not create a forward pair')
 
     logger.info({
       instanceId: this.instance.id,
-      qqChatType,
-      qqRoomId: msg.chat.id,
+      qqChatType: target.qqChatType,
+      qqRoomId: target.qqRoomId,
       tgChatId: pair.tgChatId,
       pairId: pair.id,
     }, 'Personal pair auto provisioned')
@@ -171,22 +191,21 @@ export class PersonalPairProvisioner {
     }
   }
 
-  private async resolveQQInfo(msg: UnifiedMessage, qqChatType: QqChatType): Promise<ProvisionedQQInfo> {
-    const qqRoomId = String(msg.chat.id)
-    const displayName = qqChatType === 'private'
-      ? await this.resolveFriendName(qqRoomId, msg)
-      : await this.resolveGroupName(qqRoomId, msg)
-    const label = qqChatType === 'private' ? 'QQ 好友' : 'QQ 群'
+  private async resolveQQInfo(target: ProvisionedQQTarget): Promise<ProvisionedQQInfo> {
+    const displayName = target.qqChatType === 'private'
+      ? await this.resolveFriendName(target.qqRoomId, target.fallbackName)
+      : await this.resolveGroupName(target.qqRoomId, target.fallbackName)
+    const label = target.qqChatType === 'private' ? 'QQ 好友' : 'QQ 群'
     const title = this.sanitizeTitle(`${label} ${displayName}`)
 
     return {
       displayName,
       title,
-      description: `NapGram personal mode auto-created for ${label} ${qqRoomId}`,
+      description: `NapGram personal mode auto-created for ${label} ${target.qqRoomId}`,
     }
   }
 
-  private async resolveFriendName(userId: string, msg: UnifiedMessage): Promise<string> {
+  private async resolveFriendName(userId: string, fallbackName?: string): Promise<string> {
     try {
       const info = await this.qqClient.getFriendInfo(userId)
       const name = this.cleanName(info?.name)
@@ -197,10 +216,10 @@ export class PersonalPairProvisioner {
       logger.debug({ error, userId }, 'Failed to resolve QQ friend name')
     }
 
-    return this.cleanName(msg.sender?.name) || userId
+    return this.cleanName(fallbackName) || userId
   }
 
-  private async resolveGroupName(groupId: string, msg: UnifiedMessage): Promise<string> {
+  private async resolveGroupName(groupId: string, fallbackName?: string): Promise<string> {
     try {
       const info = await this.qqClient.getGroupInfo(groupId)
       const name = this.cleanName(info?.name)
@@ -211,7 +230,7 @@ export class PersonalPairProvisioner {
       logger.debug({ error, groupId }, 'Failed to resolve QQ group name')
     }
 
-    return this.cleanName(msg.chat?.name) || groupId
+    return this.cleanName(fallbackName) || groupId
   }
 
   private cleanName(value: unknown): string {

@@ -6,6 +6,7 @@ import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { getEventPublisher, getLogger } from '../../shared-types.js'
+import { buildWorkModePrompt, hasConfiguredWorkMode, isWorkModeCommand, parseWorkMode, WORK_MODE_LABELS, type WorkMode } from '../../work-mode-gate.js'
 import { BindCommandHandler } from './handlers/BindCommandHandler.js'
 import { CommandContext } from './handlers/CommandContext.js'
 import { ForwardControlCommandHandler } from './handlers/ForwardControlCommandHandler.js'
@@ -18,20 +19,27 @@ import { CommandRegistry } from './services/CommandRegistry.js'
 import { InteractiveStateManager } from './services/InteractiveStateManager.js'
 import { PermissionChecker } from './services/PermissionChecker.js'
 import { ThreadIdExtractor } from './services/ThreadIdExtractor.js'
-import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage } from './utils/ForwardPairChatType.js'
+import { PersonalPairProvisioner } from '../forward/services/PersonalPairProvisioner.js'
+import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage, type QqChatType } from './utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandsFeature')
 
-const GROUP_MANAGEMENT_COMMANDS = new Set([
+const QQ_GROUP_ONLY_PLUGIN_COMMANDS = new Set([
   'ban',
   'unban',
   'kick',
   'card',
+  'mute',
   'muteall',
   'unmuteall',
   'admin',
   'groupname',
   'title',
+  'poke',
+  'nick',
+  'honor',
+  'refresh',
+  'refresh_all',
 ])
 
 /**
@@ -59,6 +67,7 @@ export class CommandsFeature {
   private readonly recallHandler: RecallCommandHandler
   private readonly forwardControlHandler: ForwardControlCommandHandler
   private readonly infoHandler: InfoCommandHandler
+  private personalPairProvisioner?: PersonalPairProvisioner
 
   constructor(
     private readonly instance: Instance,
@@ -227,6 +236,128 @@ export class CommandsFeature {
     }
   }
 
+  private isWorkModeConfigured(): boolean {
+    return hasConfiguredWorkMode(this.instance)
+  }
+
+  private parseWorkMode(value: string | undefined): WorkMode | undefined {
+    return parseWorkMode(value)
+  }
+
+  private buildWorkModePrompt(): string {
+    return buildWorkModePrompt(this.instance)
+  }
+
+  private async applyWorkMode(mode: WorkMode): Promise<void> {
+    const setWorkMode = (this.instance as any).setWorkMode
+    if (typeof setWorkMode === 'function') {
+      await setWorkMode.call(this.instance, mode)
+      return
+    }
+
+    ;(this.instance as any).workMode = mode
+    if (mode === 'personal' && typeof (this.instance as any).startUserBot === 'function') {
+      await (this.instance as any).startUserBot()
+    }
+    else if (mode !== 'personal' && typeof (this.instance as any).stopUserBot === 'function') {
+      await (this.instance as any).stopUserBot()
+    }
+  }
+
+  private async replyWorkModeMessage(msg: UnifiedMessage, text: string): Promise<void> {
+    if (msg.platform === 'telegram') {
+      const threadId = this.commandContext.extractThreadId(msg, [])
+      await this.replyTG(msg.chat.id, text, threadId)
+      return
+    }
+
+    await this.commandContext.replyQQ(msg.chat.id, text, qqChatTypeFromMessage(msg))
+  }
+
+  private async handleWorkModeCommand(msg: UnifiedMessage, args: string[]): Promise<void> {
+    const mode = this.parseWorkMode(args[0])
+    if (!mode) {
+      await this.replyWorkModeMessage(msg, this.buildWorkModePrompt())
+      return
+    }
+
+    const userId = msg.platform === 'telegram'
+      ? `tg:u:${msg.sender.id}`
+      : `qq:u:${msg.sender.id}`
+    if (!this.permissionChecker.isAdmin(userId)) {
+      await this.replyWorkModeMessage(msg, '您没有权限设置工作模式')
+      return
+    }
+
+    await this.applyWorkMode(mode)
+    await this.replyWorkModeMessage(
+      msg,
+      `工作模式已设置为 ${WORK_MODE_LABELS[mode]}。\n现在可以继续使用绑定、转发和其他功能。`,
+    )
+  }
+
+  private async blockUntilWorkModeConfigured(msg: UnifiedMessage, commandName: string): Promise<boolean> {
+    if (this.isWorkModeConfigured())
+      return false
+    if (isWorkModeCommand(commandName))
+      return false
+
+    await this.replyWorkModeMessage(msg, this.buildWorkModePrompt())
+    return true
+  }
+
+  private isPersonalMode(): boolean {
+    return (this.instance as any).workMode === 'personal'
+      || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+  }
+
+  private getPersonalPairProvisioner(): PersonalPairProvisioner | undefined {
+    const forwardMap = this.instance.forwardPairs as ForwardMap | undefined
+    const isForwardMap = forwardMap
+      && typeof (forwardMap as any).findByQQ === 'function'
+      && typeof (forwardMap as any).findByTG === 'function'
+    if (!isForwardMap)
+      return undefined
+
+    if (!this.personalPairProvisioner)
+      this.personalPairProvisioner = new PersonalPairProvisioner(this.instance, forwardMap, this.qqClient)
+
+    return this.personalPairProvisioner
+  }
+
+  private async handleAddQQTargetCommand(msg: UnifiedMessage, args: string[], qqChatType: QqChatType): Promise<void> {
+    if (!this.isPersonalMode()) {
+      await this.replyWorkModeMessage(msg, '该命令仅在个人模式下可用')
+      return
+    }
+
+    const qqRoomId = args[0]?.trim()
+    if (!qqRoomId || !/^\d+$/.test(qqRoomId)) {
+      const commandName = qqChatType === 'private' ? 'addfriend' : 'addgroup'
+      const targetName = qqChatType === 'private' ? 'qq_user_id' : 'qq_group_id'
+      await this.replyWorkModeMessage(msg, `用法：/${commandName} <${targetName}>`)
+      return
+    }
+
+    const provisioner = this.getPersonalPairProvisioner()
+    if (!provisioner) {
+      await this.replyWorkModeMessage(msg, '转发表尚未初始化，无法创建绑定')
+      return
+    }
+
+    const label = formatQqChatTypeLabel(qqChatType)
+    const pair = await provisioner.ensurePairForQQTarget(qqRoomId, qqChatType)
+    if (!pair) {
+      await this.replyWorkModeMessage(msg, `无法为 ${label} ${qqRoomId} 创建 Telegram 群，请检查个人模式 UserBot 状态`)
+      return
+    }
+
+    await this.replyWorkModeMessage(
+      msg,
+      `已创建 Telegram 群并绑定 ${label} ${qqRoomId}。\nTG: ${pair.tgChatId}`,
+    )
+  }
+
   /**
    * 注册默认命令
    */
@@ -236,6 +367,25 @@ export class CommandsFeature {
 
     // TODO: 旧版 constants/commands.ts 中有更细分的指令清单（preSetup/group/private 等），后续可按需合并：
     // setup/login/flags/alive/add/addfriend/addgroup/refresh_all/newinstance/info/q/rm/rmt/rmq/forwardoff/forwardon/disable_qq_forward/enable_qq_forward/disable_tg_forward/enable_tg_forward/refresh/poke/nick/mute 等。
+
+    this.registerCommand({
+      name: 'start',
+      aliases: ['开始'],
+      description: '设置或查看工作模式',
+      usage: '/start <group|personal|public>',
+      permission: { level: 3 },
+      handler: (msg, args) => this.handleWorkModeCommand(msg, args),
+    })
+
+    this.registerCommand({
+      name: 'workmode',
+      aliases: ['工作模式'],
+      description: '设置或查看工作模式',
+      usage: '/workmode <group|personal|public>',
+      permission: { level: 1 },
+      handler: (msg, args) => this.handleWorkModeCommand(msg, args),
+      adminOnly: true,
+    })
 
     // 帮助命令
     this.registerCommand({
@@ -284,6 +434,26 @@ export class CommandsFeature {
       permission: { level: 1 }, // ADMIN
       handler: (msg, args) => this.bindHandler.execute(msg, args, 'private'),
       adminOnly: true, // 保持向后兼容
+    })
+
+    this.registerCommand({
+      name: 'addfriend',
+      aliases: ['添加好友'],
+      description: '为指定 QQ 好友创建 Telegram 群并绑定',
+      usage: '/addfriend <qq_user_id>',
+      permission: { level: 1 }, // ADMIN
+      handler: (msg, args) => this.handleAddQQTargetCommand(msg, args, 'private'),
+      adminOnly: true,
+    })
+
+    this.registerCommand({
+      name: 'addgroup',
+      aliases: ['添加群'],
+      description: '为指定 QQ 群创建 Telegram 群并绑定',
+      usage: '/addgroup <qq_group_id>',
+      permission: { level: 1 }, // ADMIN
+      handler: (msg, args) => this.handleAddQQTargetCommand(msg, args, 'group'),
+      adminOnly: true,
     })
 
     // 解绑命令
@@ -426,9 +596,9 @@ export class CommandsFeature {
               permission: (config as any).permission,
               adminOnly: config.adminOnly,
               handler: async (msg, args) => {
-                if (GROUP_MANAGEMENT_COMMANDS.has(config.name) && await this.isFriendPairCommand(msg)) {
+                if (QQ_GROUP_ONLY_PLUGIN_COMMANDS.has(config.name) && await this.isFriendPairCommand(msg)) {
                   const threadId = this.commandContext.extractThreadId(msg, [])
-                  await this.commandContext.replyTG(msg.chat.id, '❌ 当前绑定是 QQ 好友，群管理命令不适用', threadId)
+                  await this.commandContext.replyTG(msg.chat.id, '❌ 当前绑定是 QQ 好友，QQ 群相关指令不可用', threadId)
                   return
                 }
 
@@ -711,6 +881,24 @@ export class CommandsFeature {
     return await this.handleTgMessage(tgMsg)
   }
 
+  private buildTgCommandMessage(tgMsg: Message, text: string, chatId: any, senderId: any): UnifiedMessage {
+    return {
+      id: String((tgMsg as any).id ?? ''),
+      platform: 'telegram',
+      chat: {
+        id: String(chatId),
+        type: (tgMsg.chat as any)?.type === 'private' ? 'private' : 'group',
+      },
+      sender: {
+        id: String(senderId),
+        name: (tgMsg.sender as any)?.displayName || (tgMsg.sender as any)?.username || String(senderId),
+      },
+      content: [{ type: 'text', data: { text } }],
+      timestamp: tgMsg.date instanceof Date ? tgMsg.date.getTime() : typeof tgMsg.date === 'number' ? tgMsg.date : Date.now(),
+      metadata: { raw: tgMsg },
+    } as UnifiedMessage
+  }
+
   private handleTgMessage = async (tgMsg: Message): Promise<boolean> => {
     try {
       const text = tgMsg.text
@@ -732,6 +920,15 @@ export class CommandsFeature {
       if (senderPeer?.isBot || (myId !== undefined && senderId === myId)) {
         logger.debug(`Ignored bot/self message for command handling: ${senderId}`)
         return false
+      }
+
+      if (!this.isWorkModeConfigured() && text && !text.startsWith(this.registry.prefix)) {
+        const staleBindingState = this.stateManager.getBindingState(String(chatId), String(senderId))
+        if (staleBindingState) {
+          this.stateManager.deleteBindingState(String(chatId), String(senderId))
+          await this.replyTG(chatId, this.buildWorkModePrompt(), staleBindingState.threadId)
+          return true
+        }
       }
 
       // 检查是否有正在进行的绑定操作
@@ -861,6 +1058,16 @@ export class CommandsFeature {
       if (!command) {
         logger.debug(`Unknown command: ${commandName}`)
         return false
+      }
+
+      const commandMsg = this.buildTgCommandMessage(tgMsg, text, chatId, senderId)
+      if (isWorkModeCommand(command)) {
+        await this.handleWorkModeCommand(commandMsg, args)
+        return true
+      }
+
+      if (await this.blockUntilWorkModeConfigured(commandMsg, command.name)) {
+        return true
       }
 
       // 检查权限
@@ -1030,6 +1237,15 @@ export class CommandsFeature {
       const command = this.registry.get(commandName)
       if (!command) {
         logger.debug(`Unknown QQ command: ${commandName}`)
+        return
+      }
+
+      if (isWorkModeCommand(command)) {
+        await this.handleWorkModeCommand(qqMsg, args)
+        return
+      }
+
+      if (await this.blockUntilWorkModeConfigured(qqMsg, command.name)) {
         return
       }
 

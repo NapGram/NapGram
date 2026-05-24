@@ -1,8 +1,13 @@
 import type { RecallEvent } from '@napgram/message-kit'
 import type { Instance, IQQClient, Telegram } from '../shared-types.js'
 import { and, db, env, eq, getLogger, schema } from '../shared-types.js'
+import { hasConfiguredWorkMode } from '../work-mode-gate.js'
 
 const logger = getLogger('RecallFeature')
+
+function recallEventChatType(event: RecallEvent): 'private' | 'group' {
+  return (event as any).chatType === 'private' ? 'private' : 'group'
+}
 
 /**
  * 消息撤回功能
@@ -34,6 +39,9 @@ export class RecallFeature {
    */
   private handleQQRecall = async (event: RecallEvent) => {
     try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
       logger.info(`QQ message recalled: ${event.messageId}`)
 
       // 检查是否启用自动撤回
@@ -43,10 +51,12 @@ export class RecallFeature {
       }
 
       // 查找对应的 Telegram 消息
+      const qqChatType = recallEventChatType(event)
       const dbEntry = await db.query.message.findFirst({
         where: and(
           eq(schema.message.instanceId, this.instance.id),
           eq(schema.message.qqRoomId, BigInt(event.chatId)),
+          eq(schema.message.qqChatType, qqChatType),
           eq(schema.message.seq, Number(event.messageId)),
         ),
       })
@@ -81,6 +91,9 @@ export class RecallFeature {
    */
   private handleTGDelete = async (update: any) => {
     try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
       const chatId = update.channelId // mtcute 使用 channelId
       const messageIds = update.messages // 删除的消息 ID 数组
 
@@ -143,6 +156,9 @@ export class RecallFeature {
    */
   async handleTGRecall(tgChatId: bigint | number, tgMsgId: bigint | number) {
     try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
       logger.info(`TG message recall requested: ${tgMsgId}`)
 
       // 查找对应的 QQ 消息

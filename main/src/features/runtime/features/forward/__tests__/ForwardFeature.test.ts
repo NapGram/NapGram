@@ -79,7 +79,7 @@ describe('forwardFeature - Notice Events', () => {
     expect(MessageUtils.replyTG).toHaveBeenCalledWith(
       tgBot,
       99999,
-      expect.stringContaining('/bindfriend 10001'),
+      expect.stringContaining('/addfriend 10001'),
     )
 
     feature.destroy()
@@ -104,7 +104,7 @@ describe('forwardFeature - Notice Events', () => {
     expect(MessageUtils.replyTG).toHaveBeenCalledWith(
       tgBot,
       99999,
-      expect.stringContaining('/bindgroup 20002'),
+      expect.stringContaining('/addgroup 20002'),
     )
 
     feature.destroy()
