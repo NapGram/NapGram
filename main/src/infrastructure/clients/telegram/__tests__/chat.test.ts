@@ -22,8 +22,8 @@ describe('telegramChat', () => {
       createInviteLink: vi.fn(),
       getChatMember: vi.fn(),
       addChatMembers: vi.fn(),
-      setTyping: vi.fn(),
       editAdminRights: vi.fn(),
+      setTyping: vi.fn(),
     } as any
 
     // Create mock parent
@@ -98,10 +98,11 @@ describe('telegramChat', () => {
   })
 
   describe('setAdmin', () => {
-    it('should call editAdminRights with default rights', async () => {
-      vi.mocked(mockClient.editAdminRights).mockResolvedValue(undefined as any)
+    it('should set default admin rights', async () => {
+      const mockResult = { success: true }
+      vi.mocked(mockClient.editAdminRights).mockResolvedValue(mockResult as any)
 
-      await telegramChat.setAdmin(987654321)
+      const result = await telegramChat.setAdmin(987654321)
 
       expect(mockClient.editAdminRights).toHaveBeenCalledWith({
         chatId: 123456789,
@@ -119,11 +120,10 @@ describe('telegramChat', () => {
           manageTopics: false,
         },
       })
+      expect(result).toBe(mockResult)
     })
 
-    it('should pass through custom rights parameter', async () => {
-      vi.mocked(mockClient.editAdminRights).mockResolvedValue(undefined as any)
-
+    it('should pass through custom rights and rank parameters', async () => {
       const customRights = {
         changeInfo: false,
         postMessages: false,
@@ -136,14 +136,18 @@ describe('telegramChat', () => {
         anonymous: false,
         manageTopics: false,
       }
+      const mockResult = { success: true }
+      vi.mocked(mockClient.editAdminRights).mockResolvedValue(mockResult as any)
 
-      await telegramChat.setAdmin(987654321, customRights)
+      const result = await telegramChat.setAdmin(987654321, customRights, 'helper')
 
       expect(mockClient.editAdminRights).toHaveBeenCalledWith({
         chatId: 123456789,
         userId: 987654321,
         rights: customRights,
+        rank: 'helper',
       })
+      expect(result).toBe(mockResult)
     })
   })
   describe('editAbout', () => {
