@@ -176,6 +176,28 @@ describe('personalPairProvisioner', () => {
     expect(pair?.autoCreated).toBe(true)
   })
 
+  it('creates a pair from an explicit QQ target without requiring a message object', async () => {
+    const runtime = createRuntime()
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    await provisioner.ensurePairForQQTarget('10001', 'private', 'Fallback Alice')
+
+    expect(runtime.qqClient.getFriendInfo).toHaveBeenCalledWith('10001')
+    expect(addForwardPairWithChatType).toHaveBeenCalledWith(
+      runtime.forwardMap,
+      7,
+      '10001',
+      BigInt(-10020002),
+      undefined,
+      'private',
+      {
+        qqDisplayName: 'Alice',
+        tgProvisionedByUserSessionId: 66,
+        autoCreated: true,
+      },
+    )
+  })
+
   it('reuses one provisioning task for concurrent messages from the same QQ chat', async () => {
     const runtime = createRuntime()
     const deferred = createDeferred<{ id: number }>()

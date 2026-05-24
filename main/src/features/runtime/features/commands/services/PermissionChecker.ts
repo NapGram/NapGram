@@ -7,14 +7,23 @@ import { env } from '../../../shared-types.js'
 export class PermissionChecker {
   constructor(private readonly instance: Instance) { }
 
+  private normalizeUserId(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .replace(/^(?:tg|qq):u:/i, '')
+  }
+
+  private isConfiguredAdmin(value: unknown): boolean {
+    return value !== undefined && value !== null && String(value).trim() !== ''
+  }
+
   /**
    * 检查是否是管理员
    */
   isAdmin(userId: string): boolean {
-    const envAdminQQ = env.ADMIN_QQ ? String(env.ADMIN_QQ) : null
-    const envAdminTG = env.ADMIN_TG ? String(env.ADMIN_TG) : null
-    return userId === String(this.instance.owner)
-      || (envAdminQQ !== null && userId === envAdminQQ)
-      || (envAdminTG !== null && userId === envAdminTG)
+    const normalizedUserId = this.normalizeUserId(userId)
+    return [this.instance.owner, env.ADMIN_QQ, env.ADMIN_TG]
+      .filter(value => this.isConfiguredAdmin(value))
+      .some(value => normalizedUserId === this.normalizeUserId(value))
   }
 }

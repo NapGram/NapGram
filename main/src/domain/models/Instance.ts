@@ -18,6 +18,8 @@ export type WorkMode = 'personal' | 'group' | 'public'
 export type InstanceLifecycleStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
 export type PersonalUserBotStatus = 'disabled' | 'not-configured' | 'starting' | 'running' | 'stopped' | 'error'
 
+const CONFIGURED_WORK_MODES = new Set(['personal', 'group', 'public'])
+
 export interface PersonalModeDiagnostics {
   workMode: WorkMode
   userBotRequired: boolean
@@ -232,30 +234,7 @@ export default class Instance {
       try {
         const eventPublisher = getEventPublisher()
         eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
-        bridgeQQEvents(this.id, this.qqClient, eventPublisher, this.log)
-      }
-      catch (error) {
-        this.log.warn('Plugin event bridge init failed:', error)
-      }
-
-      // 初始化新架构的功能管理器
-      // if (this.qqClient) { // Redundant check, login() succeeded above
-      this.log.debug('FeatureManager 正在初始化')
-      this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient)
-      await this.featureManager.initialize()
-      this.log.info('FeatureManager ✓ 初始化完成')
-      this.status = 'running'
-      try {
-        getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
-      }
-      catch (error) {
-        this.log.warn('Failed to publish instance running status:', error)
-      }
-
-      // 监听掉线/恢复事件，交给插件侧处理通知
-      this.qqClient.on('offline', async () => {
-        this.log.warn('NapCat connection offline (disconnect)')
-        this.isSetup = false
+        bridgeQQEvents(this.id, this.qqClient, eventPublisher, this.log, this)
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,
@@ -272,6 +251,8 @@ export default class Instance {
       this.qqClient.on('online', async () => {
         this.log.info('NapCat connection online (connect)')
         this.isSetup = true
+        if (!this.hasConfiguredWorkMode())
+          return
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,
@@ -289,6 +270,8 @@ export default class Instance {
       this.qqClient.on('connection:lost', async (event: any) => {
         this.log.warn('NapCat connection lost:', event)
         this.isSetup = false
+        if (!this.hasConfiguredWorkMode())
+          return
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,
@@ -306,6 +289,8 @@ export default class Instance {
       this.qqClient.on('connection:restored', async (event: any) => {
         this.log.info('NapCat connection restored:', event)
         this.isSetup = true
+        if (!this.hasConfiguredWorkMode())
+          return
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,
@@ -459,6 +444,10 @@ export default class Instance {
     return this._workMode as WorkMode
   }
 
+  hasConfiguredWorkMode() {
+    return CONFIGURED_WORK_MODES.has(String(this._workMode || '').trim())
+  }
+
   get botMe(): any {
     return this.tgBot.me
   }
@@ -517,6 +506,32 @@ export default class Instance {
         .then(() => this.log.trace(fields)),
       'update instance',
     ).catch(err => this.log.error({ err, fields }, 'Failed to update instance in DB'))
+  }
+
+  private async persistDb(fields: Record<string, unknown>) {
+    await this.dbRetry(
+      () => db.update(schema.instance)
+        .set(fields)
+        .where(eq(schema.instance.id, this.id))
+        .then(() => this.log.trace(fields)),
+      'update instance',
+    )
+  }
+
+  async setWorkMode(workMode: WorkMode) {
+    const previous = this._workMode
+    this._workMode = workMode
+    await this.persistDb({ workMode })
+
+    if (workMode === 'personal') {
+      await this.startUserBot()
+    }
+    else {
+      if (previous === 'personal' || this.tgUserBot)
+        await this.stopUserBot()
+      else
+        this._userBotStatus = 'disabled'
+    }
   }
 
   set owner(owner: number) {
