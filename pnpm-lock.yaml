@@ -5,21 +5,19 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  brace-expansion: 5.0.6
   esbuild: 0.28.0
-  ws: 8.20.1
 
 importers:
 
   .:
     dependencies:
+      '@napgram/plugin-adapter-qq-napcat':
+        specifier: ^2.0.0
+        version: 2.0.1
       '@napgram/sdk':
         specifier: ^2.0.0
         version: 2.0.0
     devDependencies:
-      '@napgram/plugin-adapter-qq-napcat':
-        specifier: 2.0.1
-        version: 2.0.1
       '@types/node':
         specifier: 25.9.1
         version: 25.9.1
@@ -198,7 +196,7 @@ importers:
         specifier: ^3.7.1
         version: 3.7.1
       ws:
-        specifier: 8.20.1
+        specifier: ^8.20.0
         version: 8.20.1
       yaml:
         specifier: ^2.9.0
@@ -669,7 +667,7 @@ packages:
   '@fuman/node@0.0.19':
     resolution: {integrity: sha512-1VNTBb47yrN5BzuXiP4t6An7mDPklH5N+vUtkeL3XATK+xWbtlQsSsU244T7iqGurmDpYrLM9kIUjdMFm8OhDw==}
     peerDependencies:
-      ws: 8.20.1
+      ws: ^8.18.1
     peerDependenciesMeta:
       ws:
         optional: true
@@ -904,11 +902,11 @@ packages:
       '@emnapi/runtime': ^1.7.1
 
   '@naplink/naplink@0.0.10':
-    resolution: {integrity: sha512-+ygiV1NblKxfBOc/8rDv7UH28WVT1PiBZ1KEJZeKlt9kpb2v/ooGosdf9MKLHDBmZcoKAykD6ydRd/A5tJ40dQ==}
+    resolution: {integrity: sha512-aJAFTNhmF3PADzGwahyk6nuCeWicvMUfOlupl6sCEtQdDzWLUVUxpNyBtMRlcAPM495rNiwXFbLOMBK6E4IqNw==, tarball: https://npm.pkg.github.com/download/@naplink/naplink/0.0.10/f3812699e2c541be5337d7f9cce3297579c003d6}
     engines: {node: '>=18.0.0'}
 
   '@naplink/naplink@1.0.0':
-    resolution: {integrity: sha512-/S0Rw90KR9BqtqDx8+pdyy8atfXrC0ZI22df2g4aGcQN1L+hRrkwauMe4pO6yM3KnaH6NQg+W7dWwjsWHHgY3g==}
+    resolution: {integrity: sha512-2BUlPbjhQkFLn40pokXm3Yi4ctKj9DfXi0jpG9CmS/aWvYCpaefTxxpY6fcfSmR3IJN9jgqgXa0y/b6ehExQGg==, tarball: https://npm.pkg.github.com/download/@naplink/naplink/1.0.0/28a666dbca2f7be494537a2fba1467eae56fb47c}
     engines: {node: '>=18.0.0'}
 
   '@opentelemetry/api-logs@0.207.0':
@@ -2529,7 +2527,7 @@ packages:
   isomorphic-ws@5.0.0:
     resolution: {integrity: sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==}
     peerDependencies:
-      ws: 8.20.1
+      ws: '*'
 
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}

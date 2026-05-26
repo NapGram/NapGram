@@ -9,9 +9,7 @@
         "@napgram/sdk": "^2.0.0"
     },
     "x-managedPnpmOverrides": {
-        "brace-expansion": "5.0.6",
-        "esbuild": "0.28.0",
-        "ws": "8.20.1"
+        "esbuild": "0.28.0"
     },
     "devDependencies": {
         "@types/node": "25.9.1",
