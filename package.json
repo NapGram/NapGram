@@ -2,7 +2,7 @@
     "name": "napgram-root",
     "version": "0.1.5",
     "private": true,
-    "packageManager": "pnpm@11.3.0",
+    "packageManager": "pnpm@11.4.0",
     "scripts": {},
     "dependencies": {
         "@napgram/plugin-adapter-qq-napcat": "^2.0.0",
