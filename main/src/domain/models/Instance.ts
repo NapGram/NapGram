@@ -235,6 +235,31 @@ export default class Instance {
         const eventPublisher = getEventPublisher()
         eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
         bridgeQQEvents(this.id, this.qqClient, eventPublisher, this.log, this)
+      }
+      catch (error) {
+        this.log.warn('Plugin event bridge init failed:', error)
+      }
+
+      // 初始化新架构的功能管理器
+      // if (this.qqClient) { // Redundant check, login() succeeded above
+      this.log.debug('FeatureManager 正在初始化')
+      this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient)
+      await this.featureManager.initialize()
+      this.log.info('FeatureManager ✓ 初始化完成')
+      this.status = 'running'
+      try {
+        getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
+      }
+      catch (error) {
+        this.log.warn('Failed to publish instance running status:', error)
+      }
+
+      // 监听掉线/恢复事件，交给插件侧处理通知
+      this.qqClient.on('offline', async () => {
+        this.log.warn('NapCat connection offline (disconnect)')
+        this.isSetup = false
+        if (!this.hasConfiguredWorkMode())
+          return
         try {
           getEventPublisher().publishNotice({
             instanceId: this.id,

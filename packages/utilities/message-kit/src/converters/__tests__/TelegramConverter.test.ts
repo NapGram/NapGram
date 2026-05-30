@@ -8,6 +8,14 @@ vi.mock('@napgram/infra-kit', () => ({
   hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
 }))
 
+vi.mock('@napgram/env-kit', () => ({
+  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn() })),
+}))
+
 function createEntity(type: 'mention' | 'text_mention', offset: number, length: number, params?: any) {
   return {
     offset,

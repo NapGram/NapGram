@@ -42,7 +42,6 @@
     "@mtcute/core": "^0.29.7",
     "@napgram/db-kit": "workspace:*",
     "@napgram/env-kit": "workspace:*",
-    "@napgram/infra-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/media-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",

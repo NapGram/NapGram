@@ -27,7 +27,6 @@
   "dependencies": {
     "@napgram/database": "workspace:*",
     "@napgram/env-kit": "workspace:*",
-    "@napgram/infra-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
     "fflate": "^0.8.2",

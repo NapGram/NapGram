@@ -76,6 +76,14 @@ vi.mock('@napgram/infra-kit', () => ({
   },
 }))
 
+vi.mock('@napgram/env-kit', () => ({
+  env: envMock,
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => loggerMocks),
+}))
+
 vi.mock('@napgram/runtime-kit', () => ({
   default: convertMocks,
 }))

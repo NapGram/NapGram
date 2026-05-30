@@ -1,25 +1,10 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import * as infraKit from '@napgram/infra-kit'
-import * as runtimeKit from '@napgram/runtime-kit'
-import convert from '@napgram/runtime-kit'
-import { ApiResponse as actualApiResponse, InstanceRegistry as actualInstanceRegistry, getGlobalRuntime as actualGetGlobalRuntime } from '@napgram/runtime-kit'
-import { and as actualAnd, count as actualCount, db as actualDb, desc as actualDesc, drizzleDb as actualDrizzleDb, eq as actualEq, gte as actualGte, inArray as actualInArray, like as actualLike, lt as actualLt, lte as actualLte, or as actualOr, schema as actualSchema, sql as actualSql } from '@napgram/db-kit'
-import { env as actualEnv } from '@napgram/env-kit'
-import { getLogger as actualGetLogger, sentry as actualSentry } from '@napgram/logger-kit'
 import path from 'node:path'
-
-const infra = infraKit as Record<string, any>
-const runtime = runtimeKit as Record<string, any>
-
-function getCompatExport<T>(fallback: T, ...keys: string[]): T {
-  for (const key of keys) {
-    if (key in infra)
-      return infra[key] as T
-    if (key in runtime)
-      return runtime[key] as T
-  }
-  return fallback
-}
+import { and, count, db, desc, drizzleDb, eq, gte, inArray, like, lt, lte, or, schema, sql } from '@napgram/db-kit'
+import { env } from '@napgram/env-kit'
+import { getLogger, sentry } from '@napgram/logger-kit'
+import { performanceMonitor } from '@napgram/infra-kit'
+import convert, { ApiResponse, getGlobalRuntime, InstanceRegistry } from '@napgram/runtime-kit'
 
 export class TTLCache<K, V> {
   private readonly cache = new Map<K, { value: V, expiresAt: number }>()
@@ -64,59 +49,14 @@ export class TTLCache<K, V> {
   }
 }
 
-const noopPerformanceMonitor = {
-  recordMessage(..._args: any[]) {},
-  recordError(..._args: any[]) {},
-  recordCacheHit(..._args: any[]) {},
-  recordCacheMiss(..._args: any[]) {},
-  updateMemoryUsage(..._args: any[]) {},
-  getStats() {
-    return {
-      uptime: 0,
-      totalMessages: 0,
-      messagesPerSecond: 0,
-      avgLatency: 0,
-      p50Latency: 0,
-      p95Latency: 0,
-      p99Latency: 0,
-      totalErrors: 0,
-      errorRate: 0,
-      cacheHits: 0,
-      cacheMisses: 0,
-      cacheHitRate: 0,
-      memoryUsageMB: 0,
-    }
-  },
-  printStats(..._args: any[]) {},
-}
+export { env, ApiResponse, db, drizzleDb, schema, eq, and, or, lt, lte, gte, count, desc, sql, like, inArray }
+export { getLogger, sentry, InstanceRegistry, getGlobalRuntime, performanceMonitor, convert }
 
-export const env = getCompatExport(actualEnv, 'env')
-export const ApiResponse = getCompatExport(actualApiResponse, 'ApiResponse')
-export const db = getCompatExport(actualDb, 'db')
-export const drizzleDb = getCompatExport(actualDrizzleDb, 'drizzleDb')
-export const schema = getCompatExport(actualSchema, 'schema')
-export const eq = getCompatExport(actualEq, 'eq')
-export const and = getCompatExport(actualAnd, 'and')
-export const or = getCompatExport(actualOr, 'or')
-export const lt = getCompatExport(actualLt, 'lt')
-export const lte = getCompatExport(actualLte, 'lte')
-export const gte = getCompatExport(actualGte, 'gte')
-export const count = getCompatExport(actualCount, 'count')
-export const desc = getCompatExport(actualDesc, 'desc')
-export const sql = getCompatExport(actualSql, 'sql')
-export const like = getCompatExport(actualLike, 'like')
-export const inArray = getCompatExport(actualInArray, 'inArray')
-export const getLogger = getCompatExport(actualGetLogger, 'getLogger')
-export const sentry = getCompatExport(actualSentry, 'sentry')
-export const InstanceRegistry = getCompatExport(actualInstanceRegistry, 'InstanceRegistry')
-export const getGlobalRuntime = getCompatExport(actualGetGlobalRuntime, 'getGlobalRuntime')
-export const groupInfoCache = getCompatExport(new TTLCache<string, any>(300_000), 'groupInfoCache')
-export const configCache = getCompatExport(new TTLCache<string, any>(300_000), 'configCache')
-export const mediaCache = getCompatExport(new TTLCache<string, any>(300_000), 'mediaCache')
-export const userInfoCache = getCompatExport(new TTLCache<string, any>(300_000), 'userInfoCache')
-export const performanceMonitor = getCompatExport(noopPerformanceMonitor, 'performanceMonitor')
-export const TEMP_PATH = getCompatExport(path.join(env.DATA_DIR, 'temp'), 'TEMP_PATH')
-export { convert }
+export const groupInfoCache = new TTLCache<string, any>(300_000)
+export const configCache = new TTLCache<string, any>(300_000)
+export const mediaCache = new TTLCache<string, any>(300_000)
+export const userInfoCache = new TTLCache<string, any>(300_000)
+export const TEMP_PATH = path.join(env.DATA_DIR, 'temp')
 
 export function registerDualRoute(
   fastify: FastifyInstance,

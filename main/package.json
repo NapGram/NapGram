@@ -36,6 +36,7 @@
     "@napgram/db-kit": "workspace:*",
     "@napgram/env-kit": "workspace:*",
     "@napgram/gateway-kit": "workspace:*",
+    "@napgram/infra-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/marketplace-kit": "workspace:*",
     "@napgram/media-kit": "workspace:*",
