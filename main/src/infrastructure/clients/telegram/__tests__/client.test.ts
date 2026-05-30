@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer'
+import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Telegram from '../client'
 import { createMockChat, createMockMessage } from './mtcuteTestHelpers'
@@ -212,7 +213,6 @@ vi.mock('@napgram/telegram-client', () => {
     get isOnline() { return this.me !== undefined }
 
     static async create(startArgs: any, _appName = 'NapGram') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const SessionCtor: new (...args: any[]) => any = (await import('../../../../domain/models/TelegramSession')).default as any
       const session = new SessionCtor()
       await session.load()
@@ -230,17 +230,12 @@ vi.mock('@napgram/telegram-client', () => {
       }
 
       const botToken = startArgs.botToken ?? startArgs.botAuthToken ?? envMock.TG_BOT_TOKEN
-      try {
-        await bot.client.start({
-          phone: startArgs.phoneNumber,
-          code: startArgs.phoneCode,
-          password: startArgs.password,
-          botToken,
-        })
-      }
-      catch (err) {
-        throw err
-      }
+      await bot.client.start({
+        phone: startArgs.phoneNumber,
+        code: startArgs.phoneCode,
+        password: startArgs.password,
+        botToken,
+      })
 
       const sessionStr = await bot.client.exportSession()
       await session.save(sessionStr)
@@ -281,14 +276,9 @@ vi.mock('@napgram/telegram-client', () => {
       }
 
       const effectiveBotToken = botToken ?? envMock.TG_BOT_TOKEN
-      try {
-        await bot.client.start({ botToken: effectiveBotToken })
-        const sessionStr = await bot.client.exportSession()
-        await session.save(sessionStr)
-      }
-      catch (err) {
-        throw err
-      }
+      await bot.client.start({ botToken: effectiveBotToken })
+      const sessionStr = await bot.client.exportSession()
+      await session.save(sessionStr)
       await bot._config()
       return bot
     }
@@ -303,7 +293,8 @@ vi.mock('@napgram/telegram-client', () => {
     private onMessage = async (msg: any) => {
       for (const handler of this.onMessageHandlers) {
         const result = await handler(msg)
-        if (result === true) return
+        if (result === true)
+          return
       }
     }
 
@@ -322,19 +313,22 @@ vi.mock('@napgram/telegram-client', () => {
     addNewMessageEventHandler(handler: any) { this.onMessageHandlers.push(handler) }
     removeNewMessageEventHandler(handler: any) {
       const i = this.onMessageHandlers.indexOf(handler)
-      if (i > -1) this.onMessageHandlers.splice(i, 1)
+      if (i > -1)
+        this.onMessageHandlers.splice(i, 1)
     }
 
     addEditedMessageEventHandler(handler: any) { this.onEditedMessageHandlers.push(handler) }
     removeEditedMessageEventHandler(handler: any) {
       const i = this.onEditedMessageHandlers.indexOf(handler)
-      if (i > -1) this.onEditedMessageHandlers.splice(i, 1)
+      if (i > -1)
+        this.onEditedMessageHandlers.splice(i, 1)
     }
 
     addDeletedMessageEventHandler(handler: any) { this.onDeletedMessageHandlers.push(handler) }
     removeDeletedMessageEventHandler(handler: any) {
       const i = this.onDeletedMessageHandlers.indexOf(handler)
-      if (i > -1) this.onDeletedMessageHandlers.splice(i, 1)
+      if (i > -1)
+        this.onDeletedMessageHandlers.splice(i, 1)
     }
 
     async getChat(chatId: number | string) {
@@ -360,7 +354,6 @@ vi.mock('@napgram/telegram-client', () => {
     }
 
     private sanitizeFilename(name: string) {
-      const path = require('node:path')
       return path.basename(name)
         .replace(/[\\/]/g, '_')
         .replace(/[^\w.\-+@() ]/g, '_')
@@ -369,7 +362,6 @@ vi.mock('@napgram/telegram-client', () => {
     }
 
     async downloadMediaToTempFile(media: any, options?: any): Promise<string> {
-      const path = require('node:path')
       const prefix = options?.prefix || 'tg'
       const { Message: Msg } = await import('@mtcute/core')
       const mediaObj = media instanceof Msg && (media as any).media ? (media as any).media : media
@@ -391,7 +383,10 @@ vi.mock('@napgram/telegram-client', () => {
         await this.client.downloadToFile(filePath, location)
       }
       catch (error) {
-        try { await fsPromMocks.rm(filePath, { force: true }) } catch { }
+        try {
+          await fsPromMocks.rm(filePath, { force: true })
+        }
+        catch { }
         throw error
       }
 
@@ -401,7 +396,8 @@ vi.mock('@napgram/telegram-client', () => {
     async downloadProfilePhoto(userId: any): Promise<Buffer | null> {
       try {
         const chat = await this.client.getChat(userId)
-        if (!chat.photo) return null
+        if (!chat.photo)
+          return null
         const result = await this.client.downloadAsBuffer(chat.photo.big)
         return Buffer.from(result)
       }
@@ -411,13 +407,8 @@ vi.mock('@napgram/telegram-client', () => {
     }
 
     async disconnect() {
-      try {
-        await this.client.disconnect()
-        this.me = undefined
-      }
-      catch (error) {
-        throw error
-      }
+      await this.client.disconnect()
+      this.me = undefined
     }
   }
 
@@ -440,7 +431,7 @@ describe('telegram client', () => {
     envMock.PROXY_PORT = undefined
     proxyOptions.captured.length = 0
     fsMocks.existsSync.mockReturnValue(true)
-      ; (Telegram as any).existedBots = {}
+    ; (Telegram as any).existedBots = {}
   })
 
   it('creates a new bot and imports session', async () => {

@@ -5,9 +5,9 @@ import fs from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import path from 'node:path'
 import { Readable } from 'node:stream'
+import { convertWithFfmpeg } from '@napgram/media-kit'
 import { fileTypeFromBuffer } from 'file-type'
 import { decode, encode } from 'image-js'
-import { convertWithFfmpeg } from '@napgram/media-kit'
 import { getLogger, temp } from '../../../shared-types.js'
 
 export interface NormalizedFile {

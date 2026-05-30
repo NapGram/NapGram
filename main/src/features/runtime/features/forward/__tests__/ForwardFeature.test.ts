@@ -19,17 +19,17 @@ vi.mock('../utils/MessageUtils.js', () => ({
   },
 }))
 
-describe('ForwardFeature - Notice Events', () => {
-  let qqClientListeners: Record<string, Function[]> = {}
+describe('forwardFeature - Notice Events', () => {
+  let qqClientListeners: Record<string, ((...args: unknown[]) => void)[]> = {}
 
   const qqClient = {
-    on: vi.fn((event: string, callback: Function) => {
+    on: vi.fn((event: string, callback: (...args: unknown[]) => void) => {
       if (!qqClientListeners[event]) {
         qqClientListeners[event] = []
       }
       qqClientListeners[event].push(callback)
     }),
-    removeListener: vi.fn((event: string, callback: Function) => {
+    removeListener: vi.fn((event: string, callback: (...args: unknown[]) => void) => {
       if (qqClientListeners[event]) {
         qqClientListeners[event] = qqClientListeners[event].filter(cb => cb !== callback)
       }
@@ -74,12 +74,12 @@ describe('ForwardFeature - Notice Events', () => {
     expect(MessageUtils.replyTG).toHaveBeenCalledWith(
       tgBot,
       99999,
-      expect.stringContaining('发现新 QQ 好友：\nQQ: 10001\n昵称: Alice')
+      expect.stringContaining('发现新 QQ 好友：\nQQ: 10001\n昵称: Alice'),
     )
     expect(MessageUtils.replyTG).toHaveBeenCalledWith(
       tgBot,
       99999,
-      expect.stringContaining('/bindfriend 10001')
+      expect.stringContaining('/bindfriend 10001'),
     )
 
     feature.destroy()
@@ -99,12 +99,12 @@ describe('ForwardFeature - Notice Events', () => {
     expect(MessageUtils.replyTG).toHaveBeenCalledWith(
       tgBot,
       99999,
-      expect.stringContaining('发现新 QQ 群：\n群号: 20002\n群名: My Group')
+      expect.stringContaining('发现新 QQ 群：\n群号: 20002\n群名: My Group'),
     )
     expect(MessageUtils.replyTG).toHaveBeenCalledWith(
       tgBot,
       99999,
-      expect.stringContaining('/bindgroup 20002')
+      expect.stringContaining('/bindgroup 20002'),
     )
 
     feature.destroy()

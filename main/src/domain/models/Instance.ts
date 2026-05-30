@@ -1,5 +1,5 @@
-import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '../../features/runtime/index.js'
 import type { AppLogger } from '@napgram/logger-kit'
+import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '../../features/runtime/index.js'
 import type { IQQClient } from '../../infrastructure/clients/qq'
 import type Telegram from '../../infrastructure/clients/telegram/client'
 import { db, eq, ForwardMap, schema } from '@napgram/db-kit'
@@ -228,7 +228,7 @@ export default class Instance {
         type: 'napcat',
         wsUrl,
         ...(wsToken ? { token: wsToken } : {}),
-        reconnect: false,
+        reconnect: true,
       })
 
       // 重试连接 NapCat，等待其就绪（如扫码登录）

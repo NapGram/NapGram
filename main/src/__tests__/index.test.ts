@@ -140,10 +140,10 @@ describe('main startup flow', () => {
       listeners.set(String(event), handler)
       return process
     }) as any)
-    vi.spyOn(process, 'exit').mockImplementation((() => undefined as never))
-    vi.spyOn(globalThis, 'setInterval').mockImplementation((() => ({
+    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+    vi.spyOn(globalThis, 'setInterval').mockImplementation(() => ({
       unref: vi.fn(),
-    }) as any))
+    }) as any)
 
     dbKitMocks.db.query.instance.findMany.mockResolvedValue([])
     pluginRuntimeMocks.start.mockResolvedValue(undefined)

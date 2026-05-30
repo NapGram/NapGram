@@ -1,7 +1,9 @@
 import process from 'node:process'
 
 const logger = {
+  // eslint-disable-next-line no-console -- lightweight logger fallback for perf monitor
   debug: (...args: unknown[]) => console.debug('[PerformanceMonitor]', ...args),
+  // eslint-disable-next-line no-console -- lightweight logger fallback for perf monitor
   info: (...args: unknown[]) => console.info('[PerformanceMonitor]', ...args),
 }
 
@@ -136,7 +138,7 @@ export class PerformanceMonitor {
 
 export const performanceMonitor = new PerformanceMonitor()
 
-export const startMonitoring = () => {
+export function startMonitoring() {
   setInterval(() => {
     performanceMonitor.updateMemoryUsage()
     performanceMonitor.printStats()

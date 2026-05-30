@@ -357,6 +357,7 @@ describe('napCatAdapter', () => {
       expect(onRecall).toHaveBeenCalledWith({
         messageId: '100',
         chatId: '200',
+        chatType: 'group',
         operatorId: '300',
         timestamp: 1234567890000,
       })
@@ -373,6 +374,7 @@ describe('napCatAdapter', () => {
       expect(onRecall).toHaveBeenCalledWith({
         messageId: '101',
         chatId: '400',
+        chatType: 'private',
         operatorId: '400',
         timestamp: 1234567890000,
       })

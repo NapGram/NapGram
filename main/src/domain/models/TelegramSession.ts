@@ -47,7 +47,7 @@ export default class TelegramSession {
       // GramJS authKey is raw bytes.
       // We'll assume if it looks like a string, it is. Otherwise ignore (force re-login).
       // Allow base64/base64url chars or colon-delimited strings
-      if (str.match(/^[\w+/=-]+$/) || str.includes(':')) {
+      if (/^[\w+/=-]+$/.test(str) || str.includes(':')) {
         this._sessionString = str
       }
       else {

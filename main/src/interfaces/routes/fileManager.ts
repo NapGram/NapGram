@@ -1,8 +1,10 @@
-import multipart from '@fastify/multipart'
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import fs from 'node:fs/promises'
+import { Buffer } from 'node:buffer'
 import { createWriteStream } from 'node:fs'
+import fs from 'node:fs/promises'
 import path from 'node:path'
+import process from 'node:process'
+import multipart from '@fastify/multipart'
 import { authMiddleware } from '@napgram/auth-kit'
 import { getLogger } from '@napgram/logger-kit'
 
@@ -40,7 +42,7 @@ function checkPermission(requiredPermission: string) {
     const auth = (request as any).auth
 
     if (auth?.type === 'env' || auth?.type === 'token') {
-      return
+      // authorized
     }
   }
 }
