@@ -32,12 +32,12 @@
   "license": "MIT",
   "dependencies": {
     "@napgram/env-kit": "workspace:*",
-    "@sentry/node": "10.52.0"
+    "@sentry/node": "10.55.0"
   },
   "devDependencies": {
-    "@types/node": "25.7.0",
+    "@types/node": "25.9.1",
     "typescript": "6.0.3",
-    "vitest": "4.1.6"
+    "vitest": "4.1.7"
   },
   "publishConfig": {
     "main": "./dist/index.js",
