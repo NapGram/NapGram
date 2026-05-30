@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { telegramMessage } from '../../../../../shared/utils/index.js'
 import type { ForwardMapper } from './MessageMapper.js'
+import { telegramMessage } from '../../../../../shared/utils/index.js'
 import { getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('ReplyResolver')

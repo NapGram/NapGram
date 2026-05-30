@@ -1,8 +1,8 @@
-import { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from './runtime/index.js'
-import { getLogger } from '@napgram/logger-kit'
 import type Instance from '../domain/models/Instance'
 import type { IQQClient } from '../infrastructure/clients/qq'
 import type Telegram from '../infrastructure/clients/telegram/client'
+import { getLogger } from '@napgram/logger-kit'
+import { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from './runtime/index.js'
 
 const logger = getLogger('FeatureManager')
 

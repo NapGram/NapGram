@@ -97,18 +97,18 @@ export class TelegramMessageHandler {
 
       const replySegment = qqReply
         ? [{
-          type: 'reply' as const,
-          data: {
-            id: String(qqReply.seq),
-            seq: qqReply.seq,
-            time: qqReply.time,
-            senderUin: qqReply.senderUin,
-            peer: {
-              chatType: qqReply.qqChatType === 'private' ? 1 : this.getReplyChatType(pair),
-              peerUid: String(qqReply.qqRoomId),
+            type: 'reply' as const,
+            data: {
+              id: String(qqReply.seq),
+              seq: qqReply.seq,
+              time: qqReply.time,
+              senderUin: qqReply.senderUin,
+              peer: {
+                chatType: qqReply.qqChatType === 'private' ? 1 : this.getReplyChatType(pair),
+                peerUid: String(qqReply.qqRoomId),
+              },
             },
-          },
-        }]
+          }]
         : []
 
       // CRITICAL: Remove TG reply segments (contain TG message IDs like 637)
