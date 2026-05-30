@@ -24,6 +24,7 @@ describe('telegramChat', () => {
       getChatMember: vi.fn(),
       addChatMembers: vi.fn(),
       setTyping: vi.fn(),
+      editAdminRights: vi.fn(),
     } as any
 
     // Create mock parent
@@ -98,13 +99,32 @@ describe('telegramChat', () => {
   })
 
   describe('setAdmin', () => {
-    it('should throw error for unimplemented functionality', async () => {
-      await expect(telegramChat.setAdmin(987654321)).rejects.toThrow(
-        'setAdmin 功能待完善：需要使用 mtcute 的 call() 方法调用 channels.editAdmin API',
-      )
+    it('should call editAdminRights with default rights', async () => {
+      vi.mocked(mockClient.editAdminRights).mockResolvedValue(undefined as any)
+
+      await telegramChat.setAdmin(987654321)
+
+      expect(mockClient.editAdminRights).toHaveBeenCalledWith({
+        chatId: 123456789,
+        userId: 987654321,
+        rights: {
+          changeInfo: true,
+          postMessages: true,
+          editMessages: true,
+          deleteMessages: true,
+          banUsers: true,
+          inviteUsers: true,
+          pinMessages: true,
+          manageCall: true,
+          anonymous: false,
+          manageTopics: false,
+        },
+      })
     })
 
     it('should pass through custom rights parameter', async () => {
+      vi.mocked(mockClient.editAdminRights).mockResolvedValue(undefined as any)
+
       const customRights = {
         changeInfo: false,
         postMessages: false,
@@ -118,9 +138,13 @@ describe('telegramChat', () => {
         manageTopics: false,
       }
 
-      await expect(telegramChat.setAdmin(987654321, customRights)).rejects.toThrow(
-        'setAdmin 功能待完善',
-      )
+      await telegramChat.setAdmin(987654321, customRights)
+
+      expect(mockClient.editAdminRights).toHaveBeenCalledWith({
+        chatId: 123456789,
+        userId: 987654321,
+        rights: customRights,
+      })
     })
   })
   describe('editAbout', () => {
