@@ -39,7 +39,8 @@ WORKDIR /app
 
 FROM base AS build
 ARG USE_MIRROR=true
-ENV PNPM_STORE_PATH=/pnpm-store
+ENV PNPM_STORE_PATH=/pnpm-store \
+    CI=true
 
 # 编译环境依赖
 RUN apk add --no-cache \
@@ -71,7 +72,7 @@ COPY main/ /app/main/
 RUN pnpm --filter ./main run build
 
 # 剔除 devDependencies，避免将构建工具（如 esbuild）带入运行时镜像
-RUN CI=true pnpm prune --prod
+RUN pnpm prune --prod
 
 # Frontend 使用预构建产物
 COPY web/dist/ /app/web/dist/
