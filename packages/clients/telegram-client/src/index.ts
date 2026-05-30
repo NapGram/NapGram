@@ -1,0 +1,5 @@
+export { default } from './client.js'
+export type { TelegramConnectOptions, TelegramAuthMode } from './client.js'
+export { default as TelegramChat } from './chat.js'
+export * from './factory.js'
+export * from './deps.js'

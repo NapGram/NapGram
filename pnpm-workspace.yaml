@@ -1,7 +1,13 @@
-# Single-package workspace: retains pnpm workspace features (allowBuilds, overrides)
-# while core logic lives in external @napgram/* packages.
+# Monorepo workspace: the app (main) plus all @napgram/* packages live here.
 packages:
   - 'main'
+  - 'packages/sdk'
+  - 'packages/sdk-core'
+  - 'packages/sdk-utils'
+  - 'packages/core/*'
+  - 'packages/clients/*'
+  - 'packages/utilities/*'
+  - 'packages/plugins/**'
 minimumReleaseAge: 0
 allowBuilds:
   better-sqlite3: true

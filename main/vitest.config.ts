@@ -36,6 +36,12 @@ export default defineConfig({
           '@mtcute/test',
           '@mtcute/web',
         ],
+        // Treat workspace @napgram/* packages (now local under ../packages)
+        // as external so they load their built dist with real implementations,
+        // matching the pre-monorepo behavior where they were installed from the
+        // registry. The two clients above are explicitly inlined and excluded
+        // here via negative lookahead.
+        external: [/\/packages\/(?!clients\/(?:qq-client|telegram-client)\/)/],
       },
     },
     coverage: {

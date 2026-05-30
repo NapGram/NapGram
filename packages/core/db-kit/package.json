@@ -1,0 +1,56 @@
+{
+  "name": "@napgram/db-kit",
+  "version": "2.0.0",
+  "description": "Database primitives and mapping models for NapGram",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "keywords": [
+    "napgram",
+    "database",
+    "drizzle"
+  ],
+  "author": "NapGram Team",
+  "license": "MIT",
+  "dependencies": {
+    "@napgram/database": "workspace:*",
+    "@napgram/env-kit": "workspace:*",
+    "@napgram/logger-kit": "workspace:*",
+    "@napgram/qq-client": "workspace:^",
+    "@napgram/telegram-client": "workspace:^",
+    "drizzle-orm": "^0.45.1"
+  },
+  "devDependencies": {
+    "@types/node": "25.7.0",
+    "typescript": "6.0.3"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  }
+}
