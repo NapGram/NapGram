@@ -255,7 +255,7 @@ describe('instance', () => {
     expect(qqMocks.factory.create).toHaveBeenCalledWith({
       type: 'napcat',
       wsUrl: 'ws://db',
-      reconnect: false,
+      reconnect: true,
     })
     expect(qqMocks.client.login).toHaveBeenCalled()
     expect(instance.forwardPairs).toEqual({ map: true })

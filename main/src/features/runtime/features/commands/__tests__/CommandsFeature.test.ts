@@ -201,6 +201,7 @@ describe('commandsFeature', () => {
 
     mockInstance = {
       id: 1,
+      workMode: 'group',
       forwardPairs: {
         reload: vi.fn().mockResolvedValue(undefined),
         getPairs: vi.fn().mockReturnValue([]),

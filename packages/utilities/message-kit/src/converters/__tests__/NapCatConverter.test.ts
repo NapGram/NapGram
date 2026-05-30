@@ -9,6 +9,14 @@ vi.mock('@napgram/infra-kit', () => ({
   qface: { 14: '/smile' },
 }))
 
+vi.mock('@napgram/env-kit', () => ({
+  env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+}))
+
 describe('napCatConverter', () => {
   it('converts napcat segments and uses sender card', () => {
     const converter = new NapCatConverter()

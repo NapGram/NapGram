@@ -92,6 +92,14 @@ vi.mock('@napgram/infra-kit', () => ({
   }
 }))
 
+vi.mock('@napgram/env-kit', () => ({
+  env: envMock.env,
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => loggerMocks),
+}))
+
 vi.mock('../encoding/convertWithFfmpeg', () => ({
   default: ffmpegMocks.convertWithFfmpeg,
 }))

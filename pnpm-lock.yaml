@@ -69,6 +69,9 @@ importers:
       '@napgram/gateway-kit':
         specifier: workspace:*
         version: link:../packages/utilities/gateway-kit
+      '@napgram/infra-kit':
+        specifier: workspace:*
+        version: link:../packages/core/infra-kit
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../packages/core/logger-kit
@@ -540,9 +543,6 @@ importers:
       '@napgram/env-kit':
         specifier: workspace:*
         version: link:../../../core/env-kit
-      '@napgram/infra-kit':
-        specifier: workspace:*
-        version: link:../../../core/infra-kit
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../../../core/logger-kit
@@ -747,19 +747,6 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
-  packages/plugins/features/plugin-mode-filter:
-    dependencies:
-      '@napgram/sdk':
-        specifier: workspace:*
-        version: link:../../../sdk
-    devDependencies:
-      '@types/node':
-        specifier: 25.9.1
-        version: 25.9.1
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-
   packages/plugins/features/plugin-monitoring:
     dependencies:
       '@napgram/web-interfaces':
@@ -947,9 +934,6 @@ importers:
       '@napgram/db-kit':
         specifier: workspace:*
         version: link:../../core/db-kit
-      '@napgram/infra-kit':
-        specifier: workspace:*
-        version: link:../../core/infra-kit
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../../core/logger-kit
@@ -1009,9 +993,6 @@ importers:
       '@napgram/env-kit':
         specifier: workspace:*
         version: link:../../core/env-kit
-      '@napgram/infra-kit':
-        specifier: workspace:*
-        version: link:../../core/infra-kit
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../../core/logger-kit
@@ -1037,9 +1018,6 @@ importers:
       '@napgram/env-kit':
         specifier: workspace:*
         version: link:../../core/env-kit
-      '@napgram/infra-kit':
-        specifier: workspace:*
-        version: link:../../core/infra-kit
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../../core/logger-kit
@@ -1074,9 +1052,6 @@ importers:
       '@napgram/env-kit':
         specifier: workspace:*
         version: link:../../core/env-kit
-      '@napgram/infra-kit':
-        specifier: workspace:*
-        version: link:../../core/infra-kit
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../../core/logger-kit

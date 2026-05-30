@@ -75,7 +75,7 @@ describe('recallFeature', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks()
-    mockInstance = { id: 1 }
+    mockInstance = { id: 1, workMode: 'group' }
     mockTgBot = {
       addDeletedMessageEventHandler: vi.fn(),
       removeDeletedMessageEventHandler: vi.fn(),

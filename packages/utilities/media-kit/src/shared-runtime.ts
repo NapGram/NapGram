@@ -1,24 +1,11 @@
-import * as infraKit from '@napgram/infra-kit'
 import { randomBytes } from 'node:crypto'
 import fs from 'node:fs'
 import { rm } from 'node:fs/promises'
 import { join } from 'node:path'
-import { env as actualEnv } from '@napgram/env-kit'
-import { getLogger as actualGetLogger } from '@napgram/logger-kit'
+import { env } from '@napgram/env-kit'
+import { getLogger } from '@napgram/logger-kit'
 
-const compat = infraKit as Record<string, any>
-
-function getCompatExport<T>(key: string, fallback: T): T {
-  return key in compat ? compat[key] : fallback
-}
-
-const fallbackRandom = {
-  pick<T>(...items: T[]): T {
-    return items[Math.floor(Math.random() * items.length)]
-  },
-}
-
-const TEMP_PATH = join(actualEnv.DATA_DIR, 'temp')
+const TEMP_PATH = join(env.DATA_DIR, 'temp')
 let tempDirInitialized = false
 
 function ensureTempDir() {
@@ -30,7 +17,7 @@ function ensureTempDir() {
   }
 }
 
-const fallbackTemp = {
+const temp = {
   TEMP_PATH,
   async createTempFile(options?: { postfix?: string, prefix?: string }) {
     ensureTempDir()
@@ -49,11 +36,14 @@ const fallbackTemp = {
     }
   },
   file(options?: { postfix?: string, prefix?: string }) {
-    return fallbackTemp.createTempFile(options)
+    return temp.createTempFile(options)
   },
 }
 
-export const env = getCompatExport('env', actualEnv)
-export const getLogger = getCompatExport('getLogger', actualGetLogger)
-export const temp = getCompatExport('temp', fallbackTemp)
-export const random = getCompatExport('random', fallbackRandom)
+const random = {
+  pick<T>(...items: T[]): T {
+    return items[Math.floor(Math.random() * items.length)]
+  },
+}
+
+export { env, getLogger, temp, random }

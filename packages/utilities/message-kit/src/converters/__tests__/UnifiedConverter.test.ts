@@ -69,6 +69,19 @@ vi.mock('@napgram/infra-kit', () => ({
   },
 }))
 
+vi.mock('@napgram/env-kit', () => ({
+  env: envMock,
+}))
+
+vi.mock('@napgram/logger-kit', () => ({
+  getLogger: vi.fn(() => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  })),
+}))
+
 describe('unifiedConverter', () => {
   beforeEach(() => {
     vi.clearAllMocks()

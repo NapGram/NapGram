@@ -50,7 +50,7 @@ const REGISTRY: PluginDef[] = [
   ['adapter-telegram-mtcute', true],
 
   // Core features
-  ['ping-pong', true],
+  ['ping-pong', false],
   ['qq-interaction', true],
   ['refresh', true],
   ['flags', true],
