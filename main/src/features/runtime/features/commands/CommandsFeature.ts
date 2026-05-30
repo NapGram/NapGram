@@ -1,9 +1,6 @@
 import type { Message } from '@mtcute/core'
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardMap } from '../../shared-types.js'
-import type { Instance } from '../../shared-types.js'
-import type { IQQClient } from '../../shared-types.js'
-import type { Telegram } from '../../shared-types.js'
+import type { ForwardMap, Instance, IQQClient, Telegram } from '../../shared-types.js'
 import type { Command } from './types.js'
 import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '@napgram/message-kit'
@@ -138,9 +135,12 @@ export class CommandsFeature {
       // 查找权限管理插件
       const permPlugin = loadedPlugins.find((p: any) => p.id === 'permission-management')
       const resolveExports = (entry: any) => {
-        if (!entry) return null
-        if (entry.context?.exports) return entry.context.exports
-        if (entry.plugin?.exports) return entry.plugin.exports
+        if (!entry)
+          return null
+        if (entry.context?.exports)
+          return entry.context.exports
+        if (entry.plugin?.exports)
+          return entry.plugin.exports
         if (entry.context?.permissionService) {
           return { permissionService: entry.context.permissionService }
         }
@@ -157,7 +157,8 @@ export class CommandsFeature {
         this.permissionPlugin = permissionExports
         logger.info('✓ Permission plugin integrated')
       }
-    } catch (error) {
+    }
+    catch {
       // 插件系统不可用，使用降级模式
       logger.debug('Plugin system not available, using fallback permission checker')
     }
@@ -179,9 +180,10 @@ export class CommandsFeature {
           command.name,
           requiredLevel,
           requireOwner,
-          this.instance.id
+          this.instance.id,
         )
-      } catch (error) {
+      }
+      catch (error) {
         logger.warn('Permission check failed, falling back to PermissionChecker:', error)
       }
     }
@@ -192,7 +194,7 @@ export class CommandsFeature {
       const isAdmin = this.permissionChecker.isAdmin(userId)
       return {
         allowed: isAdmin,
-        reason: isAdmin ? undefined : '此命令仅限管理员使用'
+        reason: isAdmin ? undefined : '此命令仅限管理员使用',
       }
     }
 
@@ -216,9 +218,10 @@ export class CommandsFeature {
           operatorId: event.userId,
           commandName: event.commandName,
           instanceId: this.instance.id,
-          details: event.reason ? { reason: event.reason } : {}
+          details: event.reason ? { reason: event.reason } : {},
         })
-      } catch (error) {
+      }
+      catch (error) {
         logger.debug('Failed to log audit:', error)
       }
     }
@@ -567,7 +570,7 @@ export class CommandsFeature {
     }
   }
 
-  private isForwardSegment(seg: any): seg is { type: 'forward'; data: { messages: any[] } } {
+  private isForwardSegment(seg: any): seg is { type: 'forward', data: { messages: any[] } } {
     return !!seg && seg.type === 'forward' && Array.isArray(seg.data?.messages)
   }
 
@@ -860,7 +863,6 @@ export class CommandsFeature {
         return false
       }
 
-
       // 检查权限
       const userId = `tg:u:${senderId}`
       const permissionCheck = await this.checkPermission(userId, command)
@@ -874,7 +876,7 @@ export class CommandsFeature {
           eventType: 'command_deny',
           userId,
           commandName,
-          reason: permissionCheck.reason
+          reason: permissionCheck.reason,
         })
 
         return true
@@ -888,7 +890,6 @@ export class CommandsFeature {
         userId,
         commandName,
       })
-
 
       // 如果有回复但回复对象不完整，尝试获取完整消息
       let replenishedReply: Message | undefined
@@ -1032,7 +1033,6 @@ export class CommandsFeature {
         return
       }
 
-
       // 检查权限
       const userId = `qq:u:${senderId}`
       const permissionCheck = await this.checkPermission(userId, command)
@@ -1045,7 +1045,7 @@ export class CommandsFeature {
           eventType: 'command_deny',
           userId,
           commandName,
-          reason: permissionCheck.reason
+          reason: permissionCheck.reason,
         })
         return
       }
@@ -1058,7 +1058,6 @@ export class CommandsFeature {
         userId,
         commandName,
       })
-
 
       // 执行命令
       await command.handler(qqMsg, args)

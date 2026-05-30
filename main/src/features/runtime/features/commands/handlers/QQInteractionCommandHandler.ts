@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { getLogger } from '../../../shared-types.js'
 import type { ForwardMap } from '../../../shared-types.js'
 import type { CommandContext } from './CommandContext.js'
+import { getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('QQInteractionCommandHandler')
 
@@ -99,7 +99,7 @@ export class QQInteractionCommandHandler {
       return
     }
 
-    const duration = args[1] ? parseInt(args[1], 10) : 30 * 60
+    const duration = args[1] ? Number.parseInt(args[1], 10) : 30 * 60
 
     try {
       const success = await this.context.qqClient.setGroupBan?.(String(pair.qqRoomId), target, duration)
@@ -259,7 +259,8 @@ export class QQInteractionCommandHandler {
   }
 
   private getPair(msg: UnifiedMessage) {
-    if (msg.platform !== 'telegram') return null
+    if (msg.platform !== 'telegram')
+      return null
     const forwardMap = this.context.instance.forwardPairs as ForwardMap
     const threadId = this.context.extractThreadId(msg, [])
     return forwardMap.findByTG(msg.chat.id, threadId, Boolean(threadId))

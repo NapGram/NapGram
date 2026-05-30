@@ -18,9 +18,9 @@ const fetchMock = vi.fn().mockImplementation(() => {
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)),
   })
 })
-global.fetch = fetchMock as any
+globalThis.fetch = fetchMock as any
 
-describe('PersonalSyncService', () => {
+describe('personalSyncService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     fetchMock.mockClear()

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@napgram/db-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import processNestedForward from '../processNestedForward'
 
 // Mock db

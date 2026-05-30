@@ -6,7 +6,7 @@ const instances: RegisteredInstance[] = []
 
 export const instanceRegistry = {
   add(instance: RegisteredInstance) {
-    if (!instances.find(item => item.id === instance.id)) {
+    if (!instances.some(item => item.id === instance.id)) {
       instances.push(instance)
     }
   },

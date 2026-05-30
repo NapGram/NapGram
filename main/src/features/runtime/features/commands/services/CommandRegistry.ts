@@ -1,5 +1,5 @@
-import { getLogger } from '../../../shared-types.js'
 import type { Command } from '../types.js'
+import { getLogger } from '../../../shared-types.js'
 
 const logger = getLogger('CommandRegistry')
 

@@ -1,6 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardMap, IQQClient, Instance, Telegram } from '../../../shared-types.js'
+import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../shared-types.js'
 import type { QqChatType, TypedForwardPair } from '../../commands/utils/ForwardPairChatType.js'
+import process from 'node:process'
 import { getLogger } from '../../../shared-types.js'
 import { addForwardPairWithChatType, findPairByQQWithChatType } from '../../commands/utils/ForwardPairChatType.js'
 
@@ -121,14 +122,14 @@ export class PersonalPairProvisioner {
       try {
         const foldersResult = await client.call({ _: 'messages.getDialogFilters' })
         const filters = foldersResult.filters || []
-        
-        let qqFilter = filters.find((f: any) => f._ === 'dialogFilter' && f.title === 'QQ')
+
+        const qqFilter = filters.find((f: any) => f._ === 'dialogFilter' && f.title === 'QQ')
         if (qqFilter) {
           const includePeers = qqFilter.includePeers || []
           const exists = includePeers.some((p: any) => {
-            return (p.userId && String(p.userId) === String(inputPeer.userId)) ||
-                   (p.chatId && String(p.chatId) === String(inputPeer.chatId)) ||
-                   (p.channelId && String(p.channelId) === String(inputPeer.channelId))
+            return (p.userId && String(p.userId) === String(inputPeer.userId))
+              || (p.chatId && String(p.chatId) === String(inputPeer.chatId))
+              || (p.channelId && String(p.channelId) === String(inputPeer.channelId))
           })
 
           if (!exists) {
@@ -298,7 +299,7 @@ export class PersonalPairProvisioner {
     if (!tgBot || typeof tgBot.getChat !== 'function')
       return
 
-    const attempts = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' ? 1 : 3
+    const attempts = process.env.NODE_ENV === 'test' ? 1 : 3
     let lastError: unknown
     for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
@@ -314,4 +315,3 @@ export class PersonalPairProvisioner {
     throw lastError instanceof Error ? lastError : new Error(String(lastError))
   }
 }
-

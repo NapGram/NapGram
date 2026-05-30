@@ -1,13 +1,9 @@
 import type { Message } from '@mtcute/core'
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardPairRecord } from '../../shared-types.js'
-import type { ForwardMap } from '../../shared-types.js'
-import type { Instance } from '../../shared-types.js'
-import type { IQQClient } from '../../shared-types.js'
-import type { Telegram } from '../../shared-types.js'
-import type { MessageSegment } from '../../shared-types.js'
+import type { ForwardMap, ForwardPairRecord, Instance, IQQClient, MessageSegment, Telegram } from '../../shared-types.js'
 import type { CommandsFeature } from '../commands/CommandsFeature.js'
 import type { MediaFeature } from '../MediaFeature.js'
+import process from 'node:process'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
@@ -50,6 +46,7 @@ export class ForwardFeature {
     chain: Promise.resolve(),
     nextAvailableAt: 0,
   }
+
   private handleTgMessage = async (tgMsg: Message) => {
     const rawText = tgMsg.text || ''
     logger.debug('[Forward][TG->QQ] incoming', {
@@ -168,7 +165,7 @@ export class ForwardFeature {
   }
 
   private getMinSendIntervalMs(): number {
-    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test')
+    if (process.env.NODE_ENV === 'test')
       return 0
     return DEFAULT_TG_SEND_INTERVAL_MS
   }
@@ -760,15 +757,16 @@ export class ForwardFeature {
     }
   }
 
-
-  private handleFriendIncrease = async (friend: { id: string; name?: string }) => {
+  private handleFriendIncrease = async (friend: { id: string, name?: string }) => {
     try {
-      const isPersonal = (this.instance as any).workMode === 'personal' ||
-                         (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
-      if (!isPersonal) return
+      const isPersonal = (this.instance as any).workMode === 'personal'
+        || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+      if (!isPersonal)
+        return
 
       const ownerId = this.instance.owner
-      if (!ownerId) return
+      if (!ownerId)
+        return
 
       const friendName = friend.name || await this.qqClient.getFriendInfo(friend.id).then(f => f?.name).catch(() => '') || '未知好友'
       const text = `👤 【个人模式】发现新 QQ 好友：\nQQ: ${friend.id}\n昵称: ${friendName}\n\n点击一键建群并绑定：\n/bindfriend ${friend.id}`
@@ -782,9 +780,10 @@ export class ForwardFeature {
 
   private handleGroupIncrease = async (groupId: string, member?: any) => {
     try {
-      const isPersonal = (this.instance as any).workMode === 'personal' ||
-                         (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
-      if (!isPersonal) return
+      const isPersonal = (this.instance as any).workMode === 'personal'
+        || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+      if (!isPersonal)
+        return
 
       // member?.id === uin 说明是机器人自己加入了新群
       const selfUin = String(this.qqClient.uin)
@@ -793,7 +792,8 @@ export class ForwardFeature {
       }
 
       const ownerId = this.instance.owner
-      if (!ownerId) return
+      if (!ownerId)
+        return
 
       const groupInfo = await this.qqClient.getGroupInfo(groupId).catch(() => null)
       const groupName = groupInfo?.name || '未知群聊'
