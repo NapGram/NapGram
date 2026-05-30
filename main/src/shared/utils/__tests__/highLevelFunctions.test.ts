@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { consumer, debounce, throttle } from '../highLevelFunces'
+import { consumer, debounce, throttle } from '../highLevelFunctions'
 
-describe('highLevelFunces', () => {
+describe('highLevelFunctions', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
