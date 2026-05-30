@@ -1,0 +1,41 @@
+{
+    "schemaVersion": 1,
+    "kind": "native",
+    "id": "permission-management",
+    "name": "权限管理",
+    "description": "提供完整的多级权限控制系统，支持5个权限等级、权限授予/撤销、命令权限配置和审计日志",
+    "entry": "dist/index.js",
+    "config": {
+        "enableAuditLog": {
+            "type": "boolean",
+            "default": true,
+            "description": "是否启用审计日志"
+        },
+        "defaultLevel": {
+            "type": "number",
+            "default": 3,
+            "min": 0,
+            "max": 4,
+            "description": "默认权限等级（0: 超级管理员, 1: 管理员, 2: 版主, 3: 普通用户, 4: 访客）"
+        },
+        "cacheEnabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "是否启用权限缓存"
+        },
+        "cacheExpireMinutes": {
+            "type": "number",
+            "default": 60,
+            "min": 1,
+            "max": 1440,
+            "description": "缓存过期时间（分钟）"
+        },
+        "auditLogRetentionDays": {
+            "type": "number",
+            "default": 90,
+            "min": 1,
+            "max": 365,
+            "description": "审计日志保留天数"
+        }
+    }
+}

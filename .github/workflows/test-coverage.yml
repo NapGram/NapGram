@@ -71,6 +71,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Build @napgram packages
+        run: pnpm -r --filter "./packages/**" run build
+
       - name: Run Drizzle migrations
         run: bash ./main/tools/run-drizzle-migrations.sh
         env:
