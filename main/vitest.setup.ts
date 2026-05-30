@@ -39,6 +39,7 @@ vi.mock('@napgram/db-kit', () => ({
     insert: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    execute: vi.fn().mockResolvedValue({ rowCount: 1 }),
   },
   drizzleDb: {
     select: vi.fn(),
