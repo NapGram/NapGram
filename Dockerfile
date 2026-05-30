@@ -50,6 +50,8 @@ RUN apk add --no-cache \
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
 COPY main/package.json /app/main/
+# 工作区内的 @napgram/* 包源码（含各包 package.json，安装时需要）
+COPY packages/ /app/packages/
 
 
 # 两步安装策略：
@@ -65,6 +67,9 @@ RUN --mount=type=cache,target=/pnpm-store \
     fi && \
     pnpm install --frozen-lockfile --shamefully-hoist && \
     rm -f /app/.npmrc
+
+# 先构建所有 @napgram/* 工作区包（生成 dist，供运行时按 external 解析）
+RUN pnpm -r --filter "./packages/**" run build
 
 # 源码构建（后端）
 
@@ -84,6 +89,9 @@ ARG REF=Local Build
 ARG COMMIT=Local Build
 
 COPY --from=build --chown=node:node /app/node_modules /app/node_modules
+# 工作区包（dist）：main 的产物把 @napgram/* 标记为 external，运行时经
+# node_modules/@napgram/* 软链接解析到 packages/**/dist，因此必须一并带上。
+COPY --from=build --chown=node:node /app/packages /app/packages
 COPY --from=build --chown=node:node /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
 COPY --from=build --chown=node:node /app/main/tools/drizzle /app/main/tools/drizzle
 COPY --from=build --chown=node:node /app/main/build /app/build

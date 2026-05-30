@@ -1,0 +1,58 @@
+{
+  "name": "@napgram/infra-kit",
+  "version": "2.0.0",
+  "description": "Infrastructure exports for NapGram plugins",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch"
+  },
+  "keywords": [
+    "napgram",
+    "infrastructure"
+  ],
+  "author": "NapGram Team",
+  "license": "MIT",
+  "dependencies": {
+    "@napgram/db-kit": "workspace:*",
+    "@napgram/env-kit": "workspace:*",
+    "@napgram/logger-kit": "workspace:*",
+    "@napgram/qq-client": "workspace:^",
+    "@napgram/telegram-client": "workspace:^",
+    "fastify": "5.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "25.7.0",
+    "@types/pg": "^8.16.0",
+    "drizzle-kit": "^0.31.8",
+    "typescript": "6.0.3",
+    "vitest": "4.1.6"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}
