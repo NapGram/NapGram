@@ -155,6 +155,11 @@ jobs:
             echo "web/dist already present, skip build"
             exit 0
           fi
+          # pnpm v11 blocks build scripts unless explicitly allowed;
+          # web/ is installed standalone (--ignore-workspace) so it needs its own config.
+          if [ ! -f web/pnpm-workspace.yaml ]; then
+            printf 'allowBuilds:\n  esbuild: true\n' > web/pnpm-workspace.yaml
+          fi
           pnpm -C web install --frozen-lockfile --ignore-workspace || pnpm -C web install --no-frozen-lockfile --ignore-workspace
           pnpm -C web --ignore-workspace run build
 
@@ -371,6 +376,11 @@ jobs:
           if [ -d web/dist ] && [ -n "$(ls -A web/dist 2>/dev/null)" ]; then
             echo "web/dist already present, skip build"
             exit 0
+          fi
+          # pnpm v11 blocks build scripts unless explicitly allowed;
+          # web/ is installed standalone (--ignore-workspace) so it needs its own config.
+          if [ ! -f web/pnpm-workspace.yaml ]; then
+            printf 'allowBuilds:\n  esbuild: true\n' > web/pnpm-workspace.yaml
           fi
           pnpm -C web install --frozen-lockfile --ignore-workspace || pnpm -C web install --no-frozen-lockfile --ignore-workspace
           pnpm -C web --ignore-workspace run build
