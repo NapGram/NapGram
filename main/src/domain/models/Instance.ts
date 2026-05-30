@@ -228,7 +228,7 @@ export default class Instance {
         type: 'napcat',
         wsUrl,
         ...(wsToken ? { token: wsToken } : {}),
-        reconnect: false,
+        reconnect: true,
       })
 
       // 重试连接 NapCat，等待其就绪（如扫码登录）
