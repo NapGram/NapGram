@@ -18,8 +18,8 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@mtcute/core": "^0.29.1",
-    "@mtcute/node": "^0.29.1",
+    "@mtcute/core": "^0.29.7",
+    "@mtcute/node": "^0.29.7",
     "@napgram/message-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
@@ -32,7 +32,7 @@
   "author": "NapGram Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "25.7.0",
+    "@types/node": "25.9.1",
     "@types/ws": "^8.18.1",
     "typescript": "6.0.3"
   },
