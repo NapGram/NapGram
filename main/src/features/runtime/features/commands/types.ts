@@ -11,9 +11,9 @@ export type CommandHandler = (msg: UnifiedMessage, args: string[]) => Promise<vo
  * 0=SUPER_ADMIN, 1=ADMIN, 2=MODERATOR, 3=USER, 4=GUEST
  */
 export interface CommandPermission {
-  level: number                                                       // 所需权限等级(0-4)
-  requireOwner?: boolean                                              // 是否必须是实例所有者
-  customCheck?: (userId: string, instanceId: number) => Promise<boolean>  // 自定义权限检查
+  level: number // 所需权限等级(0-4)
+  requireOwner?: boolean // 是否必须是实例所有者
+  customCheck?: (userId: string, instanceId: number) => Promise<boolean> // 自定义权限检查
 }
 
 /**

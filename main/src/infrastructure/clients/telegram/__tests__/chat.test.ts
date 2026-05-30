@@ -6,7 +6,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TelegramChat from '../chat'
 import { createMockChat } from './mtcuteTestHelpers'
 
-
 describe('telegramChat', () => {
   let mockClient: TelegramClient
   let mockParent: Telegram

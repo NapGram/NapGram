@@ -1,12 +1,10 @@
 import type { AudioContent, ImageContent, VideoContent } from '@napgram/message-kit'
-import type { Instance } from '../shared-types.js'
-import type { IQQClient } from '../shared-types.js'
-import type { Telegram } from '../shared-types.js'
+import type { Instance, IQQClient, Telegram } from '../shared-types.js'
 
 import { Buffer } from 'node:buffer'
 import fsP from 'node:fs/promises'
 import { fileTypeFromBuffer } from 'file-type'
-import { decode, encode, Image as ImageJS } from 'image-js'
+import { decode, encode } from 'image-js'
 import { getLogger, temp } from '../shared-types.js'
 
 const logger = getLogger('MediaFeature')
@@ -335,7 +333,8 @@ export class MediaFeature {
 
       // Determine format for Image-JS
       let format: 'jpeg' | 'png' = 'jpeg'
-      if (mime === 'image/png') format = 'png'
+      if (mime === 'image/png')
+        format = 'png'
       // WebP is not directly supported for encoding in basic image-js without plugins, usually falls back to png/jpeg if forced or fails.
       // Logic above filters to jpeg/png/bmp/tiff.
 
@@ -358,7 +357,8 @@ export class MediaFeature {
           // PNG compression loop is mostly futile for quality param, but structure kept.
           compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
           // Force break for PNG as reducing "quality" var doesn't help much if we don't change png params, and we want to avoid infinite loop if size doesn't ensure.
-          if (format === 'png') break
+          if (format === 'png')
+            break
         }
       }
 

@@ -1,7 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { Instance } from '../../../shared-types.js'
-import type { IQQClient } from '../../../shared-types.js'
-import type { Telegram } from '../../../shared-types.js'
+import type { Instance, IQQClient, Telegram } from '../../../shared-types.js'
 import { telegramSend } from '../../../../../shared/utils/index.js'
 import { env, getLogger } from '../../../shared-types.js'
 

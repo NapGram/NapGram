@@ -333,18 +333,18 @@ export class TelegramSender {
         const isVenue = Boolean((loc.title && loc.title.trim()) || (loc.address && loc.address.trim()))
         mediaInput = isVenue
           ? {
-            type: 'venue',
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-            title: loc.title || '位置',
-            address: loc.address || '',
-            source: { provider: 'qq', id: '', type: '' },
-          }
+              type: 'venue',
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+              title: loc.title || '位置',
+              address: loc.address || '',
+              source: { provider: 'qq', id: '', type: '' },
+            }
           : {
-            type: 'geo',
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-          }
+              type: 'geo',
+              latitude: loc.latitude,
+              longitude: loc.longitude,
+            }
       }
       else if (content.type === 'dice') {
         const emoji = (content as any).data.emoji || '🎲'

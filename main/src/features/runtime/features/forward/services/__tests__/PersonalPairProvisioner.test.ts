@@ -88,7 +88,7 @@ function createRuntime(overrides: Record<string, unknown> = {}) {
   return { instance, forwardMap, qqClient, tgBot, tgUserClient }
 }
 
-describe('PersonalPairProvisioner', () => {
+describe('personalPairProvisioner', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     pairHelperMocks.findPairByQQWithChatType.mockResolvedValue(undefined)
@@ -192,4 +192,3 @@ describe('PersonalPairProvisioner', () => {
     expect(addForwardPairWithChatType).toHaveBeenCalledTimes(1)
   })
 })
-
