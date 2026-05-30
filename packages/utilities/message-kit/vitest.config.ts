@@ -12,7 +12,6 @@ const clientSrc = (name: string) => packageSrc('clients', name)
 export default defineConfig({
     resolve: {
         alias: {
-            '@napgram/feature-kit': utilitySrc('feature-kit'),
             '@napgram/gateway-kit': utilitySrc('gateway-kit'),
             '@napgram/infra-kit': coreSrc('infra-kit'),
             '@napgram/auth-kit': utilitySrc('auth-kit'),

@@ -970,67 +970,6 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
 
-  packages/utilities/feature-kit:
-    dependencies:
-      '@mtcute/core':
-        specifier: ^0.29.7
-        version: 0.29.7
-      '@mtcute/markdown-parser':
-        specifier: ^0.29.7
-        version: 0.29.7
-      '@mtcute/node':
-        specifier: ^0.29.7
-        version: 0.29.7(ws@8.21.0)
-      '@napgram/auth-kit':
-        specifier: workspace:*
-        version: link:../auth-kit
-      '@napgram/db-kit':
-        specifier: workspace:*
-        version: link:../../core/db-kit
-      '@napgram/env-kit':
-        specifier: workspace:*
-        version: link:../../core/env-kit
-      '@napgram/infra-kit':
-        specifier: workspace:*
-        version: link:../../core/infra-kit
-      '@napgram/logger-kit':
-        specifier: workspace:*
-        version: link:../../core/logger-kit
-      '@napgram/media-kit':
-        specifier: workspace:*
-        version: link:../media-kit
-      '@napgram/message-kit':
-        specifier: workspace:*
-        version: link:../message-kit
-      '@napgram/plugin-kit':
-        specifier: workspace:*
-        version: link:../../core/plugin-kit
-      '@napgram/qq-client':
-        specifier: workspace:*
-        version: link:../../clients/qq-client
-      '@napgram/runtime-kit':
-        specifier: workspace:*
-        version: link:../../core/runtime-kit
-      '@napgram/telegram-client':
-        specifier: workspace:*
-        version: link:../../clients/telegram-client
-      file-type:
-        specifier: ^22.0.0
-        version: 22.0.1
-      image-js:
-        specifier: ^1.3.0
-        version: 1.6.1
-    devDependencies:
-      '@types/node':
-        specifier: 25.9.1
-        version: 25.9.1
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: 4.1.7
-        version: 4.1.7(@opentelemetry/api@1.9.1)(@types/node@25.9.1)(@vitest/coverage-v8@4.1.7)(vite@8.0.12(@types/node@25.9.1)(esbuild@0.28.0)(tsx@4.22.3)(yaml@2.9.0))
-
   packages/utilities/gateway-kit:
     dependencies:
       '@mtcute/core':
@@ -5060,8 +4999,8 @@ snapshots:
 
   '@typescript-eslint/project-service@8.58.0(typescript@6.0.3)':
     dependencies:
-      '@typescript-eslint/tsconfig-utils': 8.58.0(typescript@6.0.3)
-      '@typescript-eslint/types': 8.58.0
+      '@typescript-eslint/tsconfig-utils': 8.59.2(typescript@6.0.3)
+      '@typescript-eslint/types': 8.59.2
       debug: 4.4.3
       typescript: 6.0.3
     transitivePeerDependencies:
