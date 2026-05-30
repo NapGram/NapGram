@@ -1,3 +1,5 @@
+# Single-package workspace: retains pnpm workspace features (allowBuilds, overrides)
+# while core logic lives in external @napgram/* packages.
 packages:
   - 'main'
 minimumReleaseAge: 0
