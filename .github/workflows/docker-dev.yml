@@ -155,12 +155,13 @@ jobs:
             echo "web/dist already present, skip build"
             exit 0
           fi
-          # pnpm v11 blocks build scripts unless explicitly allowed;
-          # web/ is installed standalone (--ignore-workspace) so it needs its own config.
+          # pnpm v11 blocks build scripts unless explicitly allowed via allowBuilds.
+          # --ignore-workspace skips pnpm-workspace.yaml entirely (including allowBuilds),
+          # so we drop it from install and only use it for `run build`.
           if [ ! -f web/pnpm-workspace.yaml ]; then
             printf 'allowBuilds:\n  esbuild: true\n' > web/pnpm-workspace.yaml
           fi
-          pnpm -C web install --frozen-lockfile --ignore-workspace || pnpm -C web install --no-frozen-lockfile --ignore-workspace
+          pnpm -C web install --frozen-lockfile || pnpm -C web install --no-frozen-lockfile
           pnpm -C web --ignore-workspace run build
 
       - name: Prepare tag date
@@ -377,12 +378,13 @@ jobs:
             echo "web/dist already present, skip build"
             exit 0
           fi
-          # pnpm v11 blocks build scripts unless explicitly allowed;
-          # web/ is installed standalone (--ignore-workspace) so it needs its own config.
+          # pnpm v11 blocks build scripts unless explicitly allowed via allowBuilds.
+          # --ignore-workspace skips pnpm-workspace.yaml entirely (including allowBuilds),
+          # so we drop it from install and only use it for `run build`.
           if [ ! -f web/pnpm-workspace.yaml ]; then
             printf 'allowBuilds:\n  esbuild: true\n' > web/pnpm-workspace.yaml
           fi
-          pnpm -C web install --frozen-lockfile --ignore-workspace || pnpm -C web install --no-frozen-lockfile --ignore-workspace
+          pnpm -C web install --frozen-lockfile || pnpm -C web install --no-frozen-lockfile
           pnpm -C web --ignore-workspace run build
 
       - name: Prepare tag date
