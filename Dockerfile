@@ -62,7 +62,7 @@ RUN --mount=type=cache,target=/pnpm-store \
         echo "@napgram:registry=https://npm.pkg.github.com" > /app/.npmrc; \
         cat /run/secrets/npmrc >> /app/.npmrc; \
     fi && \
-    (pnpm install --frozen-lockfile --shamefully-hoist || pnpm install --no-frozen-lockfile --shamefully-hoist) && \
+    pnpm install --frozen-lockfile --shamefully-hoist && \
     rm -f /app/.npmrc
 
 # 源码构建（后端）

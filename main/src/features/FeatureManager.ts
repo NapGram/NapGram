@@ -9,6 +9,10 @@ const logger = getLogger('FeatureManager')
 type FeatureName = 'media' | 'commands' | 'forward' | 'recall'
 type ManagedFeature = MediaFeature | CommandsFeature | ForwardFeature | RecallFeature
 
+interface Destroyable {
+  destroy: () => void
+}
+
 export class FeatureManager {
   private features: Map<FeatureName, ManagedFeature> = new Map()
   private initialized = false
@@ -32,16 +36,16 @@ export class FeatureManager {
       messageConverter.setInstance(this.instance)
       logger.debug('✓ MessageConverter instance set')
 
-      this.attachFeature('media', () => new MediaFeature(this.instance as any, this.tgBot as any, this.qqClient))
-      this.attachFeature('commands', () => new CommandsFeature(this.instance as any, this.tgBot as any, this.qqClient))
+      this.attachFeature('media', () => new MediaFeature(this.instance, this.tgBot, this.qqClient))
+      this.attachFeature('commands', () => new CommandsFeature(this.instance, this.tgBot, this.qqClient))
       this.attachFeature('forward', () => new ForwardFeature(
-        this.instance as any,
-        this.tgBot as any,
+        this.instance,
+        this.tgBot,
         this.qqClient,
         this.media,
         this.commands,
       ))
-      this.attachFeature('recall', () => new RecallFeature(this.instance as any, this.tgBot as any, this.qqClient))
+      this.attachFeature('recall', () => new RecallFeature(this.instance, this.tgBot, this.qqClient))
 
       this.initialized = true
       logger.info(`FeatureManager 初始化完成，共 ${this.features.size} 个宿主功能`)
@@ -111,8 +115,8 @@ export class FeatureManager {
       }
 
       try {
-        if (typeof (feature as any).destroy === 'function') {
-          await (feature as any).destroy()
+        if ('destroy' in feature && typeof (feature as Destroyable).destroy === 'function') {
+          (feature as Destroyable).destroy()
           logger.debug(`✓ ${name} destroyed`)
         }
       }

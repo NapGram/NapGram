@@ -1,187 +1,95 @@
 import { env } from '@napgram/env-kit'
 
-// 使用动态导入避免打包时的路径问题
-const builtinQqNapcatAdapter = () => import('@napgram/plugin-adapter-qq-napcat')
-const builtinTelegramAdapter = () => import('@napgram/plugin-adapter-telegram-mtcute')
-const builtinAdminAuth = () => import('@napgram/plugin-admin-auth')
-const builtinAdminDatabase = () => import('@napgram/plugin-admin-database')
-const builtinAdminInstances = () => import('@napgram/plugin-admin-instances')
-const builtinAdminLogs = () => import('@napgram/plugin-admin-logs')
-const builtinAdminMessages = () => import('@napgram/plugin-admin-messages')
-const builtinAdminPairs = () => import('@napgram/plugin-admin-pairs')
-const builtinAdminPlugins = () => import('@napgram/plugin-admin-plugins')
-const builtinAdminSettings = () => import('@napgram/plugin-admin-settings')
-const builtinAdminSuite = () => import('@napgram/plugin-admin-suite')
-const builtinPermissionManagement = () => import('@napgram/plugin-permission-management')
-const builtinFlags = () => import('@napgram/plugin-flags')
-const builtinGateway = () => import('@napgram/plugin-gateway')
-const builtinGroupManagement = () => import('@napgram/plugin-group-management')
-const builtinMonitoring = () => import('@napgram/plugin-monitoring')
-const builtinNotifications = () => import('@napgram/plugin-notifications')
-const builtinPingPong = () => import('@napgram/plugin-ping-pong')
-const builtinQQInteraction = () => import('@napgram/plugin-qq-interaction')
-const builtinRefresh = () => import('@napgram/plugin-refresh')
-const builtinRequestHandler = () => import('@napgram/plugin-request-handler')
-const builtinRequestManagement = () => import('@napgram/plugin-request-management')
-const builtinStatistics = () => import('@napgram/plugin-statistics')
-const builtinWebAssets = () => import('@napgram/plugin-web-assets')
-const builtinWebConsole = () => import('@napgram/plugin-web-console')
+// ---------------------------------------------------------------------------
+// Plugin import map — static strings required for bundler compatibility
+// ---------------------------------------------------------------------------
+const IMPORT_MAP: Record<string, () => Promise<any>> = {
+  'adapter-qq-napcat': () => import('@napgram/plugin-adapter-qq-napcat'),
+  'adapter-telegram-mtcute': () => import('@napgram/plugin-adapter-telegram-mtcute'),
+  'admin-auth': () => import('@napgram/plugin-admin-auth'),
+  'admin-database': () => import('@napgram/plugin-admin-database'),
+  'admin-instances': () => import('@napgram/plugin-admin-instances'),
+  'admin-logs': () => import('@napgram/plugin-admin-logs'),
+  'admin-messages': () => import('@napgram/plugin-admin-messages'),
+  'admin-pairs': () => import('@napgram/plugin-admin-pairs'),
+  'admin-plugins': () => import('@napgram/plugin-admin-plugins'),
+  'admin-settings': () => import('@napgram/plugin-admin-settings'),
+  'admin-suite': () => import('@napgram/plugin-admin-suite'),
+  'flags': () => import('@napgram/plugin-flags'),
+  'gateway': () => import('@napgram/plugin-gateway'),
+  'group-management': () => import('@napgram/plugin-group-management'),
+  'monitoring': () => import('@napgram/plugin-monitoring'),
+  'notifications': () => import('@napgram/plugin-notifications'),
+  'permission-management': () => import('@napgram/plugin-permission-management'),
+  'ping-pong': () => import('@napgram/plugin-ping-pong'),
+  'qq-interaction': () => import('@napgram/plugin-qq-interaction'),
+  'refresh': () => import('@napgram/plugin-refresh'),
+  'request-handler': () => import('@napgram/plugin-request-handler'),
+  'request-management': () => import('@napgram/plugin-request-management'),
+  'statistics': () => import('@napgram/plugin-statistics'),
+  'web-assets': () => import('@napgram/plugin-web-assets'),
+  'web-console': () => import('@napgram/plugin-web-console'),
+}
 
-export const builtins = [
-  {
-    id: 'adapter-qq-napcat',
-    module: '@builtin/adapter-qq-napcat',
-    enabled: true,
-    load: builtinQqNapcatAdapter,
-  },
-  {
-    id: 'adapter-telegram-mtcute',
-    module: '@builtin/adapter-telegram-mtcute',
-    enabled: true,
-    load: builtinTelegramAdapter,
-  },
-  {
-    id: 'ping-pong',
-    module: '@builtin/ping-pong',
-    enabled: true,
-    load: builtinPingPong,
-  },
-  {
-    id: 'qq-interaction',
-    module: '@builtin/qq-interaction',
-    enabled: true,
-    load: builtinQQInteraction,
-  },
-  {
-    id: 'refresh',
-    module: '@builtin/refresh',
-    enabled: true,
-    load: builtinRefresh,
-  },
-  {
-    id: 'flags',
-    module: '@builtin/flags',
-    enabled: true,
-    load: builtinFlags,
-  },
-  {
-    id: 'request-handler',
-    module: '@builtin/request-handler',
-    enabled: true,
-    load: builtinRequestHandler,
-  },
-  {
-    id: 'request-management',
-    module: '@builtin/request-management',
-    enabled: true,
-    load: builtinRequestManagement,
-  },
-  {
-    id: 'group-management',
-    module: '@builtin/group-management',
-    enabled: true,
-    load: builtinGroupManagement,
-  },
-  {
-    id: 'monitoring',
-    module: '@builtin/monitoring',
-    enabled: true,
-    load: builtinMonitoring,
-  },
-  {
-    id: 'statistics',
-    module: '@builtin/statistics',
-    enabled: true,
-    load: builtinStatistics,
-  },
-  {
-    id: 'gateway',
-    module: '@builtin/gateway',
-    enabled: false,
-    load: builtinGateway,
-  },
-  {
-    id: 'notifications',
-    module: '@builtin/notifications',
+// ---------------------------------------------------------------------------
+// Declarative plugin registry: [id, enabled, config?]
+// ---------------------------------------------------------------------------
+interface BuiltinPlugin {
+  id: string
+  module: string
+  enabled: boolean
+  config?: Record<string, unknown>
+  load: () => Promise<any>
+}
+
+type PluginDef = [id: string, enabled: boolean] | [id: string, enabled: boolean, config: Record<string, unknown>]
+
+const REGISTRY: PluginDef[] = [
+  // Adapters
+  ['adapter-qq-napcat', true],
+  ['adapter-telegram-mtcute', true],
+
+  // Core features
+  ['ping-pong', true],
+  ['qq-interaction', true],
+  ['refresh', true],
+  ['flags', true],
+  ['request-handler', true],
+  ['request-management', true],
+  ['group-management', true],
+  ['monitoring', true],
+  ['statistics', true],
+
+  // Optional / env-gated
+  ['gateway', false],
+  ['notifications', Boolean(env.ENABLE_OFFLINE_NOTIFICATION), {
     enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
-    config: {
-      enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
-      adminQQ: env.ADMIN_QQ,
-      adminTG: env.ADMIN_TG,
-      cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
-    },
-    load: builtinNotifications,
-  },
-  {
-    id: 'admin-auth',
-    module: '@builtin/admin-auth',
-    enabled: false,
-    load: builtinAdminAuth,
-  },
-  {
-    id: 'admin-instances',
-    module: '@builtin/admin-instances',
-    enabled: false,
-    load: builtinAdminInstances,
-  },
-  {
-    id: 'admin-pairs',
-    module: '@builtin/admin-pairs',
-    enabled: false,
-    load: builtinAdminPairs,
-  },
-  {
-    id: 'admin-messages',
-    module: '@builtin/admin-messages',
-    enabled: false,
-    load: builtinAdminMessages,
-  },
-  {
-    id: 'admin-logs',
-    module: '@builtin/admin-logs',
-    enabled: false,
-    load: builtinAdminLogs,
-  },
-  {
-    id: 'admin-settings',
-    module: '@builtin/admin-settings',
-    enabled: false,
-    load: builtinAdminSettings,
-  },
-  {
-    id: 'admin-plugins',
-    module: '@builtin/admin-plugins',
-    enabled: false,
-    load: builtinAdminPlugins,
-  },
-  {
-    id: 'admin-database',
-    module: '@builtin/admin-database',
-    enabled: false,
-    load: builtinAdminDatabase,
-  },
-  {
-    id: 'admin-suite',
-    module: '@builtin/admin-suite',
-    enabled: true,
-    load: builtinAdminSuite,
-  },
-  {
-    id: 'permission-management',
-    module: '@builtin/permission-management',
-    enabled: true,
-    load: builtinPermissionManagement,
-  },
-  {
-    id: 'web-assets',
-    module: '@builtin/web-assets',
-    enabled: true,
-    load: builtinWebAssets,
-  },
-  {
-    id: 'web-console',
-    module: '@builtin/web-console',
-    enabled: true,
-    load: builtinWebConsole,
-  },
+    adminQQ: env.ADMIN_QQ,
+    adminTG: env.ADMIN_TG,
+    cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
+  }],
+
+  // Admin panel
+  ['admin-auth', false],
+  ['admin-instances', false],
+  ['admin-pairs', false],
+  ['admin-messages', false],
+  ['admin-logs', false],
+  ['admin-settings', false],
+  ['admin-plugins', false],
+  ['admin-database', false],
+  ['admin-suite', true],
+  ['permission-management', true],
+
+  // Web UI
+  ['web-assets', true],
+  ['web-console', true],
 ]
+
+export const builtins: BuiltinPlugin[] = REGISTRY.map(([id, enabled, config]) => ({
+  id,
+  module: `@builtin/${id}`,
+  enabled,
+  ...(config ? { config } : {}),
+  load: IMPORT_MAP[id],
+}))

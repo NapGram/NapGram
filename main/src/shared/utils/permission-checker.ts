@@ -1,4 +1,4 @@
-import type { IQQClient } from '../../infrastructure/clients/qq/interface'
+import type { IQQClient } from '../../infrastructure/clients/qq'
 
 /**
  * 权限检查工具类
