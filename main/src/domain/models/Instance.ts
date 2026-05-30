@@ -9,8 +9,10 @@ import { getEventPublisher } from '@napgram/plugin-kit'
 import { FeatureManager } from '../../features/FeatureManager'
 import { instanceRegistry } from '../../features/runtime/instance-registry'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
-
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
+import { withDbRetry } from './services/db-retry'
+import { bridgeQQEvents } from './services/QQEventBridge'
+import { enableQQMediaDownloadDiagnostics } from './services/QQMediaDiagnostics'
 
 export type WorkMode = 'personal' | 'group' | 'public'
 export type InstanceLifecycleStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
@@ -59,40 +61,12 @@ export default class Instance {
     this.log = getLogger(`Instance - ${this.id}`)
   }
 
-  private isTransientDbError(error: unknown) {
-    const message = String((error as any)?.message || error)
-    return [
-      'terminating connection due to administrator command',
-      'server closed the connection unexpectedly',
-      'Connection terminated',
-      'Connection terminated unexpectedly',
-      'ECONNRESET',
-      '57P01',
-      '57P02',
-      '57P03',
-    ].some(fragment => message.includes(fragment))
-  }
-
-  private async withDbRetry<T>(action: () => Promise<T>, context: string) {
-    const maxAttempts = 3
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        return await action()
-      }
-      catch (error) {
-        if (!this.isTransientDbError(error) || attempt === maxAttempts) {
-          throw error
-        }
-        const delay = 250 * attempt
-        this.log.warn({ error, attempt, delay }, `Transient DB error during ${context}, retrying...`)
-        await new Promise(resolve => setTimeout(resolve, delay))
-      }
-    }
-    throw new Error(`Failed to execute ${context}`)
+  private dbRetry<T>(action: () => Promise<T>, context: string) {
+    return withDbRetry(action, context, this.log)
   }
 
   private async load() {
-    const dbEntry = await this.withDbRetry(
+    const dbEntry = await this.dbRetry(
       () => db.query.instance.findFirst({
         where: eq(schema.instance.id, this.id),
         with: { qqBot: true },
@@ -248,7 +222,7 @@ export default class Instance {
         }
       }
 
-      this.enableQQMediaDownloadDiagnostics()
+      enableQQMediaDownloadDiagnostics(this.qqClient, this.log)
       this.log.info('NapCat 客户端 ✓ 初始化完成')
 
       // 仅 NapCat 链路，使用轻量转发表
@@ -258,134 +232,7 @@ export default class Instance {
       try {
         const eventPublisher = getEventPublisher()
         eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
-        const instanceId = this.id
-        const qqClient = this.qqClient;
-
-        (qqClient as any).on('request.friend', async (e: any) => {
-          const requestId = String(e?.flag ?? '')
-          if (!requestId)
-            return
-          const userId = String(e?.userId ?? '')
-          const userName = String(e?.userName || userId || 'Unknown')
-          eventPublisher.publishFriendRequest({
-            instanceId,
-            platform: 'qq',
-            requestId,
-            userId,
-            userName,
-            comment: typeof e?.comment === 'string' ? e.comment : undefined,
-            timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
-            approve: async () => {
-              if (typeof (qqClient as any).handleFriendRequest !== 'function') {
-                throw new TypeError('QQ client does not support handleFriendRequest()')
-              }
-              await (qqClient as any).handleFriendRequest(requestId, true)
-            },
-            reject: async (reason?: string) => {
-              if (typeof (qqClient as any).handleFriendRequest !== 'function') {
-                throw new TypeError('QQ client does not support handleFriendRequest()')
-              }
-              await (qqClient as any).handleFriendRequest(requestId, false, reason)
-            },
-          })
-        });
-
-        (qqClient as any).on('request.group', async (e: any) => {
-          const requestId = String(e?.flag ?? '')
-          if (!requestId)
-            return
-          const groupId = String(e?.groupId ?? '')
-          const userId = String(e?.userId ?? '')
-          const userName = String(e?.userName || userId || 'Unknown')
-          const subType = (e?.subType === 'invite' ? 'invite' : 'add') as 'add' | 'invite'
-          eventPublisher.publishGroupRequest({
-            instanceId,
-            platform: 'qq',
-            requestId,
-            groupId,
-            userId,
-            userName,
-            comment: typeof e?.comment === 'string' ? e.comment : undefined,
-            subType,
-            timestamp: typeof e?.timestamp === 'number' ? e.timestamp : Date.now(),
-            approve: async () => {
-              if (typeof (qqClient as any).handleGroupRequest !== 'function') {
-                throw new TypeError('QQ client does not support handleGroupRequest()')
-              }
-              await (qqClient as any).handleGroupRequest(requestId, subType, true)
-            },
-            reject: async (reason?: string) => {
-              if (typeof (qqClient as any).handleGroupRequest !== 'function') {
-                throw new TypeError('QQ client does not support handleGroupRequest()')
-              }
-              await (qqClient as any).handleGroupRequest(requestId, subType, false, reason)
-            },
-          })
-        })
-
-        qqClient.on('group.increase', (groupId: string, member: any) => {
-          eventPublisher.publishNotice({
-            instanceId,
-            platform: 'qq',
-            noticeType: 'group-member-increase',
-            groupId: String(groupId),
-            userId: String(member?.id ?? ''),
-            timestamp: Date.now(),
-            raw: { groupId, member },
-          })
-        })
-
-        qqClient.on('group.decrease', (groupId: string, uin: string) => {
-          eventPublisher.publishNotice({
-            instanceId,
-            platform: 'qq',
-            noticeType: 'group-member-decrease',
-            groupId: String(groupId),
-            userId: String(uin),
-            timestamp: Date.now(),
-            raw: { groupId, uin },
-          })
-        })
-
-        qqClient.on('friend.increase', (friend: any) => {
-          eventPublisher.publishNotice({
-            instanceId,
-            platform: 'qq',
-            noticeType: 'friend-add',
-            userId: String(friend?.id ?? ''),
-            timestamp: Date.now(),
-            raw: friend,
-          })
-        })
-
-        qqClient.on('recall', (evt: any) => {
-          const chatId = String(evt?.chatId ?? '')
-          const operatorId = String(evt?.operatorId ?? '')
-          const noticeType = chatId && operatorId && chatId === operatorId ? 'friend-recall' : 'group-recall'
-          eventPublisher.publishNotice({
-            instanceId,
-            platform: 'qq',
-            noticeType,
-            groupId: noticeType === 'group-recall' ? chatId : undefined,
-            userId: noticeType === 'friend-recall' ? chatId : undefined,
-            operatorId: operatorId || undefined,
-            timestamp: typeof evt?.timestamp === 'number' ? evt.timestamp : Date.now(),
-            raw: evt,
-          })
-        })
-
-        qqClient.on('poke', (chatId: string, operatorId: string, targetId: string) => {
-          eventPublisher.publishNotice({
-            instanceId,
-            platform: 'qq',
-            noticeType: 'other',
-            groupId: String(chatId),
-            userId: String(targetId),
-            operatorId: String(operatorId),
-            timestamp: Date.now(),
-            raw: { type: 'poke', chatId, operatorId, targetId },
-          })
-        })
+        bridgeQQEvents(this.id, this.qqClient, eventPublisher, this.log)
       }
       catch (error) {
         this.log.warn('Plugin event bridge init failed:', error)
@@ -592,89 +439,6 @@ export default class Instance {
     return await this.start(dbEntry.id, botToken)
   }
 
-  private enableQQMediaDownloadDiagnostics() {
-    if (!this.qqClient)
-      return
-
-    const qq = this.qqClient as any
-    if (qq.__napgramMediaWrapped)
-      return
-    qq.__napgramMediaWrapped = true
-
-    const rawGetFile = typeof qq.getFile === 'function' ? qq.getFile.bind(qq) : undefined
-    const rawDownloadFile = typeof qq.downloadFile === 'function' ? qq.downloadFile.bind(qq) : undefined
-    const rawDownloadFileStreamToFile = typeof qq.downloadFileStreamToFile === 'function'
-      ? qq.downloadFileStreamToFile.bind(qq)
-      : undefined
-
-    if (rawDownloadFile) {
-      qq.downloadFile = async (url: string, threadCount?: number, headers?: Record<string, string>) => {
-        try {
-          return await rawDownloadFile(url, threadCount, headers)
-        }
-        catch (error) {
-          const message = String((error as any)?.message || error)
-          if (/file not found/i.test(message)) {
-            this.log.warn(`download_file file not found (url=${url})`)
-          }
-          else {
-            this.log.warn(`download_file failed (url=${url}): ${message}`)
-          }
-          throw error
-        }
-      }
-    }
-
-    if (rawDownloadFileStreamToFile) {
-      qq.downloadFileStreamToFile = async (fileId: string, options?: { chunkSize?: number, filename?: string }) => {
-        const normalizedId = typeof fileId === 'string' ? fileId.replace(/^\//, '') : fileId
-        try {
-          const res = await rawDownloadFileStreamToFile(normalizedId, options)
-          if (!res?.path) {
-            this.log.warn(`downloadFileStreamToFile returned without local path (fileId=${normalizedId})`)
-          }
-          return res
-        }
-        catch (error) {
-          this.log.warn(`downloadFileStreamToFile failed (fileId=${normalizedId}): ${String((error as any)?.message || error)}`)
-          throw error
-        }
-      }
-    }
-
-    // Stream-first to reduce failures from short-lived FTN URLs.
-    if (rawGetFile) {
-      qq.getFile = async (fileId: string) => {
-        const normalizedId = typeof fileId === 'string' ? fileId.replace(/^\//, '') : fileId
-
-        if (rawDownloadFileStreamToFile) {
-          try {
-            const streamed = await rawDownloadFileStreamToFile(normalizedId, { chunkSize: 64 * 1024 })
-            const localPath = streamed?.path
-            if (typeof localPath === 'string' && localPath.startsWith('/')) {
-              this.log.debug(`stream-first getFile success (fileId=${normalizedId}, path=${localPath})`)
-              return {
-                ...(streamed?.info ? { info: streamed.info } : {}),
-                file: localPath,
-                path: localPath,
-              }
-            }
-            this.log.warn(`stream-first getFile no local path (fileId=${normalizedId})`)
-          }
-          catch (error) {
-            this.log.warn(`stream-first getFile failed (fileId=${normalizedId}), fallback get_file: ${String((error as any)?.message || error)}`)
-          }
-        }
-
-        const result = await rawGetFile(normalizedId)
-        if (!result) {
-          this.log.warn(`get_file returned empty (fileId=${normalizedId})`)
-        }
-        return result
-      }
-    }
-  }
-
   get owner() {
     return this._owner
   }
@@ -746,7 +510,7 @@ export default class Instance {
   }
 
   private updateDb(fields: Record<string, unknown>) {
-    void this.withDbRetry(
+    void this.dbRetry(
       () => db.update(schema.instance)
         .set(fields)
         .where(eq(schema.instance.id, this.id))
