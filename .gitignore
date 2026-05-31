@@ -6,6 +6,11 @@ Thumbs.db
 *.swp
 *~
 
+# Hidden directories (keep GitHub workflows tracked)
+.*/
+!.github/
+!.github/**
+
 # Logs
 *.log
 
