@@ -114,6 +114,8 @@ describe('replyResolver', () => {
     const mapper = {
       findQqSource: vi.fn().mockResolvedValue({
         seq: 7,
+        rand: BigInt(8),
+        pktnum: 1,
         qqRoomId: BigInt(111),
         qqChatType: 'group',
         qqSenderId: BigInt(222),
@@ -131,6 +133,8 @@ describe('replyResolver', () => {
     expect(mapper.findQqSource).toHaveBeenCalledWith(1, BigInt(222), BigInt(555))
     expect(result).toEqual({
       seq: 7,
+      rand: BigInt(8),
+      pktnum: 1,
       qqRoomId: BigInt(111),
       qqChatType: 'group',
       senderUin: '222',

@@ -81,25 +81,84 @@ export class ForwardMapper {
     `)
   }
 
+  private pickFirstDefined(...values: any[]) {
+    return values.find(value => value !== undefined && value !== null && value !== '')
+  }
+
+  private normalizeNumber(value: unknown, fallback = 0): number {
+    if (value === undefined || value === null || value === '')
+      return fallback
+    const numeric = Number(value)
+    return Number.isFinite(numeric) ? numeric : fallback
+  }
+
+  private normalizeBigInt(value: unknown, fallback = BigInt(0)): bigint {
+    if (value === undefined || value === null || value === '')
+      return fallback
+    try {
+      return BigInt(value as any)
+    }
+    catch {
+      return fallback
+    }
+  }
+
+  private getReceiptRaw(receipt: any) {
+    return receipt?.raw ?? receipt?.data ?? receipt ?? {}
+  }
+
+  private getReceiptMessageId(receipt: any) {
+    const raw = this.getReceiptRaw(receipt)
+    return this.pickFirstDefined(
+      receipt?.messageId,
+      receipt?.message_id,
+      receipt?.id,
+      raw?.message_id,
+      raw?.messageId,
+      raw?.id,
+    )
+  }
+
+  private getReceiptSeq(receipt: any) {
+    const raw = this.getReceiptRaw(receipt)
+    return this.normalizeNumber(this.pickFirstDefined(
+      receipt?.seq,
+      receipt?.messageSeq,
+      receipt?.message_seq,
+      raw?.seq,
+      raw?.messageSeq,
+      raw?.message_seq,
+      raw?.fetched?.message_id,
+      raw?.fetched?.messageId,
+      this.getReceiptMessageId(receipt),
+    ))
+  }
+
   async saveTgToQqMapping(unified: UnifiedMessage, tgMsg: any, receipt: any, pair: any) {
     if (this.shouldSkipPersistence()) {
       return
     }
-    const msgId = receipt?.messageId || receipt?.data?.message_id || receipt?.id
+    const raw = this.getReceiptRaw(receipt)
+    const msgId = this.getReceiptMessageId(receipt)
     if (!msgId) {
       this.logger.warn('TG->QQ forwarded but no messageId in receipt, cannot save mapping.')
       return
     }
     try {
       const nick = unified.sender?.name || tgMsg?.sender?.name || tgMsg?.sender?.username || tgMsg?.sender?.displayName || null
+      const seq = this.getReceiptSeq(receipt)
+      const rand = this.normalizeBigInt(this.pickFirstDefined(receipt?.rand, raw?.rand, raw?.fetched?.rand))
+      const pktnum = this.normalizeNumber(this.pickFirstDefined(receipt?.pktnum, receipt?.pktNum, raw?.pktnum, raw?.pktNum, raw?.fetched?.pktnum, raw?.fetched?.pktNum), 1)
+      const time = this.normalizeNumber(this.pickFirstDefined(receipt?.time, raw?.time, raw?.fetched?.time), Math.floor(Date.now() / 1000))
+      const qqSenderId = this.normalizeBigInt(this.pickFirstDefined(receipt?.senderId, raw?.sender_id, raw?.user_id, raw?.sender?.user_id, raw?.fetched?.sender_id, raw?.fetched?.user_id, raw?.fetched?.sender?.user_id))
       await this.insertMessage({
         qqChatType: this.getQqChatTypeFromPair(pair),
         qqRoomId: pair.qqRoomId,
-        qqSenderId: BigInt(0),
-        time: Math.floor(Date.now() / 1000),
-        seq: Number(msgId),
-        rand: BigInt(0),
-        pktnum: 0,
+        qqSenderId,
+        time,
+        seq,
+        rand,
+        pktnum,
         tgChatId: BigInt(pair.tgChatId),
         tgMsgId: BigInt(tgMsg.id),
         tgSenderId: BigInt(tgMsg.sender?.id || 0),
@@ -107,7 +166,7 @@ export class ForwardMapper {
         nick,
         brief: unified.content.map(c => this.contentRenderer(c)).join(' ').slice(0, 50),
       })
-      this.logger.debug(`Saved TG->QQ mapping: seq=${msgId} <-> tgMsgId=${tgMsg.id}`)
+      this.logger.debug(`Saved TG->QQ mapping: seq=${seq} <-> tgMsgId=${tgMsg.id}`)
     }
     catch (e) {
       this.logger.warn(e, 'Failed to save TG->QQ message mapping:')
@@ -206,12 +265,14 @@ export class ForwardMapper {
     this.logger.debug(`Finding QQ source: instanceId=${instanceId}, tgChatId=${tgChatId}, tgMsgId=${tgMsgId}`)
     const msg = (await this.executeRows<{
       seq?: number
+      rand?: string | number | bigint
+      pktnum?: number
       qqRoomId?: string | number | bigint
       qqChatType?: string
       qqSenderId?: string | number | bigint
       time?: number
     }>(sql`
-      SELECT "seq", "qqRoomId", "qqChatType", "qqSenderId", "time"
+      SELECT "seq", "rand", "pktnum", "qqRoomId", "qqChatType", "qqSenderId", "time"
       FROM "Message"
       WHERE "tgChatId" = ${BigInt(tgChatId)}
         AND "tgMsgId" = ${tgMsgId}
@@ -222,6 +283,7 @@ export class ForwardMapper {
     return msg
       ? {
           ...msg,
+          rand: msg.rand === undefined ? undefined : BigInt(msg.rand),
           qqRoomId: msg.qqRoomId === undefined ? undefined : BigInt(msg.qqRoomId),
           qqChatType: msg.qqChatType === 'private' ? 'private' : 'group',
           qqSenderId: msg.qqSenderId === undefined ? undefined : BigInt(msg.qqSenderId),

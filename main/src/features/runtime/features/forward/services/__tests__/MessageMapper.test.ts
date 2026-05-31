@@ -10,10 +10,21 @@ const loggerMocks = vi.hoisted(() => ({
   error: vi.fn(),
 }))
 
+const queryResult = vi.hoisted(() => (
+  rows: Record<string, unknown>[] = [],
+  rowCount = rows.length,
+) => ({
+  rows,
+  rowCount,
+  command: 'SELECT',
+  oid: 0,
+  fields: [],
+}))
+
 vi.mock('../../../../shared-types.js', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
-    execute: vi.fn().mockResolvedValue({ rows: [], rowCount: 1 }),
+    execute: vi.fn().mockResolvedValue(queryResult([], 1)),
   },
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
   getLogger: vi.fn(() => loggerMocks),
@@ -109,7 +120,7 @@ describe('forwardMapper', () => {
       1_700_000_000,
       99,
       BigInt(0),
-      0,
+      1,
       BigInt(-10040004),
       BigInt(88),
       BigInt(30003),
@@ -118,6 +129,33 @@ describe('forwardMapper', () => {
       'from tg [文件:report.txt]',
     ])
     expect(loggerMocks.debug).toHaveBeenCalledWith('Saved TG->QQ mapping: seq=99 <-> tgMsgId=88')
+  })
+
+  it('stores enriched TG to QQ receipt fields from fetched raw message data', async () => {
+    await mapper.saveTgToQqMapping(
+      createTgUnified(),
+      { id: 88, sender: { id: 30003 } },
+      {
+        messageId: '99',
+        raw: {
+          message_id: 99,
+          fetched: {
+            sender: { user_id: 777 },
+            time: 1_700_000_777,
+            rand: 123456789,
+            pktnum: 2,
+          },
+        },
+      },
+      { instanceId: 7, qqRoomId: BigInt(20002), tgChatId: BigInt(-10040004), qqChatType: 'group' },
+    )
+
+    const query = vi.mocked(db.execute).mock.calls[0][0] as any
+    expect(query.values[2]).toBe(BigInt(777))
+    expect(query.values[3]).toBe(1_700_000_777)
+    expect(query.values[4]).toBe(99)
+    expect(query.values[5]).toBe(BigInt(123456789))
+    expect(query.values[6]).toBe(2)
   })
 
   it('warns when TG to QQ receipt has no message id', async () => {
@@ -205,7 +243,7 @@ describe('forwardMapper', () => {
   })
 
   it('finds TG message ids by QQ sequence before using persistence guards', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ tgMsgId: '987654321' }] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([{ tgMsgId: '987654321' }]))
     vi.stubEnv('NODE_ENV', 'test')
 
     const tgMsgId = await mapper.findTgMsgId(7, BigInt(20002), '123')
@@ -216,7 +254,7 @@ describe('forwardMapper', () => {
   })
 
   it('returns undefined for missing TG message ids during test persistence skip', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult())
     vi.stubEnv('NODE_ENV', 'test')
 
     const tgMsgId = await mapper.findTgMsgId(7, BigInt(20002), '123')
@@ -227,8 +265,8 @@ describe('forwardMapper', () => {
 
   it('falls back to sender lookup for numeric QQ ids', async () => {
     vi.mocked(db.execute)
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ tgMsgId: BigInt(555) }] })
+      .mockResolvedValueOnce(queryResult())
+      .mockResolvedValueOnce(queryResult([{ tgMsgId: BigInt(555) }]))
 
     const tgMsgId = await mapper.findTgMsgId(7, BigInt(20002), '123', 'private')
 
@@ -246,20 +284,22 @@ describe('forwardMapper', () => {
   })
 
   it('finds and normalizes QQ source rows by TG message id', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({
-      rows: [{
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([{
         seq: 123,
+        rand: '456',
+        pktnum: 2,
         qqRoomId: '20002',
         qqChatType: 'private',
         qqSenderId: '10001',
         time: 1_700_000_500,
-      }],
-    })
+      }]))
 
     const source = await mapper.findQqSource(7, BigInt(-10040004), BigInt(77))
 
     expect(source).toEqual({
       seq: 123,
+      rand: BigInt(456),
+      pktnum: 2,
       qqRoomId: BigInt(20002),
       qqChatType: 'private',
       qqSenderId: BigInt(10001),
@@ -268,7 +308,7 @@ describe('forwardMapper', () => {
   })
 
   it('defaults missing QQ source chat type to group and preserves absent ids', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [{ seq: 123, qqChatType: 'unknown' }] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([{ seq: 123, qqChatType: 'unknown' }]))
 
     const source = await mapper.findQqSource(7, BigInt(-10040004), BigInt(77))
 
@@ -281,7 +321,7 @@ describe('forwardMapper', () => {
   })
 
   it('returns undefined when QQ source is not found', async () => {
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult())
 
     const source = await mapper.findQqSource(7, BigInt(-10040004), BigInt(77))
 

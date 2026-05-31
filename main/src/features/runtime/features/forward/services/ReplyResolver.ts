@@ -43,7 +43,7 @@ export class ReplyResolver {
     tgMsg: any,
     instanceId: number,
     tgChatId: bigint,
-  ): Promise<{ seq?: number, qqRoomId?: bigint, qqChatType?: 'private' | 'group', senderUin?: string, time?: number } | undefined> {
+  ): Promise<{ seq?: number, rand?: bigint, pktnum?: number, qqRoomId?: bigint, qqChatType?: 'private' | 'group', senderUin?: string, time?: number } | undefined> {
     const replyToMsgId = telegramMessage.getTelegramReplyMessageId(tgMsg)
     if (!replyToMsgId) {
       return undefined
@@ -54,6 +54,8 @@ export class ReplyResolver {
       logger.debug(`Resolved TG reply: TG msg ${replyToMsgId} -> QQ seq ${qqSource.seq}`)
       return {
         seq: qqSource.seq,
+        rand: qqSource.rand,
+        pktnum: qqSource.pktnum,
         qqRoomId: qqSource.qqRoomId,
         qqChatType: qqSource.qqChatType === 'private' ? 'private' : 'group',
         senderUin: qqSource.qqSenderId?.toString(),

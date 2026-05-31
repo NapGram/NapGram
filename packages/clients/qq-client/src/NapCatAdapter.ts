@@ -151,6 +151,27 @@ export class NapCatAdapter extends EventEmitter {
       })
     })
 
+    const emitFriendDecrease = (data: any) => {
+      ; (this as any).emit('friend.decrease', String(data.user_id))
+    }
+    this.client.on('notice.friend_decrease', emitFriendDecrease)
+    this.client.on('notice.friend_delete', emitFriendDecrease)
+    this.client.on('notice.friend_del', emitFriendDecrease)
+
+    const emitInputStatus = (data: any) => {
+      const chatType = data.group_id !== undefined && data.group_id !== null ? 'group' : 'private'
+      const chatId = String(chatType === 'group' ? data.group_id : data.user_id)
+      ; (this as any).emit('input.status', {
+        chatId,
+        chatType,
+        userId: String(data.user_id ?? data.sender_id ?? ''),
+        typing: Boolean(data.status_text || data.status === 1 || data.typing === true || data.input_status === 1),
+        raw: data,
+      })
+    }
+    this.client.on('notice.notify.input_status', emitInputStatus)
+    this.client.on('notice.input_status', emitInputStatus)
+
     this.client.on('notice.notify.poke', (data: any) => {
       ; (this as any).emit('poke', String(data.group_id || data.user_id), String(data.user_id), String(data.target_id),
       )
@@ -232,6 +253,52 @@ export class NapCatAdapter extends EventEmitter {
     }
   }
 
+  private pickFirstDefined(...values: any[]) {
+    return values.find(value => value !== undefined && value !== null && value !== '')
+  }
+
+  private unwrapApiResult(result: any) {
+    return result?.data && typeof result.data === 'object'
+      ? result.data
+      : result
+  }
+
+  private async fetchSentMessageRaw(messageId: string) {
+    if (!messageId || typeof (this.client as any).getMessage !== 'function')
+      return undefined
+
+    try {
+      return this.unwrapApiResult(await this.client.getMessage(messageId))
+    }
+    catch (error) {
+      this.logger.debug?.({ error, messageId }, 'Failed to enrich sent message receipt')
+      return undefined
+    }
+  }
+
+  private buildReceipt(result: any, fetchedRaw?: any): MessageReceipt {
+    const rawResult = this.unwrapApiResult(result) || {}
+    const rawMessage = fetchedRaw || {}
+    const raw = fetchedRaw ? { ...rawResult, ...rawMessage, send: rawResult, fetched: rawMessage } : rawResult
+    const messageId = String(this.pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id, rawMessage.message_id, rawMessage.messageId, rawMessage.id) ?? '')
+    const seq = Number(this.pickFirstDefined(rawResult.seq, rawResult.message_seq, rawMessage.seq, rawMessage.message_seq, rawResult.message_id, rawResult.messageId, rawResult.id, rawMessage.message_id, rawMessage.messageId, rawMessage.id, 0))
+    const time = Number(this.pickFirstDefined(rawResult.time, rawMessage.time, 0))
+    const pktnum = Number(this.pickFirstDefined(rawResult.pktnum, rawResult.pktNum, rawMessage.pktnum, rawMessage.pktNum, 0))
+    const senderId = this.pickFirstDefined(rawResult.sender_id, rawResult.user_id, rawMessage.sender_id, rawMessage.user_id, rawMessage.sender?.user_id)
+
+    return {
+      messageId,
+      timestamp: Date.now(),
+      success: true,
+      seq,
+      rand: this.pickFirstDefined(rawResult.rand, rawMessage.rand),
+      time: time || undefined,
+      pktnum: pktnum || undefined,
+      senderId: senderId !== undefined ? String(senderId) : undefined,
+      raw,
+    }
+  }
+
   async sendMessage(chatId: string, message: UnifiedMessage): Promise<MessageReceipt> {
     const messageConverter = getMessageConverter()
     const segments = (message as any).__napCatSegments
@@ -244,11 +311,12 @@ export class NapCatAdapter extends EventEmitter {
         message: segments,
       } as any)
 
-      return {
-        messageId: String(result.message_id),
-        timestamp: Date.now(),
-        success: true,
-      }
+      const rawResult = this.unwrapApiResult(result) || {}
+      const messageId = String(this.pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id) ?? '')
+      const fetchedRaw = rawResult.time && (rawResult.sender_id !== undefined || rawResult.user_id !== undefined)
+        ? undefined
+        : await this.fetchSentMessageRaw(messageId)
+      return this.buildReceipt(rawResult, fetchedRaw)
     }
     catch (error: any) {
       return {
@@ -267,11 +335,12 @@ export class NapCatAdapter extends EventEmitter {
         messages,
       )
 
-      return {
-        messageId: String(result.message_id),
-        timestamp: Date.now(),
-        success: true,
-      }
+      const rawResult = this.unwrapApiResult(result) || {}
+      const messageId = String(this.pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id) ?? '')
+      const fetchedRaw = rawResult.time && (rawResult.sender_id !== undefined || rawResult.user_id !== undefined)
+        ? undefined
+        : await this.fetchSentMessageRaw(messageId)
+      return this.buildReceipt(rawResult, fetchedRaw)
     }
     catch (error: any) {
       return {

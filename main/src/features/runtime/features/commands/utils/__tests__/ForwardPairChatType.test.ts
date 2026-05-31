@@ -20,10 +20,21 @@ const loggerMocks = vi.hoisted(() => ({
   error: vi.fn(),
 }))
 
+const queryResult = vi.hoisted(() => (
+  rows: Record<string, unknown>[] = [],
+  rowCount = rows.length,
+) => ({
+  rows,
+  rowCount,
+  command: 'SELECT',
+  oid: 0,
+  fields: [],
+}))
+
 vi.mock('../../../../shared-types.js', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
-    execute: vi.fn().mockResolvedValue({ rows: [], rowCount: 1 }),
+    execute: vi.fn().mockResolvedValue(queryResult([], 1)),
   },
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
   getLogger: vi.fn(() => loggerMocks),
@@ -68,7 +79,7 @@ describe('forwardPairChatType', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(db.execute).mockReset()
-    vi.mocked(db.execute).mockResolvedValue({ rows: [], rowCount: 1 })
+    vi.mocked(db.execute).mockResolvedValue(queryResult([], 1))
   })
 
   afterEach(() => {
@@ -101,7 +112,7 @@ describe('forwardPairChatType', () => {
 
   it('loads and attaches chat type for pairs without an in-memory type', async () => {
     const pair = { id: 10 } as any
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [createRawPair({ qqChatType: 'private' })] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([createRawPair({ qqChatType: 'private' })]))
 
     await expect(getForwardPairChatType(pair)).resolves.toBe('private')
 
@@ -131,7 +142,7 @@ describe('forwardPairChatType', () => {
     const forwardMap = createForwardMap({
       findByTG: vi.fn().mockReturnValue(loaded),
     })
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [createRawPair({ qqChatType: 'private' })] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([createRawPair({ qqChatType: 'private' })]))
 
     const pair = await findPairByTGWithChatType(forwardMap, -10040004, undefined, false)
 
@@ -153,7 +164,7 @@ describe('forwardPairChatType', () => {
     const forwardMap = createForwardMap({
       getAll: vi.fn().mockReturnValue([loaded]),
     })
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [createRawPair({ id: 10, qqChatType: 'private' })] })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([createRawPair({ id: 10, qqChatType: 'private' })]))
 
     const pair = await findPairByQQWithChatType(forwardMap, 7, 20002, 'private')
 
@@ -166,7 +177,7 @@ describe('forwardPairChatType', () => {
     const forwardMap = createForwardMap({
       findByQQ: vi.fn().mockReturnValue(fallback),
     })
-    vi.mocked(db.execute).mockResolvedValue({ rows: [] })
+    vi.mocked(db.execute).mockResolvedValue(queryResult())
 
     await expect(findPairByQQWithChatType(forwardMap, 7, 20002, 'private')).resolves.toBeUndefined()
     const groupPair = await findPairByQQWithChatType(forwardMap, 7, 20002, 'group')
@@ -196,8 +207,8 @@ describe('forwardPairChatType', () => {
       findByTG: vi.fn().mockReturnValue(existingTg),
     })
     vi.mocked(db.execute)
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [existingQq] })
+      .mockResolvedValueOnce(queryResult())
+      .mockResolvedValueOnce(queryResult([existingQq]))
 
     const pair = await addForwardPairWithChatType(forwardMap, 7, 20002, -10040004, undefined, 'group')
 
@@ -214,8 +225,8 @@ describe('forwardPairChatType', () => {
         .mockReturnValueOnce(reloaded),
     })
     vi.mocked(db.execute)
-      .mockResolvedValueOnce({ rows: [existingQq] })
-      .mockResolvedValueOnce({ rows: [], rowCount: 1 })
+      .mockResolvedValueOnce(queryResult([existingQq]))
+      .mockResolvedValueOnce(queryResult([], 1))
 
     const pair = await addForwardPairWithChatType(forwardMap, 7, 20002, -10040004, BigInt(9), 'group', {
       qqDisplayName: 'New Name',
@@ -246,9 +257,9 @@ describe('forwardPairChatType', () => {
       findByQQ: vi.fn().mockReturnValue(undefined),
     })
     vi.mocked(db.execute)
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [], rowCount: 1 })
+      .mockResolvedValueOnce(queryResult())
+      .mockResolvedValueOnce(queryResult())
+      .mockResolvedValueOnce(queryResult([], 1))
 
     await expect(addForwardPairWithChatType(forwardMap, 7, 20002, -10040004, undefined, 'group', {
       qqDisplayName: 'Group Name',
@@ -272,12 +283,12 @@ describe('forwardPairChatType', () => {
 
   it('removes pairs by id and reports row count', async () => {
     const forwardMap = createForwardMap()
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [], rowCount: 0 })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([], 0))
 
     await expect(removeForwardPairById(forwardMap, 10)).resolves.toBe(false)
     expect(forwardMap.reload).toHaveBeenCalledTimes(1)
 
-    vi.mocked(db.execute).mockResolvedValueOnce({ rows: [], rowCount: 2 })
+    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([], 2))
     await expect(removeForwardPairById(forwardMap, 11)).resolves.toBe(true)
     expect(forwardMap.reload).toHaveBeenCalledTimes(2)
   })
