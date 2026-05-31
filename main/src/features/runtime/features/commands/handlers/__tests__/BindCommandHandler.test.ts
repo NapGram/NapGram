@@ -2,7 +2,20 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../../shared-types.js'
 import type { CommandContext } from '../CommandContext.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+vi.mock('../../utils/ForwardPairChatType.js', async (importOriginal) => {
+  const actual = await importOriginal() as any
+  return {
+    ...actual,
+    addForwardPairWithChatType: vi.fn().mockImplementation(async (_fm: any, _id: any, qqRoomId: any, _tgChatId: any, _threadId: any, qqChatType: any) => ({
+      qqRoomId: BigInt(qqRoomId),
+      qqChatType,
+    })),
+  }
+})
+
 import { BindCommandHandler } from '../BindCommandHandler.js'
+import { addForwardPairWithChatType } from '../../utils/ForwardPairChatType.js'
 
 // Mock QQ Client
 function createMockQQClient(): IQQClient {
@@ -205,6 +218,106 @@ describe('bindCommandHandler', () => {
         '999999',
         BigInt(99999),
         'group',
+      )
+    })
+  })
+
+  describe('successful binding', () => {
+    it('binds QQ group to TG chat successfully', async () => {
+      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+        qqRoomId: BigInt(888888),
+        qqChatType: 'group',
+      } as any)
+
+      const msg = createMessage('/bind 888888', '999999', '777777')
+      await handler.execute(msg, ['888888'])
+
+      expect(mockContext.replyTG).toHaveBeenCalledWith(
+        '777777',
+        expect.stringContaining('绑定成功'),
+        undefined,
+      )
+    })
+
+    it('binds with thread ID info in success message', async () => {
+      vi.mocked(mockContext.extractThreadId).mockReturnValue(BigInt(12345))
+      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+        qqRoomId: BigInt(888888),
+        qqChatType: 'group',
+      } as any)
+
+      const msg = createMessage('/bind 888888', '999999', '777777')
+      await handler.execute(msg, ['888888'])
+
+      expect(mockContext.replyTG).toHaveBeenCalledWith(
+        '777777',
+        expect.stringContaining('话题 12345'),
+        BigInt(12345),
+      )
+    })
+
+    it('handles addForwardPairWithChatType returning null', async () => {
+      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce(undefined as any)
+
+      const msg = createMessage('/bind 888888', '999999', '777777')
+      await handler.execute(msg, ['888888'])
+
+      expect(mockContext.replyTG).toHaveBeenCalledWith(
+        '777777',
+        expect.stringContaining('绑定失败：操作未生效'),
+        undefined,
+      )
+    })
+
+    it('handles addForwardPairWithChatType returning conflicting record', async () => {
+      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+        qqRoomId: BigInt(999999),
+        qqChatType: 'group',
+      } as any)
+
+      const msg = createMessage('/bind 888888', '999999', '777777')
+      await handler.execute(msg, ['888888'])
+
+      expect(mockContext.replyTG).toHaveBeenCalledWith(
+        '777777',
+        expect.stringContaining('绑定失败：检测到冲突'),
+        undefined,
+      )
+    })
+
+    it('binds private (friend) chat type', async () => {
+      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+        qqRoomId: BigInt(888888),
+        qqChatType: 'private',
+      } as any)
+
+      const msg = createMessage('/bindfriend 888888', '999999', '777777')
+      await handler.execute(msg, ['888888'], 'private')
+
+      expect(mockContext.replyTG).toHaveBeenCalledWith(
+        '777777',
+        expect.stringContaining('绑定成功'),
+        undefined,
+      )
+    })
+
+    it('allows re-binding same QQ target to same TG thread', async () => {
+      mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue({
+        qqRoomId: BigInt(888888),
+        qqChatType: 'group',
+      })
+      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+        qqRoomId: BigInt(888888),
+        qqChatType: 'group',
+      } as any)
+
+      const msg = createMessage('/bind 888888', '999999', '777777')
+      await handler.execute(msg, ['888888'])
+
+      expect(mockContext.replyTG).toHaveBeenCalledWith(
+        '777777',
+        expect.stringContaining('绑定成功'),
+        undefined,
       )
     })
   })

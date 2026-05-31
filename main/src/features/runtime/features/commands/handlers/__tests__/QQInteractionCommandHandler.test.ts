@@ -406,4 +406,94 @@ describe('qQInteractionCommandHandler', () => {
       expect(replyText).toContain('TopUser')
     })
   })
+    describe('/ban command', () => {
+      it('should require a target', async () => {
+        const msg = createMessage('/ban', '999999', '777777')
+        await handler.execute(msg, [], 'ban')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('用法'), undefined)
+      })
+
+      it('should ban target with default duration', async () => {
+        const msg = createMessage('/ban 12345', '999999', '777777')
+        mockContext.qqClient.setGroupBan = vi.fn().mockResolvedValue(true)
+        await handler.execute(msg, ['12345'], 'ban')
+        expect(mockContext.qqClient.setGroupBan).toHaveBeenCalledWith('888888', '12345', 1800)
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('已禁言'), undefined)
+      })
+
+      it('should handle failure', async () => {
+        const msg = createMessage('/ban 12345 60', '999999', '777777')
+        mockContext.qqClient.setGroupBan = vi.fn().mockResolvedValue(false)
+        await handler.execute(msg, ['12345', '60'], 'ban')
+        expect(mockContext.qqClient.setGroupBan).toHaveBeenCalledWith('888888', '12345', 60)
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('禁言失败'), undefined)
+      })
+
+      it('should handle exceptions', async () => {
+        const msg = createMessage('/ban 12345', '999999', '777777')
+        mockContext.qqClient.setGroupBan = vi.fn().mockRejectedValue(new Error('Network Error'))
+        await handler.execute(msg, ['12345'], 'ban')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('出错'), undefined)
+      })
+      
+      it('should show error when chat is not bound', async () => {
+        const msg = createMessage('/ban 12345', '999999', '777777')
+        mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue(null)
+        await handler.execute(msg, ['12345'], 'ban')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('未绑定'), undefined)
+      })
+    })
+
+    describe('/card command', () => {
+      it('should require a target and new name', async () => {
+        const msg = createMessage('/card 12345', '999999', '777777')
+        await handler.execute(msg, ['12345'], 'card')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('用法'), undefined)
+      })
+
+      it('should change card', async () => {
+        const msg = createMessage('/card 12345 new card', '999999', '777777')
+        mockContext.qqClient.setGroupCard = vi.fn().mockResolvedValue(true)
+        await handler.execute(msg, ['12345', 'new', 'card'], 'card')
+        expect(mockContext.qqClient.setGroupCard).toHaveBeenCalledWith('888888', '12345', 'new card')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('已修改群名片'), undefined)
+      })
+
+      it('should handle failure', async () => {
+        const msg = createMessage('/card 12345 new', '999999', '777777')
+        mockContext.qqClient.setGroupCard = vi.fn().mockResolvedValue(false)
+        await handler.execute(msg, ['12345', 'new'], 'card')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('失败'), undefined)
+      })
+
+      it('should handle exceptions', async () => {
+        const msg = createMessage('/card 12345 new', '999999', '777777')
+        mockContext.qqClient.setGroupCard = vi.fn().mockRejectedValue(new Error('Network Error'))
+        await handler.execute(msg, ['12345', 'new'], 'card')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('出错'), undefined)
+      })
+      
+      it('should show error when chat is not bound', async () => {
+        const msg = createMessage('/card 12345 new', '999999', '777777')
+        mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue(null)
+        await handler.execute(msg, ['12345', 'new'], 'card')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('未绑定'), undefined)
+      })
+    })
+
+    describe('nested qq command', () => {
+      it('unwraps nested qq command', async () => {
+        const msg = createMessage('/qq poke', '999999', '777777')
+        // commandName='qq', args=['poke', '12345']
+        await handler.execute(msg, ['poke', '12345'], 'qq')
+        expect(mockQQClient.callApi).toHaveBeenCalledWith('send_group_poke', { group_id: 888888, user_id: 12345 })
+      })
+      
+      it('handles unknown command', async () => {
+        const msg = createMessage('/unknown', '999999', '777777')
+        await handler.execute(msg, [], 'unknown')
+        expect(mockContext.replyTG).toHaveBeenCalledWith('777777', expect.stringContaining('未知交互指令'), undefined)
+      })
+    })
 })
+
