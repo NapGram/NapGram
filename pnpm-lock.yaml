@@ -172,8 +172,8 @@ importers:
         specifier: workspace:*
         version: link:../packages/clients/telegram-client
       '@naplink/naplink':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.1.0
+        version: 1.1.0
       '@sentry/node':
         specifier: 10.57.0
         version: 10.57.0
@@ -291,8 +291,8 @@ importers:
   packages/clients/qq-client:
     dependencies:
       '@naplink/naplink':
-        specifier: ^1.0.0
-        version: 1.0.0
+        specifier: ^1.1.0
+        version: 1.1.0
     devDependencies:
       '@types/node':
         specifier: 25.9.3
@@ -1676,8 +1676,8 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
-  '@naplink/naplink@1.0.0':
-    resolution: {integrity: sha512-/S0Rw90KR9BqtqDx8+pdyy8atfXrC0ZI22df2g4aGcQN1L+hRrkwauMe4pO6yM3KnaH6NQg+W7dWwjsWHHgY3g==}
+  '@naplink/naplink@1.1.0':
+    resolution: {integrity: sha512-otXmMxbgMpNZw5vE7ebinSxC4d6mDweSJWslfz5elqVg1AcC+Z8jiuzqEpQFm0MVJBmoKvY7mNPY1SnR2IZxdA==}
     engines: {node: '>=18.0.0'}
 
   '@opentelemetry/api-logs@0.214.0':
@@ -4705,7 +4705,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.2
     optional: true
 
-  '@naplink/naplink@1.0.0':
+  '@naplink/naplink@1.1.0':
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.21.0)
       ws: 8.21.0

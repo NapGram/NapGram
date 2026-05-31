@@ -26,7 +26,7 @@
   "author": "NapGram Team",
   "license": "MIT",
   "dependencies": {
-    "@naplink/naplink": "^1.0.0"
+    "@naplink/naplink": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "25.9.3",
