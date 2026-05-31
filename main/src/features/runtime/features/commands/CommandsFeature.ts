@@ -20,6 +20,7 @@ import { InteractiveStateManager } from './services/InteractiveStateManager.js'
 import { PermissionChecker } from './services/PermissionChecker.js'
 import { ThreadIdExtractor } from './services/ThreadIdExtractor.js'
 import { PersonalPairProvisioner } from '../forward/services/PersonalPairProvisioner.js'
+import { hasQ2tgSkipMarker } from '../../utils/QqLoopbackMarker.js'
 import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage, type QqChatType } from './utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandsFeature')
@@ -1208,6 +1209,11 @@ export class CommandsFeature {
 
   private handleQqMessage = async (qqMsg: UnifiedMessage): Promise<void> => {
     try {
+      if (hasQ2tgSkipMarker(qqMsg)) {
+        logger.debug(`[Commands] Ignored q2tgSkip QQ loopback message: ${qqMsg.id}`)
+        return
+      }
+
       // 提取所有文本内容并合并
       const textContents = qqMsg.content.filter(c => c.type === 'text')
       if (textContents.length === 0)

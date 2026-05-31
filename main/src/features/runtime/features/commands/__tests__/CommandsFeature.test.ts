@@ -598,6 +598,29 @@ describe('commandsFeature', () => {
       expect(registry.get).not.toHaveBeenCalled()
     })
 
+    it('ignores QQ messages carrying q2tgSkip loopback marker', async () => {
+      const registry = (commandsFeature as any).registry
+      registry.prefix = '/'
+
+      await (commandsFeature as any).handleQqMessage({
+        id: 'qq-skip',
+        platform: 'qq',
+        sender: { id: '123', name: 'User' },
+        chat: { id: '777', type: 'group' },
+        content: [{ type: 'text', data: { text: '/help' } }],
+        timestamp: Date.now(),
+        metadata: {
+          raw: {
+            message: [
+              { type: 'mirai', data: JSON.stringify({ q2tgSkip: true }) },
+            ],
+          },
+        },
+      })
+
+      expect(registry.get).not.toHaveBeenCalled()
+    })
+
     it('logs and swallows errors from QQ command handlers', async () => {
       const registry = (commandsFeature as any).registry
       registry.prefix = '/'
