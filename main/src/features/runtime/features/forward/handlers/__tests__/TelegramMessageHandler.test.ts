@@ -149,6 +149,8 @@ describe('telegramMessageHandler', () => {
     const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100' }
     replyResolver.resolveTGReply.mockResolvedValueOnce({
       seq: 555,
+      rand: BigInt(777),
+      pktnum: 1,
       time: 12345,
       senderUin: '999',
       qqRoomId: '888',
@@ -167,7 +169,15 @@ describe('telegramMessageHandler', () => {
     await handler.handleTGMessage(tgMsg, pair)
 
     const sentMsg = qqClient.sendMessage.mock.calls[0][1]
-    expect(sentMsg.content.some((c: any) => c.type === 'reply')).toBe(true)
+    const reply = sentMsg.content.find((c: any) => c.type === 'reply')
+    expect(reply).toBeTruthy()
+      expect(reply.data).toEqual(expect.objectContaining({
+        seq: 555,
+      rand: '777',
+      pktnum: 1,
+      time: 12345,
+      senderUin: '999',
+    }))
   })
 
   it('handles receipt with error', async () => {

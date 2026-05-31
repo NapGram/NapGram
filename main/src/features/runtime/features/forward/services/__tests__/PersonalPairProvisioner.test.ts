@@ -359,7 +359,7 @@ describe('personalPairProvisioner', () => {
 
   it('skips settings and folder RPCs when UserBot client lacks RPC methods', async () => {
     const runtime = createRuntime()
-    runtime.instance.tgUserBot.client.resolvePeer = undefined
+    ;(runtime.instance.tgUserBot.client as any).resolvePeer = undefined
     const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
 
     await provisioner.ensurePairForQQTarget('20002', 'group')
@@ -370,7 +370,7 @@ describe('personalPairProvisioner', () => {
   it('swallows already-participant invite errors and continues without promotion support', async () => {
     const runtime = createRuntime()
     runtime.tgUserClient.addChatMembers.mockRejectedValueOnce(new Error('USER_ALREADY_PARTICIPANT'))
-    runtime.tgUserClient.editAdminRights = undefined
+    ;(runtime.tgUserClient as any).editAdminRights = undefined
     const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
 
     const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
@@ -381,7 +381,7 @@ describe('personalPairProvisioner', () => {
 
   it('logs and returns undefined when provisioning cannot create a group', async () => {
     const runtime = createRuntime()
-    runtime.instance.tgUserBot.client.createSupergroup = undefined
+    ;(runtime.instance.tgUserBot.client as any).createSupergroup = undefined
     const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
 
     const pair = await provisioner.ensurePairForQQTarget('20002', 'group')

@@ -3,6 +3,7 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../shared-types.js'
 import { messageConverter } from '@napgram/message-kit'
 import { getLogger } from '../../../shared-types.js'
+import { ForwardMapper } from '../services/MessageMapper.js'
 
 const logger = getLogger('MediaGroupHandler')
 
@@ -23,6 +24,7 @@ export class MediaGroupHandler {
     private readonly qqClient: IQQClient,
     private readonly prepareMediaForQQ: (msg: UnifiedMessage) => Promise<void>,
     private readonly getNicknameMode: (pair: any) => string,
+    private readonly mapper = new ForwardMapper(),
   ) { }
 
   private getQqChatType(pair: any): 'private' | 'group' {
@@ -140,6 +142,7 @@ export class MediaGroupHandler {
       if (receipt.success) {
         const msgId = receipt.messageId || (receipt as any).data?.message_id || (receipt as any).id
         logger.info(`[MediaGroup] Flushed group ${groupId} -> QQ ${buffer.pair.qqRoomId} (seq: ${msgId})`)
+        await this.mapper.saveTgToQqMapping(msgWithSegments, lastMsg, receipt, buffer.pair)
       }
     }
     catch (error) {

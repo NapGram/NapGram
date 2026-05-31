@@ -189,6 +189,12 @@ export interface MessageReceipt {
   timestamp: number
   success: boolean
   error?: string
+  seq?: number
+  rand?: number | string
+  time?: number
+  pktnum?: number
+  senderId?: string
+  raw?: any
 }
 
 /**

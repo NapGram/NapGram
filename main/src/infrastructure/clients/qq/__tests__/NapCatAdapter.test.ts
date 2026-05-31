@@ -127,6 +127,7 @@ const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstr
   }
 
   const mockLog = {
+    debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
     error: vi.fn(),
@@ -400,6 +401,17 @@ describe('napCatAdapter', () => {
       expect(onFriendIncrease).toHaveBeenCalledWith({ id: '20', name: '' })
     })
 
+    it('should handle friend decrease variants', () => {
+      const onFriendDecrease = vi.fn()
+      adapter.on('friend.decrease', onFriendDecrease)
+      triggerClientEvent('notice.friend_decrease', { user_id: 20 })
+      triggerClientEvent('notice.friend_delete', { user_id: 21 })
+      triggerClientEvent('notice.friend_del', { user_id: 22 })
+      expect(onFriendDecrease).toHaveBeenCalledWith('20')
+      expect(onFriendDecrease).toHaveBeenCalledWith('21')
+      expect(onFriendDecrease).toHaveBeenCalledWith('22')
+    })
+
     it('should handle poke', () => {
       const onPoke = vi.fn()
       adapter.on('poke', onPoke)
@@ -410,6 +422,27 @@ describe('napCatAdapter', () => {
       // Private poke (group_id missing)
       triggerClientEvent('notice.notify.poke', { user_id: 60, target_id: 70 })
       expect(onPoke).toHaveBeenCalledWith('60', '60', '70')
+    })
+
+    it('should handle input status notices', () => {
+      const onInputStatus = vi.fn()
+      adapter.on('input.status', onInputStatus)
+
+      triggerClientEvent('notice.notify.input_status', { user_id: 60, group_id: 50, status_text: 'typing' })
+      expect(onInputStatus).toHaveBeenCalledWith(expect.objectContaining({
+        chatId: '50',
+        chatType: 'group',
+        userId: '60',
+        typing: true,
+      }))
+
+      triggerClientEvent('notice.input_status', { user_id: 60, status_text: '' })
+      expect(onInputStatus).toHaveBeenCalledWith(expect.objectContaining({
+        chatId: '60',
+        chatType: 'private',
+        userId: '60',
+        typing: false,
+      }))
     })
   })
 
@@ -454,7 +487,7 @@ describe('napCatAdapter', () => {
         group_id: 100,
         message: ['converted'],
       })
-      expect(receipt).toEqual({ messageId: '12345', timestamp: expect.any(Number), success: true })
+      expect(receipt).toEqual(expect.objectContaining({ messageId: '12345', timestamp: expect.any(Number), success: true, seq: 12345 }))
     })
 
     it('should send private message with pre-converted segments', async () => {
@@ -468,7 +501,29 @@ describe('napCatAdapter', () => {
         user_id: 200,
         message: ['pre'],
       })
-      expect(receipt).toEqual({ messageId: '67890', timestamp: expect.any(Number), success: true })
+      expect(receipt).toEqual(expect.objectContaining({ messageId: '67890', timestamp: expect.any(Number), success: true, seq: 67890 }))
+    })
+
+    it('should enrich sent message receipts from getMessage when send result is sparse', async () => {
+      const msg: any = { chat: { type: 'private' }, content: ['pre'], __napCatSegments: true }
+      mockNapLinkInstance.sendMessage.mockResolvedValue({ message_id: 67890 })
+      mockNapLinkInstance.getMessage.mockResolvedValue({
+        message_id: 67890,
+        time: 123456,
+        rand: 999,
+        sender: { user_id: 123456 },
+      })
+
+      const receipt = await adapter.sendMessage('200', msg)
+
+      expect(mockNapLinkInstance.getMessage).toHaveBeenCalledWith('67890')
+      expect(receipt).toEqual(expect.objectContaining({
+        messageId: '67890',
+        seq: 67890,
+        rand: 999,
+        time: 123456,
+        senderId: '123456',
+      }))
     })
 
     it('should handle sendMessage error', async () => {
@@ -483,7 +538,7 @@ describe('napCatAdapter', () => {
       mockNapLinkInstance.sendGroupForwardMessage.mockResolvedValue({ message_id: 111 })
       const receipt = await adapter.sendGroupForwardMsg('400', [])
       expect(mockNapLinkInstance.sendGroupForwardMessage).toHaveBeenCalledWith('400', [])
-      expect(receipt).toEqual({ messageId: '111', timestamp: expect.any(Number), success: true })
+      expect(receipt).toEqual(expect.objectContaining({ messageId: '111', timestamp: expect.any(Number), success: true, seq: 111 }))
 
       mockNapLinkInstance.sendGroupForwardMessage.mockRejectedValue(new Error('Fail'))
       const receipt2 = await adapter.sendGroupForwardMsg('400', [])

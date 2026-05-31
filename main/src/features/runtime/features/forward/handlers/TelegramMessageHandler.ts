@@ -4,7 +4,8 @@ import type { IQQClient } from '../../../shared-types.js'
 import type { ReplyResolver } from '../services/ReplyResolver.js'
 import type { MediaGroupHandler } from './MediaGroupHandler.js'
 import { messageConverter } from '@napgram/message-kit'
-import { db, getLogger, performanceMonitor, sql } from '../../../shared-types.js'
+import { getLogger, performanceMonitor } from '../../../shared-types.js'
+import { ForwardMapper } from '../services/MessageMapper.js'
 
 const logger = getLogger('ForwardFeature')
 
@@ -19,6 +20,7 @@ export class TelegramMessageHandler {
     private readonly prepareMediaForQQ: (msg: UnifiedMessage) => Promise<void>,
     private readonly renderContent: (content: any) => string,
     private readonly getNicknameMode: (pair: any) => string,
+    private readonly mapper = new ForwardMapper(renderContent),
   ) { }
 
   private getQqChatType(pair: any): 'private' | 'group' {
@@ -101,6 +103,8 @@ export class TelegramMessageHandler {
             data: {
               id: String(qqReply.seq),
               seq: qqReply.seq,
+              rand: qqReply.rand !== undefined ? String(qqReply.rand) : undefined,
+              pktnum: qqReply.pktnum,
               time: qqReply.time,
               senderUin: qqReply.senderUin,
               peer: {
@@ -263,51 +267,7 @@ export class TelegramMessageHandler {
         const latency = Date.now() - startTime
         performanceMonitor.recordMessage(latency)
 
-        if (msgId) {
-          // Save mapping for reply lookup (QQ -> TG reply)
-          try {
-            const tgSenderName = unified.sender?.name || tgMsg?.sender?.displayName || tgMsg?.sender?.username || null
-            await db.execute(sql`
-              INSERT INTO "Message" (
-                "qqChatType",
-                "qqRoomId",
-                "qqSenderId",
-                "time",
-                "seq",
-                "rand",
-                "pktnum",
-                "tgChatId",
-                "tgMsgId",
-                "tgSenderId",
-                "instanceId",
-                "nick",
-                "brief"
-              )
-              VALUES (
-                ${this.getQqChatType(pair)},
-                ${pair.qqRoomId},
-                ${BigInt(0)},
-                ${Math.floor(Date.now() / 1000)},
-                ${Number(msgId)},
-                ${BigInt(0)},
-                ${0},
-                ${BigInt(pair.tgChatId)},
-                ${BigInt(tgMsg.id)},
-                ${BigInt(tgMsg.sender?.id || 0)},
-                ${pair.instanceId},
-                ${tgSenderName},
-                ${unified.content.map(c => this.renderContent(c)).join(' ').slice(0, 50)}
-              )
-            `)
-            logger.debug(`Saved TG->QQ mapping: seq=${msgId} <-> tgMsgId=${tgMsg.id}`)
-          }
-          catch (e) {
-            logger.warn('Failed to save TG->QQ message mapping:', e)
-          }
-        }
-        else {
-          logger.warn('TG->QQ forwarded but no messageId in receipt, cannot save mapping.')
-        }
+        await this.mapper.saveTgToQqMapping(unified, tgMsg, receipt, pair)
       }
       else if (receipt.error) {
         logger.warn(`TG message ${tgMsg.id} forwarded to QQ ${pair.qqRoomId} failed: ${receipt.error}`)

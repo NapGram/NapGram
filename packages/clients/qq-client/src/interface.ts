@@ -2,6 +2,7 @@ import type { Buffer } from 'node:buffer'
 import type { EventEmitter } from 'node:events'
 import type {
   Chat,
+  InputStatusEvent,
   MessageReceipt,
   RecallEvent,
   Sender,
@@ -206,6 +207,7 @@ export interface IQQClient extends EventEmitter {
   & ((event: 'friend.decrease', listener: (uin: string) => void) => this)
   & ((event: 'group.increase', listener: (groupId: string, member: Sender) => void) => this)
   & ((event: 'group.decrease', listener: (groupId: string, uin: string) => void) => this)
+  & ((event: 'input.status', listener: (event: InputStatusEvent) => void) => this)
   & ((event: 'poke', listener: (chatId: string, operatorId: string, targetId: string) => void) => this)
   & ((event: 'error', listener: (error: Error) => void) => this)
   & ((event: 'offline', listener: () => void) => this)
