@@ -212,4 +212,24 @@ describe('fileNormalizer', () => {
       expect(result).toBeUndefined()
     })
   })
+
+  describe('ensureTelegramPhotoCompatible', () => {
+    it('returns unmodified if not webp', async () => {
+      const file = { fileName: 'a.jpg', data: Buffer.alloc(0), fileMime: 'image/jpeg' }
+      const res = await normalizer.ensureTelegramPhotoCompatible(file)
+      expect(res).toBe(file)
+    })
+    
+    it('handles webp to png conversion via image-js failure and ffmpeg fallback', async () => {
+      const file = { fileName: 'a.webp', data: Buffer.alloc(0), fileMime: 'image/webp' }
+      
+      // We don't want to actually run ffmpeg or image-js in unit test, so we just let it fail 
+      // or mock them if possible. Here image-js `decode` will throw because Buffer is empty.
+      // And ffmpeg will fail because we mock nothing or it throws.
+      const res = await normalizer.ensureTelegramPhotoCompatible(file)
+      
+      // It should fallback to returning the original file because both failed
+      expect(res).toBe(file)
+    })
+  })
 })

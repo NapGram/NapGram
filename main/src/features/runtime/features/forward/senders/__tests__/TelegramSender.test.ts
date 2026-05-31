@@ -437,4 +437,80 @@ describe('telegramSender', () => {
 
     expect(mockChat.client.sendMedia).toHaveBeenCalledWith(100, expect.objectContaining({ type: 'document', fileName: 'doc.pdf' }), expect.any(Object))
   })
+
+  it('flushes text before image content', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'text', data: { text: 'Look at this:' } },
+        { type: 'image', data: { file: '/tmp/photo.jpg' } },
+      ],
+    }
+    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/photo.jpg')
+    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('img'), fileName: 'photo.jpg' })
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    // Text should be sent first
+    expect(mockChat.sendMessage).toHaveBeenCalled()
+    // Then image
+    expect(mockChat.client.sendMedia).toHaveBeenCalled()
+  })
+
+  it('handles audio content', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'audio', data: { file: '/tmp/audio.mp3' } }],
+    }
+    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/audio.mp3')
+    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('audio'), fileName: 'audio.mp3' })
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    // Audio goes through mediaSender which determines the actual type
+    expect(mockChat.client.sendMedia).toHaveBeenCalled()
+  })
+
+  it('handles location content', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'location', data: { latitude: 30.5, longitude: 120.1, title: 'Home' } }],
+    }
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    expect(mockChat.client.sendMedia).toHaveBeenCalled()
+  })
+
+  it('handles forward content with text before it', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'text', data: { text: 'Check this:' } },
+        { type: 'forward', data: { messages: [{ userId: '1', userName: 'User', segments: [{ type: 'text', data: { text: 'fwd' } }] }] } },
+      ],
+    }
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    // Text should be sent first, then forward
+    expect(mockChat.sendMessage).toHaveBeenCalled()
+  })
+
+  it('handles default content type', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'sticker', data: { emoji: '😊' } }],
+    }
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    // Default type renders as text
+    expect(mockChat.sendMessage).toHaveBeenCalled()
+  })
 })

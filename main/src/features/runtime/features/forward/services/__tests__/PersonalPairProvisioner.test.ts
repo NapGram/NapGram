@@ -1,5 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { addForwardPairWithChatType, findPairByQQWithChatType } from '../../../commands/utils/ForwardPairChatType.js'
 import { PersonalPairProvisioner } from '../PersonalPairProvisioner.js'
 
@@ -103,6 +103,10 @@ describe('personalPairProvisioner', () => {
       apiKey: 'api-key',
       autoCreated: true,
     })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('does nothing when personal auto provisioning is unavailable', async () => {
@@ -212,5 +216,223 @@ describe('personalPairProvisioner', () => {
     await expect(Promise.all([first, second])).resolves.toHaveLength(2)
     expect(runtime.tgUserClient.createSupergroup).toHaveBeenCalledTimes(1)
     expect(addForwardPairWithChatType).toHaveBeenCalledTimes(1)
+  })
+
+  it('returns an existing pair without creating a Telegram group', async () => {
+    const existingPair = {
+      id: 22,
+      instanceId: 7,
+      qqRoomId: BigInt(20002),
+      qqChatType: 'group',
+      tgChatId: BigInt(-10030003),
+      tgThreadId: null,
+      flags: 0,
+      apiKey: 'existing',
+    }
+    pairHelperMocks.findPairByQQWithChatType.mockResolvedValueOnce(existingPair)
+    const runtime = createRuntime()
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group', 'Fallback Group')
+
+    expect(pair).toBe(existingPair)
+    expect(runtime.tgUserClient.createSupergroup).not.toHaveBeenCalled()
+    expect(addForwardPairWithChatType).not.toHaveBeenCalled()
+  })
+
+  it('falls back to clean display names when QQ lookups fail', async () => {
+    const runtime = createRuntime()
+    runtime.qqClient.getFriendInfo.mockRejectedValueOnce(new Error('friend lookup failed'))
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    await provisioner.ensurePairForQQTarget('10001', 'private', '  Fallback   Alice  ')
+
+    expect(runtime.tgUserClient.createSupergroup).toHaveBeenCalledWith({
+      title: 'QQ 好友 Fallback Alice',
+      description: 'NapGram personal mode auto-created for QQ 好友 10001',
+      forum: false,
+    })
+    expect(loggerMocks.debug).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: '10001' }),
+      'Failed to resolve QQ friend name',
+    )
+  })
+
+  it('uses raw id when QQ name lookup and fallback name are unavailable', async () => {
+    const runtime = createRuntime()
+    runtime.qqClient.getGroupInfo.mockResolvedValueOnce({ id: '20002', name: '   ' })
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(runtime.tgUserClient.createSupergroup).toHaveBeenCalledWith({
+      title: 'QQ 群 20002',
+      description: 'NapGram personal mode auto-created for QQ 群 20002',
+      forum: false,
+    })
+  })
+
+  it('adds auto-created chats to an existing QQ folder only when absent', async () => {
+    const runtime = createRuntime()
+    const inputPeer = { _: 'inputPeerChannel', channelId: 10020002, accessHash: 0 }
+    runtime.tgUserClient.resolvePeer.mockResolvedValueOnce(inputPeer)
+    runtime.tgUserClient.call.mockImplementation(async (request: any) => {
+      if (request._ === 'messages.getDialogFilters') {
+        return {
+          filters: [{
+            _: 'dialogFilter',
+            id: 5,
+            title: 'QQ',
+            includePeers: [{ userId: 123 }],
+            excludePeers: [],
+            pinnedPeers: [],
+          }],
+        }
+      }
+      return {}
+    })
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(runtime.tgUserClient.call).toHaveBeenCalledWith({
+      _: 'messages.updateDialogFilter',
+      id: 5,
+      filter: expect.objectContaining({
+        includePeers: [{ userId: 123 }, inputPeer],
+      }),
+    })
+  })
+
+  it('does not duplicate existing folder peers', async () => {
+    const runtime = createRuntime()
+    const inputPeer = { _: 'inputPeerUser', userId: 90001, accessHash: 0 }
+    runtime.tgUserClient.resolvePeer.mockResolvedValueOnce(inputPeer)
+    runtime.tgUserClient.call.mockImplementation(async (request: any) => {
+      if (request._ === 'messages.getDialogFilters') {
+        return {
+          filters: [{
+            _: 'dialogFilter',
+            id: 5,
+            title: 'QQ',
+            includePeers: [{ userId: 90001 }],
+            excludePeers: [],
+            pinnedPeers: [],
+          }],
+        }
+      }
+      return {}
+    })
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(runtime.tgUserClient.call).not.toHaveBeenCalledWith(expect.objectContaining({
+      _: 'messages.updateDialogFilter',
+      id: 5,
+    }))
+  })
+
+  it('continues when hiding settings bar or folder update fails', async () => {
+    const runtime = createRuntime()
+    runtime.tgUserClient.call.mockImplementation(async (request: any) => {
+      if (request._ === 'messages.hidePeerSettingsBar')
+        throw new Error('hide failed')
+      if (request._ === 'messages.getDialogFilters')
+        throw new Error('folder failed')
+      return {}
+    })
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(pair?.autoCreated).toBe(true)
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: -10020002 }),
+      'Failed to hide peer settings bar',
+    )
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: -10020002 }),
+      'Failed to update QQ folder',
+    )
+  })
+
+  it('skips settings and folder RPCs when UserBot client lacks RPC methods', async () => {
+    const runtime = createRuntime()
+    runtime.instance.tgUserBot.client.resolvePeer = undefined
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(runtime.tgUserClient.call).not.toHaveBeenCalled()
+  })
+
+  it('swallows already-participant invite errors and continues without promotion support', async () => {
+    const runtime = createRuntime()
+    runtime.tgUserClient.addChatMembers.mockRejectedValueOnce(new Error('USER_ALREADY_PARTICIPANT'))
+    runtime.tgUserClient.editAdminRights = undefined
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(pair?.autoCreated).toBe(true)
+    expect(addForwardPairWithChatType).toHaveBeenCalled()
+  })
+
+  it('logs and returns undefined when provisioning cannot create a group', async () => {
+    const runtime = createRuntime()
+    runtime.instance.tgUserBot.client.createSupergroup = undefined
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(pair).toBeUndefined()
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ instanceId: 7, qqChatType: 'group', qqRoomId: '20002' }),
+      'Personal pair auto provisioning failed',
+    )
+  })
+
+  it('logs and returns undefined when bot identity is unavailable', async () => {
+    const runtime = createRuntime()
+    runtime.instance.tgBot.me = {}
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(pair).toBeUndefined()
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ instanceId: 7, qqChatType: 'group', qqRoomId: '20002' }),
+      'Personal pair auto provisioning failed',
+    )
+  })
+
+  it('logs and returns undefined when the bot cannot observe the auto-created chat', async () => {
+    const runtime = createRuntime()
+    runtime.tgBot.getChat.mockRejectedValueOnce(new Error('not visible'))
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(pair).toBeUndefined()
+    expect(addForwardPairWithChatType).not.toHaveBeenCalled()
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ instanceId: 7, qqChatType: 'group', qqRoomId: '20002' }),
+      'Personal pair auto provisioning failed',
+    )
+  })
+
+  it('logs and returns undefined when addForwardPairWithChatType returns no pair', async () => {
+    pairHelperMocks.addForwardPairWithChatType.mockResolvedValueOnce(undefined)
+    const runtime = createRuntime()
+    const provisioner = new PersonalPairProvisioner(runtime.instance, runtime.forwardMap, runtime.qqClient)
+
+    const pair = await provisioner.ensurePairForQQTarget('20002', 'group')
+
+    expect(pair).toBeUndefined()
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ instanceId: 7, qqChatType: 'group', qqRoomId: '20002' }),
+      'Personal pair auto provisioning failed',
+    )
   })
 })
