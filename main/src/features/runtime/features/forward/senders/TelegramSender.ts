@@ -328,43 +328,7 @@ export class TelegramSender {
           fileName: normalized.fileName,
         }
       }
-      else if (content.type === 'location') {
-        const loc = (content as any).data
-        const isVenue = Boolean((loc.title && loc.title.trim()) || (loc.address && loc.address.trim()))
-        mediaInput = isVenue
-          ? {
-              type: 'venue',
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-              title: loc.title || '位置',
-              address: loc.address || '',
-              source: { provider: 'qq', id: '', type: '' },
-            }
-          : {
-              type: 'geo',
-              latitude: loc.latitude,
-              longitude: loc.longitude,
-            }
-      }
-      else if (content.type === 'dice') {
-        const emoji = (content as any).data.emoji || '🎲'
-        const value = (content as any).data.value
-        if (!ALLOWED_TELEGRAM_DICE.has(emoji)) {
-          // 不支持的 emoji，退回文本
-          const { text, params } = this.richHeaderBuilder.applyRichHeader(`${header}${emoji}${value ? ` ${value}` : ''}`, richHeaderUsed ? richHeaderUrl : undefined)
-          try {
-            return await chat.sendMessage(text, telegramSend.applyTelegramReplyTo(params, this.richHeaderBuilder.buildReplyTo(pair, replyToMsgId)))
-          }
-          catch (e) {
-            this.logger.error(e, 'Failed to send fallback text for dice:')
-            throw e
-          }
-        }
-        mediaInput = {
-          type: 'dice',
-          emoji,
-        }
-      }
+
 
       if (mediaInput) {
         const ttlSeconds = env.TG_MEDIA_TTL_SECONDS && env.TG_MEDIA_TTL_SECONDS > 0 ? env.TG_MEDIA_TTL_SECONDS : undefined
