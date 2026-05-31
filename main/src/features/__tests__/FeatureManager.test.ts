@@ -116,4 +116,35 @@ describe('featureManager', () => {
     const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
     await expect(manager.initialize()).rejects.toThrow('Init error')
   })
+
+  it('enableFeature returns true when feature exists', async () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+    await manager.initialize()
+    expect(manager.enableFeature('media')).toBe(true)
+    expect(manager.enableFeature('nonexistent')).toBe(false)
+  })
+
+  it('disableFeature returns true when feature exists', async () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+    await manager.initialize()
+    expect(manager.disableFeature('media')).toBe(true)
+    expect(manager.disableFeature('nonexistent')).toBe(false)
+  })
+
+  it('handles destroy when feature map has gaps', async () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+    await manager.initialize()
+    // Manually remove a feature to test the `continue` branch
+    ;(manager as any).features.delete('forward')
+    await manager.destroy()
+    // Should not crash
+  })
+
+  it('handles features without destroy method', async () => {
+    const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
+    // Register a feature without destroy
+    manager.registerFeature('media', {} as any)
+    await manager.destroy()
+    // Should not crash
+  })
 })

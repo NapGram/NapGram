@@ -69,4 +69,70 @@ describe('web interfaces', () => {
 
     expect(second).not.toBe(first)
   })
+
+  it('returns 500 with error message from error handler', async () => {
+    const { createServer } = await import('../index')
+    const app = createServer()
+
+    // Register a route that throws
+    app.get('/test-error', async () => {
+      throw new Error('test error message')
+    })
+
+    const response = await app.inject({ method: 'GET', url: '/test-error' })
+    expect(response.statusCode).toBe(500)
+    expect(response.json()).toEqual({ message: 'test error message' })
+    expect(logger.error).toHaveBeenCalledWith('GET', '/test-error', 'test error message')
+  })
+
+  it('getWebApi returns registerRoutes function', async () => {
+    const { getWebApi } = await import('../index')
+    const api = getWebApi()
+    expect(typeof api.registerRoutes).toBe('function')
+  })
+
+  it('startServer starts listening on configured port', async () => {
+    const { startServer, stopServer } = await import('../index')
+    try {
+      const app = await startServer()
+      expect(app).toBeDefined()
+      expect(logger.info).toHaveBeenCalledWith('Listening on', 8080)
+      await stopServer()
+    }
+    catch (e: any) {
+      // Port might be in use from other tests, that's OK
+      if (e.code === 'EADDRINUSE') {
+        await stopServer()
+        return
+      }
+      throw e
+    }
+  })
+
+  it('stopServer is a no-op when no server exists', async () => {
+    const { stopServer } = await import('../index')
+    // Should not throw
+    await stopServer()
+    // Calling again should also be fine
+    await stopServer()
+  })
+
+  it('startServer propagates listen errors', async () => {
+    const { createServer, startServer, stopServer } = await import('../index')
+    const app = createServer()
+    try {
+      await startServer(app)
+    }
+    catch (e: any) {
+      // Port already in use - that's the expected error path
+      if (e.code === 'EADDRINUSE') {
+        expect(e.code).toBe('EADDRINUSE')
+        return
+      }
+      throw e
+    }
+    // If first start succeeded, second should fail
+    await expect(startServer(app)).rejects.toThrow()
+    await stopServer()
+  })
 })
