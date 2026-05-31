@@ -26,6 +26,7 @@ async function fetchBuffer(url: string): Promise<Buffer> {
 
 export class PersonalSyncService {
   private timer?: NodeJS.Timeout
+  private initialTimer?: NodeJS.Timeout
   private readonly avatarHashCache = new Map<string, string>()
 
   constructor(
@@ -35,11 +36,14 @@ export class PersonalSyncService {
   ) {}
 
   public start(intervalMs = 60 * 60 * 1000) {
-    if (this.timer)
+    if (this.timer || this.initialTimer)
       return
     this.timer = setInterval(() => this.syncAll().catch(err => logger.error('Sync failed:', err)), intervalMs)
     // Run initial sync after a short delay
-    setTimeout(() => this.syncAll().catch(err => logger.error('Sync failed:', err)), 10_000)
+    this.initialTimer = setTimeout(() => {
+      this.initialTimer = undefined
+      this.syncAll().catch(err => logger.error('Sync failed:', err))
+    }, 10_000)
     logger.info('PersonalSyncService started')
   }
 
@@ -47,6 +51,10 @@ export class PersonalSyncService {
     if (this.timer) {
       clearInterval(this.timer)
       this.timer = undefined
+    }
+    if (this.initialTimer) {
+      clearTimeout(this.initialTimer)
+      this.initialTimer = undefined
     }
     logger.info('PersonalSyncService stopped')
   }

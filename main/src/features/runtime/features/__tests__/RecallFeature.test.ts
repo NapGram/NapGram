@@ -194,6 +194,32 @@ describe('recallFeature', () => {
       expect(mockQqClient.recallMessage).toHaveBeenCalledWith('123')
     })
 
+    it('normalizes mtcute chatId/messageIds aliases on TG delete', async () => {
+      const handleTGDelete = mockTgBot.addDeletedMessageEventHandler.mock.calls[0][0]
+      vi.mocked(db.query.message.findFirst).mockResolvedValue({ seq: 123 } as any)
+
+      await handleTGDelete({
+        chatId: '-100456',
+        messageIds: ['101'],
+      })
+
+      expect(db.query.message.findFirst).toHaveBeenCalled()
+      expect(mockQqClient.recallMessage).toHaveBeenCalledWith('123')
+    })
+
+    it('normalizes peer/deletedIds aliases on TG delete', async () => {
+      const handleTGDelete = mockTgBot.addDeletedMessageEventHandler.mock.calls[0][0]
+      vi.mocked(db.query.message.findFirst).mockResolvedValue({ seq: 124 } as any)
+
+      await handleTGDelete({
+        peer: { channelId: BigInt(456) },
+        deletedIds: [BigInt(102)],
+      })
+
+      expect(db.query.message.findFirst).toHaveBeenCalled()
+      expect(mockQqClient.recallMessage).toHaveBeenCalledWith('124')
+    })
+
     it('handles missing sequence in DB entry', async () => {
       const handleTGDelete = mockTgBot.addDeletedMessageEventHandler.mock.calls[0][0]
       vi.mocked(db.query.message.findFirst).mockResolvedValue({ seq: null } as any)

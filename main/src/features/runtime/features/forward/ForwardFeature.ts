@@ -6,7 +6,8 @@ import type { MediaFeature } from '../MediaFeature.js'
 import process from 'node:process'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
-import { db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
+import { and, db, env, eq, getEventPublisher, getLogger, performanceMonitor, schema } from '../../shared-types.js'
+import { hasQ2tgSkipMarker } from '../../utils/QqLoopbackMarker.js'
 import { hasConfiguredWorkMode } from '../../work-mode-gate.js'
 import { ThreadIdExtractor } from '../commands/services/ThreadIdExtractor.js'
 import { findPairByQQWithChatType, findPairByTGWithChatType } from '../commands/utils/ForwardPairChatType.js'
@@ -49,11 +50,19 @@ export class ForwardFeature {
   }
 
   private handleTgMessage = async (tgMsg: Message) => {
+    await this.processTelegramMessage(tgMsg, false)
+  }
+
+  private handleTgEditedMessage = async (tgMsg: Message) => {
+    await this.processTelegramMessage(tgMsg, true)
+  }
+
+  private async processTelegramMessage(tgMsg: Message, isEdit: boolean) {
     if (!hasConfiguredWorkMode(this.instance))
       return
 
     const rawText = tgMsg.text || ''
-    logger.debug('[Forward][TG->QQ] incoming', {
+    logger.debug(isEdit ? '[Forward][TG->QQ] edited incoming' : '[Forward][TG->QQ] incoming', {
       id: tgMsg.id,
       chatId: tgMsg.chat.id,
       text: rawText.slice(0, 100),
@@ -86,6 +95,8 @@ export class ForwardFeature {
     catch (e) {
       logger.debug(e, '[Forward] Failed to convert TG message')
     }
+    if (isEdit && unified)
+      unified.metadata = { ...(unified.metadata || {}), isEdited: true }
 
     await this.publishTgPluginEvent(tgMsg, pair, unified, threadId ? Number(threadId) : undefined)
 
@@ -98,6 +109,11 @@ export class ForwardFeature {
       logger.debug(e, '[Gateway] publishMessageCreated (TG) failed')
     }
 
+    if (isEdit && this.isRecallCommandText(rawText)) {
+      await this.handleEditedRecallCommand(tgMsg, pair)
+      return
+    }
+
     if (rawText.trim().startsWith('/')) {
       logger.debug({ text: rawText }, '[Forward] Skipping command message')
       return
@@ -108,6 +124,10 @@ export class ForwardFeature {
     if (forwardMode[1] === '0') {
       logger.debug(`Forward TG->QQ disabled for chat ${tgMsg.chat.id} (mode: ${forwardMode})`)
       return
+    }
+
+    if (isEdit) {
+      await this.recallMappedQQMessage(tgMsg, pair)
     }
 
     await this.tgMessageHandler.handleTGMessage(tgMsg, pair, unified)
@@ -234,8 +254,12 @@ export class ForwardFeature {
     this.qqClient.on('message', this.handleQQMessage)
     this.qqClient.on('poke', this.handlePokeEvent)
     this.qqClient.on('friend.increase', this.handleFriendIncrease)
+    this.qqClient.on('friend.decrease', this.handleFriendDecrease)
     this.qqClient.on('group.increase', this.handleGroupIncrease)
+    this.qqClient.on('group.decrease', this.handleGroupDecrease)
+    this.qqClient.on('input.status', this.handleInputStatus)
     this.tgBot.addNewMessageEventHandler(this.handleTgMessage)
+    this.tgBot.addEditedMessageEventHandler?.(this.handleTgEditedMessage)
     logger.debug('[ForwardFeature] listeners attached')
   }
 
@@ -255,6 +279,74 @@ export class ForwardFeature {
     if (!pair.nicknameMode && (this.instance as any).workMode === 'personal')
       return '10'
     return pair.nicknameMode || env.SHOW_NICKNAME_MODE
+  }
+
+  private isPersonalMode(): boolean {
+    return (this.instance as any).workMode === 'personal'
+      || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
+  }
+
+  private getProcessedQQMessageKey(msg: UnifiedMessage): string {
+    const chatType = msg.chat?.type || 'unknown'
+    const chatId = msg.chat?.id ?? 'unknown'
+    return [
+      this.instance.id,
+      msg.platform || 'qq',
+      chatType,
+      chatId,
+      msg.id,
+    ].map(value => String(value)).join(':')
+  }
+
+  private isRecallCommandText(text: string): boolean {
+    const command = text.trim().split(/\s+/)[0]?.split('@')[0]?.toLowerCase()
+    return command === '/rm'
+  }
+
+  private async deleteTelegramMessageQuietly(tgMsg: Message) {
+    try {
+      const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
+      const messageId = telegramSend.normalizeTelegramMessageId(tgMsg.id)
+      if (!messageId)
+        return
+      await chat.deleteMessages([messageId])
+    }
+    catch (error) {
+      logger.debug(error, `[Forward][TG->QQ] failed to delete edited /rm command ${tgMsg.id}`)
+    }
+  }
+
+  private async handleEditedRecallCommand(tgMsg: Message, pair: ForwardPairRecord) {
+    await this.recallMappedQQMessage(tgMsg, pair)
+    await this.deleteTelegramMessageQuietly(tgMsg)
+    logger.info(`[Forward][TG->QQ] handled edited /rm command for TG message ${tgMsg.id}`)
+  }
+
+  private async recallMappedQQMessage(tgMsg: Message, pair: ForwardPairRecord) {
+    const source = await this.mapper.findQqSource(
+      pair.instanceId,
+      BigInt(pair.tgChatId),
+      BigInt(tgMsg.id),
+    )
+    if (!source?.seq) {
+      logger.debug(`[Forward][TG->QQ] edited message ${tgMsg.id} has no QQ mapping to recall`)
+      return
+    }
+
+    try {
+      await this.qqClient.recallMessage(String(source.seq))
+      await db.update(schema.message)
+        .set({ ignoreDelete: true })
+        .where(and(
+          eq(schema.message.instanceId, pair.instanceId),
+          eq(schema.message.tgChatId, BigInt(pair.tgChatId)),
+          eq(schema.message.tgMsgId, BigInt(tgMsg.id)),
+        ))
+      logger.info(`[Forward][TG->QQ] recalled old QQ message ${source.seq} before reposting edited TG ${tgMsg.id}`)
+    }
+    catch (error) {
+      logger.warn(error, `[Forward][TG->QQ] failed to recall old QQ message ${source.seq} before edit repost`)
+    }
   }
 
   async sendPluginMessageToTelegram(
@@ -440,6 +532,11 @@ export class ForwardFeature {
     if (!hasConfiguredWorkMode(this.instance))
       return
 
+    if (hasQ2tgSkipMarker(msg)) {
+      logger.debug(`[Forward] Ignored q2tgSkip QQ loopback message: ${msg.id}`)
+      return
+    }
+
     const startTime = Date.now() // 📊 开始计时
     const text = (msg.content || [])
       .filter(c => c.type === 'text')
@@ -453,14 +550,15 @@ export class ForwardFeature {
     }
 
     // Deduplication check
-    if (this.processedMsgIds.has(String(msg.id))) {
+    const processedMsgKey = this.getProcessedQQMessageKey(msg)
+    if (this.processedMsgIds.has(processedMsgKey)) {
       logger.info(`[Forward] Duplicate QQ message ignored: ${msg.id}`)
       return
     }
-    this.processedMsgIds.add(String(msg.id))
+    this.processedMsgIds.add(processedMsgKey)
     // Clear cache after 30 seconds
     setTimeout(() => {
-      this.processedMsgIds.delete(String(msg.id))
+      this.processedMsgIds.delete(processedMsgKey)
     }, 30 * 1000)
 
     const isCommand = text.startsWith('/')
@@ -539,7 +637,7 @@ export class ForwardFeature {
 
       const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
       let pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
-      if (!pair && qqChatType === 'private')
+      if (!pair && this.isPersonalMode())
         pair = await this.personalPairProvisioner.ensurePairForQQMessage(msg, qqChatType)
       if (!pair) {
         logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`)
@@ -786,9 +884,7 @@ export class ForwardFeature {
       if (!hasConfiguredWorkMode(this.instance))
         return
 
-      const isPersonal = (this.instance as any).workMode === 'personal'
-        || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
-      if (!isPersonal)
+      if (!this.isPersonalMode())
         return
 
       const ownerId = this.instance.owner
@@ -810,9 +906,7 @@ export class ForwardFeature {
       if (!hasConfiguredWorkMode(this.instance))
         return
 
-      const isPersonal = (this.instance as any).workMode === 'personal'
-        || (this.instance as any).getPersonalModeDiagnostics?.().workMode === 'personal'
-      if (!isPersonal)
+      if (!this.isPersonalMode())
         return
 
       // member?.id === uin 说明是机器人自己加入了新群
@@ -836,14 +930,96 @@ export class ForwardFeature {
     }
   }
 
+  private async removePersonalPair(pair: ForwardPairRecord, chatType: 'private' | 'group', qqRoomId: string, notice: string) {
+    if (typeof (this.forwardMap as any).remove === 'function') {
+      await (this.forwardMap as any).remove({ type: chatType, id: qqRoomId })
+    }
+    else {
+      await db.delete(schema.forwardPair).where(eq(schema.forwardPair.id, pair.id))
+      await (this.forwardMap as any).reload?.()
+    }
+
+    const ownerId = this.instance.owner
+    if (ownerId)
+      await MessageUtils.replyTG(this.tgBot, ownerId, notice).catch(error => logger.warn(error, 'Failed to notify owner after personal pair removal'))
+
+    await MessageUtils.replyTG(this.tgBot, BigInt(pair.tgChatId), notice, pair.tgThreadId ?? undefined)
+      .catch(error => logger.warn(error, 'Failed to notify pair chat after personal pair removal'))
+  }
+
+  private handleFriendDecrease = async (uin: string) => {
+    try {
+      if (!hasConfiguredWorkMode(this.instance) || !this.isPersonalMode())
+        return
+
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, uin, 'private')
+      if (!pair)
+        return
+
+      await this.removePersonalPair(pair, 'private', uin, `👤 【个人模式】QQ 好友 ${uin} 已删除，相关绑定已清理。`)
+      logger.info({ uin, pairId: pair.id }, 'Removed personal private pair after friend decrease')
+    }
+    catch (error) {
+      logger.error('Failed to handle friend decrease:', error)
+    }
+  }
+
+  private handleGroupDecrease = async (groupId: string, uin: string) => {
+    try {
+      if (!hasConfiguredWorkMode(this.instance) || !this.isPersonalMode())
+        return
+
+      const selfUin = String(this.qqClient.uin)
+      if (!uin || String(uin) !== selfUin)
+        return
+
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, groupId, 'group')
+      if (!pair)
+        return
+
+      await this.removePersonalPair(pair, 'group', groupId, `👥 【个人模式】QQ 群 ${groupId} 已退出或机器人被移除，相关绑定已清理。`)
+      logger.info({ groupId, pairId: pair.id }, 'Removed personal group pair after bot group decrease')
+    }
+    catch (error) {
+      logger.error('Failed to handle group decrease:', error)
+    }
+  }
+
+  private handleInputStatus = async (event: { chatId: string, chatType?: 'private' | 'group', typing: boolean }) => {
+    try {
+      if (!hasConfiguredWorkMode(this.instance))
+        return
+
+      const qqChatType = event.chatType === 'private' ? 'private' : 'group'
+      const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, event.chatId, qqChatType)
+      if (!pair)
+        return
+
+      const forwardMode = this.getForwardMode(pair)
+      if (forwardMode[0] === '0')
+        return
+
+      const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(pair.tgChatId) as any)
+      if (typeof chat.setTyping === 'function')
+        await chat.setTyping(event.typing ? 'typing' : 'cancel')
+    }
+    catch (error) {
+      logger.debug(error, '[Forward] Failed to forward QQ input status to TG')
+    }
+  }
+
   destroy() {
     this.personalSyncService?.stop()
     this.mediaGroupHandler.destroy()
     this.qqClient.removeListener('message', this.handleQQMessage)
     this.qqClient.removeListener('poke', this.handlePokeEvent)
     this.qqClient.removeListener('friend.increase', this.handleFriendIncrease)
+    this.qqClient.removeListener('friend.decrease', this.handleFriendDecrease)
     this.qqClient.removeListener('group.increase', this.handleGroupIncrease)
+    this.qqClient.removeListener('group.decrease', this.handleGroupDecrease)
+    this.qqClient.removeListener('input.status', this.handleInputStatus)
     this.tgBot.removeNewMessageEventHandler(this.handleTgMessage)
+    this.tgBot.removeEditedMessageEventHandler?.(this.handleTgEditedMessage)
     logger.info('ForwardFeature destroyed')
   }
 }

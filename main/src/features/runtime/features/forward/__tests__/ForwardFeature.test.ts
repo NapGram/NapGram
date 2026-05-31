@@ -20,15 +20,37 @@ const performanceMonitorMocks = vi.hoisted(() => ({
   recordError: vi.fn(),
 }))
 
+const personalPairProvisionerMocks = vi.hoisted(() => ({
+  instances: [] as any[],
+}))
+
+const mapperMocks = vi.hoisted(() => ({
+  instances: [] as any[],
+}))
+
+const telegramMessageHandlerMocks = vi.hoisted(() => ({
+  instances: [] as any[],
+}))
+
 vi.mock('../../../shared-types.js', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
     execute: vi.fn().mockResolvedValue({ rows: [], rowCount: 1 }),
     update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }) }),
+    delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
   },
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
   eq: vi.fn((a: any, b: any) => ({ a, b })),
-  schema: { forwardPair: { id: 'id' } },
+  and: vi.fn((...conditions: any[]) => ({ and: conditions })),
+  schema: {
+    forwardPair: { id: 'forwardPair.id' },
+    message: {
+      instanceId: 'message.instanceId',
+      tgChatId: 'message.tgChatId',
+      tgMsgId: 'message.tgMsgId',
+      seq: 'message.seq',
+    },
+  },
   getLogger: vi.fn(() => loggerMocks),
   getEventPublisher: vi.fn(() => eventPublisherMocks),
   performanceMonitor: performanceMonitorMocks,
@@ -77,6 +99,10 @@ vi.mock('../handlers/MediaGroupHandler.js', () => ({
 vi.mock('../handlers/TelegramMessageHandler.js', () => ({
   TelegramMessageHandler: class {
     handleTGMessage = vi.fn().mockResolvedValue(undefined)
+
+    constructor() {
+      telegramMessageHandlerMocks.instances.push(this)
+    }
   },
 }))
 
@@ -95,12 +121,21 @@ vi.mock('../senders/TelegramSender.js', () => ({
 vi.mock('../services/MessageMapper.js', () => ({
   ForwardMapper: class {
     saveMessage = vi.fn().mockResolvedValue(undefined)
+    findQqSource = vi.fn().mockResolvedValue(undefined)
+
+    constructor() {
+      mapperMocks.instances.push(this)
+    }
   },
 }))
 
 vi.mock('../services/PersonalPairProvisioner.js', () => ({
   PersonalPairProvisioner: class {
     ensurePairForQQMessage = vi.fn().mockResolvedValue(undefined)
+
+    constructor() {
+      personalPairProvisionerMocks.instances.push(this)
+    }
   },
 }))
 
@@ -142,6 +177,7 @@ function createInstance(overrides: Record<string, unknown> = {}) {
       getAll: vi.fn().mockReturnValue([]),
       reload: vi.fn().mockResolvedValue(undefined),
       add: vi.fn(),
+      remove: vi.fn().mockResolvedValue(true),
     },
     tgBot: createTgBot(),
     ...overrides,
@@ -152,9 +188,12 @@ function createTgBot() {
   return {
     addNewMessageEventHandler: vi.fn(),
     removeNewMessageEventHandler: vi.fn(),
+    addEditedMessageEventHandler: vi.fn(),
+    removeEditedMessageEventHandler: vi.fn(),
     getChat: vi.fn().mockResolvedValue({
       sendMessage: vi.fn().mockResolvedValue({ id: 500 }),
       deleteMessages: vi.fn().mockResolvedValue(undefined),
+      setTyping: vi.fn().mockResolvedValue(undefined),
     }),
   } as any
 }
@@ -179,6 +218,7 @@ function createQqClient(overrides: Record<string, unknown> = {}) {
     getGroupMemberInfo: vi.fn().mockResolvedValue({ card: 'Card', nickname: 'Nick' }),
     getGroupInfo: vi.fn().mockResolvedValue({ name: 'TestGroup' }),
     getFriendInfo: vi.fn().mockResolvedValue({ name: 'FriendName' }),
+    setInputStatus: vi.fn().mockResolvedValue(undefined),
     _handlers: handlers,
     ...overrides,
   } as any
@@ -244,6 +284,9 @@ describe('forwardFeature', () => {
     vi.mocked(MessageUtils.isAdmin).mockReturnValue(true)
     vi.mocked(MessageUtils.replyTG).mockResolvedValue(undefined)
     vi.mocked(MessageUtils.populateAtDisplayNames).mockResolvedValue(undefined)
+    personalPairProvisionerMocks.instances.length = 0
+    mapperMocks.instances.length = 0
+    telegramMessageHandlerMocks.instances.length = 0
   })
 
   afterEach(() => {
@@ -253,11 +296,15 @@ describe('forwardFeature', () => {
   /* ---- constructor ---- */
   describe('constructor', () => {
     it('initializes with a valid ForwardMap and registers listeners', () => {
-      const { qqClient } = buildFeature()
+      const { qqClient, tgBot } = buildFeature()
       expect(qqClient.on).toHaveBeenCalledWith('message', expect.any(Function))
       expect(qqClient.on).toHaveBeenCalledWith('poke', expect.any(Function))
       expect(qqClient.on).toHaveBeenCalledWith('friend.increase', expect.any(Function))
+      expect(qqClient.on).toHaveBeenCalledWith('friend.decrease', expect.any(Function))
       expect(qqClient.on).toHaveBeenCalledWith('group.increase', expect.any(Function))
+      expect(qqClient.on).toHaveBeenCalledWith('group.decrease', expect.any(Function))
+      expect(qqClient.on).toHaveBeenCalledWith('input.status', expect.any(Function))
+      expect(tgBot.addEditedMessageEventHandler).toHaveBeenCalledWith(expect.any(Function))
     })
 
     it('throws when forwardPairs is not a ForwardMap', () => {
@@ -292,6 +339,24 @@ describe('forwardFeature', () => {
       })
     })
 
+    it('skips QQ messages carrying q2tgSkip loopback marker', async () => {
+      const { qqClient } = buildFeature()
+      qqClient.emit('message', createQqMessage({
+        id: 'skip-loopback-1',
+        metadata: {
+          raw: {
+            message: [
+              { type: 'mirai', data: JSON.stringify({ q2tgSkip: true }) },
+            ],
+          },
+        },
+      }))
+
+      await vi.waitFor(() => {
+        expect(findPairByQQWithChatType).not.toHaveBeenCalled()
+      })
+    })
+
     it('deduplicates QQ messages with same id', async () => {
       const pair = createPair()
       vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
@@ -305,6 +370,35 @@ describe('forwardFeature', () => {
         // findPairByQQWithChatType should be called only once (second is dedup)
         expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('Duplicate'))
       })
+    })
+
+    it('does not deduplicate same QQ message id from different chats', async () => {
+      vi.mocked(findPairByQQWithChatType)
+        .mockResolvedValueOnce(createPair({ qqRoomId: '20002', tgChatId: '-100400' }))
+        .mockResolvedValueOnce(createPair({ qqRoomId: '30003', tgChatId: '-100500' }))
+
+      const { qqClient, tgBot } = buildFeature()
+      tgBot.getChat.mockResolvedValue({ sendMessage: vi.fn().mockResolvedValue({ id: 501 }) })
+
+      qqClient.emit('message', createQqMessage({
+        id: 'shared-qq-id',
+        chat: { id: '20002', type: 'group', name: 'GroupA' },
+      }))
+      qqClient.emit('message', createQqMessage({
+        id: 'shared-qq-id',
+        chat: { id: '30003', type: 'group', name: 'GroupB' },
+      }))
+
+      await vi.waitFor(() => {
+        expect(findPairByQQWithChatType).toHaveBeenCalledTimes(2)
+      })
+      expect(findPairByQQWithChatType).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        1,
+        '30003',
+        'group',
+      )
     })
 
     it('skips command messages starting with /', async () => {
@@ -328,6 +422,26 @@ describe('forwardFeature', () => {
       qqClient.emit('message', createQqMessage())
       await vi.waitFor(() => {
         expect(loggerMocks.debug).toHaveBeenCalledWith(expect.stringContaining('No TG mapping'))
+      })
+    })
+
+    it('auto provisions unbound QQ group messages in personal mode', async () => {
+      const pair = createPair({ qqChatType: 'group' })
+      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      const { qqClient } = buildFeature(createInstance({ workMode: 'personal' }))
+      const provisioner = personalPairProvisionerMocks.instances[0]
+      provisioner.ensurePairForQQMessage.mockResolvedValueOnce(pair)
+
+      qqClient.emit('message', createQqMessage({ id: 'personal-group-1' }))
+
+      await vi.waitFor(() => {
+        expect(provisioner.ensurePairForQQMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            chat: expect.objectContaining({ id: '20002', type: 'group' }),
+          }),
+          'group',
+        )
+        expect(performanceMonitorMocks.recordMessage).toHaveBeenCalled()
       })
     })
 
@@ -423,6 +537,10 @@ describe('forwardFeature', () => {
       return tgBot.addNewMessageEventHandler.mock.calls[0][0]
     }
 
+    function getEditedTgHandler(tgBot: any): Function {
+      return tgBot.addEditedMessageEventHandler.mock.calls[0][0]
+    }
+
     it('skips when work mode is not configured', async () => {
       vi.mocked(hasConfiguredWorkMode).mockReturnValue(false)
       const { tgBot } = buildFeature()
@@ -468,6 +586,37 @@ describe('forwardFeature', () => {
       await handler(createTgMessage())
       expect(eventPublisherMocks.publishMessage).toHaveBeenCalled()
       expect(eventPublisherMocks.publishMessageCreated).toHaveBeenCalled()
+    })
+
+    it('recalls mapped QQ message before reposting edited TG messages', async () => {
+      const pair = createPair()
+      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      const { tgBot, qqClient } = buildFeature()
+      const mapper = mapperMocks.instances[0]
+      mapper.findQqSource.mockResolvedValueOnce({ seq: 4321 })
+
+      const handler = getEditedTgHandler(tgBot)
+      await handler(createTgMessage({ id: 1001, text: 'edited' }))
+
+      expect(qqClient.recallMessage).toHaveBeenCalledWith('4321')
+      expect(db.update).toHaveBeenCalledWith(schema.message)
+    })
+
+    it('treats edited /rm as recall command without reposting to QQ', async () => {
+      const pair = createPair()
+      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      const { tgBot, qqClient } = buildFeature()
+      const mapper = mapperMocks.instances[0]
+      mapper.findQqSource.mockResolvedValueOnce({ seq: 4321 })
+      const deleteMessages = vi.fn().mockResolvedValue(undefined)
+      tgBot.getChat.mockResolvedValueOnce({ deleteMessages })
+
+      const handler = getEditedTgHandler(tgBot)
+      await handler(createTgMessage({ id: 1001, text: '/rm@bot' }))
+
+      expect(qqClient.recallMessage).toHaveBeenCalledWith('4321')
+      expect(deleteMessages).toHaveBeenCalledWith([1001])
+      expect(telegramMessageHandlerMocks.instances[0].handleTGMessage).not.toHaveBeenCalled()
     })
   })
 
@@ -596,6 +745,71 @@ describe('forwardFeature', () => {
       qqClient.emit('group.increase', '30003', { id: '88888' })
       await vi.waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
+      })
+    })
+  })
+
+  describe('personal lifecycle cleanup', () => {
+    it('removes personal friend binding when the QQ friend is deleted', async () => {
+      const pair = createPair({ qqChatType: 'private', qqRoomId: BigInt(55555), tgChatId: BigInt(-100555) })
+      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      const inst = createInstance({ workMode: 'personal' })
+      const { qqClient, instance } = buildFeature(inst)
+
+      qqClient.emit('friend.decrease', '55555')
+
+      await vi.waitFor(() => {
+        expect(instance.forwardPairs.remove).toHaveBeenCalledWith({ type: 'private', id: '55555' })
+        expect(MessageUtils.replyTG).toHaveBeenCalledWith(
+          expect.anything(),
+          'owner-tg-123',
+          expect.stringContaining('好友 55555 已删除'),
+        )
+      })
+    })
+
+    it('removes personal group binding only when the bot itself leaves', async () => {
+      const pair = createPair({ qqChatType: 'group', qqRoomId: BigInt(30003), tgChatId: BigInt(-10030003) })
+      vi.mocked(findPairByQQWithChatType).mockResolvedValueOnce(pair)
+      const inst = createInstance({ workMode: 'personal' })
+      const { qqClient, instance } = buildFeature(inst)
+
+      qqClient.emit('group.decrease', '30003', '99999')
+      await new Promise(resolve => setTimeout(resolve, 0))
+      expect(instance.forwardPairs.remove).not.toHaveBeenCalled()
+
+      vi.mocked(findPairByQQWithChatType).mockResolvedValueOnce(pair)
+      qqClient.emit('group.decrease', '30003', '88888')
+
+      await vi.waitFor(() => {
+        expect(instance.forwardPairs.remove).toHaveBeenCalledWith({ type: 'group', id: '30003' })
+        expect(MessageUtils.replyTG).toHaveBeenCalledWith(
+          expect.anything(),
+          'owner-tg-123',
+          expect.stringContaining('QQ 群 30003 已退出'),
+        )
+      })
+    })
+  })
+
+  describe('handleInputStatus', () => {
+    it('forwards QQ typing status to the mapped Telegram chat', async () => {
+      const pair = createPair()
+      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      const tgChat = { setTyping: vi.fn().mockResolvedValue(undefined) }
+      const { qqClient, tgBot } = buildFeature()
+      tgBot.getChat.mockResolvedValue(tgChat)
+
+      qqClient.emit('input.status', { chatId: '20002', chatType: 'group', typing: true })
+
+      await vi.waitFor(() => {
+        expect(tgChat.setTyping).toHaveBeenCalledWith('typing')
+      })
+
+      qqClient.emit('input.status', { chatId: '20002', chatType: 'group', typing: false })
+
+      await vi.waitFor(() => {
+        expect(tgChat.setTyping).toHaveBeenCalledWith('cancel')
       })
     })
   })
@@ -735,8 +949,12 @@ describe('forwardFeature', () => {
       expect(qqClient.removeListener).toHaveBeenCalledWith('message', expect.any(Function))
       expect(qqClient.removeListener).toHaveBeenCalledWith('poke', expect.any(Function))
       expect(qqClient.removeListener).toHaveBeenCalledWith('friend.increase', expect.any(Function))
+      expect(qqClient.removeListener).toHaveBeenCalledWith('friend.decrease', expect.any(Function))
       expect(qqClient.removeListener).toHaveBeenCalledWith('group.increase', expect.any(Function))
+      expect(qqClient.removeListener).toHaveBeenCalledWith('group.decrease', expect.any(Function))
+      expect(qqClient.removeListener).toHaveBeenCalledWith('input.status', expect.any(Function))
       expect(tgBot.removeNewMessageEventHandler).toHaveBeenCalled()
+      expect(tgBot.removeEditedMessageEventHandler).toHaveBeenCalled()
     })
   })
 
