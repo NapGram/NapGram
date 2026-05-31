@@ -9,6 +9,52 @@ function recallEventChatType(event: RecallEvent): 'private' | 'group' {
   return (event as any).chatType === 'private' ? 'private' : 'group'
 }
 
+function toBigIntValue(value: unknown): bigint | undefined {
+  if (value === null || value === undefined)
+    return undefined
+
+  try {
+    if (typeof value === 'bigint')
+      return value
+    if (typeof value === 'number' && Number.isFinite(value))
+      return BigInt(value)
+    if (typeof value === 'string' && value.trim())
+      return BigInt(value)
+
+    const text = (value as any)?.toString?.()
+    if (typeof text === 'string' && /^-?\d+$/.test(text.trim()))
+      return BigInt(text.trim())
+  }
+  catch {
+    return undefined
+  }
+
+  return undefined
+}
+
+function normalizeTelegramDeleteUpdate(update: any): { chatId: bigint, messageIds: bigint[] } | undefined {
+  const chatId = toBigIntValue(
+    update?.channelId
+    ?? update?.chatId
+    ?? update?.peer?.channelId
+    ?? update?.peer?.chatId
+    ?? update?.peerId,
+  )
+
+  const rawMessageIds = update?.messageIds ?? update?.messages ?? update?.deletedIds
+  if (!chatId || !Array.isArray(rawMessageIds))
+    return undefined
+
+  const messageIds = rawMessageIds
+    .map(toBigIntValue)
+    .filter((id): id is bigint => id !== undefined)
+
+  if (!messageIds.length)
+    return undefined
+
+  return { chatId, messageIds }
+}
+
 /**
  * 消息撤回功能
  * Phase 3: 处理双向消息撤回
@@ -94,13 +140,12 @@ export class RecallFeature {
       if (!hasConfiguredWorkMode(this.instance))
         return
 
-      const chatId = update.channelId // mtcute 使用 channelId
-      const messageIds = update.messages // 删除的消息 ID 数组
-
-      if (!messageIds || !Array.isArray(messageIds)) {
-        logger.debug('Invalid delete update: messageIds is missing or not an array')
+      const normalized = normalizeTelegramDeleteUpdate(update)
+      if (!normalized) {
+        logger.debug('Invalid delete update: chatId/messageIds are missing or invalid')
         return
       }
+      const { chatId, messageIds } = normalized
 
       logger.info(`TG messages deleted in ${chatId}: ${messageIds.join(', ')}`)
 
@@ -117,8 +162,8 @@ export class RecallFeature {
           const dbEntry = await db.query.message.findFirst({
             where: and(
               eq(schema.message.instanceId, this.instance.id),
-              eq(schema.message.tgChatId, BigInt(chatId)),
-              eq(schema.message.tgMsgId, BigInt(tgMsgId)),
+              eq(schema.message.tgChatId, chatId),
+              eq(schema.message.tgMsgId, tgMsgId),
             ),
           })
 

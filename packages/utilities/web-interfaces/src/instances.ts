@@ -112,6 +112,40 @@ export default async function (fastify: FastifyInstance) {
     }
   }
 
+  const syncRuntimeInstance = async (instanceId: number, body: z.infer<typeof updateInstanceSchema>) => {
+    const runtimeInstance = getRuntimeInstance(instanceId)
+    if (!runtimeInstance)
+      return
+
+    if (body.owner !== undefined && 'owner' in runtimeInstance)
+      runtimeInstance.owner = Number(body.owner)
+    if (body.flags !== undefined && 'flags' in runtimeInstance)
+      runtimeInstance.flags = body.flags
+    if (body.isSetup !== undefined && 'isSetup' in runtimeInstance)
+      runtimeInstance.isSetup = body.isSetup
+
+    const nextWorkMode = body.workMode ?? runtimeInstance.workMode
+    if (body.userSessionId !== undefined && 'userSessionId' in runtimeInstance)
+      runtimeInstance.userSessionId = body.userSessionId
+
+    if (body.workMode !== undefined) {
+      if (typeof runtimeInstance.setWorkMode === 'function') {
+        await runtimeInstance.setWorkMode(body.workMode)
+      }
+      else {
+        runtimeInstance.workMode = body.workMode
+      }
+      return
+    }
+
+    if (body.userSessionId !== undefined && nextWorkMode === 'personal') {
+      if (body.userSessionId && typeof runtimeInstance.startUserBot === 'function')
+        await runtimeInstance.startUserBot()
+      else if (!body.userSessionId && typeof runtimeInstance.stopUserBot === 'function')
+        await runtimeInstance.stopUserBot()
+    }
+  }
+
   const buildPersonalModeDiagnostics = (instance: any, runtimeInstance?: any) => {
     if (typeof runtimeInstance?.getPersonalModeDiagnostics === 'function') {
       return runtimeInstance.getPersonalModeDiagnostics()
@@ -411,6 +445,8 @@ export default async function (fastify: FastifyInstance) {
         .returning()
       const instance = updatedArr[0]
 
+      await syncRuntimeInstance(instanceId, body)
+
       // 审计日志
       const { AuthService } = await import('@napgram/auth-kit')
       await AuthService.logAudit(
@@ -426,7 +462,7 @@ export default async function (fastify: FastifyInstance) {
       return {
         success: true,
         data: {
-          ...instance,
+          ...decorateInstance(instance),
           owner: instance.owner.toString(),
         },
       }

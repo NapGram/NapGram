@@ -198,14 +198,18 @@ describe('personalSyncService', () => {
 
     service.start(1000)
     expect((service as any).timer).toBeDefined()
+    expect((service as any).initialTimer).toBeDefined()
 
     // start again should ignore
     const timer = (service as any).timer
+    const initialTimer = (service as any).initialTimer
     service.start(1000)
     expect((service as any).timer).toBe(timer)
+    expect((service as any).initialTimer).toBe(initialTimer)
 
     service.stop()
     expect((service as any).timer).toBeUndefined()
+    expect((service as any).initialTimer).toBeUndefined()
 
     // stop again should be safe
     service.stop()

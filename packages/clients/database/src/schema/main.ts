@@ -182,6 +182,9 @@ export const forwardPair = pgTable('ForwardPair', {
 }, (t) => ({
     uniqueQq: uniqueIndex('ForwardPair_qqChatType_qqRoomId_instanceId_key').on(t.qqChatType, t.qqRoomId, t.instanceId),
     uniqueTg: uniqueIndex('ForwardPair_tgChatId_tgThreadId_instanceId_key').on(t.tgChatId, t.tgThreadId, t.instanceId),
+    uniqueTgNullThread: uniqueIndex('ForwardPair_tgChatId_instanceId_nullThread_key')
+        .on(t.tgChatId, t.instanceId)
+        .where(sql`${t.tgThreadId} IS NULL`),
     uniqueApiKey: uniqueIndex('ForwardPair_apiKey_key').on(t.apiKey),
 }));
 
