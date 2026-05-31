@@ -123,4 +123,101 @@ describe('commandContext', () => {
     expect(qqClient.sendMessage).toHaveBeenCalled()
     expect(replyTG).not.toHaveBeenCalled()
   })
+
+  it('replies TG only when no QQ pair found', async () => {
+    forwardPairs.findByTG.mockReturnValue(null)
+    const msg = createMessage('telegram')
+    await context.replyBoth(msg, 'hello')
+    expect(replyTG).toHaveBeenCalledWith('777777', 'hello', undefined)
+    expect(qqClient.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('skips QQ reply when both-sides disabled', async () => {
+    forwardPairs.findByTG.mockReturnValue({
+      id: 1,
+      qqRoomId: 222222,
+      commandReplyMode: '0',
+    })
+    const msg = createMessage('telegram')
+    await context.replyBoth(msg, 'hello')
+    expect(replyTG).toHaveBeenCalled()
+    expect(qqClient.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('replies QQ only when no TG pair found', async () => {
+    forwardPairs.findByQQ.mockReturnValue(null)
+    const msg = createMessage('qq')
+    await context.replyBoth(msg, 'hello')
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+    expect(replyTG).not.toHaveBeenCalled()
+  })
+
+  it('replies both sides for QQ origin when pair found and both-sides enabled', async () => {
+    forwardPairs.findByQQ.mockReturnValue({
+      id: 4,
+      tgChatId: '666666',
+      tgThreadId: undefined,
+      commandReplyMode: '1',
+      commandReplyFilter: undefined,
+      commandReplyList: undefined,
+    })
+    const msg = createMessage('qq')
+    await context.replyBoth(msg, 'hello')
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+    expect(replyTG).toHaveBeenCalledWith(666666, 'hello', undefined)
+  })
+
+  it('skips TG reply when both-sides disabled for QQ origin', async () => {
+    forwardPairs.findByQQ.mockReturnValue({
+      id: 5,
+      tgChatId: '777777',
+      commandReplyMode: '0',
+    })
+    const msg = createMessage('qq')
+    await context.replyBoth(msg, 'hello')
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+    expect(replyTG).not.toHaveBeenCalled()
+  })
+
+  it('allows commands not in blacklist', async () => {
+    forwardPairs.findByTG.mockReturnValue({
+      id: 6,
+      qqRoomId: 888888,
+      commandReplyMode: '1',
+      commandReplyFilter: 'blacklist',
+      commandReplyList: 'help',
+    })
+    const msg = createMessage('telegram')
+    await context.replyBoth(msg, 'hello', 'status')
+    expect(replyTG).toHaveBeenCalled()
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+  })
+
+  it('allows all commands when filter/list not set', async () => {
+    forwardPairs.findByTG.mockReturnValue({
+      id: 7,
+      qqRoomId: 999999,
+      commandReplyMode: '1',
+      commandReplyFilter: undefined,
+      commandReplyList: undefined,
+    })
+    const msg = createMessage('telegram')
+    await context.replyBoth(msg, 'hello', 'anything')
+    expect(replyTG).toHaveBeenCalled()
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+  })
+
+  it('allows all commands for unknown filter type', async () => {
+    forwardPairs.findByTG.mockReturnValue({
+      id: 8,
+      qqRoomId: 111111,
+      commandReplyMode: '1',
+      commandReplyFilter: 'unknown',
+      commandReplyList: 'help',
+    })
+    const msg = createMessage('telegram')
+    await context.replyBoth(msg, 'hello', 'help')
+    expect(replyTG).toHaveBeenCalled()
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+  })
 })
