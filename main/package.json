@@ -71,7 +71,7 @@
     "@napgram/request-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
     "@naplink/naplink": "^1.0.0",
-    "@sentry/node": "10.55.0",
+    "@sentry/node": "10.56.0",
     "drizzle-kit": "^0.31.10",
     "fastify": "^5.8.5",
     "fflate": "^0.8.2",
