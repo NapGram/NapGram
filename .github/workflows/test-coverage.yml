@@ -92,7 +92,7 @@ jobs:
           DATA_DIR: ${{ runner.temp }}/napgram-data
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./main/coverage/coverage-final.json
