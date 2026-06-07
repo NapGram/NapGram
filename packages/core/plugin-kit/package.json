@@ -48,7 +48,7 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
-    "@types/node": "25.9.1",
+    "@types/node": "25.9.2",
     "@types/semver": "^7.7.1",
     "typescript": "6.0.3",
     "vitest": "4.1.8"
