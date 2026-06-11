@@ -39,7 +39,7 @@
   "author": "NapGram Team",
   "license": "MIT",
   "dependencies": {
-    "@mtcute/core": "^0.29.7",
+    "@mtcute/core": "^0.30.0",
     "@napgram/db-kit": "workspace:*",
     "@napgram/env-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
