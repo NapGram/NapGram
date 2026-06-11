@@ -25,9 +25,9 @@
   "author": "NapGram Team",
   "license": "MIT",
   "dependencies": {
-    "@mtcute/core": "^0.29.7",
-    "@mtcute/dispatcher": "^0.29.7",
-    "@mtcute/node": "^0.29.7"
+    "@mtcute/core": "^0.30.0",
+    "@mtcute/dispatcher": "^0.30.0",
+    "@mtcute/node": "^0.30.0"
   },
   "devDependencies": {
     "@types/node": "25.9.2",
