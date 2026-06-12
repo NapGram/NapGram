@@ -21,10 +21,9 @@
             "automerge": true,
             "automergeType": "pr",
             "groupName": "all non-major dependencies",
+            "groupSingleUpdates": false,
             "groupSlug": "all-minor-patch",
-            "matchPackageNames": [
-                "*"
-            ]
+            "commitMessageExtra": ""
         },
         {
             "description": "Match pnpm's default 24h package cooldown before opening or automerging npm updates.",

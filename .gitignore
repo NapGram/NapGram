@@ -20,6 +20,12 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Local agent guidance
+AGENTS.md
+AGENTS.override.md
+agents.md
+agents.override.md
+
 # Node
 node_modules/
 .pnpm-store/
