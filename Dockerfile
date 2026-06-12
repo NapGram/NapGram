@@ -1,12 +1,11 @@
 # syntax=docker/dockerfile:1
-ARG NODE_VERSION=25-alpine
 ARG INSTALL_PG_CLIENT=true
 
 # === Stage: Extract TGS conversion binaries ===
 FROM edasriyan/lottie-to-gif:latest AS lottie
 
 # === Stage: Base ===
-FROM node:${NODE_VERSION} AS base
+FROM node:26-alpine3.24 AS base
 ARG USE_MIRROR=true
 ARG INSTALL_PG_CLIENT=true
 

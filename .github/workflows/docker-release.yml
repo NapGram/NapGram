@@ -110,14 +110,6 @@ jobs:
           pnpm -C web install --no-frozen-lockfile --ignore-scripts
           pnpm -C web run build
 
-      - name: Resolve Alpine latest stable
-        run: |
-          VER=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
-            | rg -n "version: " -m 1 | awk '{print $2}')
-          BRANCH=$(curl -fsSL https://dl-cdn.alpinelinux.org/alpine/latest-stable/releases/x86_64/latest-releases.yaml \
-            | rg -n "branch: " -m 1 | awk '{print $2}' | sed 's/^v//')
-          echo "ALPINE_VERSION=$VER" >> "$GITHUB_ENV"
-          echo "ALPINE_BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
       - name: OCI meta (Alpine)
         id: meta
