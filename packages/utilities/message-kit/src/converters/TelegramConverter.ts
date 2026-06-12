@@ -100,6 +100,42 @@ export class TelegramConverter extends BaseConverter {
       }
     }
 
+    if ((tgMsg as any).richMessage) {
+      const rich = (tgMsg as any).richMessage
+      if (rich.blocks) {
+        for (const block of rich.blocks) {
+          // simplistic block parsing
+          content.push({
+            type: 'text',
+            data: { text: '[Rich text block] ' }
+          })
+        }
+      }
+      if (rich.photos) {
+        for (const photo of rich.photos.values()) {
+          content.push({
+            type: 'image',
+            data: { file: photo }
+          })
+        }
+      }
+      if (rich.documents) {
+        for (const doc of rich.documents.values()) {
+          content.push({
+            type: 'file',
+            data: { file: doc, filename: doc.fileName || 'file', size: doc.fileSize }
+          })
+        }
+      }
+    }
+
+    if (content.length === 0) {
+      content.push({
+        type: 'text',
+        data: { text: '[Unsupported message format or empty richMessage]' }
+      })
+    }
+
     const senderId = String(tgMsg.sender?.id ?? 'unknown')
     const senderName = tgMsg.sender?.displayName || 'Unknown'
     const chatId = String(tgMsg.chat?.id ?? 'unknown')
