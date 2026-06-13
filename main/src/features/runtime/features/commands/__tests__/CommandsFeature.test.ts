@@ -19,9 +19,9 @@ vi.mock('../services/CommandRegistry', () => {
   }
 })
 
-vi.mock('../services/PermissionChecker', () => {
+vi.mock('../services/CommandAccessChecker', () => {
   return {
-    PermissionChecker: vi.fn(function PermissionCheckerMock() {
+    CommandAccessChecker: vi.fn(function CommandAccessCheckerMock() {
       return {
         check: vi.fn().mockReturnValue(true),
         isAdmin: vi.fn().mockReturnValue(true),
@@ -92,11 +92,6 @@ vi.mock('../handlers/RecallCommandHandler', () => ({
 }))
 vi.mock('../handlers/ForwardControlCommandHandler', () => ({
   ForwardControlCommandHandler: vi.fn(function ForwardControlCommandHandlerMock() {
-    return mockHandler
-  }),
-}))
-vi.mock('../handlers/RequestManagementCommandHandler', () => ({
-  RequestManagementCommandHandler: vi.fn(function RequestManagementCommandHandlerMock() {
     return mockHandler
   }),
 }))
