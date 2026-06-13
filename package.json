@@ -9,7 +9,7 @@
         "@napgram/sdk": "workspace:*"
     },
     "x-managedPnpmOverrides": {
-        "esbuild": "0.28.0"
+        "esbuild": "0.28.1"
     },
     "devDependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
