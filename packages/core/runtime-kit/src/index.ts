@@ -6,7 +6,6 @@
 
 // New Runtime Abstraction
 export * from './runtime-types.js'
-export * from './config-store.js'
 export * from './runtime-holder.js'
 export { InstanceRegistry } from './runtime-holder.js'
 export { PermissionChecker } from './permission-checker.js'

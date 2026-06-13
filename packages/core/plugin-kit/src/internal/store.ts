@@ -7,4 +7,4 @@ export {
   patchPluginConfig,
   removePluginConfig,
   __testing,
-} from '@napgram/runtime-kit'
+} from '@napgram/marketplace-kit'

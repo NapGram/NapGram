@@ -26,6 +26,7 @@
     "@napgram/infra-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/message-kit": "workspace:*",
+    "@napgram/marketplace-kit": "workspace:*",
     "@napgram/plugin-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",

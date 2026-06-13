@@ -4,8 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import YAML from 'yaml'
-import { readStringEnv } from '../env.js'
-import * as store from '../store.js'
+import * as store from '../plugin-store.js'
 
 // Mock modules before importing anything else
 vi.mock('node:process', () => ({
@@ -46,20 +45,15 @@ vi.mock('@napgram/media-kit', () => ({
   default: {},
 }))
 
-vi.mock('../env', () => ({
-  readStringEnv: vi.fn(() => undefined),
-}))
-
 vi.mock('node:fs/promises')
 
-describe('store.ts', () => {
+describe('plugin-store.ts', () => {
   const mockDataDir = '/test/data'
   const mockPluginsDir = path.join(mockDataDir, 'plugins')
   const mockConfigPath = path.join(mockPluginsDir, 'plugins.yaml')
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(readStringEnv).mockReturnValue(undefined as any)
     // Set default DATA_DIR
     process.env.DATA_DIR = mockDataDir
     delete process.env.PLUGINS_CONFIG_PATH

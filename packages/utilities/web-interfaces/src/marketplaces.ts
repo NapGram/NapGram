@@ -14,7 +14,7 @@ import {
   upsertMarketplaceIndex,
   writeMarketplaces,
   type MarketplaceIndexSpec,
-} from '@napgram/plugin-kit'
+} from '@napgram/marketplace-kit'
 
 /**
  * Marketplace (index) Admin API
