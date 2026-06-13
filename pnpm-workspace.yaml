@@ -20,4 +20,4 @@ allowBuilds:
   ssh2: true
 
 overrides:
-  'esbuild': '0.28.0'
+  'esbuild': '0.28.1'
