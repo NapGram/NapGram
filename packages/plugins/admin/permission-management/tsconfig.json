@@ -12,5 +12,22 @@
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../../../core/db-kit"
+        },
+        {
+            "path": "../../../core/env-kit"
+        },
+        {
+            "path": "../../../core/logger-kit"
+        },
+        {
+            "path": "../../../core/runtime-kit"
+        },
+        {
+            "path": "../../../sdk"
+        }
     ]
 }

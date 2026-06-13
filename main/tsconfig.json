@@ -1,35 +1,88 @@
 {
-  "extends": "../tsconfig.base.json",
-  "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "Html.createElement",
-    "jsxFragmentFactory": "Html.Fragment",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "paths": {
-      "@napgram/app/*": [
-        "./src/*"
-      ]
+    "extends": "../tsconfig.base.json",
+    "compilerOptions": {
+        "jsx": "react",
+        "jsxFactory": "Html.createElement",
+        "jsxFragmentFactory": "Html.Fragment",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "paths": {
+            "@napgram/app/*": [
+                "./src/*"
+            ]
+        },
+        "types": [
+            "node",
+            "vitest/globals"
+        ],
+        "noEmit": true,
+        "outDir": "build",
+        "plugins": [
+            {
+                "name": "@kitajs/ts-html-plugin"
+            }
+        ],
+        "composite": true,
+        "tsBuildInfoFile": "build/.tsbuildinfo"
     },
-    "types": [
-      "node",
-      "vitest/globals"
+    "include": [
+        "src/**/*",
+        "vitest.setup.ts",
+        "build.ts",
+        "package.json"
     ],
-    "noEmit": true,
-    "outDir": "build",
-    "plugins": [
-      {
-        "name": "@kitajs/ts-html-plugin"
-      }
+    "exclude": [
+        "node_modules",
+        "tools/**"
+    ],
+    "references": [
+        {
+            "path": "../packages/builtins"
+        },
+        {
+            "path": "../packages/clients/database"
+        },
+        {
+            "path": "../packages/clients/qq-client"
+        },
+        {
+            "path": "../packages/clients/telegram-client"
+        },
+        {
+            "path": "../packages/core/db-kit"
+        },
+        {
+            "path": "../packages/core/env-kit"
+        },
+        {
+            "path": "../packages/core/infra-kit"
+        },
+        {
+            "path": "../packages/core/logger-kit"
+        },
+        {
+            "path": "../packages/core/plugin-kit"
+        },
+        {
+            "path": "../packages/core/runtime-kit"
+        },
+        {
+            "path": "../packages/utilities/auth-kit"
+        },
+        {
+            "path": "../packages/utilities/gateway-kit"
+        },
+        {
+            "path": "../packages/utilities/marketplace-kit"
+        },
+        {
+            "path": "../packages/utilities/media-kit"
+        },
+        {
+            "path": "../packages/utilities/message-kit"
+        },
+        {
+            "path": "../packages/utilities/request-kit"
+        }
     ]
-  },
-  "include": [
-    "src/**/*",
-    "vitest.setup.ts",
-    "build.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "tools/**"
-  ]
 }

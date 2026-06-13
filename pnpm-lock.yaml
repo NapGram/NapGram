@@ -21,6 +21,9 @@ importers:
       '@types/node':
         specifier: 25.9.3
         version: 25.9.3
+      turbo:
+        specifier: ^2.9.18
+        version: 2.9.18
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -57,6 +60,9 @@ importers:
       '@napgram/auth-kit':
         specifier: workspace:*
         version: link:../packages/utilities/auth-kit
+      '@napgram/builtins':
+        specifier: workspace:*
+        version: link:../packages/builtins
       '@napgram/database':
         specifier: workspace:*
         version: link:../packages/clients/database
@@ -84,90 +90,18 @@ importers:
       '@napgram/message-kit':
         specifier: workspace:*
         version: link:../packages/utilities/message-kit
-      '@napgram/plugin-adapter-qq-napcat':
-        specifier: workspace:*
-        version: link:../packages/plugins/adapters/plugin-adapter-qq-napcat
-      '@napgram/plugin-adapter-telegram-mtcute':
-        specifier: workspace:*
-        version: link:../packages/plugins/adapters/plugin-adapter-telegram-mtcute
-      '@napgram/plugin-admin-auth':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-auth
-      '@napgram/plugin-admin-database':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-database
-      '@napgram/plugin-admin-instances':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-instances
-      '@napgram/plugin-admin-logs':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-logs
-      '@napgram/plugin-admin-messages':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-messages
-      '@napgram/plugin-admin-pairs':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-pairs
-      '@napgram/plugin-admin-plugins':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-plugins
-      '@napgram/plugin-admin-settings':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-settings
-      '@napgram/plugin-admin-suite':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/plugin-admin-suite
-      '@napgram/plugin-flags':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-flags
-      '@napgram/plugin-gateway':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-gateway
-      '@napgram/plugin-group-management':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-group-management
       '@napgram/plugin-kit':
         specifier: workspace:*
         version: link:../packages/core/plugin-kit
-      '@napgram/plugin-monitoring':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-monitoring
-      '@napgram/plugin-notifications':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-notifications
-      '@napgram/plugin-permission-management':
-        specifier: workspace:*
-        version: link:../packages/plugins/admin/permission-management
-      '@napgram/plugin-ping-pong':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-ping-pong
-      '@napgram/plugin-qq-interaction':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-qq-interaction
-      '@napgram/plugin-refresh':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-refresh
-      '@napgram/plugin-request-handler':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-request-handler
-      '@napgram/plugin-request-management':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-request-management
-      '@napgram/plugin-statistics':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-statistics
-      '@napgram/plugin-web-assets':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-web-assets
-      '@napgram/plugin-web-console':
-        specifier: workspace:*
-        version: link:../packages/plugins/features/plugin-web-console
       '@napgram/qq-client':
         specifier: workspace:*
         version: link:../packages/clients/qq-client
       '@napgram/request-kit':
         specifier: workspace:*
         version: link:../packages/utilities/request-kit
+      '@napgram/runtime-kit':
+        specifier: workspace:*
+        version: link:../packages/core/runtime-kit
       '@napgram/telegram-client':
         specifier: workspace:*
         version: link:../packages/clients/telegram-client
@@ -262,6 +196,94 @@ importers:
       vitest:
         specifier: 4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(vite@8.0.12(@types/node@25.9.3)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.9.0))
+
+  packages/builtins:
+    dependencies:
+      '@napgram/env-kit':
+        specifier: workspace:*
+        version: link:../core/env-kit
+      '@napgram/plugin-adapter-qq-napcat':
+        specifier: workspace:*
+        version: link:../plugins/adapters/plugin-adapter-qq-napcat
+      '@napgram/plugin-adapter-telegram-mtcute':
+        specifier: workspace:*
+        version: link:../plugins/adapters/plugin-adapter-telegram-mtcute
+      '@napgram/plugin-admin-auth':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-auth
+      '@napgram/plugin-admin-database':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-database
+      '@napgram/plugin-admin-instances':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-instances
+      '@napgram/plugin-admin-logs':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-logs
+      '@napgram/plugin-admin-messages':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-messages
+      '@napgram/plugin-admin-pairs':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-pairs
+      '@napgram/plugin-admin-plugins':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-plugins
+      '@napgram/plugin-admin-settings':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-settings
+      '@napgram/plugin-admin-suite':
+        specifier: workspace:*
+        version: link:../plugins/admin/plugin-admin-suite
+      '@napgram/plugin-flags':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-flags
+      '@napgram/plugin-gateway':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-gateway
+      '@napgram/plugin-group-management':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-group-management
+      '@napgram/plugin-monitoring':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-monitoring
+      '@napgram/plugin-notifications':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-notifications
+      '@napgram/plugin-permission-management':
+        specifier: workspace:*
+        version: link:../plugins/admin/permission-management
+      '@napgram/plugin-ping-pong':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-ping-pong
+      '@napgram/plugin-qq-interaction':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-qq-interaction
+      '@napgram/plugin-refresh':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-refresh
+      '@napgram/plugin-request-handler':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-request-handler
+      '@napgram/plugin-request-management':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-request-management
+      '@napgram/plugin-statistics':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-statistics
+      '@napgram/plugin-web-assets':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-web-assets
+      '@napgram/plugin-web-console':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-web-console
+    devDependencies:
+      '@types/node':
+        specifier: 25.9.3
+        version: 25.9.3
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
   packages/clients/database:
     dependencies:
@@ -476,22 +498,6 @@ importers:
         version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(vite@8.0.12(@types/node@25.9.3)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.9.0))
 
   packages/core/runtime-kit:
-    dependencies:
-      '@napgram/auth-kit':
-        specifier: workspace:*
-        version: link:../../utilities/auth-kit
-      '@napgram/db-kit':
-        specifier: workspace:*
-        version: link:../db-kit
-      '@napgram/env-kit':
-        specifier: workspace:*
-        version: link:../env-kit
-      '@napgram/logger-kit':
-        specifier: workspace:*
-        version: link:../logger-kit
-      '@napgram/media-kit':
-        specifier: workspace:*
-        version: link:../../utilities/media-kit
     devDependencies:
       '@types/node':
         specifier: 25.9.3
@@ -890,10 +896,10 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@napgram/core':
+      '@napgram/sdk-core':
         specifier: workspace:*
         version: link:../sdk-core
-      '@napgram/utils':
+      '@napgram/sdk-utils':
         specifier: workspace:*
         version: link:../sdk-utils
     devDependencies:
@@ -915,7 +921,7 @@ importers:
 
   packages/sdk-utils:
     dependencies:
-      '@napgram/core':
+      '@napgram/sdk-core':
         specifier: workspace:*
         version: link:../sdk-core
     devDependencies:
@@ -1895,6 +1901,36 @@ packages:
 
   '@tokenizer/token@0.3.0':
     resolution: {integrity: sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==}
+
+  '@turbo/darwin-64@2.9.18':
+    resolution: {integrity: sha512-9f27peFu16ur8c0v9nUFUEyBnbKuuFsUTjHFWfmwGfzySBXbHwzU44QhZon6Mznz0cHsIr3984NQj/bVrnGSRw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@turbo/darwin-arm64@2.9.18':
+    resolution: {integrity: sha512-9A6TMRq/Ib+QnbhLlgkhOm+624wO4pzSQ/yQviQfWHOlFvaYxdnIAYmu2H6TS6y7kSVL0DvzNe04NbESTOzFVQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@turbo/linux-64@2.9.18':
+    resolution: {integrity: sha512-zCdIDtz69AnbYh913elJRRoF3QY5aa2HNnf+4rAkc7bQ+tWujiDkCNV7stazOUPggaDvhKIf2Z87qHftTeXSkw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@turbo/linux-arm64@2.9.18':
+    resolution: {integrity: sha512-Va1kXI04naMgYwqv/5Dfa36dTDx8015U7oaQAjrXa45ua9OoFjSV4OmvkML4EmXvUclQHCiBRbY8bvd0jV7eAg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@turbo/windows-64@2.9.18':
+    resolution: {integrity: sha512-m0kDhZANxSNz9ck1ybogFscHabriAsp4eDFNrN/1H5WrgTF7b3VlcPZnhuO3v2+E2KnCbeAc+UUT10BZZHdDKw==}
+    cpu: [x64]
+    os: [win32]
+
+  '@turbo/windows-arm64@2.9.18':
+    resolution: {integrity: sha512-nUdR8WqoomUys9iIQmG45TMiizJ+5BV8egSeLLZba/AWblyp3fVBcIH1kSE58OtK4g2YzbMJEth6Ttv9w5rqMA==}
+    cpu: [arm64]
+    os: [win32]
 
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
@@ -3999,6 +4035,10 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
+  turbo@2.9.18:
+    resolution: {integrity: sha512-bwabv6PupzeavybzEoArBAkwq5fnzwf8OFnRtpHwnviFWuwJPFxtyH+aVp36TmIqK3aYYgtTJ3J0m2ysxxSzQg==}
+    hasBin: true
+
   two-product@1.0.2:
     resolution: {integrity: sha512-vOyrqmeYvzjToVM08iU52OFocWT6eB/I5LUWYnxeAPGXAhAxXYU/Yr/R2uY5/5n4bvJQL9AQulIuxpIsMoT8XQ==}
 
@@ -4875,6 +4915,24 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
+  '@turbo/darwin-64@2.9.18':
+    optional: true
+
+  '@turbo/darwin-arm64@2.9.18':
+    optional: true
+
+  '@turbo/linux-64@2.9.18':
+    optional: true
+
+  '@turbo/linux-arm64@2.9.18':
+    optional: true
+
+  '@turbo/windows-64@2.9.18':
+    optional: true
+
+  '@turbo/windows-arm64@2.9.18':
+    optional: true
+
   '@tybys/wasm-util@0.10.2':
     dependencies:
       tslib: 2.8.1
@@ -4917,7 +4975,7 @@ snapshots:
 
   '@types/needle@3.3.0':
     dependencies:
-      '@types/node': 25.9.2
+      '@types/node': 25.9.3
 
   '@types/node@25.9.2':
     dependencies:
@@ -7239,6 +7297,15 @@ snapshots:
   tunnel-agent@0.6.0:
     dependencies:
       safe-buffer: 5.2.1
+
+  turbo@2.9.18:
+    optionalDependencies:
+      '@turbo/darwin-64': 2.9.18
+      '@turbo/darwin-arm64': 2.9.18
+      '@turbo/linux-64': 2.9.18
+      '@turbo/linux-arm64': 2.9.18
+      '@turbo/windows-64': 2.9.18
+      '@turbo/windows-arm64': 2.9.18
 
   two-product@1.0.2: {}
 

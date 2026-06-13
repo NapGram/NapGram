@@ -2,7 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "rootDir": "./src"
+        "rootDir": "./src",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
         "src/**/*"
@@ -10,5 +12,13 @@
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../../core/env-kit"
+        },
+        {
+            "path": "../../core/logger-kit"
+        }
     ]
 }

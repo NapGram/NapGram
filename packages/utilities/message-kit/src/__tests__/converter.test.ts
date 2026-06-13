@@ -84,8 +84,8 @@ vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => loggerMocks),
 }))
 
-vi.mock('@napgram/runtime-kit', () => ({
-  default: convertMocks,
+vi.mock('@napgram/media-kit', () => ({
+  convert: convertMocks,
 }))
 
 describe('messageConverter', () => {

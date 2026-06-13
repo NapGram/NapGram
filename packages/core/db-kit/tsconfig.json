@@ -1,14 +1,33 @@
 {
-  "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
+    "references": [
+        {
+            "path": "../../clients/database"
+        },
+        {
+            "path": "../../clients/qq-client"
+        },
+        {
+            "path": "../../clients/telegram-client"
+        },
+        {
+            "path": "../env-kit"
+        },
+        {
+            "path": "../logger-kit"
+        }
+    ]
 }
