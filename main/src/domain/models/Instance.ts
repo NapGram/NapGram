@@ -7,7 +7,6 @@ import { env } from '@napgram/env-kit'
 import { getLogger, sentry } from '@napgram/logger-kit'
 import { messageConverter } from '@napgram/message-kit'
 import { getEventPublisher } from '@napgram/plugin-kit'
-import { FeatureManager } from '../../features/FeatureManager'
 import { instanceRegistry } from '../../features/runtime/instance-registry'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
@@ -53,7 +52,6 @@ export default class Instance {
   public mediaFeature?: MediaFeature
   public commandsFeature?: CommandsFeature
   public forwardFeature?: ForwardFeature
-  private featureManager?: FeatureManager
   public isInit = false
   public status: InstanceLifecycleStatus = 'stopped'
   private initPromise?: Promise<void>
@@ -238,22 +236,16 @@ export default class Instance {
       // 插件系统：桥接 QQ 侧事件到插件 EventBus
       try {
         const eventPublisher = getEventPublisher()
-        eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
+        await eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
         bridgeQQEvents(this.id, this.qqClient, eventPublisher, this.log, this)
       }
       catch (error) {
         this.log.warn('Plugin event bridge init failed:', error)
       }
 
-      // 初始化新架构的功能管理器
-      // if (this.qqClient) { // Redundant check, login() succeeded above
-      this.log.debug('FeatureManager 正在初始化')
-      this.featureManager = new FeatureManager(this, this.tgBot, this.qqClient)
-      await this.featureManager.initialize()
-      this.log.info('FeatureManager ✓ 初始化完成')
       this.status = 'running'
       try {
-        getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
+        await getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
       }
       catch (error) {
         this.log.warn('Failed to publish instance running status:', error)
@@ -345,12 +337,12 @@ export default class Instance {
       .catch((err) => {
         this.status = 'error'
         this.log.error('初始化失败', err)
-        try {
-          getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'error', error: err as Error })
-        }
-        catch (publishError) {
-          this.log.warn('Failed to publish instance error status:', publishError)
-        }
+        void Promise.resolve(
+          getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'error', error: err as Error }),
+        )
+          .catch((publishError) => {
+            this.log.warn('Failed to publish instance error status:', publishError)
+          })
         sentry.captureException(err, { stage: 'instance-init', instanceId: this.id })
       })
 
@@ -358,18 +350,9 @@ export default class Instance {
   }
 
   private async disposeRuntimeResources() {
-    try {
-      await this.featureManager?.destroy()
-    }
-    catch (error) {
-      this.log.warn('Failed to destroy feature manager during cleanup:', error)
-    }
-    finally {
-      this.featureManager = undefined
-      this.mediaFeature = undefined
-      this.commandsFeature = undefined
-      this.forwardFeature = undefined
-    }
+    this.mediaFeature = undefined
+    this.commandsFeature = undefined
+    this.forwardFeature = undefined
 
     try {
       await (this.qqClient as any)?.logout?.()
@@ -426,7 +409,7 @@ export default class Instance {
   public async stop() {
     this.status = 'stopping'
     try {
-      getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopping' })
+      await getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopping' })
     }
     catch (error) {
       this.log.warn('Failed to publish instance stopping status:', error)
@@ -437,7 +420,7 @@ export default class Instance {
     instanceRegistry.remove(this.id)
 
     try {
-      getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopped' })
+      await getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'stopped' })
     }
     catch (error) {
       this.log.warn('Failed to publish instance stopped status:', error)

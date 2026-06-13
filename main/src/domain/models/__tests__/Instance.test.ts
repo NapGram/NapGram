@@ -712,30 +712,25 @@ describe('instance', () => {
     expect(lastRecall.noticeType).toBe('group-recall')
   })
 
-  it('handles FeatureManager initialization failure', async () => {
-    const error = new Error('Feature Init Failed')
-    featureManagerMocks.initialize.mockRejectedValueOnce(error)
-    featureManagerMocks.destroy.mockClear()
+  it('starts successfully without host feature manager coupling', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
     qqMocks.client.logout.mockClear()
     telegramBotMocks.created.disconnect.mockClear()
 
-    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
+    const instance = await Instance.start(16, 'token')
 
-    await expect(Instance.start(16, 'token')).rejects.toThrow('Feature Init Failed')
-
-    expect(loggerMocks.error).toHaveBeenCalledWith('初始化失败', error)
-    expect(featureManagerMocks.destroy).toHaveBeenCalled()
+    expect(instance.status).toBe('running')
+    expect(qqMocks.client.logout).not.toHaveBeenCalled()
+    expect(telegramBotMocks.created.disconnect).not.toHaveBeenCalled()
+    await instance.stop()
     expect(qqMocks.client.logout).toHaveBeenCalled()
     expect(telegramBotMocks.created.disconnect).toHaveBeenCalled()
     expect(instanceRegistryMocks.remove).toHaveBeenCalledWith(16)
   })
 
-  it('handles connection listeners and feature manager correctly', async () => {
+  it('handles connection listeners correctly', async () => {
     dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
     const instance = await Instance.start(17, 'token')
-
-    // Verify FeatureManager init
-    expect(featureManagerMocks.initialize).toHaveBeenCalled()
 
     // Test connection:lost
     const lostHandler = qqMocks.handlers.get('connection:lost')
@@ -985,12 +980,10 @@ describe('instance', () => {
     const instance = await Instance.start(25, 'token')
 
     eventPublisherMocks.publishInstanceStatus.mockClear()
-    featureManagerMocks.destroy.mockClear()
     qqMocks.client.logout.mockClear()
 
     await instance.stop()
 
-    expect(featureManagerMocks.destroy).toHaveBeenCalled()
     expect(qqMocks.client.logout).toHaveBeenCalled()
     expect(instance.status).toBe('stopped')
     expect(instanceRegistryMocks.remove).toHaveBeenCalledWith(25)

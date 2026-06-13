@@ -173,11 +173,15 @@ describe('main startup flow', () => {
     const { main } = await import('../index')
     await main()
 
-    expect(pluginRuntimeMocks.start).toHaveBeenCalledWith({
-      defaultInstances: [1, 2],
-      webRoutes: interfaceMocks.registerWebRoutes,
-      builtins: [{ id: 'builtin-test' }],
-    })
+    const startOptions = pluginRuntimeMocks.start.mock.calls[0]?.[0]
+    expect(startOptions.defaultInstances).toEqual([1, 2])
+    expect(startOptions.webRoutes).toBe(interfaceMocks.registerWebRoutes)
+    expect(startOptions.builtins.map((builtin: any) => builtin.id)).toEqual([
+      'core-media',
+      'core-commands',
+      'core-forward',
+      'builtin-test',
+    ])
     expect(interfaceMocks.startServer).toHaveBeenCalledWith(interfaceMocks.app)
     expect(instanceA.commandsFeature.reloadCommands).toHaveBeenCalled()
     expect(instanceB.commandsFeature.reloadCommands).toHaveBeenCalled()

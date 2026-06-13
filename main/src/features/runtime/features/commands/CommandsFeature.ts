@@ -1,5 +1,6 @@
 import type { Message } from '@mtcute/core'
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
+import type { RuntimePluginHandle } from '@napgram/runtime-kit'
 import type { ForwardMap, Instance, IQQClient, Telegram } from '../../shared-types.js'
 import type { Command } from './types.js'
 import { md } from '@mtcute/markdown-parser'
@@ -17,7 +18,7 @@ import { StatusCommandHandler } from './handlers/StatusCommandHandler.js'
 import { UnbindCommandHandler } from './handlers/UnbindCommandHandler.js'
 import { CommandRegistry } from './services/CommandRegistry.js'
 import { InteractiveStateManager } from './services/InteractiveStateManager.js'
-import { PermissionChecker } from './services/PermissionChecker.js'
+import { CommandAccessChecker } from './services/CommandAccessChecker.js'
 import { ThreadIdExtractor } from './services/ThreadIdExtractor.js'
 import { PersonalPairProvisioner } from '../forward/services/PersonalPairProvisioner.js'
 import { hasQ2tgSkipMarker } from '../../utils/QqLoopbackMarker.js'
@@ -49,16 +50,103 @@ const QQ_GROUP_ONLY_PLUGIN_COMMANDS = new Set([
 export type CommandHandler = (msg: UnifiedMessage, args: string[]) => Promise<void>
 export type { Command }
 
+type CommandPermissionResult = { allowed: boolean, reason?: string }
+
+type PermissionAuditEvent = {
+  eventType: string
+  operatorId?: string
+  targetUserId?: string
+  instanceId?: number
+  commandName?: string
+  details?: Record<string, unknown>
+}
+
+type PermissionServiceLike = {
+  checkCommandPermission: (
+    userId: string,
+    commandName: string,
+    requiredLevel: number,
+    requireOwner: boolean,
+    instanceId?: number,
+  ) => Promise<CommandPermissionResult>
+  logAudit?: (event: PermissionAuditEvent) => Promise<void>
+}
+
+type PermissionPluginExports = {
+  permissionService: PermissionServiceLike
+}
+
+type CommandCapablePluginContext = {
+  logger?: unknown
+  getCommands: () => Map<string, {
+    name: string
+    aliases?: string[]
+    description?: string
+    usage?: string
+    permission?: Command['permission']
+    adminOnly?: boolean
+    handler: (event: unknown, args: string[]) => void | Promise<void>
+  }>
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null
+    ? value as Record<string, unknown>
+    : null
+}
+
+function toPermissionExports(value: unknown): PermissionPluginExports | null {
+  const candidate = asRecord(value)
+  if (!candidate) {
+    return null
+  }
+
+  const permissionService = asRecord(candidate.permissionService)
+  if (!permissionService || typeof permissionService.checkCommandPermission !== 'function') {
+    return null
+  }
+
+  return {
+    permissionService: {
+      checkCommandPermission: permissionService.checkCommandPermission as PermissionServiceLike['checkCommandPermission'],
+      logAudit: typeof permissionService.logAudit === 'function'
+        ? permissionService.logAudit as PermissionServiceLike['logAudit']
+        : undefined,
+    },
+  }
+}
+
+function resolvePermissionExports(entry: RuntimePluginHandle | undefined): PermissionPluginExports | null {
+  if (!entry) {
+    return null
+  }
+
+  const context = asRecord(entry.context)
+
+  return toPermissionExports(context?.exports)
+    ?? toPermissionExports(entry.plugin?.exports)
+    ?? toPermissionExports(context)
+}
+
+function getCommandPluginContext(entry: RuntimePluginHandle): CommandCapablePluginContext | null {
+  const context = asRecord(entry.context)
+  if (!context || typeof context.getCommands !== 'function') {
+    return null
+  }
+
+  return context as unknown as CommandCapablePluginContext
+}
+
 /**
  * 命令处理功能
  * Phase 3: 统一的命令处理系统
  */
 export class CommandsFeature {
   private readonly registry: CommandRegistry
-  private readonly permissionChecker: PermissionChecker
+  private readonly permissionChecker: CommandAccessChecker
   private readonly stateManager: InteractiveStateManager
   private readonly commandContext: CommandContext
-  private permissionPlugin: any | null = null
+  private permissionPlugin: PermissionPluginExports | null = null
 
   // Command handlers
   private readonly helpHandler: HelpCommandHandler
@@ -76,7 +164,7 @@ export class CommandsFeature {
     private readonly qqClient: IQQClient,
   ) {
     this.registry = new CommandRegistry()
-    this.permissionChecker = new PermissionChecker(instance)
+    this.permissionChecker = new CommandAccessChecker(instance)
     this.stateManager = new InteractiveStateManager()
 
     // Create command context
@@ -143,24 +231,11 @@ export class CommandsFeature {
       const loadedPlugins = report?.loadedPlugins || []
 
       // 查找权限管理插件
-      const permPlugin = loadedPlugins.find((p: any) => p.id === 'permission-management')
-      const resolveExports = (entry: any) => {
-        if (!entry)
-          return null
-        if (entry.context?.exports)
-          return entry.context.exports
-        if (entry.plugin?.exports)
-          return entry.plugin.exports
-        if (entry.context?.permissionService) {
-          return { permissionService: entry.context.permissionService }
-        }
-        return null
-      }
+      const permPlugin = loadedPlugins.find(plugin => plugin.id === 'permission-management')
+      let permissionExports = resolvePermissionExports(permPlugin)
 
-      let permissionExports = resolveExports(permPlugin)
-
-      if (!permissionExports && typeof (runtime as any).getPlugin === 'function') {
-        permissionExports = resolveExports((runtime as any).getPlugin('permission-management'))
+      if (!permissionExports) {
+        permissionExports = resolvePermissionExports(runtime.getPlugin('permission-management'))
       }
 
       if (permissionExports?.permissionService) {
@@ -194,11 +269,11 @@ export class CommandsFeature {
         )
       }
       catch (error) {
-        logger.warn('Permission check failed, falling back to PermissionChecker:', error)
+        logger.warn('Permission check failed, falling back to CommandAccessChecker:', error)
       }
     }
 
-    // 2. 降级：使用旧的 PermissionChecker
+    // 2. 降级：使用旧的命令访问检查器
     const fallbackLevel = command.permission?.level
     if (command.adminOnly || (fallbackLevel !== undefined && fallbackLevel <= 1)) {
       const isAdmin = this.permissionChecker.isAdmin(userId)
@@ -221,7 +296,7 @@ export class CommandsFeature {
     commandName: string
     reason?: string
   }): Promise<void> {
-    if (this.permissionPlugin?.permissionService) {
+    if (this.permissionPlugin?.permissionService?.logAudit) {
       try {
         await this.permissionPlugin.permissionService.logAudit({
           eventType: event.eventType,
@@ -578,9 +653,8 @@ export class CommandsFeature {
 
       for (const pluginInfo of loadedPlugins) {
         try {
-          const context = (pluginInfo as any).context
-
-          if (!context || typeof context.getCommands !== 'function') {
+          const context = getCommandPluginContext(pluginInfo)
+          if (!context) {
             continue
           }
 
@@ -592,7 +666,7 @@ export class CommandsFeature {
             this.registerCommand({
               name: config.name,
               aliases: config.aliases,
-              description: config.description,
+              description: config.description ?? config.name,
               usage: config.usage,
               permission: (config as any).permission,
               adminOnly: config.adminOnly,
@@ -604,7 +678,7 @@ export class CommandsFeature {
                 }
 
                 // 将 UnifiedMessage 转换为 MessageEvent
-                const event = this.convertToMessageEvent(msg, (context as any).logger)
+                const event = this.convertToMessageEvent(msg, context.logger)
                 await config.handler(event, args)
               },
             })
