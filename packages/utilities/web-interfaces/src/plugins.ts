@@ -10,17 +10,19 @@ import {
   getLogger,
 } from './shared-host.js'
 import {
-  getPluginVersions,
-  installFromMarketplace,
   normalizeModuleSpecifierForPluginsConfig,
   patchPluginConfig,
-  PluginRuntime,
   readPluginsConfig,
   removePluginConfig,
+  upsertPluginConfig,
+  getPluginVersions,
+  installFromMarketplace,
   rollbackPlugin,
   uninstallPlugin,
   upgradePlugin,
-  upsertPluginConfig,
+} from '@napgram/marketplace-kit'
+import {
+  PluginRuntime,
 } from '@napgram/plugin-kit'
 const logger = getLogger('PluginAdmin')
 

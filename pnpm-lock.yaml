@@ -492,15 +492,6 @@ importers:
       '@napgram/media-kit':
         specifier: workspace:*
         version: link:../../utilities/media-kit
-      '@napgram/qq-client':
-        specifier: workspace:*
-        version: link:../../clients/qq-client
-      '@napgram/telegram-client':
-        specifier: workspace:*
-        version: link:../../clients/telegram-client
-      yaml:
-        specifier: ^2.8.2
-        version: 2.9.0
     devDependencies:
       '@types/node':
         specifier: 25.9.3
@@ -1018,6 +1009,9 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(vite@8.0.12(@types/node@25.9.3)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.9.0))
 
   packages/utilities/media-kit:
     dependencies:
@@ -1135,6 +1129,9 @@ importers:
       '@napgram/logger-kit':
         specifier: workspace:*
         version: link:../../core/logger-kit
+      '@napgram/marketplace-kit':
+        specifier: workspace:*
+        version: link:../marketplace-kit
       '@napgram/message-kit':
         specifier: workspace:*
         version: link:../message-kit
