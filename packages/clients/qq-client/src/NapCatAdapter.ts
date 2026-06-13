@@ -1,12 +1,13 @@
-import type { MessageEvent } from '@naplink/naplink'
 import type { Buffer } from 'node:buffer'
-import type { Chat, MessageReceipt, RecallEvent, Sender, UnifiedMessage } from './message.js'
+import type { Chat, MessageReceipt, Sender, UnifiedMessage } from './message.js'
 import type { NapCatCreateParams } from './interface.js'
 import type { ForwardMessage } from './types/index.js'
 import { EventEmitter } from 'node:events'
 import { NapLink } from '@naplink/naplink'
 import { getQQClientDependencies, resolveLoggerFactory } from './deps.js'
 import { napCatForwardMultiple } from './napcatConvert.js'
+import { setupNapCatEvents } from './napcatEvents.js'
+import { buildReceipt, normalizeMediaIds, pickFirstDefined, unwrapApiResult } from './napcatReceipt.js'
 
 function getLogger(name: string) {
   const { loggerFactory } = getQQClientDependencies()
@@ -67,7 +68,12 @@ export class NapCatAdapter extends EventEmitter {
       },
     })
 
-    this.setupEvents()
+    setupNapCatEvents({
+      client: this.client,
+      logger: this.logger,
+      emit: (event, ...args) => { (this as any).emit(event, ...args) },
+      refreshSelfInfo: () => { this.refreshSelfInfo() },
+    })
   }
 
   get uin(): number {
@@ -76,159 +82,6 @@ export class NapCatAdapter extends EventEmitter {
 
   get nickname(): string {
     return this._nickname
-  }
-
-  private setupEvents() {
-    this.client.on('connect', () => {
-      this.emit('online')
-      this.refreshSelfInfo()
-    })
-
-    this.client.on('disconnect', () => {
-      this.emit('offline')
-    })
-
-    this.client.on('connection:lost', (data: any) => {
-      const timestamp = typeof data?.timestamp === 'number' ? data.timestamp : Date.now()
-      const attempts = typeof data?.attempts === 'number' ? data.attempts : undefined
-      const reason = attempts ? `Reconnect attempts exceeded (${attempts})` : 'Connection lost'
-      this.emit('connection:lost', { timestamp, reason })
-    })
-
-    this.client.on('connection:restored', (data: any) => {
-      const timestamp = typeof data?.timestamp === 'number' ? data.timestamp : Date.now()
-      this.emit('connection:restored', { timestamp })
-    })
-
-    this.client.on('message', async (data: MessageEvent) => {
-      try {
-        const messageConverter = getMessageConverter()
-        this.normalizeMediaIds(data.message)
-        await this.client.hydrateMessage(data.message)
-        const unifiedMsg = messageConverter.fromNapCat(data)
-          ; (this as any).emit('message', unifiedMsg)
-      }
-      catch (err) {
-        this.logger.error('Failed to handle message event:', err)
-      }
-    })
-
-    this.client.on('notice.group_recall', (data: any) => {
-      ; (this as any).emit('recall', {
-        messageId: String(data.message_id),
-        chatId: String(data.group_id),
-        chatType: 'group',
-        operatorId: String(data.operator_id),
-        timestamp: data.time * 1000,
-      } as RecallEvent)
-    })
-
-    this.client.on('notice.friend_recall', (data: any) => {
-      ; (this as any).emit('recall', {
-        messageId: String(data.message_id),
-        chatId: String(data.user_id),
-        chatType: 'private',
-        operatorId: String(data.user_id),
-        timestamp: data.time * 1000,
-      } as RecallEvent)
-    })
-
-    this.client.on('notice.group_increase', (data: any) => {
-      ; (this as any).emit('group.increase', String(data.group_id), {
-        id: String(data.user_id),
-        name: '',
-      })
-    })
-
-    this.client.on('notice.group_decrease', (data: any) => {
-      ; (this as any).emit('group.decrease', String(data.group_id), String(data.user_id))
-    })
-
-    this.client.on('notice.friend_add', (data: any) => {
-      ; (this as any).emit('friend.increase', {
-        id: String(data.user_id),
-        name: '',
-      })
-    })
-
-    const emitFriendDecrease = (data: any) => {
-      ; (this as any).emit('friend.decrease', String(data.user_id))
-    }
-    this.client.on('notice.friend_decrease', emitFriendDecrease)
-    this.client.on('notice.friend_delete', emitFriendDecrease)
-    this.client.on('notice.friend_del', emitFriendDecrease)
-
-    const emitInputStatus = (data: any) => {
-      const chatType = data.group_id !== undefined && data.group_id !== null ? 'group' : 'private'
-      const chatId = String(chatType === 'group' ? data.group_id : data.user_id)
-      ; (this as any).emit('input.status', {
-        chatId,
-        chatType,
-        userId: String(data.user_id ?? data.sender_id ?? ''),
-        typing: Boolean(data.status_text || data.status === 1 || data.typing === true || data.input_status === 1),
-        raw: data,
-      })
-    }
-    this.client.on('notice.notify.input_status', emitInputStatus)
-    this.client.on('notice.input_status', emitInputStatus)
-
-    this.client.on('notice.notify.poke', (data: any) => {
-      ; (this as any).emit('poke', String(data.group_id || data.user_id), String(data.user_id), String(data.target_id),
-      )
-    })
-
-    this.client.on('request.friend', (data: any) => {
-      ; (this as any).emit('request.friend', {
-        flag: data.flag,
-        userId: String(data.user_id),
-        comment: data.comment || '',
-        timestamp: data.time * 1000,
-      })
-    })
-
-    this.client.on('request.group', (data: any) => {
-      ; (this as any).emit('request.group', {
-        flag: data.flag,
-        groupId: String(data.group_id),
-        userId: String(data.user_id),
-        subType: data.sub_type,
-        comment: data.comment || '',
-        timestamp: data.time * 1000,
-      })
-    })
-
-    this.client.on('notice.notify.gray_tip', (data: any) => {
-      ; (this as any).emit('gray_tip', {
-        groupId: String(data.group_id),
-        content: data.content,
-        busiId: String(data.busi_id),
-        messageId: String(data.message_id),
-        timestamp: Date.now(),
-      })
-    })
-  }
-
-  private normalizeMediaIds(message: any) {
-    const segments = Array.isArray(message) ? message : []
-    for (const segment of segments) {
-      const data = segment?.data
-      if (!data || typeof data !== 'object')
-        continue
-
-      for (const key of ['file_id', 'file'] as const) {
-        const value = (data as any)[key]
-        if (typeof value !== 'string')
-          continue
-        if (!value.startsWith('/'))
-          continue
-
-        const rest = value.slice(1)
-        if (rest.includes('/'))
-          continue // likely a local absolute path
-
-          ; (data as any)[key] = rest
-      }
-    }
   }
 
   private async refreshSelfInfo() {
@@ -253,49 +106,16 @@ export class NapCatAdapter extends EventEmitter {
     }
   }
 
-  private pickFirstDefined(...values: any[]) {
-    return values.find(value => value !== undefined && value !== null && value !== '')
-  }
-
-  private unwrapApiResult(result: any) {
-    return result?.data && typeof result.data === 'object'
-      ? result.data
-      : result
-  }
-
   private async fetchSentMessageRaw(messageId: string) {
     if (!messageId || typeof (this.client as any).getMessage !== 'function')
       return undefined
 
     try {
-      return this.unwrapApiResult(await this.client.getMessage(messageId))
+      return unwrapApiResult(await this.client.getMessage(messageId))
     }
     catch (error) {
       this.logger.debug?.({ error, messageId }, 'Failed to enrich sent message receipt')
       return undefined
-    }
-  }
-
-  private buildReceipt(result: any, fetchedRaw?: any): MessageReceipt {
-    const rawResult = this.unwrapApiResult(result) || {}
-    const rawMessage = fetchedRaw || {}
-    const raw = fetchedRaw ? { ...rawResult, ...rawMessage, send: rawResult, fetched: rawMessage } : rawResult
-    const messageId = String(this.pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id, rawMessage.message_id, rawMessage.messageId, rawMessage.id) ?? '')
-    const seq = Number(this.pickFirstDefined(rawResult.seq, rawResult.message_seq, rawMessage.seq, rawMessage.message_seq, rawResult.message_id, rawResult.messageId, rawResult.id, rawMessage.message_id, rawMessage.messageId, rawMessage.id, 0))
-    const time = Number(this.pickFirstDefined(rawResult.time, rawMessage.time, 0))
-    const pktnum = Number(this.pickFirstDefined(rawResult.pktnum, rawResult.pktNum, rawMessage.pktnum, rawMessage.pktNum, 0))
-    const senderId = this.pickFirstDefined(rawResult.sender_id, rawResult.user_id, rawMessage.sender_id, rawMessage.user_id, rawMessage.sender?.user_id)
-
-    return {
-      messageId,
-      timestamp: Date.now(),
-      success: true,
-      seq,
-      rand: this.pickFirstDefined(rawResult.rand, rawMessage.rand),
-      time: time || undefined,
-      pktnum: pktnum || undefined,
-      senderId: senderId !== undefined ? String(senderId) : undefined,
-      raw,
     }
   }
 
@@ -311,12 +131,12 @@ export class NapCatAdapter extends EventEmitter {
         message: segments,
       } as any)
 
-      const rawResult = this.unwrapApiResult(result) || {}
-      const messageId = String(this.pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id) ?? '')
+      const rawResult = unwrapApiResult(result) || {}
+      const messageId = String(pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id) ?? '')
       const fetchedRaw = rawResult.time && (rawResult.sender_id !== undefined || rawResult.user_id !== undefined)
         ? undefined
         : await this.fetchSentMessageRaw(messageId)
-      return this.buildReceipt(rawResult, fetchedRaw)
+      return buildReceipt(rawResult, fetchedRaw)
     }
     catch (error: any) {
       return {
@@ -335,12 +155,12 @@ export class NapCatAdapter extends EventEmitter {
         messages,
       )
 
-      const rawResult = this.unwrapApiResult(result) || {}
-      const messageId = String(this.pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id) ?? '')
+      const rawResult = unwrapApiResult(result) || {}
+      const messageId = String(pickFirstDefined(rawResult.message_id, rawResult.messageId, rawResult.id) ?? '')
       const fetchedRaw = rawResult.time && (rawResult.sender_id !== undefined || rawResult.user_id !== undefined)
         ? undefined
         : await this.fetchSentMessageRaw(messageId)
-      return this.buildReceipt(rawResult, fetchedRaw)
+      return buildReceipt(rawResult, fetchedRaw)
     }
     catch (error: any) {
       return {
@@ -378,7 +198,7 @@ export class NapCatAdapter extends EventEmitter {
         if (segments.length === 0)
           return
 
-        this.normalizeMediaIds(segments)
+        normalizeMediaIds(segments)
         await this.client.hydrateMessage(segments)
       }))
 
