@@ -1,0 +1,96 @@
+{
+    "extends": "../tsconfig.base.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
+    "references": [
+        {
+            "path": "../core/env-kit"
+        },
+        {
+            "path": "../plugins/adapters/plugin-adapter-qq-napcat"
+        },
+        {
+            "path": "../plugins/adapters/plugin-adapter-telegram-mtcute"
+        },
+        {
+            "path": "../plugins/admin/permission-management"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-auth"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-database"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-instances"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-logs"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-messages"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-pairs"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-plugins"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-settings"
+        },
+        {
+            "path": "../plugins/admin/plugin-admin-suite"
+        },
+        {
+            "path": "../plugins/features/plugin-flags"
+        },
+        {
+            "path": "../plugins/features/plugin-gateway"
+        },
+        {
+            "path": "../plugins/features/plugin-group-management"
+        },
+        {
+            "path": "../plugins/features/plugin-monitoring"
+        },
+        {
+            "path": "../plugins/features/plugin-notifications"
+        },
+        {
+            "path": "../plugins/features/plugin-ping-pong"
+        },
+        {
+            "path": "../plugins/features/plugin-qq-interaction"
+        },
+        {
+            "path": "../plugins/features/plugin-refresh"
+        },
+        {
+            "path": "../plugins/features/plugin-request-handler"
+        },
+        {
+            "path": "../plugins/features/plugin-request-management"
+        },
+        {
+            "path": "../plugins/features/plugin-statistics"
+        },
+        {
+            "path": "../plugins/features/plugin-web-assets"
+        },
+        {
+            "path": "../plugins/features/plugin-web-console"
+        }
+    ]
+}

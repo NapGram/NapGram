@@ -4,6 +4,7 @@ packages:
   - 'packages/sdk'
   - 'packages/sdk-core'
   - 'packages/sdk-utils'
+  - 'packages/builtins'
   - 'packages/core/*'
   - 'packages/clients/*'
   - 'packages/utilities/*'

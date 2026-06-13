@@ -1,0 +1,37 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": [
+        "pnpm-workspace.yaml",
+        "tsconfig.base.json",
+        "tsconfig.json"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                "build/**",
+                "dist/**"
+            ]
+        },
+        "type-check": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": []
+        },
+        "test": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": []
+        },
+        "lint": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": []
+        }
+    }
+}

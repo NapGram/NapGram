@@ -3,7 +3,12 @@
     "version": "0.1.5",
     "private": true,
     "packageManager": "pnpm@11.6.0",
-    "scripts": {},
+    "scripts": {
+        "build": "turbo run build",
+        "type-check": "turbo run type-check",
+        "test": "turbo run test",
+        "lint": "turbo run lint"
+    },
     "dependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
         "@napgram/sdk": "workspace:*"
@@ -14,6 +19,7 @@
     "devDependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
         "@types/node": "25.9.3",
+        "turbo": "^2.9.18",
         "typescript": "6.0.3"
     },
     "peerDependencies": {

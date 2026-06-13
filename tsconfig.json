@@ -1,0 +1,143 @@
+{
+    "files": [],
+    "references": [
+        {
+            "path": "main"
+        },
+        {
+            "path": "packages/builtins"
+        },
+        {
+            "path": "packages/clients/database"
+        },
+        {
+            "path": "packages/clients/qq-client"
+        },
+        {
+            "path": "packages/clients/telegram-client"
+        },
+        {
+            "path": "packages/core/db-kit"
+        },
+        {
+            "path": "packages/core/env-kit"
+        },
+        {
+            "path": "packages/core/infra-kit"
+        },
+        {
+            "path": "packages/core/logger-kit"
+        },
+        {
+            "path": "packages/core/plugin-kit"
+        },
+        {
+            "path": "packages/core/runtime-kit"
+        },
+        {
+            "path": "packages/plugins/adapters/plugin-adapter-qq-napcat"
+        },
+        {
+            "path": "packages/plugins/adapters/plugin-adapter-telegram-mtcute"
+        },
+        {
+            "path": "packages/plugins/admin/permission-management"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-auth"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-database"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-instances"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-logs"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-messages"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-pairs"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-plugins"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-settings"
+        },
+        {
+            "path": "packages/plugins/admin/plugin-admin-suite"
+        },
+        {
+            "path": "packages/plugins/features/plugin-flags"
+        },
+        {
+            "path": "packages/plugins/features/plugin-gateway"
+        },
+        {
+            "path": "packages/plugins/features/plugin-group-management"
+        },
+        {
+            "path": "packages/plugins/features/plugin-monitoring"
+        },
+        {
+            "path": "packages/plugins/features/plugin-notifications"
+        },
+        {
+            "path": "packages/plugins/features/plugin-ping-pong"
+        },
+        {
+            "path": "packages/plugins/features/plugin-qq-interaction"
+        },
+        {
+            "path": "packages/plugins/features/plugin-refresh"
+        },
+        {
+            "path": "packages/plugins/features/plugin-request-handler"
+        },
+        {
+            "path": "packages/plugins/features/plugin-request-management"
+        },
+        {
+            "path": "packages/plugins/features/plugin-statistics"
+        },
+        {
+            "path": "packages/plugins/features/plugin-web-assets"
+        },
+        {
+            "path": "packages/plugins/features/plugin-web-console"
+        },
+        {
+            "path": "packages/sdk"
+        },
+        {
+            "path": "packages/sdk-core"
+        },
+        {
+            "path": "packages/sdk-utils"
+        },
+        {
+            "path": "packages/utilities/auth-kit"
+        },
+        {
+            "path": "packages/utilities/gateway-kit"
+        },
+        {
+            "path": "packages/utilities/marketplace-kit"
+        },
+        {
+            "path": "packages/utilities/media-kit"
+        },
+        {
+            "path": "packages/utilities/message-kit"
+        },
+        {
+            "path": "packages/utilities/request-kit"
+        },
+        {
+            "path": "packages/utilities/web-interfaces"
+        }
+    ]
+}

@@ -2,7 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "rootDir": "./src"
+        "rootDir": "./src",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
         "src/**/*"
@@ -13,5 +15,22 @@
         "src/__tests__/**/*",
         "src/**/*.test.ts",
         "src/**/*.spec.ts"
+    ],
+    "references": [
+        {
+            "path": "../../clients/qq-client"
+        },
+        {
+            "path": "../../clients/telegram-client"
+        },
+        {
+            "path": "../db-kit"
+        },
+        {
+            "path": "../env-kit"
+        },
+        {
+            "path": "../logger-kit"
+        }
     ]
 }

@@ -2,7 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "rootDir": "./src"
+        "rootDir": "./src",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
         "src/**/*"
@@ -10,5 +12,28 @@
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../../sdk"
+        },
+        {
+            "path": "../../utilities/marketplace-kit"
+        },
+        {
+            "path": "../../utilities/message-kit"
+        },
+        {
+            "path": "../db-kit"
+        },
+        {
+            "path": "../env-kit"
+        },
+        {
+            "path": "../logger-kit"
+        },
+        {
+            "path": "../runtime-kit"
+        }
     ]
 }

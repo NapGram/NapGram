@@ -5,7 +5,8 @@ import { env } from '@napgram/env-kit'
 import { getLogger, sentry } from '@napgram/logger-kit'
 import { performanceMonitor } from '@napgram/infra-kit'
 import { convert } from '@napgram/media-kit'
-import { ApiResponse, getGlobalRuntime, InstanceRegistry } from '@napgram/runtime-kit'
+import { getGlobalRuntime, InstanceRegistry } from '@napgram/runtime-kit'
+import { ApiResponse } from './api-response.js'
 
 export class TTLCache<K, V> {
   private readonly cache = new Map<K, { value: V, expiresAt: number }>()

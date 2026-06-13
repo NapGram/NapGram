@@ -2,7 +2,9 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "rootDir": "./src"
+        "rootDir": "./src",
+        "composite": true,
+        "tsBuildInfoFile": "./dist/.tsbuildinfo"
     },
     "include": [
         "src/**/*"
@@ -10,5 +12,40 @@
     "exclude": [
         "node_modules",
         "dist"
+    ],
+    "references": [
+        {
+            "path": "../../clients/telegram-client"
+        },
+        {
+            "path": "../../core/db-kit"
+        },
+        {
+            "path": "../../core/env-kit"
+        },
+        {
+            "path": "../../core/infra-kit"
+        },
+        {
+            "path": "../../core/logger-kit"
+        },
+        {
+            "path": "../../core/plugin-kit"
+        },
+        {
+            "path": "../../core/runtime-kit"
+        },
+        {
+            "path": "../auth-kit"
+        },
+        {
+            "path": "../marketplace-kit"
+        },
+        {
+            "path": "../media-kit"
+        },
+        {
+            "path": "../message-kit"
+        }
     ]
 }

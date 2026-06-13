@@ -303,6 +303,14 @@ export class MessageConverter {
                   break
                 }
                 logger.debug('Downloading mtcute Media object for sticker')
+                if (typeof this.instance.tgBot?.downloadMedia !== 'function') {
+                  logger.error('tgBot.downloadMedia not available, cannot download sticker')
+                  segments.push({
+                    type: 'text',
+                    data: { text: '[贴纸下载失败:未初始化]' },
+                  })
+                  break
+                }
                 const buffer = await this.instance.tgBot.downloadMedia(file)
                 if (!buffer || buffer.length === 0) {
                   logger.warn('Downloaded sticker buffer is empty')
