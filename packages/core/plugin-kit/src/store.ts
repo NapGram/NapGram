@@ -7,5 +7,3 @@ export {
   upsertPluginConfig,
   type PluginsConfigFile,
 } from './internal/store.js'
-
-export const __coverage_anchor__ = true
