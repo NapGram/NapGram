@@ -112,6 +112,7 @@ describe('pluginContextImpl', () => {
     const userAPI = { getInfo: vi.fn(), isFriend: vi.fn() } as any
     const groupAPI = { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() } as any
     const webAPI = { registerRoutes: vi.fn() } as any
+    const nativeAPI = { getInstance: vi.fn(), getInstances: vi.fn() } as any
 
     const ctx = new PluginContextImpl('test-plugin-with-apis', {}, eventBus, {
       message: messageAPI,
@@ -119,6 +120,8 @@ describe('pluginContextImpl', () => {
       user: userAPI,
       group: groupAPI,
       web: webAPI,
+      database: null,
+      native: nativeAPI,
     })
 
     expect(ctx.message).toBeDefined()
@@ -126,6 +129,7 @@ describe('pluginContextImpl', () => {
     expect(ctx.user).toBeDefined()
     expect(ctx.group).toBeDefined()
     expect(ctx.web).toBeDefined()
+    expect(ctx.native).toBeDefined()
   })
 
   it('should wrap web API to auto-inject pluginId', () => {
@@ -133,6 +137,12 @@ describe('pluginContextImpl', () => {
 
     const ctx = new PluginContextImpl('test-web-plugin', {}, eventBus, {
       web: webAPI,
+      database: null,
+      message: { send: vi.fn(), recall: vi.fn(), get: vi.fn() },
+      instance: { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() },
+      user: { getInfo: vi.fn(), isFriend: vi.fn() },
+      group: { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() },
+      native: { getInstance: vi.fn(), getInstances: vi.fn() },
     })
 
     const mockRegister = vi.fn()
@@ -150,7 +160,7 @@ describe('pluginContextImpl', () => {
     // InstanceAPI
     expect(await context.instance.list()).toEqual([])
     expect(await context.instance.get(0)).toBeNull()
-    expect(await context.instance.getStatus(0)).toBe('unknown')
+    expect(await context.instance.getStatus(0)).toBe('stopped')
 
     // UserAPI
     expect(await context.user.getInfo({ instanceId: 1, userId: 'u1' })).toBeNull()
@@ -162,6 +172,10 @@ describe('pluginContextImpl', () => {
     await context.group.setAdmin({ instanceId: 1, groupId: 'g1', userId: 'u1', enable: true })
     await context.group.muteUser({ instanceId: 1, groupId: 'g1', userId: 'u1', duration: 60 })
     await context.group.kickUser({ instanceId: 1, groupId: 'g1', userId: 'u1' })
+
+    // Native API
+    expect(context.native.getInstance(1)).toBeUndefined()
+    expect(context.native.getInstances()).toEqual([])
 
     // WebAPI
     context.web.registerRoutes(vi.fn())

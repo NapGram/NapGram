@@ -315,7 +315,7 @@ export default class Telegram {
 
   private readonly onMessageHandlers: Array<MessageHandler> = []
   private readonly onEditedMessageHandlers: Array<MessageHandler> = []
-  private readonly onDeletedMessageHandlers: Array<(update: any) => Promise<void>> = []
+  private readonly onDeletedMessageHandlers: Array<(update: any) => void | Promise<void>> = []
 
   public addNewMessageEventHandler(handler: MessageHandler) {
     this.onMessageHandlers.push(handler)
@@ -339,11 +339,11 @@ export default class Telegram {
     }
   }
 
-  public addDeletedMessageEventHandler(handler: (update: any) => Promise<void>) {
+  public addDeletedMessageEventHandler(handler: (update: any) => void | Promise<void>) {
     this.onDeletedMessageHandlers.push(handler)
   }
 
-  public removeDeletedMessageEventHandler(handler: (update: any) => Promise<void>) {
+  public removeDeletedMessageEventHandler(handler: (update: any) => void | Promise<void>) {
     const index = this.onDeletedMessageHandlers.indexOf(handler)
     if (index > -1) {
       this.onDeletedMessageHandlers.splice(index, 1)

@@ -1,6 +1,6 @@
 export type { default as Instance } from '../../domain/models/Instance.js'
 export type { IQQClient } from '../../infrastructure/clients/qq/index.js'
-export type { default as Telegram } from '../../infrastructure/clients/telegram/client.js'
+export type { default as Telegram } from '@napgram/telegram-client'
 export { performanceMonitor } from '../../infrastructure/services/PerformanceMonitor.js'
 export * as temp from '../../infrastructure/temp.js'
 export { DurationParser } from '../../shared/utils/durationParser.js'

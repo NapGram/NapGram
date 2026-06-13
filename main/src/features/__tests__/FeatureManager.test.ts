@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { messageConverter } from '../../domain/message'
+import { messageConverter } from '@napgram/message-kit'
 import { FeatureManager } from '../FeatureManager'
 
 const lifecycleEvents = vi.hoisted(() => [] as string[])
 
-function createFeatureClass(name: 'media' | 'commands' | 'forward' | 'recall') {
+function createFeatureClass(name: 'media' | 'commands' | 'forward') {
   return class {
     destroy = vi.fn(async () => {
       lifecycleEvents.push(`destroy:${name}`)
@@ -20,10 +20,9 @@ vi.mock('../runtime/index.js', () => ({
   MediaFeature: createFeatureClass('media'),
   CommandsFeature: createFeatureClass('commands'),
   ForwardFeature: createFeatureClass('forward'),
-  RecallFeature: createFeatureClass('recall'),
 }))
 
-vi.mock('../../domain/message', () => ({
+vi.mock('@napgram/message-kit', () => ({
   messageConverter: {
     setInstance: vi.fn(),
   },
@@ -42,12 +41,11 @@ describe('featureManager', () => {
       forwardPairs: {},
       mediaFeature: undefined,
       commandsFeature: undefined,
-      recallFeature: undefined,
       forwardFeature: undefined,
     }
   })
 
-  it('host-manages the four core features in order', async () => {
+  it('host-manages the core features in order', async () => {
     const manager = new FeatureManager(mockInstance, mockTgBot, mockQqClient)
     await manager.initialize()
 
@@ -55,19 +53,16 @@ describe('featureManager', () => {
       'create:media',
       'create:commands',
       'create:forward',
-      'create:recall',
     ])
     expect(messageConverter.setInstance).toHaveBeenCalledWith(mockInstance)
     expect(manager.getFeatureStatus()).toEqual({
       media: true,
       commands: true,
       forward: true,
-      recall: true,
     })
     expect(mockInstance.mediaFeature).toBeDefined()
     expect(mockInstance.commandsFeature).toBeDefined()
     expect(mockInstance.forwardFeature).toBeDefined()
-    expect(mockInstance.recallFeature).toBeDefined()
   })
 
   it('reuses existing feature instances when already attached', async () => {
@@ -89,7 +84,6 @@ describe('featureManager', () => {
     await manager.destroy()
 
     expect(lifecycleEvents).toEqual([
-      'destroy:recall',
       'destroy:forward',
       'destroy:commands',
       'destroy:media',
@@ -97,7 +91,6 @@ describe('featureManager', () => {
     expect(mockInstance.mediaFeature).toBeUndefined()
     expect(mockInstance.commandsFeature).toBeUndefined()
     expect(mockInstance.forwardFeature).toBeUndefined()
-    expect(mockInstance.recallFeature).toBeUndefined()
   })
 
   it('returns false for invalid or duplicate manual registrations', () => {

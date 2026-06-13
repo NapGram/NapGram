@@ -1,10 +1,11 @@
 import type { AppLogger } from '@napgram/logger-kit'
-import type { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from '../../features/runtime/index.js'
+import type { CommandsFeature, ForwardFeature, MediaFeature } from '../../features/runtime/index.js'
 import type { IQQClient } from '../../infrastructure/clients/qq'
-import type Telegram from '../../infrastructure/clients/telegram/client'
+import type Telegram from '@napgram/telegram-client'
 import { db, eq, ForwardMap, schema } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
 import { getLogger, sentry } from '@napgram/logger-kit'
+import { messageConverter } from '@napgram/message-kit'
 import { getEventPublisher } from '@napgram/plugin-kit'
 import { FeatureManager } from '../../features/FeatureManager'
 import { instanceRegistry } from '../../features/runtime/instance-registry'
@@ -50,7 +51,6 @@ export default class Instance {
   public qqClient?: IQQClient
   public forwardPairs!: ForwardMap
   public mediaFeature?: MediaFeature
-  public recallFeature?: RecallFeature
   public commandsFeature?: CommandsFeature
   public forwardFeature?: ForwardFeature
   private featureManager?: FeatureManager
@@ -233,6 +233,7 @@ export default class Instance {
 
       // 仅 NapCat 链路，使用轻量转发表
       this.forwardPairs = await ForwardMap.load(this.id)
+      messageConverter.setInstance(this)
 
       // 插件系统：桥接 QQ 侧事件到插件 EventBus
       try {
@@ -368,7 +369,6 @@ export default class Instance {
       this.mediaFeature = undefined
       this.commandsFeature = undefined
       this.forwardFeature = undefined
-      this.recallFeature = undefined
     }
 
     try {

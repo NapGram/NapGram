@@ -8,6 +8,8 @@ import type {
   GetUserParams,
   UserAPI,
   UserInfo,
+  PluginInstanceResolver,
+  PluginRuntimeInstance,
 } from '../core/interfaces.js'
 import { getLogger } from '@napgram/logger-kit'
 
@@ -20,9 +22,9 @@ export class UserAPIImpl implements UserAPI {
   /**
    * 实例访问器（Phase 4 注入）
    */
-  private instanceResolver?: (instanceId: number) => any
+  private instanceResolver?: PluginInstanceResolver
 
-  constructor(instanceResolver?: (instanceId: number) => any) {
+  constructor(instanceResolver?: PluginInstanceResolver) {
     this.instanceResolver = instanceResolver
   }
 
@@ -134,7 +136,7 @@ export class UserAPIImpl implements UserAPI {
   /**
    * 获取 QQ 用户信息（Phase 4 实现）
    */
-  private async getQQUserInfo(_instance: any, _uin: string): Promise<UserInfo | null> {
+  private async getQQUserInfo(_instance: PluginRuntimeInstance, _uin: string): Promise<UserInfo | null> {
     // Phase 4: 调用 instance.qqClient.getUserInfo()
     // 目前返回模拟数据
     return null
@@ -143,7 +145,7 @@ export class UserAPIImpl implements UserAPI {
   /**
    * 获取 TG 用户信息（Phase 4 实现）
    */
-  private async getTGUserInfo(_instance: any, _userId: string): Promise<UserInfo | null> {
+  private async getTGUserInfo(_instance: PluginRuntimeInstance, _userId: string): Promise<UserInfo | null> {
     // Phase 4: 调用 instance.tgBot.getUser()
     // 目前返回模拟数据
     return null
@@ -152,7 +154,7 @@ export class UserAPIImpl implements UserAPI {
   /**
    * 检查是否为 QQ 好友（Phase 4 实现）
    */
-  private async isQQFriend(_instance: any, _uin: string): Promise<boolean> {
+  private async isQQFriend(_instance: PluginRuntimeInstance, _uin: string): Promise<boolean> {
     // Phase 4: 调用 instance.qqClient.isFriend()
     return false
   }
@@ -161,6 +163,6 @@ export class UserAPIImpl implements UserAPI {
 /**
  * 创建用户 API
  */
-export function createUserAPI(instanceResolver?: (instanceId: number) => any): UserAPI {
+export function createUserAPI(instanceResolver?: PluginInstanceResolver): UserAPI {
   return new UserAPIImpl(instanceResolver)
 }

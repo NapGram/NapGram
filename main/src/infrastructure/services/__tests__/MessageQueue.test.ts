@@ -1,4 +1,4 @@
-import type { UnifiedMessage } from '../../../domain/message'
+import type { UnifiedMessage } from '@napgram/message-kit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageQueue } from '../MessageQueue'
 import * as performanceMonitorModule from '../PerformanceMonitor'

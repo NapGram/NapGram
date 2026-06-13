@@ -1,6 +1,6 @@
-import type { UnifiedMessage } from '../types'
+import type { UnifiedMessage } from '@napgram/message-kit'
 import { describe, expect, it } from 'vitest'
-import { MessageConverter } from '../converter'
+import { MessageConverter } from '@napgram/message-kit'
 
 describe('messageConverter', () => {
   const converter = new MessageConverter()

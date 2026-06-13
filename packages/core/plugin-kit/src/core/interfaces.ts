@@ -5,6 +5,20 @@
  * 这些接口构成了独立于任何第三方框架的插件 API。
  */
 
+import type {
+  PluginInstancePersonalModeDiagnostics,
+  PluginInstanceResolver,
+  PluginInstancesResolver,
+  PluginQqClientLike,
+  PluginQqMessageContent,
+  PluginQqMessageLike,
+  PluginQqSendReceipt,
+  PluginRuntimeInstance,
+  PluginTgBotLike,
+  PluginTgChatLike,
+  PluginUserBotStatus,
+} from '@napgram/runtime-kit'
+
 // ============================================================================
 // 插件定义
 // ============================================================================
@@ -141,7 +155,7 @@ export interface PluginContext {
   readonly storage: PluginStorage
 
   /** 数据库 API (Drizzle Client) */
-  readonly database: any
+  readonly database: unknown
 
   // === 事件监听 ===
 
@@ -170,6 +184,9 @@ export interface PluginContext {
 
   /** Web API（注册管理路由） */
   readonly web: WebAPI
+
+  /** 原生/特权实例访问器 */
+  readonly native: PluginNativeInstanceAPI
 
   // === 命令注册 ===
 
@@ -520,6 +537,20 @@ export interface RawSegment {
   }
 }
 
+export type {
+  PluginInstancePersonalModeDiagnostics,
+  PluginInstanceResolver,
+  PluginInstancesResolver,
+  PluginQqClientLike,
+  PluginQqMessageContent,
+  PluginQqMessageLike,
+  PluginQqSendReceipt,
+  PluginRuntimeInstance,
+  PluginTgBotLike,
+  PluginTgChatLike,
+  PluginUserBotStatus,
+}
+
 // ============================================================================
 // API 接口
 // ============================================================================
@@ -730,6 +761,28 @@ export interface WebAPI {
 }
 
 /**
+ * 原生插件实例访问器
+ *
+ * 为特权插件提供对运行时真实实例对象的只读访问。
+ */
+export interface PluginNativeInstanceAPI {
+  getInstance: (instanceId: number) => PluginRuntimeInstance | undefined
+  getInstances: () => PluginRuntimeInstance[]
+}
+
+export interface PluginApis {
+  message: MessageAPI
+  instance: InstanceAPI
+  user: UserAPI
+  group: GroupAPI
+  web: WebAPI
+  database: unknown
+  native?: PluginNativeInstanceAPI
+}
+
+export type PluginWebRouteRegistrar = (register: (app: any) => void, pluginId?: string) => void
+
+/**
  * 插件存储 API
  */
 export interface PluginStorage {
@@ -854,6 +907,12 @@ export interface CommandConfig {
 
   /** 是否仅管理员可用 */
   adminOnly?: boolean
+
+  /** 细粒度权限要求 */
+  permission?: {
+    level?: number
+    requireOwner?: boolean
+  }
 
   /** 命令处理器 */
   handler: CommandHandler

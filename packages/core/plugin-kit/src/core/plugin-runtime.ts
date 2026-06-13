@@ -4,11 +4,18 @@
  * 插件系统的核心引擎，管理所有插件的加载、运行和状态
  */
 
-import type { PluginSpec } from './interfaces.js'
+import type {
+  PluginApis,
+  PluginInstanceResolver,
+  PluginInstancesResolver,
+  PluginSpec,
+  PluginWebRouteRegistrar,
+} from './interfaces.js'
 import type { PluginInstance } from './lifecycle.js'
+import type { IPluginRuntime, PluginRuntimeInstance, ReloadPluginResult, RuntimeReport } from '@napgram/runtime-kit'
+import { drizzleDb } from '@napgram/db-kit'
 import { getLogger } from '@napgram/logger-kit'
 import {
-  IPluginRuntime,
   getGlobalRuntime as getKitRuntime,
   setGlobalRuntime as setKitRuntime,
   resetGlobalRuntime as resetKitRuntime,
@@ -18,8 +25,16 @@ import { EventBus, globalEventBus } from './event-bus.js'
 import { PluginLifecycleManager, PluginState } from './lifecycle.js'
 import { PluginContextImpl } from './plugin-context.js'
 import { PluginLoader, PluginType } from './plugin-loader.js'
+import { createGroupAPI } from '../api/group.js'
+import { createNativeAPI } from '../api/native.js'
+import { createInstanceAPI } from '../api/instance.js'
+import { createMessageAPI } from '../api/message.js'
+import { createUserAPI } from '../api/user.js'
+import { createWebAPI } from '../api/web.js'
 
 const logger = getLogger('PluginRuntime')
+
+export type { ReloadPluginResult, RuntimeReport } from '@napgram/runtime-kit'
 
 /**
  * 运行时配置
@@ -35,56 +50,7 @@ export interface RuntimeConfig {
   lifecycleManager?: PluginLifecycleManager
 
   /** API 注入（Phase 3 实现） */
-  apis?: {
-    message?: any
-    instance?: any
-    user?: any
-    group?: any
-    web?: any
-    database?: any
-  }
-}
-
-/**
- * 插件运行时报告
- */
-export interface RuntimeReport {
-  /** 是否启用 */
-  enabled: boolean
-
-  /** 已加载的插件 ID */
-  loaded: string[]
-
-  /** 已加载的插件实例（用于命令系统访问） */
-  loadedPlugins?: Array<{
-    id: string
-    context: any
-    plugin?: {
-      id: string
-      name: string
-      version: string
-      description?: string
-      homepage?: string
-      defaultConfig?: any
-    }
-  }>
-
-  /** 加载失败的插件 */
-  failed: Array<{ id: string, error: string }>
-
-  /** 插件类型统计 */
-  stats: {
-    total: number
-    native: number
-    installed: number
-    error: number
-  }
-}
-
-export interface ReloadPluginResult {
-  id: string
-  success: boolean
-  error?: string
+  apis?: PluginApis
 }
 
 /**
@@ -120,13 +86,29 @@ export class PluginRuntime implements IPluginRuntime {
   }
 
   /** API 注入 */
-  private apis?: RuntimeConfig['apis']
+  private apis?: PluginApis
+
+  /** 实例访问器 */
+  private instanceResolver?: PluginInstanceResolver
+
+  /** 实例列表访问器 */
+  private instancesResolver?: PluginInstancesResolver
+
+  /** Web 路由注册器 */
+  private webRoutes?: PluginWebRouteRegistrar
+
+  /** 内置插件规范 */
+  private builtins: PluginSpec[] = []
+
+  /** 是否使用显式注入的 API */
+  private hasExplicitApis = false
 
   constructor(config?: RuntimeConfig) {
     this.eventBus = config?.eventBus || globalEventBus
     this.loader = config?.loader || new PluginLoader()
     this.lifecycleManager = config?.lifecycleManager || new PluginLifecycleManager()
     this.apis = config?.apis
+    this.hasExplicitApis = Boolean(config?.apis)
 
     logger.info('PluginRuntime initialized')
   }
@@ -134,8 +116,29 @@ export class PluginRuntime implements IPluginRuntime {
   /**
    * 更新 API 注入（允许在首次创建后再注入）
    */
-  setApis(apis?: RuntimeConfig['apis']) {
+  setApis(apis?: PluginApis) {
     this.apis = apis
+    this.hasExplicitApis = Boolean(apis)
+  }
+
+  setInstanceResolvers(
+    instanceResolver?: PluginInstanceResolver,
+    instancesResolver?: PluginInstancesResolver,
+  ) {
+    this.instanceResolver = instanceResolver
+    this.instancesResolver = instancesResolver
+  }
+
+  setWebRoutes(register?: PluginWebRouteRegistrar) {
+    this.webRoutes = register
+  }
+
+  setBuiltins(builtins: PluginSpec[] = []) {
+    this.builtins = builtins
+  }
+
+  getBuiltins(): PluginSpec[] {
+    return this.builtins
   }
 
   /**
@@ -143,6 +146,58 @@ export class PluginRuntime implements IPluginRuntime {
    */
   getEventBus(): EventBus {
     return this.eventBus
+  }
+
+  /**
+   * 获取单个真实实例对象
+   */
+  getInstance(instanceId: number): PluginRuntimeInstance | undefined {
+    return this.instanceResolver?.(instanceId) as PluginRuntimeInstance | undefined
+  }
+
+  /**
+   * 获取所有真实实例对象
+   */
+  getInstances(): PluginRuntimeInstance[] {
+    return (this.instancesResolver?.() ?? []) as PluginRuntimeInstance[]
+  }
+
+  async reloadCommandsForInstances(): Promise<void> {
+    if (!this.instancesResolver) {
+      return
+    }
+
+    const instances = this.instancesResolver()
+    for (const instance of instances) {
+      try {
+        if (typeof instance.reloadCommands === 'function') {
+          await instance.reloadCommands()
+          logger.info({ instanceId: instance.id ?? 0 }, 'CommandsFeature commands reloaded')
+        }
+      }
+      catch (error) {
+        logger.warn({ instanceId: instance.id ?? 0, error }, 'Failed to reload CommandsFeature commands')
+      }
+    }
+  }
+
+  private configureApis() {
+    if (this.hasExplicitApis && this.apis) {
+      return
+    }
+
+    const instanceResolver = this.instanceResolver ?? ((_id: number) => undefined)
+    const instancesResolver = this.instancesResolver ?? (() => [])
+
+    this.apis = {
+      message: createMessageAPI(instanceResolver),
+      instance: createInstanceAPI(instancesResolver),
+      user: createUserAPI(instanceResolver),
+      group: createGroupAPI(instanceResolver),
+      web: createWebAPI(this.webRoutes),
+      database: drizzleDb,
+      native: createNativeAPI(instanceResolver, instancesResolver),
+    }
   }
 
   /**
@@ -156,6 +211,7 @@ export class PluginRuntime implements IPluginRuntime {
       return this.lastReport
     }
 
+    this.configureApis()
     logger.info({ pluginCount: specs.length, eventBus: this.eventBus === globalEventBus ? 'global' : 'private' }, 'Starting PluginRuntime')
 
     const report: RuntimeReport = {
@@ -201,7 +257,7 @@ export class PluginRuntime implements IPluginRuntime {
           version: inst.plugin.version,
           description: inst.plugin.description,
           homepage: inst.plugin.homepage,
-          defaultConfig: (inst.plugin as any)?.defaultConfig,
+          defaultConfig: inst.plugin.defaultConfig,
         },
       }))
 
@@ -258,7 +314,7 @@ export class PluginRuntime implements IPluginRuntime {
    *
    * @param specs 插件规范列表
    */
-  async reload(options?: any): Promise<RuntimeReport> {
+  async reload(options?: unknown): Promise<RuntimeReport> {
     const specs: PluginSpec[] = Array.isArray(options) ? options : []
     logger.info('Reloading PluginRuntime')
 
@@ -276,7 +332,7 @@ export class PluginRuntime implements IPluginRuntime {
    * 不适用：
    * - 模块文件变更且依赖 ESM import cache 刷新（此类场景建议全量 reload）
    */
-  async reloadPlugin(pluginId: string, newConfig?: any): Promise<ReloadPluginResult> {
+  async reloadPlugin(pluginId: string, newConfig?: unknown): Promise<ReloadPluginResult> {
     if (!this.isRunning) {
       return { id: pluginId, success: false, error: 'PluginRuntime is not running' }
     }
@@ -314,7 +370,7 @@ export class PluginRuntime implements IPluginRuntime {
     // 保障 plugin.id 与运行时 ID 一致（插件内部若依赖 ctx.pluginId / storage 目录）
     if (loadResult.plugin.id !== pluginId) {
       logger.warn({ expected: pluginId, actual: loadResult.plugin.id }, 'Plugin ID mismatch; overriding plugin.id with spec.id');
-      (loadResult.plugin as any).id = pluginId
+      loadResult.plugin.id = pluginId
     }
 
     // 检查是否已加载

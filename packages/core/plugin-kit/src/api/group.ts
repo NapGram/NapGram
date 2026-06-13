@@ -11,6 +11,8 @@ import type {
   GroupMember,
   KickUserParams,
   MuteUserParams,
+  PluginInstanceResolver,
+  PluginRuntimeInstance,
   SetAdminParams,
 } from '../core/interfaces.js'
 import { getLogger } from '@napgram/logger-kit'
@@ -24,9 +26,9 @@ export class GroupAPIImpl implements GroupAPI {
   /**
    * 实例访问器（Phase 4 注入）
    */
-  private instanceResolver?: (instanceId: number) => any
+  private instanceResolver?: PluginInstanceResolver
 
-  constructor(instanceResolver?: (instanceId: number) => any) {
+  constructor(instanceResolver?: PluginInstanceResolver) {
     this.instanceResolver = instanceResolver
   }
 
@@ -284,45 +286,45 @@ export class GroupAPIImpl implements GroupAPI {
 
   // === QQ 平台方法（Phase 4 实现） ===
 
-  private async getQQGroupInfo(_instance: any, _groupId: string): Promise<GroupInfo | null> {
+  private async getQQGroupInfo(_instance: PluginRuntimeInstance, _groupId: string): Promise<GroupInfo | null> {
     return null
   }
 
-  private async getQQGroupMembers(_instance: any, _groupId: string): Promise<GroupMember[]> {
+  private async getQQGroupMembers(_instance: PluginRuntimeInstance, _groupId: string): Promise<GroupMember[]> {
     return []
   }
 
-  private async setQQAdmin(_instance: any, _groupId: string, _userId: string, _enable: boolean): Promise<void> {
+  private async setQQAdmin(_instance: PluginRuntimeInstance, _groupId: string, _userId: string, _enable: boolean): Promise<void> {
     // Phase 4: instance.qqClient.setGroupAdmin()
   }
 
-  private async muteQQUser(_instance: any, _groupId: string, _userId: string, _duration: number): Promise<void> {
+  private async muteQQUser(_instance: PluginRuntimeInstance, _groupId: string, _userId: string, _duration: number): Promise<void> {
     // Phase 4: instance.qqClient.muteGroupMember()
   }
 
-  private async kickQQUser(_instance: any, _groupId: string, _userId: string, _reject?: boolean): Promise<void> {
+  private async kickQQUser(_instance: PluginRuntimeInstance, _groupId: string, _userId: string, _reject?: boolean): Promise<void> {
     // Phase 4: instance.qqClient.kickGroupMember()
   }
 
   // === TG 平台方法（Phase 4 实现） ===
 
-  private async getTGGroupInfo(_instance: any, _chatId: string): Promise<GroupInfo | null> {
+  private async getTGGroupInfo(_instance: PluginRuntimeInstance, _chatId: string): Promise<GroupInfo | null> {
     return null
   }
 
-  private async getTGGroupMembers(_instance: any, _chatId: string): Promise<GroupMember[]> {
+  private async getTGGroupMembers(_instance: PluginRuntimeInstance, _chatId: string): Promise<GroupMember[]> {
     return []
   }
 
-  private async setTGAdmin(_instance: any, _chatId: string, _userId: string, _enable: boolean): Promise<void> {
+  private async setTGAdmin(_instance: PluginRuntimeInstance, _chatId: string, _userId: string, _enable: boolean): Promise<void> {
     // Phase 4: instance.tgBot.promoteChatMember()
   }
 
-  private async muteTGUser(_instance: any, _chatId: string, _userId: string, _duration: number): Promise<void> {
+  private async muteTGUser(_instance: PluginRuntimeInstance, _chatId: string, _userId: string, _duration: number): Promise<void> {
     // Phase 4: instance.tgBot.restrictChatMember()
   }
 
-  private async kickTGUser(_instance: any, _chatId: string, _userId: string): Promise<void> {
+  private async kickTGUser(_instance: PluginRuntimeInstance, _chatId: string, _userId: string): Promise<void> {
     // Phase 4: instance.tgBot.banChatMember()
   }
 }
@@ -330,6 +332,6 @@ export class GroupAPIImpl implements GroupAPI {
 /**
  * 创建群组 API
  */
-export function createGroupAPI(instanceResolver?: (instanceId: number) => any): GroupAPI {
+export function createGroupAPI(instanceResolver?: PluginInstanceResolver): GroupAPI {
   return new GroupAPIImpl(instanceResolver)
 }

@@ -1,7 +1,7 @@
 import { env } from '@napgram/env-kit'
 import { setConsoleLogLevel } from '@napgram/logger-kit'
 import { afterAll, describe, expect, it, vi } from 'vitest'
-import { JsonCardConverter } from '../JsonCardConverter'
+import { JsonCardConverter } from '@napgram/message-kit'
 
 const originalLogLevel = env.LOG_LEVEL
 setConsoleLogLevel('off')

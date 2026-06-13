@@ -1,5 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
-import { napCatForwardMultiple } from '../napcatConvert'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
+
+let napCatForwardMultiple: typeof import('@napgram/qq-client').napCatForwardMultiple
+
+beforeAll(async () => {
+  await import('../index')
+  const module = await import('@napgram/qq-client')
+  napCatForwardMultiple = module.napCatForwardMultiple
+})
 
 // Mock logger to avoid console noise and verify warnings
 // Mock logger to avoid console noise and verify warnings

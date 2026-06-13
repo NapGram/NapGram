@@ -53,6 +53,7 @@
     "@napgram/plugin-ping-pong": "workspace:*",
     "@napgram/plugin-qq-interaction": "workspace:*",
     "@napgram/plugin-refresh": "workspace:*",
+    "@napgram/plugin-recall": "workspace:*",
     "@napgram/plugin-request-handler": "workspace:*",
     "@napgram/plugin-request-management": "workspace:*",
     "@napgram/plugin-statistics": "workspace:*",

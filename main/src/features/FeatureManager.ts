@@ -1,13 +1,13 @@
 import type Instance from '../domain/models/Instance'
 import type { IQQClient } from '../infrastructure/clients/qq'
-import type Telegram from '../infrastructure/clients/telegram/client'
+import type Telegram from '@napgram/telegram-client'
 import { getLogger } from '@napgram/logger-kit'
-import { CommandsFeature, ForwardFeature, MediaFeature, RecallFeature } from './runtime/index.js'
+import { CommandsFeature, ForwardFeature, MediaFeature } from './runtime/index.js'
 
 const logger = getLogger('FeatureManager')
 
-type FeatureName = 'media' | 'commands' | 'forward' | 'recall'
-type ManagedFeature = MediaFeature | CommandsFeature | ForwardFeature | RecallFeature
+type FeatureName = 'media' | 'commands' | 'forward'
+type ManagedFeature = MediaFeature | CommandsFeature | ForwardFeature
 
 interface Destroyable {
   destroy: () => void
@@ -18,7 +18,6 @@ export class FeatureManager {
   private initialized = false
 
   public forward?: ForwardFeature
-  public recall?: RecallFeature
   public media?: MediaFeature
   public commands?: CommandsFeature
 
@@ -32,7 +31,7 @@ export class FeatureManager {
 
   async initialize() {
     try {
-      const { messageConverter } = await import('../domain/message')
+      const { messageConverter } = await import('@napgram/message-kit')
       messageConverter.setInstance(this.instance)
       logger.debug('✓ MessageConverter instance set')
 
@@ -45,7 +44,6 @@ export class FeatureManager {
         this.media,
         this.commands,
       ))
-      this.attachFeature('recall', () => new RecallFeature(this.instance, this.tgBot, this.qqClient))
 
       this.initialized = true
       logger.info(`FeatureManager 初始化完成，共 ${this.features.size} 个宿主功能`)
@@ -153,9 +151,9 @@ export class FeatureManager {
         return this.instance.commandsFeature
       case 'forward':
         return this.instance.forwardFeature
-      case 'recall':
-        return this.instance.recallFeature
     }
+
+    return undefined
   }
 
   private setFeatureReference(name: FeatureName, feature: ManagedFeature) {
@@ -171,10 +169,6 @@ export class FeatureManager {
       case 'forward':
         this.forward = feature as ForwardFeature
         this.instance.forwardFeature = feature as ForwardFeature
-        break
-      case 'recall':
-        this.recall = feature as RecallFeature
-        this.instance.recallFeature = feature as RecallFeature
         break
     }
   }
@@ -193,10 +187,6 @@ export class FeatureManager {
         this.forward = undefined
         this.instance.forwardFeature = undefined
         break
-      case 'recall':
-        this.recall = undefined
-        this.instance.recallFeature = undefined
-        break
     }
   }
 
@@ -208,9 +198,9 @@ export class FeatureManager {
         return 'CommandsFeature'
       case 'forward':
         return 'ForwardFeature'
-      case 'recall':
-        return 'RecallFeature'
     }
+
+    return name
   }
 }
 

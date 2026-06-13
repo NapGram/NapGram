@@ -78,6 +78,9 @@
             "path": "../plugins/features/plugin-refresh"
         },
         {
+            "path": "../plugins/features/plugin-recall"
+        },
+        {
             "path": "../plugins/features/plugin-request-handler"
         },
         {

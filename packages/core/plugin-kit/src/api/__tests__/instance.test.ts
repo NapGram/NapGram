@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createInstanceAPI, InstanceAPIImpl } from '../instance.js'
+import type { PluginInstancesResolver } from '../../core/interfaces.js'
 
 const loggerMocks = vi.hoisted(() => ({
   debug: vi.fn(),
@@ -26,14 +27,22 @@ describe('instanceAPI', () => {
   it('lists instances with mapped info', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2020-01-01T00:00:00Z'))
-    const api = createInstanceAPI(() => [
+    const resolver: PluginInstancesResolver = () => [
       {
         id: 1,
         name: 'A',
         owner: 456,
         status: 'running',
-        qqClient: { uin: 123 },
-        tgBot: { username: 'tg' },
+        qqClient: {
+          uin: 123,
+          sendMessage: vi.fn(),
+          recallMessage: vi.fn(),
+          getMessage: vi.fn(),
+        },
+        tgBot: {
+          username: 'tg',
+          getChat: vi.fn(),
+        },
       },
       {
         id: 2,
@@ -41,7 +50,8 @@ describe('instanceAPI', () => {
         status: 'stopped',
         createdAt: new Date('2020-01-02T00:00:00Z'),
       },
-    ])
+    ]
+    const api = createInstanceAPI(resolver)
 
     const result = await api.list()
 
@@ -107,11 +117,19 @@ describe('instanceAPI', () => {
   })
 
   it('returns instance status', async () => {
-    const api = createInstanceAPI(() => [
+    const resolver: PluginInstancesResolver = () => [
       {
         id: 1,
-        qqClient: { isConnected: true },
-        tgBot: { isRunning: true },
+        qqClient: {
+          isConnected: true,
+          sendMessage: vi.fn(),
+          recallMessage: vi.fn(),
+          getMessage: vi.fn(),
+        },
+        tgBot: {
+          isRunning: true,
+          getChat: vi.fn(),
+        },
       },
       {
         id: 2,
@@ -120,7 +138,8 @@ describe('instanceAPI', () => {
       {
         id: 3,
       },
-    ])
+    ]
+    const api = createInstanceAPI(resolver)
 
     await expect(api.getStatus(1)).resolves.toBe('running')
     await expect(api.getStatus(2)).resolves.toBe('stopped')

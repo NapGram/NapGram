@@ -16,8 +16,10 @@ import type {
   MessageAPI,
   MessageEventHandler,
   NoticeEventHandler,
+  PluginApis,
   PluginContext,
   PluginLogger,
+  PluginNativeInstanceAPI,
   PluginReloadEventHandler,
   PluginStorage,
   UserAPI,
@@ -32,9 +34,9 @@ import { createPluginStorage } from '../api/storage.js'
 export class PluginContextImpl implements PluginContext {
   readonly pluginId: string
   readonly logger: PluginLogger
-  readonly config: any
+  config: any
   readonly storage: PluginStorage
-  readonly database: any
+  readonly database: unknown
 
   // API 实例（将在 Phase 3 实现）
   readonly message!: MessageAPI
@@ -42,6 +44,7 @@ export class PluginContextImpl implements PluginContext {
   readonly user!: UserAPI
   readonly group!: GroupAPI
   readonly web!: WebAPI
+  readonly native!: PluginNativeInstanceAPI
 
   /** 命令注册表 */
   private commands: Map<string, CommandConfig> = new Map()
@@ -54,57 +57,32 @@ export class PluginContextImpl implements PluginContext {
     pluginId: string,
     config: any,
     private readonly eventBus: EventBus,
-    apis?: {
-      message?: MessageAPI
-      instance?: InstanceAPI
-      user?: UserAPI
-      group?: GroupAPI
-      web?: WebAPI
-      database?: any
-    },
+    apis?: PluginApis,
   ) {
     this.pluginId = pluginId
     this.config = config
     this.logger = createPluginLogger(pluginId)
     this.storage = createPluginStorage(pluginId)
-    this.database = apis?.database || null
 
-    // 注入 API（如果提供）
-    if (apis?.message) {
-      (this as any).message = apis.message
+    if (apis) {
+      this.database = apis.database
+      this.message = apis.message as MessageAPI
+      this.instance = apis.instance as InstanceAPI
+      this.user = apis.user as UserAPI
+      this.group = apis.group as GroupAPI
+      this.web = {
+        registerRoutes: (register: (app: any) => void) => apis.web.registerRoutes(register, this.pluginId),
+      }
+      this.native = apis.native ?? this.createMockNativeAPI()
     }
-    if (apis?.instance) {
-      (this as any).instance = apis.instance
-    }
-    if (apis?.user) {
-      (this as any).user = apis.user
-    }
-    if (apis?.group) {
-      (this as any).group = apis.group
-    }
-    if (apis?.web) {
-      const web = apis.web
-        ; (this as any).web = {
-          registerRoutes: (register: (app: any) => void) => web.registerRoutes(register, this.pluginId),
-        }
-    }
-
-    // 如果没有提供完整 API，使用懒加载的占位符
-    // 实际 API 将在 Phase 4 时注入
-    if (!apis?.message) {
-      (this as any).message = this.createMockMessageAPI()
-    }
-    if (!apis?.instance) {
-      (this as any).instance = this.createMockInstanceAPI()
-    }
-    if (!apis?.user) {
-      (this as any).user = this.createMockUserAPI()
-    }
-    if (!apis?.group) {
-      (this as any).group = this.createMockGroupAPI()
-    }
-    if (!apis?.web) {
-      (this as any).web = this.createMockWebAPI()
+    else {
+      this.database = null
+      this.message = this.createMockMessageAPI()
+      this.instance = this.createMockInstanceAPI()
+      this.user = this.createMockUserAPI()
+      this.group = this.createMockGroupAPI()
+      this.web = this.createMockWebAPI()
+      this.native = this.createMockNativeAPI()
     }
   }
 
@@ -113,7 +91,7 @@ export class PluginContextImpl implements PluginContext {
     return {
       async send() {
         logger.warn('MessageAPI not yet integrated (Phase 4)')
-        return { messageId: `mock-${Date.now()}` }
+        return { messageId: `mock-${Date.now()}`, timestamp: Date.now() }
       },
       async recall() {
         logger.warn('MessageAPI not yet integrated (Phase 4)')
@@ -122,7 +100,7 @@ export class PluginContextImpl implements PluginContext {
         logger.warn('MessageAPI not yet integrated (Phase 4)')
         return null
       },
-    } as any
+    }
   }
 
   private createMockInstanceAPI(): InstanceAPI {
@@ -138,9 +116,9 @@ export class PluginContextImpl implements PluginContext {
       },
       async getStatus() {
         logger.warn('InstanceAPI not yet integrated (Phase 4)')
-        return 'unknown' as any
+        return 'stopped'
       },
-    } as any
+    }
   }
 
   private createMockUserAPI(): UserAPI {
@@ -154,7 +132,7 @@ export class PluginContextImpl implements PluginContext {
         logger.warn('UserAPI not yet integrated (Phase 4)')
         return false
       },
-    } as any
+    }
   }
 
   private createMockGroupAPI(): GroupAPI {
@@ -177,7 +155,7 @@ export class PluginContextImpl implements PluginContext {
       async kickUser() {
         logger.warn('GroupAPI not yet integrated (Phase 4)')
       },
-    } as any
+    }
   }
 
   private createMockWebAPI(): WebAPI {
@@ -185,6 +163,20 @@ export class PluginContextImpl implements PluginContext {
     return {
       registerRoutes() {
         logger.warn('WebAPI not yet integrated (Phase 3)')
+      },
+    }
+  }
+
+  private createMockNativeAPI(): PluginNativeInstanceAPI {
+    const logger = this.logger
+    return {
+      getInstance() {
+        logger.warn('Native instance API not yet integrated (Phase 3)')
+        return undefined
+      },
+      getInstances() {
+        logger.warn('Native instance API not yet integrated (Phase 3)')
+        return []
       },
     }
   }
@@ -197,10 +189,10 @@ export class PluginContextImpl implements PluginContext {
   on(event: 'notice', handler: NoticeEventHandler): EventSubscription
   on(event: 'instance-status', handler: InstanceStatusEventHandler): EventSubscription
   on(event: 'plugin-reload', handler: PluginReloadEventHandler): EventSubscription
-  on(event: string, handler: any): EventSubscription {
+  on(event: string, handler: unknown): EventSubscription {
     return this.eventBus.subscribe(
-      event as any,
-      handler,
+      event as never,
+      handler as never,
       undefined,
       this.pluginId,
     )

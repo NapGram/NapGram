@@ -1,6 +1,5 @@
-import type { NapCatAdapter as NapCatAdapterType } from '../NapCatAdapter'
+import type { NapCatAdapter as NapCatAdapterType } from '@napgram/qq-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { napCatForwardMultiple } from '../napcatConvert'
 
 // Mock dependencies
 const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstructor } = vi.hoisted(() => {
@@ -152,12 +151,13 @@ vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => mockLogger),
 }))
 
-vi.mock('../../../../domain/message/converter', () => ({
+vi.mock('@napgram/message-kit', () => ({
   messageConverter: mockMessageConverter,
 }))
 
 describe('napCatAdapter', () => {
-  let NapCatAdapter: typeof import('../NapCatAdapter').NapCatAdapter
+  let NapCatAdapter: typeof import('@napgram/qq-client').NapCatAdapter
+  let napCatForwardMultiple: typeof import('@napgram/qq-client').napCatForwardMultiple
   let adapter: NapCatAdapterType
   const createParams: any = {
     type: 'napcat',
@@ -212,8 +212,10 @@ describe('napCatAdapter', () => {
     mockNapLinkInstance.getLoginInfo.mockResolvedValue({ user_id: 123456, nickname: 'Me' })
 
     vi.resetModules()
-    const module = await import('../NapCatAdapter')
+    await import('../index')
+    const module = await import('@napgram/qq-client')
     NapCatAdapter = module.NapCatAdapter
+    napCatForwardMultiple = module.napCatForwardMultiple
     adapter = new NapCatAdapter(createParams)
   })
 

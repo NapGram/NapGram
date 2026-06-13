@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TextSegmentConverter } from '../TextSegmentConverter'
+import { TextSegmentConverter } from '@napgram/message-kit'
 
 describe('textSegmentConverter', () => {
   const converter = new TextSegmentConverter()

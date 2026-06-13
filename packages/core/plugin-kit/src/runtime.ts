@@ -4,15 +4,15 @@
  * 原生插件系统的统一入口
  */
 
-import { drizzleDb } from '@napgram/db-kit'
 import { getLogger } from '@napgram/logger-kit'
-import { IPluginRuntime, IInstance } from '@napgram/runtime-kit'
-import { createGroupAPI } from './api/group.js'
-import { createInstanceAPI } from './api/instance.js'
-import { createMessageAPI } from './api/message.js'
-import { createUserAPI } from './api/user.js'
-import { createWebAPI } from './api/web.js'
-import { getGlobalRuntime } from './core/plugin-runtime.js'
+import { IPluginRuntime } from '@napgram/runtime-kit'
+import type {
+  PluginInstanceResolver,
+  PluginInstancesResolver,
+  PluginSpec,
+  PluginWebRouteRegistrar,
+} from './core/interfaces.js'
+import { getGlobalRuntime as getCoreRuntime } from './core/plugin-runtime.js'
 import { loadPluginSpecs } from './internal/config.js' // Ensure config.ts exists in internal
 
 const logger = getLogger('PluginRuntimeAPI')
@@ -21,78 +21,45 @@ const logger = getLogger('PluginRuntimeAPI')
  * 插件运行时公共 API
  */
 export class PluginRuntimeAPI implements IPluginRuntime {
-  private static instance: PluginRuntimeAPI
-  private webRoutes?: (register: (app: any) => void, pluginId?: string) => void
-  private instanceResolver?: (id: number) => IInstance | undefined
-  private instancesResolver?: () => IInstance[]
-  private builtins: any[] = []
-
-  setWebRoutes(register?: (appRegister: (app: any) => void, pluginId?: string) => void) {
-    this.webRoutes = register
+  private get runtime() {
+    return getCoreRuntime()
   }
 
-  setInstanceResolvers(
-    instanceResolver: (id: number) => IInstance | undefined,
-    instancesResolver: () => IInstance[]
-  ) {
-    this.instanceResolver = instanceResolver
-    this.instancesResolver = instancesResolver
+  setWebRoutes(register?: PluginWebRouteRegistrar) {
+    this.runtime.setWebRoutes(register)
   }
 
   private async reloadCommandsForInstances() {
-    if (!this.instancesResolver)
-      return
-    const instances = this.instancesResolver()
-    for (const instance of instances) {
-      try {
-        if (typeof instance.reloadCommands === 'function') {
-          await instance.reloadCommands()
-          logger.info({ instanceId: instance.id }, 'CommandsFeature commands reloaded')
-        }
-      }
-      catch (error) {
-        logger.warn({ instanceId: instance.id, error }, 'Failed to reload CommandsFeature commands')
-      }
-    }
+    await this.runtime.reloadCommandsForInstances()
   }
 
-  private configureApis() {
-    const instanceResolver = this.instanceResolver || ((_id: number) => undefined);
-    const instancesResolver = this.instancesResolver || (() => []);
-
-    const apis = {
-      message: createMessageAPI(instanceResolver),
-      instance: createInstanceAPI(instancesResolver),
-      user: createUserAPI(instanceResolver),
-      group: createGroupAPI(instanceResolver),
-      web: createWebAPI(this.webRoutes),
-      database: drizzleDb,
-    }
-
-    getGlobalRuntime({ apis })
+  setInstanceResolvers(
+    instanceResolver: PluginInstanceResolver,
+    instancesResolver: PluginInstancesResolver,
+  ) {
+    this.runtime.setInstanceResolvers(instanceResolver, instancesResolver)
   }
 
   /**
    * 启动插件系统
    */
-  async start(options?: { defaultInstances?: number[], webRoutes?: (register: (app: any) => void, pluginId?: string) => void, builtins?: any[] }) {
+  async start(options?: { defaultInstances?: number[], webRoutes?: PluginWebRouteRegistrar, builtins?: PluginSpec[] }) {
     logger.info('Starting plugin runtime')
 
     try {
       if (options?.builtins) {
-        this.builtins = options.builtins
+        this.runtime.setBuiltins(options.builtins)
       }
       if (options?.webRoutes) {
-        this.webRoutes = options.webRoutes
+        this.runtime.setWebRoutes(options.webRoutes)
       }
-      this.configureApis()
       // 加载插件规范
-      const specs = await loadPluginSpecs(this.builtins)
+      const specs = await loadPluginSpecs(this.runtime.getBuiltins())
 
       logger.debug({ count: specs.length }, 'Plugin specs loaded')
 
       // 获取全局运行时
-      const runtime = getGlobalRuntime()
+      const runtime = this.runtime
 
       // 启动运行时
       const report = await runtime.start(specs)
@@ -117,7 +84,7 @@ export class PluginRuntimeAPI implements IPluginRuntime {
     logger.info('Stopping plugin runtime')
 
     try {
-      const runtime = getGlobalRuntime()
+      const runtime = this.runtime
       await runtime.stop()
 
       logger.info('Plugin runtime stopped')
@@ -135,12 +102,11 @@ export class PluginRuntimeAPI implements IPluginRuntime {
     logger.info('Reloading plugin runtime')
 
     try {
-      this.configureApis()
       // 加载插件规范
-      const specs = await loadPluginSpecs(this.builtins)
+      const specs = await loadPluginSpecs(this.runtime.getBuiltins())
 
       // 获取全局运行时
-      const runtime = getGlobalRuntime()
+      const runtime = this.runtime
 
       // 重载运行时
       const report = await runtime.reload(specs || [])
@@ -168,15 +134,13 @@ export class PluginRuntimeAPI implements IPluginRuntime {
     if (!id)
       throw new Error('Missing pluginId')
 
-    this.configureApis()
-
-    const specs = await loadPluginSpecs(this.builtins)
+    const specs = await loadPluginSpecs(this.runtime.getBuiltins())
     const spec = specs.find(s => s.id === id)
     if (!spec) {
       throw new Error(`Plugin spec not found: ${id}`)
     }
 
-    const runtime = getGlobalRuntime()
+    const runtime = this.runtime
     const result = await runtime.reloadPlugin(id, spec.config ?? {})
     await this.reloadCommandsForInstances()
     return result
@@ -186,7 +150,7 @@ export class PluginRuntimeAPI implements IPluginRuntime {
    * 获取最后一次报告
    */
   getLastReport() {
-    const runtime = getGlobalRuntime()
+    const runtime = this.runtime
     return runtime.getLastReport()
   }
 
@@ -194,7 +158,7 @@ export class PluginRuntimeAPI implements IPluginRuntime {
    * 获取事件总线（用于事件发布）
    */
   getEventBus() {
-    const runtime = getGlobalRuntime()
+    const runtime = this.runtime
     return runtime.getEventBus()
   }
 
@@ -202,23 +166,25 @@ export class PluginRuntimeAPI implements IPluginRuntime {
    * Get a plugin instance by ID
    */
   getPlugin(id: string) {
-    const runtime = getGlobalRuntime()
+    const runtime = this.runtime
     return runtime.getPlugin(id)
   }
 
-  isActive() {
-    return getGlobalRuntime().isActive()
+  getInstance(instanceId: number) {
+    return this.runtime.getInstance(instanceId)
   }
 
-  static getInstance() {
-    if (!PluginRuntimeAPI.instance) {
-      PluginRuntimeAPI.instance = new PluginRuntimeAPI()
-    }
-    return PluginRuntimeAPI.instance
+  getInstances() {
+    return this.runtime.getInstances()
   }
+
+  isActive() {
+    return this.runtime.isActive()
+  }
+
 }
 
-export const PluginRuntime = PluginRuntimeAPI.getInstance()
+export const PluginRuntime = new PluginRuntimeAPI()
 
 // 导出 getGlobalRuntime 供其他模块使用（如 CommandsFeature）
-export { getGlobalRuntime }
+export { getGlobalRuntime } from './core/plugin-runtime.js'
