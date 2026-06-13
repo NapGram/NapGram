@@ -17,10 +17,16 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
-if ! /app/node_modules/.bin/drizzle-kit migrate --config /app/main/tools/drizzle.config.cjs; then
+MIGRATION_SCRIPT="/app/main/tools/run-drizzle-migrations.sh"
+if [ ! -x "${MIGRATION_SCRIPT}" ]; then
+  echo "ERROR: migration script not found: ${MIGRATION_SCRIPT}"
+  exit 1
+fi
+
+if ! "${MIGRATION_SCRIPT}"; then
   echo "Database migration failed; aborting."
   exit 1
 fi
 
 echo "数据库迁移完成，启动应用..."
-exec node --enable-source-maps build/index.js
+exec node --enable-source-maps main/build/index.js
