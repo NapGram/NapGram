@@ -65,26 +65,15 @@ jobs:
       - name: Send Telegram Notification to Group Topic
         env:
           MESSAGE: |
-            🚀 New Release: ${{ env.RELEASE_TAG }}
-            
+            🚀 NapGram：Release ${{ env.RELEASE_TAG }}
+            📌 #NapGram
+
             ${{ env.RELEASE_BODY }}
-            
-            Link: ${{ env.RELEASE_URL }}
+
+            🔗 Release: ${{ env.RELEASE_URL }}
         run: |
           curl -fSs -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
             -d "chat_id=${{ secrets.TELEGRAM_TO_GROUP }}" \
             -d "message_thread_id=${{ secrets.TELEGRAM_RELEASE_TOPIC_ID }}" \
-            --data-urlencode "text=$MESSAGE"
-
-      - name: Send Telegram Notification to Channel
-        env:
-          MESSAGE: |
-            🚀 New Release: ${{ env.RELEASE_TAG }}
-            
-            ${{ env.RELEASE_BODY }}
-            
-            Link: ${{ env.RELEASE_URL }}
-        run: |
-          curl -fSs -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-            -d "chat_id=${{ secrets.TELEGRAM_TO_CHANNEL }}" \
+            -d "disable_web_page_preview=true" \
             --data-urlencode "text=$MESSAGE"
