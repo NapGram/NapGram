@@ -31,8 +31,8 @@ export default definePlugin({
 
 ## Exports
 
-- All types from `@napgram/core`
-- All helpers from `@napgram/utils`
+- All types from `@napgram/sdk-core`
+- All helpers from `@napgram/sdk-utils`
 - `definePlugin` / `defineCommand` / `definePermissions`
 - Guard + helper utilities from SDK
 

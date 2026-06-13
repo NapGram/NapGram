@@ -1,5 +1,5 @@
 {
-  "name": "@napgram/core",
+  "name": "@napgram/sdk-core",
   "version": "2.0.0",
   "description": "TypeScript type definitions for NapGram native plugins",
   "type": "module",

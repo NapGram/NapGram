@@ -1,11 +1,11 @@
-# @napgram/utils
+# @napgram/sdk-utils
 
 Utility functions for NapGram native plugins.
 
 ## Installation
 
 ```bash
-pnpm add @napgram/utils
+pnpm add @napgram/sdk-utils
 ```
 
 ## Usage
@@ -21,7 +21,7 @@ import {
   parseUserId,
   sleep,
   randomChoice
-} from '@napgram/utils';
+} from '@napgram/sdk-utils';
 
 // Extract plain text from message segments
 const text = extractPlainText(event.message.segments);
@@ -51,7 +51,7 @@ await event.send([{ type: 'forward', data: { messages: preparedForward } }]);
 ## Subpath Exports
 
 ```typescript
-import { sendPoke } from '@napgram/utils/qq-helpers';
+import { sendPoke } from '@napgram/sdk-utils/qq-helpers';
 ```
 
 ## API Reference

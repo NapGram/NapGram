@@ -187,7 +187,7 @@ export interface PluginContext {
     readonly web: WebAPI;
 
     /** Database API (Drizzle Client) */
-    readonly database: any;
+    readonly database: unknown;
 
     // === 命令注册 ===
 

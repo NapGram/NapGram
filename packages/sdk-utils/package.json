@@ -1,5 +1,5 @@
 {
-  "name": "@napgram/utils",
+  "name": "@napgram/sdk-utils",
   "version": "2.0.0",
   "description": "Utility functions for NapGram native plugins",
   "type": "module",
@@ -37,7 +37,7 @@
   "author": "NapLink",
   "license": "MIT",
   "dependencies": {
-    "@napgram/core": "workspace:*"
+    "@napgram/sdk-core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "25.9.3",

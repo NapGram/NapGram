@@ -4,7 +4,7 @@
  * 提供群组/用户级别的黑白名单过滤功能，支持 QQ 和 Telegram 双平台
  */
 
-import type { MessageEvent, CommandConfig } from '@napgram/core';
+import type { MessageEvent, CommandConfig } from '@napgram/sdk-core';
 import type { ModeFilterConfig, ModeFilterFunction, ExtendedModeFilterConfig } from './types.js';
 
 /**

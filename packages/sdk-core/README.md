@@ -1,11 +1,11 @@
-# @napgram/core
+# @napgram/sdk-core
 
 TypeScript type definitions for NapGram native plugins.
 
 ## Installation
 
 ```bash
-pnpm add @napgram/core
+pnpm add @napgram/sdk-core
 ```
 
 ## Usage
@@ -17,7 +17,7 @@ import type {
   MessageEvent,
   MessageAPI,
   // ... more types
-} from '@napgram/core';
+} from '@napgram/sdk-core';
 
 const plugin: NapGramPlugin = {
   id: 'my-plugin',

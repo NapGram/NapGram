@@ -1,7 +1,7 @@
-import type { CommandConfig, MessageEvent, NapGramPlugin, PluginContext, PluginLogger, PluginPermissions } from '@napgram/core';
+import type { CommandConfig, MessageEvent, NapGramPlugin, PluginContext, PluginLogger, PluginPermissions } from '@napgram/sdk-core';
 
-export * from '@napgram/core';
-export * from '@napgram/utils';
+export * from '@napgram/sdk-core';
+export * from '@napgram/sdk-utils';
 export * from './guards/index.js';
 
 export type PluginWithConfig<TConfig = unknown> = Omit<NapGramPlugin, 'install'> & {
