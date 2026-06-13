@@ -6,7 +6,7 @@
 
 import { drizzleDb } from '@napgram/db-kit'
 import { getLogger } from '@napgram/logger-kit'
-import { IPluginRuntime, setGlobalRuntime, IInstance } from '@napgram/runtime-kit'
+import { IPluginRuntime, IInstance } from '@napgram/runtime-kit'
 import { createGroupAPI } from './api/group.js'
 import { createInstanceAPI } from './api/instance.js'
 import { createMessageAPI } from './api/message.js'
@@ -40,14 +40,13 @@ export class PluginRuntimeAPI implements IPluginRuntime {
   }
 
   private async reloadCommandsForInstances() {
-    if (!this.instancesResolver) return;
-    const instances = this.instancesResolver();
+    if (!this.instancesResolver)
+      return
+    const instances = this.instancesResolver()
     for (const instance of instances) {
       try {
-        const featureManager = (instance as any)?.featureManager // Using any as IInstance doesn't define featureManager yet
-        const commands = featureManager?.commands
-        if (commands && typeof commands.reloadCommands === 'function') {
-          await commands.reloadCommands()
+        if (typeof instance.reloadCommands === 'function') {
+          await instance.reloadCommands()
           logger.info({ instanceId: instance.id }, 'CommandsFeature commands reloaded')
         }
       }
@@ -214,7 +213,6 @@ export class PluginRuntimeAPI implements IPluginRuntime {
   static getInstance() {
     if (!PluginRuntimeAPI.instance) {
       PluginRuntimeAPI.instance = new PluginRuntimeAPI()
-      setGlobalRuntime(PluginRuntimeAPI.instance)
     }
     return PluginRuntimeAPI.instance
   }

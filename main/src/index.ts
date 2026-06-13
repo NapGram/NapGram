@@ -242,7 +242,7 @@ export async function main() {
 
   for (const instance of succeeded) {
     try {
-      await instance.commandsFeature?.reloadCommands?.()
+      await instance.reloadCommands?.()
     }
     catch (error) {
       log.warn({ error, instanceId: instance.id }, 'Failed to reload commands after startup')

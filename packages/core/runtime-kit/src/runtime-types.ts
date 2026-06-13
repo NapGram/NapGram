@@ -86,5 +86,6 @@ export interface IInstance {
     starting?: boolean
     stopping?: boolean
     stopped?: boolean
+    reloadCommands?: () => Promise<void>
     // Add other necessary properties accessed by plugin API
 }

@@ -35,6 +35,14 @@ export function setGlobalRuntime(runtime: IPluginRuntime) {
 }
 
 /**
+ * Reset the global runtime instance.
+ * Intended for tests and runtime teardown coordination.
+ */
+export function resetGlobalRuntime(): void {
+    globalRuntime = null
+}
+
+/**
  * Get the global runtime instance.
  * Throws if runtime is not initialized.
  */
