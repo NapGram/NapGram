@@ -2,7 +2,7 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../shared-types.js'
 import type { CommandRegistry } from '../services/CommandRegistry.js'
 import type { InteractiveStateManager } from '../services/InteractiveStateManager.js'
-import type { PermissionChecker } from '../services/PermissionChecker.js'
+import type { CommandAccessChecker } from '../services/CommandAccessChecker.js'
 import type { QqChatType } from '../utils/ForwardPairChatType.js'
 import { env, getLogger } from '../../../shared-types.js'
 import { findPairByQQWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage, qqChatTypeToMessageChatType } from '../utils/ForwardPairChatType.js'
@@ -18,7 +18,7 @@ export class CommandContext {
     public readonly tgBot: Telegram,
     public readonly qqClient: IQQClient,
     public readonly registry: CommandRegistry,
-    public readonly permissionChecker: PermissionChecker,
+    public readonly permissionChecker: CommandAccessChecker,
     public readonly stateManager: InteractiveStateManager,
     public readonly replyTG: (chatId: string | number, text: any, threadId?: bigint | number) => Promise<void>,
     public readonly extractThreadId: (msg: UnifiedMessage, args: string[]) => bigint | undefined,

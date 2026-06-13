@@ -138,5 +138,3 @@ export class MessageQueue<T = unknown> {
     logger.info('MessageQueue destroyed')
   }
 }
-
-export const __coverage_anchor__ = true

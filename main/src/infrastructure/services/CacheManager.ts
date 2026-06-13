@@ -162,5 +162,3 @@ export const groupInfoCache = new CacheManager({ defaultTTL: 300000 })
 export const userInfoCache = new CacheManager({ defaultTTL: 600000 })
 export const mediaCache = new CacheManager({ defaultTTL: 3600000 })
 export const configCache = new CacheManager({ defaultTTL: Infinity })
-
-export const __coverage_anchor__ = true

@@ -6,6 +6,7 @@ import { PluginRuntime } from '@napgram/plugin-kit'
 import { builtins } from '@napgram/builtins'
 import * as Sentry from '@sentry/node'
 import Instance from './domain/models/Instance'
+import { coreFeatureBuiltins } from './features/runtime/builtins'
 import { instanceRegistry } from './features/runtime/instance-registry'
 import { performanceMonitor } from './infrastructure/services/PerformanceMonitor'
 import { createServer, registerWebRoutes, startServer, stopServer } from './interfaces'
@@ -212,7 +213,11 @@ export async function main() {
     () => instanceRegistry.getAll() as any,
   )
 
-  await PluginRuntime.start({ defaultInstances: targets, webRoutes: registerWebRoutes, builtins })
+  await PluginRuntime.start({
+    defaultInstances: targets,
+    webRoutes: registerWebRoutes,
+    builtins: [...coreFeatureBuiltins, ...builtins],
+  })
   await startServer(app)
 
   const startupResults = await Promise.allSettled(targets.map(async (id) => {
