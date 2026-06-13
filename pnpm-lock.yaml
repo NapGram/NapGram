@@ -1132,6 +1132,9 @@ importers:
       '@napgram/marketplace-kit':
         specifier: workspace:*
         version: link:../marketplace-kit
+      '@napgram/media-kit':
+        specifier: workspace:*
+        version: link:../media-kit
       '@napgram/message-kit':
         specifier: workspace:*
         version: link:../message-kit
