@@ -7,7 +7,13 @@
 import type { PluginSpec } from './interfaces.js'
 import type { PluginInstance } from './lifecycle.js'
 import { getLogger } from '@napgram/logger-kit'
-import { IPluginRuntime, setGlobalRuntime as setKitRuntime } from '@napgram/runtime-kit'
+import {
+  IPluginRuntime,
+  getGlobalRuntime as getKitRuntime,
+  setGlobalRuntime as setKitRuntime,
+  resetGlobalRuntime as resetKitRuntime,
+  tryGetGlobalRuntime as tryGetKitRuntime,
+} from '@napgram/runtime-kit'
 import { EventBus, globalEventBus } from './event-bus.js'
 import { PluginLifecycleManager, PluginState } from './lifecycle.js'
 import { PluginContextImpl } from './plugin-context.js'
@@ -422,29 +428,29 @@ export class PluginRuntime implements IPluginRuntime {
 }
 
 /**
- * 全局插件运行时实例
- */
-let globalRuntime: PluginRuntime | null = null
-
-/**
  * 获取或创建全局运行时实例
  *
  * @param config 运行时配置（仅在首次创建时使用）
  * @returns 全局运行时实例
  */
 export function getGlobalRuntime(config?: RuntimeConfig): PluginRuntime {
-  if (!globalRuntime) {
-    globalRuntime = new PluginRuntime(config)
+  const existing = tryGetKitRuntime()
+  if (existing) {
+    const runtime = existing as PluginRuntime
+    if (config?.apis) {
+      runtime.setApis(config.apis)
+    }
+    return runtime
   }
-  if (config?.apis) {
-    globalRuntime.setApis(config.apis)
-  }
-  return globalRuntime
+
+  const runtime = new PluginRuntime(config)
+  setKitRuntime(runtime)
+  return runtime
 }
 
 /**
  * 重置全局运行时（用于测试）
  */
 export function resetGlobalRuntime(): void {
-  globalRuntime = null
+  resetKitRuntime()
 }

@@ -160,6 +160,10 @@ export default class Instance {
     this._userBotStatus = this.workMode === 'personal' && this._userSessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
   }
 
+  public async reloadCommands() {
+    await this.commandsFeature?.reloadCommands?.()
+  }
+
   private async init(botToken?: string) {
     if (this.initPromise)
       return this.initPromise

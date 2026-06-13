@@ -110,11 +110,13 @@ vi.mock('../infrastructure/services/PerformanceMonitor', () => performanceMonito
 vi.mock('../shared/utils/random', () => randomMocks)
 
 function createInstance(id: number) {
+  const commandsFeature = {
+    reloadCommands: vi.fn().mockResolvedValue(undefined),
+  }
   return {
     id,
-    commandsFeature: {
-      reloadCommands: vi.fn().mockResolvedValue(undefined),
-    },
+    commandsFeature,
+    reloadCommands: vi.fn().mockImplementation(() => commandsFeature.reloadCommands()),
     stop: vi.fn().mockResolvedValue(undefined),
   }
 }

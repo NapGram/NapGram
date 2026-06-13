@@ -477,6 +477,9 @@ importers:
 
   packages/core/runtime-kit:
     dependencies:
+      '@napgram/auth-kit':
+        specifier: workspace:*
+        version: link:../../utilities/auth-kit
       '@napgram/db-kit':
         specifier: workspace:*
         version: link:../db-kit
