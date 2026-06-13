@@ -1,6 +1,6 @@
 import { getLogger } from '@napgram/logger-kit'
 import { configureQQClient } from '@napgram/qq-client'
-import { messageConverter } from '../../../domain/message/converter'
+import { messageConverter } from '@napgram/message-kit'
 
 configureQQClient({
   messageConverter,

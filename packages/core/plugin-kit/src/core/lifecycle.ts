@@ -188,8 +188,8 @@ export class PluginLifecycleManager {
 
         // 更新配置
         if (newConfig !== undefined) {
-          instance.config = newConfig;
-          (instance.context as any).config = newConfig
+          instance.config = newConfig
+          instance.context.config = newConfig
         }
 
         // 重置状态
@@ -200,8 +200,8 @@ export class PluginLifecycleManager {
 
       // 更新配置
       if (newConfig !== undefined) {
-        instance.config = newConfig;
-        (instance.context as any).config = newConfig
+        instance.config = newConfig
+        instance.context.config = newConfig
       }
 
       const duration = Date.now() - startTime

@@ -6,8 +6,10 @@ export { PluginRuntime as CorePluginRuntime } from './core/plugin-runtime.js'
 export * from './core/lifecycle.js'
 export * from './core/event-bus.js'
 export * from './core/event-publisher.js'
+export * from './core/native-lifecycle.js'
 export * from './core/schema-helper.js'
 export * from './runtime.js'
+export * from './api/native.js'
 export {
     getPluginVersions,
     installFromMarketplace,

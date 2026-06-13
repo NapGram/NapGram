@@ -1,5 +1,14 @@
-import { describe, expect, it } from 'vitest'
-import { QQClientFactory, qqClientFactory } from '../factory'
+import { beforeAll, describe, expect, it } from 'vitest'
+
+let QQClientFactory: typeof import('@napgram/qq-client').QQClientFactory
+let qqClientFactory: typeof import('@napgram/qq-client').qqClientFactory
+
+beforeAll(async () => {
+  await import('../index')
+  const module = await import('@napgram/qq-client')
+  QQClientFactory = module.QQClientFactory
+  qqClientFactory = module.qqClientFactory
+})
 
 describe('qqClientFactory', () => {
   it('creates NapCat client', async () => {

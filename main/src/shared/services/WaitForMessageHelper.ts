@@ -1,5 +1,5 @@
 import type { Message } from '@mtcute/core'
-import type Telegram from '../../infrastructure/clients/telegram/client'
+import type Telegram from '@napgram/telegram-client'
 
 export default class WaitForMessageHelper {
   private map = new Map<number, (event: Message) => any>()

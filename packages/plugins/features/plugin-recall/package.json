@@ -1,0 +1,56 @@
+{
+  "name": "@napgram/plugin-recall",
+  "version": "2.0.0",
+  "description": "NapGram recall plugin: synchronize QQ and Telegram message recalls",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run src/__tests__"
+  },
+  "keywords": [
+    "napgram",
+    "plugin",
+    "recall"
+  ],
+  "author": "NapGram Team",
+  "license": "MIT",
+  "dependencies": {
+    "@napgram/db-kit": "workspace:*",
+    "@napgram/env-kit": "workspace:*",
+    "@napgram/message-kit": "workspace:*",
+    "@napgram/plugin-kit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "25.9.3",
+    "vitest": "4.1.8",
+    "typescript": "6.0.3"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./package.json": "./package.json"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
+}

@@ -99,7 +99,7 @@ vi.mock('@napgram/plugin-kit', () => ({
 }))
 vi.mock('../features/runtime/instance-registry', () => runtimeRegistryMocks)
 vi.mock('@sentry/node', () => sentryNodeMocks)
-vi.mock('../builtins', () => ({
+vi.mock('@napgram/builtins', () => ({
   builtins: [{ id: 'builtin-test' }],
 }))
 vi.mock('../interfaces', () => interfaceMocks)

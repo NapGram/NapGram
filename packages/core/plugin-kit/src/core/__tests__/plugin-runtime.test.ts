@@ -34,7 +34,15 @@ describe('pluginRuntime Core', () => {
     const eventBus = new EventBus()
     const loader = new PluginLoader()
     const lifecycleManager = new PluginLifecycleManager()
-    const apis = { message: {}, instance: {}, user: {}, group: {} }
+    const apis = {
+      message: { send: vi.fn(), recall: vi.fn(), get: vi.fn() },
+      instance: { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() },
+      user: { getInfo: vi.fn(), isFriend: vi.fn() },
+      group: { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() },
+      web: { registerRoutes: vi.fn() },
+      database: null,
+      native: { getInstance: vi.fn(), getInstances: vi.fn() },
+    }
 
     const customRuntime = new PluginRuntime({
       eventBus,
@@ -81,6 +89,18 @@ describe('pluginRuntime Core', () => {
     // Test stop
     await pluginRuntime.stop()
     expect(pluginRuntime.isActive()).toBe(false)
+  })
+
+  it('should expose privileged instance accessors', () => {
+    const instance = { id: 42, status: 'running' } as any
+
+    pluginRuntime.setInstanceResolvers(
+      id => (id === 42 ? instance : undefined),
+      () => [instance],
+    )
+
+    expect(pluginRuntime.getInstance(42)).toBe(instance)
+    expect(pluginRuntime.getInstances()).toEqual([instance])
   })
 
   it('should return last report when already running', async () => {
@@ -542,7 +562,14 @@ describe('pluginRuntime Core', () => {
   })
 
   it('should set APIs correctly', () => {
-    const newApis = { message: { send: vi.fn() } }
+    const newApis = {
+      message: { send: vi.fn(), recall: vi.fn(), get: vi.fn() },
+      instance: { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() },
+      user: { getInfo: vi.fn(), isFriend: vi.fn() },
+      group: { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() },
+      web: { registerRoutes: vi.fn() },
+      database: null,
+    }
     pluginRuntime.setApis(newApis)
 
     // This is a bit tricky to test since setApis is a private method in PluginRuntime
@@ -623,9 +650,25 @@ describe('global Runtime', () => {
   })
 
   it('should accept config on first call only', () => {
-    const apis = { message: {}, instance: {} }
+    const apis = {
+      message: { send: vi.fn(), recall: vi.fn(), get: vi.fn() },
+      instance: { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() },
+      user: { getInfo: vi.fn(), isFriend: vi.fn() },
+      group: { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() },
+      web: { registerRoutes: vi.fn() },
+      database: null,
+    }
     const runtime1 = getGlobalRuntime({ apis })
-    const runtime2 = getGlobalRuntime({ apis: { user: {} } }) // This config should be ignored
+    const runtime2 = getGlobalRuntime({
+      apis: {
+        message: { send: vi.fn(), recall: vi.fn(), get: vi.fn() },
+        instance: { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() },
+        user: { getInfo: vi.fn(), isFriend: vi.fn() },
+        group: { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() },
+        web: { registerRoutes: vi.fn() },
+        database: null,
+      },
+    }) // This config should be ignored
 
     expect(runtime1).toBe(runtime2)
   })

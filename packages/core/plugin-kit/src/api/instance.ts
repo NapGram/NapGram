@@ -8,6 +8,8 @@ import type {
   InstanceAPI,
   InstanceInfo,
   InstanceStatus,
+  PluginInstancesResolver,
+  PluginRuntimeInstance,
 } from '../core/interfaces.js'
 import { getLogger } from '@napgram/logger-kit'
 
@@ -20,9 +22,9 @@ export class InstanceAPIImpl implements InstanceAPI {
   /**
    * 实例列表访问器（Phase 4 注入）
    */
-  private instancesResolver?: () => any[]
+  private instancesResolver?: PluginInstancesResolver
 
-  constructor(instancesResolver?: () => any[]) {
+  constructor(instancesResolver?: PluginInstancesResolver) {
     this.instancesResolver = instancesResolver
   }
 
@@ -64,7 +66,7 @@ export class InstanceAPIImpl implements InstanceAPI {
       }
 
       const instances = this.instancesResolver()
-      const instance = instances.find(i => i.id === instanceId)
+      const instance = instances.find(i => Number(i.id ?? 0) === instanceId)
 
       if (!instance) {
         logger.debug({ instanceId }, 'Instance not found')
@@ -91,7 +93,7 @@ export class InstanceAPIImpl implements InstanceAPI {
       }
 
       const instances = this.instancesResolver()
-      const instance = instances.find(i => i.id === instanceId)
+      const instance = instances.find(i => Number(i.id ?? 0) === instanceId)
 
       if (!instance) {
         throw new Error(`Instance ${instanceId} not found`)
@@ -115,10 +117,10 @@ export class InstanceAPIImpl implements InstanceAPI {
   /**
    * 转换为 InstanceInfo 格式
    */
-  private toInstanceInfo(instance: any): InstanceInfo {
+  private toInstanceInfo(instance: PluginRuntimeInstance): InstanceInfo {
     const personalMode = this.extractPersonalModeDiagnostics(instance)
     return {
-      id: instance.id,
+      id: Number(instance.id ?? 0),
       name: instance.name,
       ownerTgId: this.extractOwnerTgId(instance),
       workMode: instance.workMode,
@@ -135,7 +137,7 @@ export class InstanceAPIImpl implements InstanceAPI {
     }
   }
 
-  private extractOwnerTgId(instance: any): string | undefined {
+  private extractOwnerTgId(instance: PluginRuntimeInstance): string | undefined {
     const rawOwner = instance.ownerTgId ?? instance.owner
     if (rawOwner === undefined || rawOwner === null || rawOwner === '') {
       return undefined
@@ -144,7 +146,7 @@ export class InstanceAPIImpl implements InstanceAPI {
     return String(rawOwner)
   }
 
-  private extractPersonalModeDiagnostics(instance: any): InstanceInfo['personalMode'] {
+  private extractPersonalModeDiagnostics(instance: PluginRuntimeInstance): InstanceInfo['personalMode'] {
     if (typeof instance.getPersonalModeDiagnostics === 'function') {
       return instance.getPersonalModeDiagnostics()
     }
@@ -173,7 +175,7 @@ export class InstanceAPIImpl implements InstanceAPI {
   /**
    * 提取实例状态
    */
-  private extractStatus(instance: any): InstanceStatus {
+  private extractStatus(instance: PluginRuntimeInstance): InstanceStatus {
     if (typeof instance.status === 'string') {
       switch (instance.status) {
         case 'starting':
@@ -208,6 +210,6 @@ export class InstanceAPIImpl implements InstanceAPI {
 /**
  * 创建实例 API
  */
-export function createInstanceAPI(instancesResolver?: () => any[]): InstanceAPI {
+export function createInstanceAPI(instancesResolver?: PluginInstancesResolver): InstanceAPI {
   return new InstanceAPIImpl(instancesResolver)
 }

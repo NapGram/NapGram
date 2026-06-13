@@ -6,13 +6,19 @@
 
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import { messageConverter } from '@napgram/message-kit'
-import type { IInstance } from '@napgram/runtime-kit'
 import type {
   GetMessageParams,
   MessageAPI,
   MessageInfo,
   MessageSegment,
   ForwardSegment,
+  PluginInstanceResolver,
+  PluginQqClientLike,
+  PluginQqMessageContent,
+  PluginQqMessageLike,
+  PluginQqSendReceipt,
+  PluginRuntimeInstance,
+  PluginTgBotLike,
   RecallMessageParams,
   SendMessageParams,
   SendMessageResult,
@@ -139,7 +145,7 @@ export function pluginSegmentsToUnifiedContents(segments: MessageSegment[]): Mes
 }
 
 function isForwardSegment(seg: MessageSegment | undefined): seg is ForwardSegment {
-  return !!seg && seg.type === 'forward' && Array.isArray((seg as any).data?.messages)
+  return !!seg && seg.type === 'forward' && Array.isArray(seg.data?.messages)
 }
 
 /**
@@ -152,9 +158,9 @@ export class MessageAPIImpl implements MessageAPI {
   /**
    * 实例访问器（Phase 4 注入）
    */
-  private instanceResolver?: (instanceId: number) => IInstance | undefined
+  private instanceResolver?: PluginInstanceResolver
 
-  constructor(instanceResolver?: (instanceId: number) => IInstance | undefined) {
+  constructor(instanceResolver?: PluginInstanceResolver) {
     this.instanceResolver = instanceResolver
   }
 
@@ -306,7 +312,7 @@ export class MessageAPIImpl implements MessageAPI {
    * 通过实例发送消息（Phase 4 实现）
    */
   private async sendViaInstance(
-    instance: any,
+    instance: PluginRuntimeInstance,
     params: {
       channelId: string
       segments: MessageSegment[]
@@ -318,11 +324,16 @@ export class MessageAPIImpl implements MessageAPI {
     const timestamp = Date.now()
 
     if (target.platform === 'tg') {
-      if (!instance?.tgBot)
+      if (!instance.tgBot)
         throw new Error('Telegram bot not available on instance')
-      const chat = await instance.tgBot.getChat(Number(target.channelId))
+      const tgBot: PluginTgBotLike = instance.tgBot
+      if (typeof tgBot.getChat !== 'function')
+        throw new Error('Telegram bot chat API not available on instance')
+      const chat = await tgBot.getChat(Number(target.channelId))
+      if (typeof chat.sendMessage !== 'function')
+        throw new Error('Telegram chat sendMessage not available on instance')
       const text = segmentsToText(params.segments)
-      const sendParams: any = {}
+      const sendParams: { replyTo?: number } = {}
       if (params.replyTo) {
         const { chatId, messageId } = parseReplyToForPlatform(params.replyTo, 'tg')
         if (chatId && chatId !== String(target.channelId)) {
@@ -335,13 +346,13 @@ export class MessageAPIImpl implements MessageAPI {
       else if (params.threadId)
         sendParams.replyTo = params.threadId
       const sent = await chat.sendMessage(text, sendParams)
-      const messageId = `tg:${target.channelId}:${String((sent as any)?.id ?? '')}`
+      const messageId = `tg:${target.channelId}:${String(sent?.id ?? '')}`
       return { messageId, timestamp }
     }
 
-    if (!instance?.qqClient)
+    if (!instance.qqClient)
       throw new Error('QQ client not available on instance')
-    const qqClient = instance.qqClient
+    const qqClient: PluginQqClientLike = instance.qqClient
     const forwardSegments = params.segments.filter(isForwardSegment)
     if (forwardSegments.length) {
       const nonForwardSegments = params.segments.filter(seg => !isForwardSegment(seg))
@@ -361,7 +372,7 @@ export class MessageAPIImpl implements MessageAPI {
 
       if (target.qqType === 'private') {
         const payload = { user_id: target.channelId, messages: nodes }
-        let result: any
+        let result: PluginQqSendReceipt
         if (typeof qqClient.sendPrivateForwardMessage === 'function') {
           result = await qqClient.sendPrivateForwardMessage(payload)
         }
@@ -375,15 +386,17 @@ export class MessageAPIImpl implements MessageAPI {
         return { messageId: forwardMessageId ? `qq:${String(forwardMessageId)}` : `qq:forward:${timestamp}`, timestamp }
       }
 
+      if (typeof qqClient.sendGroupForwardMsg !== 'function')
+        throw new Error('QQ client does not support group forward messages')
       const receipt = await qqClient.sendGroupForwardMsg(String(target.channelId), nodes)
-      return { messageId: `qq:${String(receipt.messageId)}`, timestamp }
+      return { messageId: `qq:${String(receipt.messageId ?? receipt.message_id ?? receipt.data?.message_id ?? '')}`, timestamp }
     }
 
     let segments = params.segments
     if (params.replyTo && !segments.some(s => s?.type === 'reply')) {
       const { messageId } = parseReplyToForPlatform(params.replyTo, 'qq')
       if (messageId) {
-        segments = [{ type: 'reply', data: { messageId: String(messageId) } } as any, ...segments]
+        segments = [{ type: 'reply', data: { messageId: String(messageId) } }, ...segments]
       }
     }
     const unified: UnifiedMessage = {
@@ -394,16 +407,18 @@ export class MessageAPIImpl implements MessageAPI {
       content: pluginSegmentsToUnifiedContents(segments),
       timestamp,
     }
-    const receipt = await qqClient.sendMessage(String(target.channelId), unified as any)
-    return { messageId: `qq:${String(receipt.messageId)}`, timestamp }
+    if (typeof qqClient.sendMessage !== 'function')
+      throw new Error('QQ client not available on instance')
+    const receipt = await qqClient.sendMessage(String(target.channelId), unified)
+    return { messageId: `qq:${String(receipt.messageId ?? receipt.message_id ?? receipt.data?.message_id ?? '')}`, timestamp }
   }
 
   private async buildForwardNodes(
     forwardSegments: MessageSegment[],
     target: { channelId: string, qqType?: QqChannelType },
-    qqClient: any,
-  ): Promise<any[]> {
-    const nodes: any[] = []
+    qqClient: PluginQqClientLike,
+  ): Promise<Array<{ type: 'node', data: { name: string, uin: number, content: MessageContent[] } }>> {
+    const nodes: Array<{ type: 'node', data: { name: string, uin: number, content: MessageContent[] } }> = []
     let counter = 0
 
     for (const seg of forwardSegments) {
@@ -442,10 +457,10 @@ export class MessageAPIImpl implements MessageAPI {
   /**
    * 通过实例撤回消息（Phase 4 实现）
    */
-  private async recallViaInstance(instance: any, messageId: string): Promise<void> {
+  private async recallViaInstance(instance: PluginRuntimeInstance, messageId: string): Promise<void> {
     const parsed = parseMessageId(messageId)
     if (parsed.platform === 'qq') {
-      if (!instance?.qqClient)
+      if (!instance?.qqClient || typeof instance.qqClient.recallMessage !== 'function')
         throw new Error('QQ client not available on instance')
       await instance.qqClient.recallMessage(String(parsed.messageId))
       return
@@ -453,39 +468,43 @@ export class MessageAPIImpl implements MessageAPI {
 
     // if (!parsed.chatId)
     //   throw new Error('Telegram messageId must be "tg:<chatId>:<messageId>"')
-    if (!instance?.tgBot)
+    if (!instance?.tgBot || typeof instance.tgBot.getChat !== 'function')
       throw new Error('Telegram bot not available on instance')
     const chat = await instance.tgBot.getChat(Number(parsed.chatId))
+    if (typeof chat.deleteMessages !== 'function')
+      throw new Error('Telegram chat deleteMessages not available on instance')
     await chat.deleteMessages([Number(parsed.messageId)])
   }
 
   /**
    * 通过实例获取消息（Phase 4 实现）
    */
-  private async getViaInstance(instance: any, messageId: string): Promise<MessageInfo | null> {
+  private async getViaInstance(instance: PluginRuntimeInstance, messageId: string): Promise<MessageInfo | null> {
     const parsed = parseMessageId(messageId)
     if (parsed.platform !== 'qq') {
       // Telegram 获取消息需要更多上下文（chatId + mtproto 权限），暂不实现
       return null
     }
 
-    if (!instance?.qqClient)
+    if (!instance?.qqClient || typeof instance.qqClient.getMessage !== 'function')
       throw new Error('QQ client not available on instance')
-    const msg = await instance.qqClient.getMessage(String(parsed.messageId))
+    const msg: PluginQqMessageLike | null = await instance.qqClient.getMessage(String(parsed.messageId))
     if (!msg)
       return null
 
-    const segments: MessageSegment[] = (msg.content || []).map((c: any) => {
+    const segments: MessageSegment[] = (msg.content || []).map((c: PluginQqMessageContent | null | undefined): MessageSegment => {
       if (!c)
-        return { type: 'raw', data: { platform: 'qq', content: c } } as any
+        return { type: 'raw', data: { platform: 'qq', content: c } }
       if (c.type === 'text')
         return { type: 'text', data: { text: String(c.data?.text ?? '') } }
-      if (c.type === 'at')
-        return { type: 'at', data: { userId: String(c.data?.userId ?? ''), userName: c.data?.userName } }
-      return { type: 'raw', data: { platform: 'qq', content: c } } as any
+      if (c.type === 'at') {
+        const userName = typeof c.data?.userName === 'string' ? c.data.userName : undefined
+        return { type: 'at', data: { userId: String(c.data?.userId ?? ''), userName } }
+      }
+      return { type: 'raw', data: { platform: 'qq', content: c } }
     })
 
-    const text = (msg.content || []).filter((c: any) => c?.type === 'text').map((c: any) => String(c.data?.text ?? '')).join('')
+    const text = (msg.content || []).filter(c => c?.type === 'text').map(c => String(c.data?.text ?? '')).join('')
 
     return {
       id: String(messageId),
@@ -501,6 +520,6 @@ export class MessageAPIImpl implements MessageAPI {
 /**
  * 创建消息 API 实例
  */
-export function createMessageAPI(instanceResolver?: (instanceId: number) => IInstance | undefined): MessageAPI {
+export function createMessageAPI(instanceResolver?: PluginInstanceResolver): MessageAPI {
   return new MessageAPIImpl(instanceResolver)
 }
