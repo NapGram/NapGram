@@ -1,16 +1,8 @@
 import esbuild from 'esbuild'
 import packageJson from './package.json'
 
-const banner = {
-  js: `
-    import { createRequire as _createRequire } from 'module';
-    import { fileURLToPath as _fileURLToPath } from 'url';
-    import { dirname as _dirname } from 'path';
-    const require = _createRequire(import.meta.url);
-    const __filename = _fileURLToPath(import.meta.url);
-    const __dirname = _dirname(__filename);
-  `,
-}
+const externalDeps = Object.keys(packageJson.dependencies ?? {})
+  .filter(dep => !dep.startsWith('@napgram/'))
 
 esbuild.buildSync({
   bundle: true,
@@ -19,6 +11,7 @@ esbuild.buildSync({
   sourcemap: true,
   platform: 'node',
   format: 'esm',
-  banner,
-  external: Object.keys(packageJson.dependencies ?? {}),
+  splitting: true,
+  chunkNames: 'chunks/[name]-[hash]',
+  external: externalDeps,
 })

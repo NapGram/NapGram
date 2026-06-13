@@ -11,8 +11,8 @@ import { fileURLToPath } from 'node:url'
 const logger = getLogger('PermissionManagementPlugin')
 
 // ESM __dirname alternative
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const moduleFilePath = fileURLToPath(import.meta.url)
+const moduleDir = dirname(moduleFilePath)
 
 /**
  * 检查权限管理表是否存在
@@ -41,7 +41,7 @@ async function checkPermissionTablesExist(): Promise<boolean> {
 async function runAutoMigration(): Promise<void> {
     try {
         const db = drizzleDb
-        const migrationPath = join(__dirname, 'database/migrations/001_initial.sql')
+        const migrationPath = join(moduleDir, 'database/migrations/001_initial.sql')
         const migrationSQL = readFileSync(migrationPath, 'utf-8')
 
         logger.info('Running database migration for permission management...')

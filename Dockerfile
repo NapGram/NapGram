@@ -1,63 +1,51 @@
 # syntax=docker/dockerfile:1
 ARG INSTALL_PG_CLIENT=true
 
-# === Stage: Extract TGS conversion binaries ===
+# Extract TGS conversion tools
 FROM edasriyan/lottie-to-gif:latest AS lottie
 
-# === Stage: Base ===
+# Base runtime image
 FROM node:26-alpine3.24 AS base
 ARG USE_MIRROR=true
 ARG INSTALL_PG_CLIENT=true
 
-# Alpine 使用 apk 包管理器，需要不同的包名
+# Base Alpine packages
 RUN if [ "$USE_MIRROR" = "true" ]; then \
       sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories; \
     fi && \
     apk upgrade --no-cache && \
     apk add --no-cache \
     curl wget bash \
-    # 中文字体
     font-wqy-zenhei \
-    # 图像处理库 (Alpine 包名不同)
     pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg yt-dlp \
-    # PostgreSQL 客户端 (可选)
     $(if [ "$INSTALL_PG_CLIENT" = "true" ]; then echo postgresql-client; fi)
 
-# 复制TGS转换工具（lottie_to_png和gifski）
-# 注意: edasriyan/lottie-to-gif 是基于 Debian 的,可能需要 glibc 兼容层
-# Alpine 使用 musl libc，可能存在兼容性问题
+# Copy TGS conversion tools
 COPY --from=lottie /usr/bin/lottie_to_png /usr/bin/
 COPY --from=lottie /usr/bin/gifski /usr/bin/
 
-# Alpine 可能需要 glibc 兼容层来运行编译自 Debian 的二进制文件
-# 如果遇到问题，可以安装 gcompat
+# Compat layer for Debian-built binaries
 RUN apk add --no-cache gcompat
 
 RUN npm install -g pnpm@latest && npm install -g npm@latest
 WORKDIR /app
 
-FROM base AS build
+# Workspace build image
+FROM base AS workspace
 ARG USE_MIRROR=true
 ENV PNPM_STORE_PATH=/pnpm-store \
     CI=true
 
-# 编译环境依赖
+# Build dependencies
 RUN apk add --no-cache \
     python3 make g++ pkgconfig \
-    # 开发头文件 (Alpine 使用 -dev 后缀)
     pixman-dev cairo-dev pango-dev giflib-dev libjpeg-turbo-dev libpng-dev librsvg-dev vips-dev
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
 COPY main/package.json /app/main/
-# 工作区内的 @napgram/* 包源码（含各包 package.json，安装时需要）
 COPY packages/ /app/packages/
 
-
-# 两步安装策略：
-# 1. 安装所有依赖并跳过脚本（避免 sharp 尝试源码编译）
-# 2. 编译必需的原生模块
-#    - better-sqlite3: mtcute 用于 Telegram session 存储
-#    - silk-wasm 是纯 WASM，无需编译
+# Install dependencies
 RUN --mount=type=cache,target=/pnpm-store \
     --mount=type=secret,id=npmrc \
     if [ -f /run/secrets/npmrc ]; then \
@@ -67,44 +55,44 @@ RUN --mount=type=cache,target=/pnpm-store \
     pnpm install --frozen-lockfile --shamefully-hoist && \
     rm -f /app/.npmrc
 
-# 先构建所有 @napgram/* 工作区包（生成 dist，供运行时按 external 解析）
+# Build workspace packages first
 RUN pnpm -r --filter "./packages/**" run build
 
-# 源码构建（后端）
-
+# Build the main app
 COPY main/ /app/main/
 RUN pnpm --filter ./main run build
 
-# 剔除 devDependencies，避免将构建工具（如 esbuild）带入运行时镜像
-RUN pnpm prune --prod
-
-# Frontend 使用预构建产物
+# Copy prebuilt web assets
 COPY web/dist/ /app/web/dist/
 
+# Keep production dependencies only
+FROM workspace AS build
+RUN pnpm prune --prod
+
+# Release image
 FROM base AS release
-# Note: TGS to GIF conversion now handled by tgs-to npm package
 ARG REPO=Local Build
 ARG REF=Local Build
 ARG COMMIT=Local Build
 
 COPY --from=build --chown=node:node /app/node_modules /app/node_modules
-# 工作区包（dist）：main 的产物把 @napgram/* 标记为 external，运行时经
-# node_modules/@napgram/* 软链接解析到 packages/**/dist，因此必须一并带上。
-COPY --from=build --chown=node:node /app/packages /app/packages
-COPY --from=build --chown=node:node /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
-COPY --from=build --chown=node:node /app/main/tools/drizzle /app/main/tools/drizzle
-COPY --from=build --chown=node:node /app/main/build /app/build
-COPY --from=build --chown=node:node /app/main/package.json /app/package.json
-COPY --from=build --chown=node:node /app/web/dist /app/public
+# Preserve main's pnpm symlink graph
+COPY --from=workspace --chown=node:node /app/main/node_modules /app/main/node_modules
+COPY --from=workspace --chown=node:node /app/main/build /app/main/build
+COPY --from=workspace --chown=node:node /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
+COPY --from=workspace --chown=node:node /app/main/tools/drizzle /app/main/tools/drizzle
+COPY --from=workspace --chown=node:node /app/main/tools/run-drizzle-migrations.sh /app/main/tools/run-drizzle-migrations.sh
+COPY --from=workspace --chown=node:node /app/packages/clients/database/dist/schema /app/main/tools/runtime-schemas/database
+COPY --from=workspace --chown=node:node /app/packages/plugins/admin/permission-management/dist/database /app/main/tools/runtime-schemas/permission-management
+COPY --from=workspace --chown=node:node /app/web/dist /app/public
 
-# 确保 ESM 兼容
-RUN echo '{ "type": "module" }' > /app/build/package.json && \
-    chown node:node /app/build/package.json && \
+# Prepare runtime directories
+RUN rm -rf /app/node_modules/@napgram && \
     mkdir -p /app/data /app/.config/QQ && \
     chown -R node:node /app/data /app/.config/QQ
 
 COPY --chown=node:node docker-entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh /app/main/tools/run-drizzle-migrations.sh
 
 ENV DATA_DIR=/app/data \
     CACHE_DIR=/app/.config/QQ/NapCat/temp \
