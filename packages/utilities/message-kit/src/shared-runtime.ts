@@ -1,7 +1,7 @@
 import { db, eq, schema } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
-import convert from '@napgram/runtime-kit'
+import { convert } from '@napgram/media-kit'
 import type { IInstance as Instance } from '@napgram/runtime-kit'
 
 export type { Instance }
