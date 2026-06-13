@@ -259,6 +259,9 @@ importers:
       '@napgram/plugin-qq-interaction':
         specifier: workspace:*
         version: link:../plugins/features/plugin-qq-interaction
+      '@napgram/plugin-recall':
+        specifier: workspace:*
+        version: link:../plugins/features/plugin-recall
       '@napgram/plugin-refresh':
         specifier: workspace:*
         version: link:../plugins/features/plugin-refresh
@@ -801,6 +804,31 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+
+  packages/plugins/features/plugin-recall:
+    dependencies:
+      '@napgram/db-kit':
+        specifier: workspace:*
+        version: link:../../../core/db-kit
+      '@napgram/env-kit':
+        specifier: workspace:*
+        version: link:../../../core/env-kit
+      '@napgram/message-kit':
+        specifier: workspace:*
+        version: link:../../../utilities/message-kit
+      '@napgram/plugin-kit':
+        specifier: workspace:*
+        version: link:../../../core/plugin-kit
+    devDependencies:
+      '@types/node':
+        specifier: 25.9.3
+        version: 25.9.3
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(vite@8.0.12(@types/node@25.9.3)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.9.0))
 
   packages/plugins/features/plugin-refresh:
     devDependencies:

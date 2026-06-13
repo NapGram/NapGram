@@ -2,7 +2,7 @@
  * 模式过滤器类型定义
  */
 
-import type { MessageEvent } from '@napgram/core';
+import type { MessageEvent } from '@napgram/sdk-core';
 
 /**
  * 过滤模式

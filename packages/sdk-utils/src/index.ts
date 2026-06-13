@@ -4,7 +4,7 @@
  * Utility functions for NapGram native plugins
  */
 
-import type { MessageSegment, ForwardMessage } from '@napgram/core';
+import type { MessageSegment, ForwardMessage } from '@napgram/sdk-core';
 import { Buffer } from 'node:buffer';
 import fs from 'node:fs/promises';
 import path from 'node:path';

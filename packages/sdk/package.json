@@ -32,8 +32,8 @@
   "author": "NapLink",
   "license": "MIT",
   "dependencies": {
-    "@napgram/core": "workspace:*",
-    "@napgram/utils": "workspace:*"
+    "@napgram/sdk-core": "workspace:*",
+    "@napgram/sdk-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "25.9.3",
