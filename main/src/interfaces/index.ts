@@ -1,8 +1,8 @@
+import type { WebRuntimeBridge } from '@napgram/runtime-kit'
 import type { FastifyInstance } from 'fastify'
 import cookie from '@fastify/cookie'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
-import type { WebRuntimeBridge } from '@napgram/runtime-kit'
 import {
   activatePluginWebRoutes,
   clearWebRuntimeBridge,

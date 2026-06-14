@@ -8,7 +8,7 @@ interface EventPublisher {
 }
 
 interface WorkModeAware {
-  hasConfiguredWorkMode(): boolean
+  hasConfiguredWorkMode: () => boolean
 }
 
 /**

@@ -14,7 +14,7 @@ export interface PersonalUserBotHost {
   qqClient?: unknown
   userBotStatus: PersonalUserBotStatus
   userBotError?: string
-  setUserBotState(status: PersonalUserBotStatus, error?: string): void
+  setUserBotState: (status: PersonalUserBotStatus, error?: string) => void
 }
 
 export class PersonalUserBotService {

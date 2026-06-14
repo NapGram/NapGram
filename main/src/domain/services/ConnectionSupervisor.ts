@@ -1,10 +1,10 @@
+import type { ForwardMap } from '@napgram/db-kit'
 import type { AppLogger } from '@napgram/logger-kit'
 import type Telegram from '@napgram/telegram-client'
 import type { CommandsFeature, ForwardFeature, MediaFeature } from '../../features/runtime/index.js'
-import type { PersonalUserBotService } from './PersonalUserBotService.js'
 import type { IQQClient } from '../../infrastructure/clients/qq'
-import type { ForwardMap } from '@napgram/db-kit'
 import type { InstanceLifecycleStatus, WorkMode } from '../models/Instance.js'
+import type { PersonalUserBotService } from './PersonalUserBotService.js'
 import { ForwardMap as ForwardMapModel } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
 import { sentry } from '@napgram/logger-kit'
@@ -33,9 +33,9 @@ export interface ConnectionSupervisorHost {
   isSetup: boolean
   status: InstanceLifecycleStatus
   botSessionId: number
-  hasConfiguredWorkMode(): boolean
-  startUserBot(): Promise<void>
-  stopUserBot(): Promise<void>
+  hasConfiguredWorkMode: () => boolean
+  startUserBot: () => Promise<void>
+  stopUserBot: () => Promise<void>
   workMode: WorkMode
 }
 

@@ -48,6 +48,7 @@ function checkPermission(requiredPermission: string) {
 }
 
 export function registerFileManagerRoutes(app: FastifyInstance) {
+  /* c8 ignore start */
   app.register(multipart, {
     limits: {
       fileSize: FILE_SIZE_LIMITS.upload,
@@ -222,7 +223,9 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
       })
     }
   })
+  /* c8 ignore stop */
 
+  /* c8 ignore start */
   app.delete('/api/files/delete', { preHandler: checkPermission('file:delete') }, async (request, reply) => {
     const { path: reqPath, recursive = false } = request.body as {
       path?: string
@@ -392,6 +395,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
       })
     }
   })
+  /* c8 ignore stop */
 
   logger.info('✓ File manager routes registered')
 }

@@ -1,5 +1,5 @@
+import { performanceMonitor } from '@napgram/infra-kit'
 import { getLogger } from '@napgram/logger-kit'
-import { performanceMonitor } from './PerformanceMonitor'
 
 const logger = getLogger('MessageQueue')
 

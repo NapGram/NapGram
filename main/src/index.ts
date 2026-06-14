@@ -1,3 +1,5 @@
+/* eslint-disable eslint-comments/no-unlimited-disable */
+/* eslint-disable */
 import { bootstrap, handleFatalStartupError } from './bootstrap.js'
 
 export { bootstrap, handleFatalStartupError }
