@@ -1,19 +1,19 @@
 import process from 'node:process'
+import { builtins } from '@napgram/builtins'
 import { db } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
+import { performanceMonitor } from '@napgram/infra-kit'
 import { getLogger, sentry } from '@napgram/logger-kit'
 import { PluginRuntime } from '@napgram/plugin-kit'
 import { resetGlobalRuntime as resetRuntimeKit } from '@napgram/runtime-kit'
-import { builtins } from '@napgram/builtins'
 import * as Sentry from '@sentry/node'
 import Instance from './domain/models/Instance'
 import { coreFeatureBuiltins } from './features/runtime/builtins'
 import { instanceRegistry } from './features/runtime/instance-registry'
-import { performanceMonitor } from './infrastructure/services/PerformanceMonitor'
 import { configureRuntimeBridge, createServer, registerWebRoutes, startServer, stopServer } from './interfaces'
 import random from './shared/utils/random'
 
-function maskProxyUrl(rawUrl: string) {
+export function maskProxyUrl(rawUrl: string) {
   try {
     const parsed = new URL(rawUrl)
     if (parsed.username || parsed.password) {
@@ -28,7 +28,7 @@ function maskProxyUrl(rawUrl: string) {
   }
 }
 
-function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
+export function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
   let lastSampleAt = Date.now()
   let lastTotalMessages = 0
   let lastEstimatedErrors = 0
@@ -60,7 +60,7 @@ function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
   }, 60_000)
 }
 
-function getSentryMessage(event: Sentry.Event): string {
+export function getSentryMessage(event: Sentry.Event): string {
   const parts: string[] = []
   if (event.message)
     parts.push(event.message)
@@ -74,7 +74,7 @@ function getSentryMessage(event: Sentry.Event): string {
   return parts.join(' | ')
 }
 
-function isTransientConnectionError(message: string): boolean {
+export function isTransientConnectionError(message: string): boolean {
   return [
     /ConnectionError: WebSocket 错误/i,
     /ConnectionClosedError: .*connect\(\)/i,

@@ -1,88 +1,88 @@
 {
-    "extends": "../tsconfig.base.json",
-    "compilerOptions": {
-        "jsx": "react",
-        "jsxFactory": "Html.createElement",
-        "jsxFragmentFactory": "Html.Fragment",
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
-        "paths": {
-            "@napgram/app/*": [
-                "./src/*"
-            ]
-        },
-        "types": [
-            "node",
-            "vitest/globals"
-        ],
-        "noEmit": true,
-        "outDir": "build",
-        "plugins": [
-            {
-                "name": "@kitajs/ts-html-plugin"
-            }
-        ],
-        "composite": true,
-        "tsBuildInfoFile": "build/.tsbuildinfo"
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "build/.tsbuildinfo",
+    "jsx": "react",
+    "jsxFactory": "Html.createElement",
+    "jsxFragmentFactory": "Html.Fragment",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@napgram/app/*": [
+        "./src/*"
+      ]
     },
-    "include": [
-        "src/**/*",
-        "vitest.setup.ts",
-        "build.ts",
-        "package.json"
+    "types": [
+      "node",
+      "vitest/globals"
     ],
-    "exclude": [
-        "node_modules",
-        "tools/**"
-    ],
-    "references": [
-        {
-            "path": "../packages/builtins"
-        },
-        {
-            "path": "../packages/clients/database"
-        },
-        {
-            "path": "../packages/clients/qq-client"
-        },
-        {
-            "path": "../packages/clients/telegram-client"
-        },
-        {
-            "path": "../packages/core/db-kit"
-        },
-        {
-            "path": "../packages/core/env-kit"
-        },
-        {
-            "path": "../packages/core/infra-kit"
-        },
-        {
-            "path": "../packages/core/logger-kit"
-        },
-        {
-            "path": "../packages/core/plugin-kit"
-        },
-        {
-            "path": "../packages/core/runtime-kit"
-        },
-        {
-            "path": "../packages/utilities/auth-kit"
-        },
-        {
-            "path": "../packages/utilities/gateway-kit"
-        },
-        {
-            "path": "../packages/utilities/marketplace-kit"
-        },
-        {
-            "path": "../packages/utilities/media-kit"
-        },
-        {
-            "path": "../packages/utilities/message-kit"
-        },
-        {
-            "path": "../packages/utilities/request-kit"
-        }
+    "noEmit": true,
+    "outDir": "build",
+    "plugins": [
+      {
+        "name": "@kitajs/ts-html-plugin"
+      }
     ]
+  },
+  "references": [
+    {
+      "path": "../packages/builtins"
+    },
+    {
+      "path": "../packages/clients/database"
+    },
+    {
+      "path": "../packages/clients/qq-client"
+    },
+    {
+      "path": "../packages/clients/telegram-client"
+    },
+    {
+      "path": "../packages/core/db-kit"
+    },
+    {
+      "path": "../packages/core/env-kit"
+    },
+    {
+      "path": "../packages/core/infra-kit"
+    },
+    {
+      "path": "../packages/core/logger-kit"
+    },
+    {
+      "path": "../packages/core/plugin-kit"
+    },
+    {
+      "path": "../packages/core/runtime-kit"
+    },
+    {
+      "path": "../packages/utilities/auth-kit"
+    },
+    {
+      "path": "../packages/utilities/gateway-kit"
+    },
+    {
+      "path": "../packages/utilities/marketplace-kit"
+    },
+    {
+      "path": "../packages/utilities/media-kit"
+    },
+    {
+      "path": "../packages/utilities/message-kit"
+    },
+    {
+      "path": "../packages/utilities/request-kit"
+    }
+  ],
+  "include": [
+    "src/**/*",
+    "vitest.setup.ts",
+    "build.ts",
+    "package.json"
+  ],
+  "exclude": [
+    "node_modules",
+    "tools/**"
+  ]
 }

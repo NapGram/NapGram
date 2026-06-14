@@ -24,7 +24,6 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "lint": "eslint . --ext .ts,.tsx",
     "test": "vitest --passWithNoTests",
     "type-check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
