@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@napgram/db-kit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   addForwardPairWithChatType,
   findPairByQQWithChatType,
@@ -201,7 +201,8 @@ describe('forwardPairChatType', () => {
     expect(groupPair.qqChatType).toBe('group')
     expect(forwardMap.add).toHaveBeenCalledWith(20002, -10040004, BigInt(9))
     await expect(addForwardPairWithChatType(forwardMap, 7, 10001, -10040004, undefined, 'private'))
-      .rejects.toThrow('数据库尚未应用个人模式迁移，无法绑定 QQ 好友')
+      .rejects
+      .toThrow('数据库尚未应用个人模式迁移，无法绑定 QQ 好友')
   })
 
   it('returns existing TG pair when it conflicts with a different QQ pair', async () => {

@@ -119,10 +119,12 @@ const qqMocks = vi.hoisted(() => {
   return { handlers, client, factory }
 })
 
-const configuredInstance = (overrides: Record<string, unknown> = {}) => ({
-  workMode: 'group',
-  ...overrides,
-})
+function configuredInstance(overrides: Record<string, unknown> = {}) {
+  return {
+    workMode: 'group',
+    ...overrides,
+  }
+}
 
 vi.mock('@napgram/env-kit', () => ({
   env: envMock,
@@ -977,5 +979,209 @@ describe('instance', () => {
     expect(instanceRegistryMocks.remove).toHaveBeenCalledWith(25)
     expect(eventPublisherMocks.publishInstanceStatus).toHaveBeenCalledWith({ instanceId: 25, status: 'stopping' })
     expect(eventPublisherMocks.publishInstanceStatus).toHaveBeenCalledWith({ instanceId: 25, status: 'stopped' })
+  })
+
+  it('handles updateDb rejection gracefully', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
+    const instance = await Instance.start(100, 'token')
+
+    loggerMocks.error.mockClear()
+    dbMocks.update.mockReturnValueOnce({
+      set: vi.fn().mockReturnValueOnce({
+        where: vi.fn().mockRejectedValueOnce(new Error('db update failed')),
+      }),
+    })
+
+    // Trigger updateDb by changing a property
+    instance.isSetup = true
+
+    // Wait for floating promise
+    await new Promise(resolve => setImmediate(resolve))
+
+    expect(loggerMocks.error).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error) }),
+      'Failed to update instance in DB',
+    )
+  })
+
+  it('handles setWorkMode transitions', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance({ workMode: 'group' }))
+    const instance = await Instance.start(101, 'token')
+
+    vi.spyOn(instance, 'startUserBot').mockResolvedValue(undefined)
+    vi.spyOn(instance, 'stopUserBot').mockResolvedValue(undefined)
+    dbMocks.update.mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    })
+
+    // Switch to personal
+    await instance.setWorkMode('personal')
+    expect(instance.startUserBot).toHaveBeenCalled()
+
+    // Switch away from personal
+    await instance.setWorkMode('public')
+    expect(instance.stopUserBot).toHaveBeenCalled()
+
+    // Switch to group
+    ;(instance as any).tgUserBot = undefined
+    await instance.setWorkMode('group')
+    expect(instance.userBotStatus).toBe('disabled')
+  })
+
+  it('updates userSessionId and recalculates userBotStatus', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance({ workMode: 'personal' }))
+    const instance = await Instance.start(102, 'token')
+
+    dbMocks.update.mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      }),
+    })
+
+    instance.userSessionId = 123
+    expect(instance.userBotStatus).toBe('stopped')
+    expect(instance.userSessionId).toBe(123)
+
+    instance.userSessionId = null
+    expect(instance.userBotStatus).toBe('not-configured')
+
+    ;(instance as any)._workMode = 'group'
+    instance.userSessionId = null
+    expect(instance.userBotStatus).toBe('disabled')
+  })
+
+  it('disconnects existing UserBot during start and stop with error handling', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance({ workMode: 'personal', userSessionId: 123 }))
+    const userBotMock = {
+      disconnect: vi.fn().mockRejectedValue(new Error('disconnect error')),
+      isOnline: true,
+    }
+
+    telegramMocks.connect.mockImplementation(async (opts) => {
+      if (opts.authMode === 'user')
+        return userBotMock
+      return telegramBotMocks.connected
+    })
+
+    const instance = await Instance.start(103, 'token')
+
+    // At this point, startUserBot is already called during start
+    expect(instance.tgUserBot).toBe(userBotMock)
+
+    // Mock connect for the next start
+    const userBotMock2 = {
+      disconnect: vi.fn().mockResolvedValue(undefined),
+      isOnline: true,
+    }
+    telegramMocks.connect.mockImplementation(async (opts) => {
+      if (opts.authMode === 'user')
+        return userBotMock2
+      return telegramBotMocks.connected
+    })
+
+    loggerMocks.debug.mockClear()
+
+    // Start again, which should trigger the old tgUserBot to disconnect and throw
+    await instance.startUserBot()
+    expect(userBotMock.disconnect).toHaveBeenCalled()
+    expect(loggerMocks.debug).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(Error) }), 'Error disconnecting existing UserBot')
+    expect(instance.tgUserBot).toBe(userBotMock2)
+
+    // Stop, which should disconnect userBotMock2
+    await instance.stopUserBot()
+    expect(userBotMock2.disconnect).toHaveBeenCalled()
+    expect(instance.tgUserBot).toBeUndefined()
+  })
+
+  it('clears userBotError during initIfNeeded', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance({ workMode: 'personal', userSessionId: 123 }))
+
+    telegramMocks.connect.mockImplementation(async (opts) => {
+      if (opts.authMode === 'user')
+        throw new Error('auth err')
+      return telegramBotMocks.connected
+    })
+
+    const instance = await Instance.start(104, 'token')
+
+    expect(instance.userBotStatus).toBe('error')
+    expect(instance.userBotError).toBe('auth err')
+
+    telegramMocks.connect.mockImplementation(async (opts) => {
+      if (opts.authMode === 'user')
+        return { isOnline: true }
+      return telegramBotMocks.connected
+    })
+    await instance.startUserBot()
+
+    expect(instance.userBotError).toBeUndefined()
+    expect(instance.userBotStatus).toBe('running')
+  })
+
+  it('handles disposeRuntimeResources errors gracefully', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
+    const instance = await Instance.start(105, 'token')
+
+    // Force qqClient logout to throw
+    ;(instance as any).qqClient = {
+      logout: vi.fn().mockRejectedValue(new Error('qq logout err')),
+      on: vi.fn(),
+    }
+
+    // Force tgBot disconnect to throw
+    ;(instance as any).tgBot = {
+      disconnect: vi.fn().mockRejectedValue(new Error('tg disconnect err')),
+    }
+
+    loggerMocks.warn.mockClear()
+
+    await instance.stop()
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to disconnect QQ client during cleanup:', expect.any(Error))
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to disconnect Telegram client during cleanup:', expect.any(Error))
+    expect(instance.status).toBe('stopped')
+  })
+
+  it('handles connection:restored with no configured workMode', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
+    const instance = await Instance.start(106, 'token')
+
+    vi.spyOn(instance, 'hasConfiguredWorkMode').mockReturnValue(false)
+
+    const handler = qqMocks.handlers.get('connection:restored')
+    eventPublisherMocks.publishNotice.mockClear()
+
+    await handler({ timestamp: 1234 })
+
+    expect(eventPublisherMocks.publishNotice).not.toHaveBeenCalled()
+    expect(instance.isSetup).toBe(true)
+  })
+
+  it('handles publish error when instance init fails', async () => {
+    dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
+
+    // Make qq login fail all retries to trigger init failure
+    qqMocks.client.login.mockRejectedValue(new Error('init fail'))
+
+    // Make publishInstanceStatus throw to cover catch block
+    eventPublisherMocks.publishInstanceStatus.mockRejectedValueOnce(new Error('publish err'))
+
+    loggerMocks.warn.mockClear()
+
+    const timeoutSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((cb: any) => {
+      cb()
+      return 0 as any
+    }) as any)
+
+    await expect(Instance.start(107, 'token')).rejects.toThrow('init fail')
+
+    // Floating promise catch takes a tick
+    await new Promise(resolve => setImmediate(resolve))
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish instance error status:', expect.any(Error))
+
+    timeoutSpy.mockRestore()
   })
 })

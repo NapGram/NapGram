@@ -415,6 +415,27 @@ describe('mediaFeature', () => {
         expect(result).toEqual(buf)
       })
 
+      it('breaks png compression loop immediately', async () => {
+        const { decode, encode } = await import('image-js')
+        const buf = Buffer.alloc(2000)
+        const mockType = { mime: 'image/png' }
+        vi.mocked(fileTypeFromBuffer).mockResolvedValue(mockType as any)
+
+        const mockImage = {
+          width: 100,
+          height: 100,
+          resize: vi.fn().mockReturnThis(),
+        }
+        vi.mocked(decode).mockReturnValue(mockImage as any)
+        // ensure it fails size check to enter loop
+        vi.mocked(encode).mockReturnValue(Buffer.alloc(1500))
+
+        const result = await mediaFeature.compressImage(buf, 1000)
+        expect(result.length).toBe(1500)
+        expect(encode).toHaveBeenCalledWith(mockImage, { format: 'png' })
+        expect(encode).toHaveBeenCalledTimes(2)
+      })
+
       it('handles compression failure by returning original buffer', async () => {
         const buf = Buffer.alloc(2000)
         vi.mocked(fileTypeFromBuffer).mockRejectedValue(new Error('Crash'))

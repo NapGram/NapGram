@@ -124,15 +124,22 @@ describe('personalSyncService', () => {
     }
     const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
     const instance = {
-      id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot
+      id: 7,
+      workMode: 'personal',
+      tgUserBot: { isOnline: true },
+      tgBot,
     } as any
 
     const forwardMap = {
       getAll: vi.fn().mockReturnValue([
         {
-          id: 102, instanceId: 7, qqChatType: 'group',
-          qqRoomId: BigInt(33333), tgChatId: BigInt(-10030003),
-          qqDisplayName: '', autoCreated: true,
+          id: 102,
+          instanceId: 7,
+          qqChatType: 'group',
+          qqRoomId: BigInt(33333),
+          tgChatId: BigInt(-10030003),
+          qqDisplayName: '',
+          autoCreated: true,
         },
       ]),
     } as any
@@ -161,8 +168,8 @@ describe('personalSyncService', () => {
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
       getAll: vi.fn().mockReturnValue([
-        { id: 103, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(444), tgChatId: BigInt(555), autoCreated: true }
-      ])
+        { id: 103, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(444), tgChatId: BigInt(555), autoCreated: true },
+      ]),
     } as any
     const qqClient = { getFriendInfo: vi.fn().mockResolvedValue({ name: 'Name' }) } as any
 
@@ -178,8 +185,8 @@ describe('personalSyncService', () => {
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
       getAll: vi.fn().mockReturnValue([
-        { id: 104, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(444), tgChatId: BigInt(555), autoCreated: true }
-      ])
+        { id: 104, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(444), tgChatId: BigInt(555), autoCreated: true },
+      ]),
     } as any
     const qqClient = { getFriendInfo: vi.fn().mockResolvedValue({ name: 'Name' }) } as any
 

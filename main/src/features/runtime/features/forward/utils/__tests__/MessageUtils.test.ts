@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { env } from '@napgram/env-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageUtils } from '../MessageUtils.js'
 
 const envKitMocks = vi.hoisted(() => {

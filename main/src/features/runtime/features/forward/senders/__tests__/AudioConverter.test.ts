@@ -1,8 +1,8 @@
 import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
 import fs from 'node:fs'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { silk } from '@napgram/media-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AudioConverter } from '../AudioConverter.js'
 
 vi.mock('node:child_process', () => ({

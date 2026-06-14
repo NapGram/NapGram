@@ -1,6 +1,6 @@
+import { db } from '@napgram/db-kit'
 import { messageConverter } from '@napgram/message-kit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db } from '@napgram/db-kit'
 import { TelegramMessageHandler } from '../TelegramMessageHandler.js'
 
 vi.mock('@napgram/message-kit', () => ({
@@ -170,8 +170,8 @@ describe('telegramMessageHandler', () => {
     const sentMsg = qqClient.sendMessage.mock.calls[0][1]
     const reply = sentMsg.content.find((c: any) => c.type === 'reply')
     expect(reply).toBeTruthy()
-      expect(reply.data).toEqual(expect.objectContaining({
-        seq: 555,
+    expect(reply.data).toEqual(expect.objectContaining({
+      seq: 555,
       rand: '777',
       pktnum: 1,
       time: 12345,
@@ -264,5 +264,126 @@ describe('telegramMessageHandler', () => {
 
     // Should catch and log error
     expect(qqClient.sendMessage).not.toHaveBeenCalled()
+  })
+
+  it('handles private forward messages (sendPrivateForwardMessage present)', async () => {
+    const tgMsg: any = { id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } }
+    const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' }
+    const unified = {
+      platform: 'telegram' as const,
+      id: '1',
+      sender: { id: 'Alice', name: 'Alice' },
+      content: [{ type: 'video' as const, data: { file: 'vid' } }],
+      chat: { id: '888', type: 'private' as const },
+      timestamp: Date.now(),
+    }
+    vi.mocked(messageConverter.fromTelegram).mockReturnValueOnce(unified)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
+
+    const sendPrivateForwardMessage = vi.fn().mockResolvedValue({ message_id: 'priv-123' });
+    (qqClient as any).sendPrivateForwardMessage = sendPrivateForwardMessage
+
+    await handler.handleTGMessage(tgMsg, pair)
+
+    expect(sendPrivateForwardMessage).toHaveBeenCalled()
+    const args = sendPrivateForwardMessage.mock.calls[0][0]
+    expect(args.user_id).toBe('888')
+    expect(args.messages[0].data.content).toContainEqual({ type: 'video', data: { file: 'vid' } })
+
+    // Cleanup
+    delete (qqClient as any).sendPrivateForwardMessage
+  })
+
+  it('handles private forward messages fallback (sendPrivateForwardMessage absent)', async () => {
+    const tgMsg: any = { id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } }
+    const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' }
+    const unified = {
+      platform: 'telegram' as const,
+      id: '1',
+      sender: { id: 'Alice', name: 'Alice' },
+      content: [{ type: 'video' as const, data: { file: 'vid' } }],
+      chat: { id: '888', type: 'private' as const },
+      timestamp: Date.now(),
+    }
+    vi.mocked(messageConverter.fromTelegram).mockReturnValueOnce(unified)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
+
+    // Ensure it's absent
+    delete (qqClient as any).sendPrivateForwardMessage
+
+    await handler.handleTGMessage(tgMsg, pair)
+
+    expect(qqClient.sendMessage).toHaveBeenCalled()
+    expect(qqClient.sendGroupForwardMsg).not.toHaveBeenCalled()
+  })
+
+  it('handles normalizeReceipt boolean result', async () => {
+    const tgMsg: any = { id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } }
+    const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' }
+    const unified = {
+      platform: 'telegram' as const,
+      id: '1',
+      sender: { id: 'Alice', name: 'Alice' },
+      content: [{ type: 'video' as const, data: { file: 'vid' } }],
+      chat: { id: '888', type: 'private' as const },
+      timestamp: Date.now(),
+    }
+    vi.mocked(messageConverter.fromTelegram).mockReturnValueOnce(unified)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
+
+    const sendPrivateForwardMessage = vi.fn().mockResolvedValue({ success: true, messageId: 'bool-success' });
+    (qqClient as any).sendPrivateForwardMessage = sendPrivateForwardMessage
+
+    await handler.handleTGMessage(tgMsg, pair)
+
+    expect(sendPrivateForwardMessage).toHaveBeenCalled()
+    // db.insert check is handled by mapper mock in the code
+    delete (qqClient as any).sendPrivateForwardMessage
+  })
+
+  it('handles normalizeReceipt empty result', async () => {
+    const tgMsg: any = { id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } }
+    const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' }
+    const unified = {
+      platform: 'telegram' as const,
+      id: '1',
+      sender: { id: 'Alice', name: 'Alice' },
+      content: [{ type: 'video' as const, data: { file: 'vid' } }],
+      chat: { id: '888', type: 'private' as const },
+      timestamp: Date.now(),
+    }
+    vi.mocked(messageConverter.fromTelegram).mockReturnValueOnce(unified)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
+
+    const sendPrivateForwardMessage = vi.fn().mockResolvedValue(null);
+    (qqClient as any).sendPrivateForwardMessage = sendPrivateForwardMessage
+
+    await handler.handleTGMessage(tgMsg, pair)
+
+    expect(sendPrivateForwardMessage).toHaveBeenCalled()
+    delete (qqClient as any).sendPrivateForwardMessage
+  })
+
+  it('handles empty actionText in hasSplitMedia', async () => {
+    const tgMsg: any = { id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } }
+    const pair = { instanceId: 1, qqRoomId: '888', tgChatId: '100' }
+    const unified = {
+      platform: 'telegram' as const,
+      id: '1',
+      sender: { id: 'Alice', name: 'Alice' },
+      content: [{ type: 'audio' as const, data: { file: 'aud' } }], // No text, no image
+      chat: { id: '888', type: 'group' as const },
+      timestamp: Date.now(),
+    }
+    vi.mocked(messageConverter.fromTelegram).mockReturnValueOnce(unified)
+    vi.mocked(messageConverter.toNapCat).mockResolvedValueOnce([{ type: 'audio', data: { file: 'aud' } }])
+
+    // Use mode 00 so showTGToQQNickname is false
+    getNicknameMode.mockReturnValueOnce('00')
+
+    await handler.handleTGMessage(tgMsg, pair)
+
+    // Should only send the media message since headerText and textSegments are empty
+    expect(qqClient.sendMessage).toHaveBeenCalledTimes(1)
   })
 })

@@ -2,8 +2,8 @@ import type { Chat } from '@mtcute/core'
 import type { TelegramClient } from '@mtcute/node'
 import type Telegram from '@napgram/telegram-client'
 import { Buffer } from 'node:buffer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TelegramChat } from '@napgram/telegram-client'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockChat } from './mtcuteTestHelpers'
 
 describe('telegramChat', () => {

@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
 import fc from 'fast-check'
+import { describe, expect, it } from 'vitest'
 import random from '../random'
 
 describe('random utility', () => {
@@ -94,7 +94,8 @@ describe('random utility', () => {
           let digit = Number.parseInt(imei[i])
           if (i % 2 === 1) {
             digit *= 2
-            if (digit > 9) digit -= 9
+            if (digit > 9)
+              digit -= 9
           }
           sum += digit
         }
@@ -114,11 +115,11 @@ describe('random utility', () => {
  * **Validates: Requirements 6.2, 7.1**
  */
 describe('random property-based tests', () => {
-  it('Property 1: Random Range Containment - random.int(min, max) always produces min <= v <= max', () => {
+  it('property 1: Random Range Containment - random.int(min, max) always produces min <= v <= max', () => {
     fc.assert(
       fc.property(
-        fc.integer({ min: -1000000, max: 1000000 }).chain((min) =>
-          fc.integer({ min, max: min + 2000000 }).map((max) => ({ min, max })),
+        fc.integer({ min: -1000000, max: 1000000 }).chain(min =>
+          fc.integer({ min, max: min + 2000000 }).map(max => ({ min, max })),
         ),
         ({ min, max }) => {
           const result = random.int(min, max)

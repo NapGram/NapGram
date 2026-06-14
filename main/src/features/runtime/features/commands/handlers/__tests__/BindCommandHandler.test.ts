@@ -3,6 +3,9 @@ import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { addForwardPairWithChatType } from '../../utils/ForwardPairChatType.js'
+import { BindCommandHandler } from '../BindCommandHandler.js'
+
 vi.mock('../../utils/ForwardPairChatType.js', async (importOriginal) => {
   const actual = await importOriginal() as any
   return {
@@ -13,9 +16,6 @@ vi.mock('../../utils/ForwardPairChatType.js', async (importOriginal) => {
     })),
   }
 })
-
-import { BindCommandHandler } from '../BindCommandHandler.js'
-import { addForwardPairWithChatType } from '../../utils/ForwardPairChatType.js'
 
 // Mock QQ Client
 function createMockQQClient(): IQQClient {

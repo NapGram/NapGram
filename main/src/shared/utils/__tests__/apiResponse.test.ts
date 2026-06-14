@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ApiResponse } from '../apiResponse'
 
-describe('ApiResponse', () => {
+describe('apiResponse', () => {
   describe('success()', () => {
     it('returns a success response with no data or message', () => {
       const result = ApiResponse.success()

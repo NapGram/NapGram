@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
 import * as message from '@napgram/message-kit'
+import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@napgram/message-kit', () => ({
   MessageConverter: class MessageConverter {},

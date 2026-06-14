@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@napgram/db-kit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ForwardMapper } from '../MessageMapper.js'
 
 const loggerMocks = vi.hoisted(() => ({
@@ -289,14 +289,14 @@ describe('forwardMapper', () => {
 
   it('finds and normalizes QQ source rows by TG message id', async () => {
     vi.mocked(db.execute).mockResolvedValueOnce(queryResult([{
-        seq: 123,
-        rand: '456',
-        pktnum: 2,
-        qqRoomId: '20002',
-        qqChatType: 'private',
-        qqSenderId: '10001',
-        time: 1_700_000_500,
-      }]))
+      seq: 123,
+      rand: '456',
+      pktnum: 2,
+      qqRoomId: '20002',
+      qqChatType: 'private',
+      qqSenderId: '10001',
+      time: 1_700_000_500,
+    }]))
 
     const source = await mapper.findQqSource(7, BigInt(-10040004), BigInt(77))
 

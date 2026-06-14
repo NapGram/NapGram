@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import path from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import Telegram from '@napgram/telegram-client'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockChat, createMockMessage } from './mtcuteTestHelpers'
 
 // ---------------------------------------------------------------------------
