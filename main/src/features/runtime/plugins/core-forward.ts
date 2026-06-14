@@ -1,7 +1,7 @@
-import { definePlugin } from '@napgram/sdk'
 import { bindInstanceLifecycle } from '@napgram/plugin-kit'
-import { ForwardFeature } from '../features/forward/ForwardFeature.js'
+import { definePlugin } from '@napgram/sdk'
 import { createInstanceFeatureBinder } from '../feature-binder.js'
+import { ForwardFeature } from '../features/forward/ForwardFeature.js'
 
 const plugin = definePlugin({
   id: 'core-forward',

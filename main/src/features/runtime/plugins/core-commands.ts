@@ -1,7 +1,7 @@
-import { definePlugin } from '@napgram/sdk'
 import { bindInstanceLifecycle } from '@napgram/plugin-kit'
-import { CommandsFeature } from '../features/commands/CommandsFeature.js'
+import { definePlugin } from '@napgram/sdk'
 import { createInstanceFeatureBinder } from '../feature-binder.js'
+import { CommandsFeature } from '../features/commands/CommandsFeature.js'
 
 const plugin = definePlugin({
   id: 'core-commands',

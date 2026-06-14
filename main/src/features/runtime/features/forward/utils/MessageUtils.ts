@@ -1,8 +1,8 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { Instance, IQQClient, Telegram } from '../../../runtime-types.js'
 import { telegramSend } from '../../../../../shared/utils/index.js'
-import { getLogger } from '../../../capabilities/logging.js'
 import { isInstanceAdmin } from '../../../admin-access.js'
+import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('MessageUtils')
 
