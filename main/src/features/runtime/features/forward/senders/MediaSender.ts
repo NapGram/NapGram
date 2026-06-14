@@ -2,7 +2,8 @@ import type { MessageContent } from '@napgram/message-kit'
 import type { FileNormalizer } from './FileNormalizer.js'
 import type { RichHeaderBuilder } from './RichHeaderBuilder.js'
 import { telegramSend } from '../../../../../shared/utils/index.js'
-import { env, getLogger } from '../../../shared-types.js'
+import { env } from '../../../capabilities/env.js'
+import { getLogger } from '../../../capabilities/logging.js'
 
 const ALLOWED_TELEGRAM_DICE = new Set(['🎲', '🎯', '🏀', '⚽️', '🎳', '🎰'])
 

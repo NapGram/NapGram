@@ -1,4 +1,5 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import {
     authRoutes,
     databaseRoutes,
@@ -41,7 +42,7 @@ function resolveRouteList(config?: AdminSuiteConfig): string[] {
     return routeOrder.filter(key => !excludeSet.has(key));
 }
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'admin-suite',
     name: 'Admin Suite',
     version: '1.0.0',
@@ -63,6 +64,6 @@ const plugin: NapGramPlugin = {
             }
         });
     },
-};
+});
 
 export default plugin;

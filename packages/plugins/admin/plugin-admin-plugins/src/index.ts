@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { marketplacesRoutes, pluginsRoutes, permissionsRoutes } from '@napgram/web-interfaces';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'admin-plugins',
     name: 'Admin Plugins API',
     version: '1.0.0',
@@ -16,6 +17,6 @@ const plugin: NapGramPlugin = {
             app.register(permissionsRoutes);
         });
     },
-};
+});
 
 export default plugin;

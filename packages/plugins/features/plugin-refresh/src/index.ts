@@ -1,6 +1,7 @@
-import type { NapGramPlugin, PluginContext, MessageEvent } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext, MessageEvent } from '@napgram/sdk';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'refresh',
     name: 'Refresh Plugin',
     version: '1.0.0',
@@ -158,6 +159,6 @@ const plugin: NapGramPlugin = {
 
     uninstall: async () => {
     },
-};
+});
 
 export default plugin;

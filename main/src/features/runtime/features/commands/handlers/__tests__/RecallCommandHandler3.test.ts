@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { RecallCommandHandler } from '../RecallCommandHandler.js'
-import { db, schema, eq, and, env } from '../../../../shared-types.js'
+import { and, db, eq, schema } from '@napgram/db-kit'
 
 vi.mock('../../../../../../shared/utils/index.js', () => ({
   telegramMessage: {
     getTelegramReplyMessageId: vi.fn(),
   },
 }))
-vi.mock('../../../../shared-types.js', () => ({
+vi.mock('@napgram/db-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   db: {
     query: { message: { findFirst: vi.fn(), findMany: vi.fn() } },
   },
@@ -16,7 +17,15 @@ vi.mock('../../../../shared-types.js', () => ({
   and: vi.fn(),
   lt: vi.fn(),
   desc: vi.fn(),
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn().mockReturnValue({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
+}))
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   env: { ENABLE_AUTO_RECALL: true },
 }))
 

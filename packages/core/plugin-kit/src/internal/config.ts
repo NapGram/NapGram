@@ -19,19 +19,6 @@ export function resolveGatewayEndpoint(): string {
   return readStringEnv(['PLUGINS_GATEWAY_URL']) || 'ws://127.0.0.1:8765'
 }
 
-export function resolvePluginsInstances(defaultInstances?: number[]): number[] {
-  const raw = readStringEnv(['PLUGINS_INSTANCES'])
-  if (!raw)
-    return Array.isArray(defaultInstances) && defaultInstances.length ? defaultInstances : [0]
-  const instances = raw
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-    .map(s => Number(s))
-    .filter(n => Number.isFinite(n))
-  return instances.length ? instances : (defaultInstances?.length ? defaultInstances : [0])
-}
-
 export function resolveAllowTsPlugins(): boolean {
   return readBoolEnv(['PLUGINS_ALLOW_TS'])
 }

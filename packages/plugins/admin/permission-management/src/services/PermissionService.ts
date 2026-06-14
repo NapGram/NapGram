@@ -1,21 +1,41 @@
-import { and, drizzleDb, env, eq, getLogger } from '../shared-runtime.js'
-import type { IInstance } from '../shared-runtime.js'
+import { and, eq } from 'drizzle-orm'
+import type { PluginLogger } from '@napgram/sdk'
+import { matchesAnyIdentity, type AdminIdentityValue } from '@napgram/env-kit'
 import { userPermissions, commandPermissions, permissionAuditLogs } from '../database/schema.js'
 import { PermissionLevel } from '../types/index.js'
 import type { UserPermission, PermissionCheckResult } from '../types/index.js'
-
-const logger = getLogger('PermissionService')
 
 /**
  * 权限管理服务
  * 提供完整的权限管理功能，包括权限等级查询、授予、撤销和审计
  */
-type InstanceResolver = (instanceId: number) => IInstance | undefined
+type InstanceLike = {
+  owner?: AdminIdentityValue
+  ownerTgId?: AdminIdentityValue
+}
+
+type InstanceResolver = (instanceId: number) => Promise<InstanceLike | null | undefined> | InstanceLike | null | undefined
+
+export interface PermissionDatabase {
+  select(): any
+  insert(table: unknown): any
+  delete(table: unknown): any
+  execute(query: unknown): Promise<any>
+}
+
+export interface PermissionServiceExports {
+  permissionService: PermissionService
+}
+
 type PermissionServiceOptions = {
   cacheEnabled?: boolean
   cacheExpireMinutes?: number
   defaultLevel?: PermissionLevel
   enableAuditLog?: boolean
+  systemOwners?: {
+    qq?: AdminIdentityValue
+    tg?: AdminIdentityValue
+  }
 }
 
 type CachedPermission = {
@@ -27,6 +47,8 @@ export class PermissionService {
   private permissionCache = new Map<string, CachedPermission>()
 
   constructor(
+    private readonly db: PermissionDatabase,
+    private readonly logger: Pick<PluginLogger, 'debug' | 'info' | 'warn' | 'error'>,
     private readonly instanceResolver?: InstanceResolver,
     private readonly options: PermissionServiceOptions = {}
   ) { }
@@ -45,7 +67,7 @@ export class PermissionService {
     }
 
     // 2. 检查是否是实例所有者
-    if (targetInstanceId !== 0 && this.isInstanceOwner(userId, targetInstanceId)) {
+    if (targetInstanceId !== 0 && await this.isInstanceOwner(userId, targetInstanceId)) {
       return PermissionLevel.ADMIN
     }
 
@@ -65,7 +87,7 @@ export class PermissionService {
 
     // 4. 从数据库查询（优先实例权限，其次全局权限）
     try {
-      const db = drizzleDb
+      const db = this.db
       const instanceResult = await db
         .select()
         .from(userPermissions)
@@ -82,7 +104,7 @@ export class PermissionService {
 
         // 检查是否过期
         if (perm.expiresAt && new Date(perm.expiresAt) < new Date()) {
-          logger.debug(`Permission expired for ${userId}`)
+          this.logger.debug(`Permission expired for ${userId}`)
           return this.getDefaultLevel()
         }
 
@@ -114,7 +136,7 @@ export class PermissionService {
           const perm = globalResult[0]
 
           if (perm.expiresAt && new Date(perm.expiresAt) < new Date()) {
-            logger.debug(`Global permission expired for ${userId}`)
+            this.logger.debug(`Global permission expired for ${userId}`)
             return this.getDefaultLevel()
           }
 
@@ -130,7 +152,7 @@ export class PermissionService {
         }
       }
     } catch (error) {
-      logger.error('Failed to query user permission:', error)
+      this.logger.error('Failed to query user permission:', error)
     }
 
     // 5. 默认为普通用户
@@ -163,7 +185,7 @@ export class PermissionService {
     }
 
     // 3. 检查所有者要求
-    if (effectiveRequireOwner && !this.isInstanceOwner(userId, targetInstanceId)) {
+    if (effectiveRequireOwner && !(await this.isInstanceOwner(userId, targetInstanceId))) {
       return {
         allowed: false,
         reason: '此命令仅限实例所有者执行'
@@ -205,18 +227,18 @@ export class PermissionService {
 
     // 操作者不能授予比自己更高的权限
     if (operatorLevel > permissionLevel) {
-      logger.warn(`User ${operatorId} tried to grant higher permission than they have`)
+      this.logger.warn(`User ${operatorId} tried to grant higher permission than they have`)
       return false
     }
 
     // 超级管理员权限只能由系统所有者授予
     if (permissionLevel === PermissionLevel.SUPER_ADMIN && !this.isSystemOwner(operatorId)) {
-      logger.warn(`Non-owner ${operatorId} tried to grant SUPER_ADMIN permission`)
+      this.logger.warn(`Non-owner ${operatorId} tried to grant SUPER_ADMIN permission`)
       return false
     }
 
     try {
-      const db = drizzleDb
+      const db = this.db
 
       await db
         .insert(userPermissions)
@@ -258,11 +280,11 @@ export class PermissionService {
         }
       })
 
-      logger.info(`Permission granted: ${targetUserId} -> ${this.getLevelName(permissionLevel)}`)
+      this.logger.info(`Permission granted: ${targetUserId} -> ${this.getLevelName(permissionLevel)}`)
 
       return true
     } catch (error) {
-      logger.error('Failed to grant permission:', error)
+      this.logger.error('Failed to grant permission:', error)
       return false
     }
   }
@@ -278,7 +300,7 @@ export class PermissionService {
     const targetInstanceId = instanceId ?? 0
 
     try {
-      const db = drizzleDb
+      const db = this.db
 
       await db
         .delete(userPermissions)
@@ -300,11 +322,11 @@ export class PermissionService {
         instanceId: targetInstanceId,
       })
 
-      logger.info(`Permission revoked: ${targetUserId}`)
+      this.logger.info(`Permission revoked: ${targetUserId}`)
 
       return true
     } catch (error) {
-      logger.error('Failed to revoke permission:', error)
+      this.logger.error('Failed to revoke permission:', error)
       return false
     }
   }
@@ -316,7 +338,7 @@ export class PermissionService {
     const targetInstanceId = instanceId ?? 0
 
     try {
-      const db = drizzleDb
+      const db = this.db
 
       const results = await db
         .select()
@@ -331,7 +353,7 @@ export class PermissionService {
         expiresAt: r.expiresAt ? new Date(r.expiresAt) : undefined,
       }))
     } catch (error) {
-      logger.error('Failed to list permissions:', error)
+      this.logger.error('Failed to list permissions:', error)
       return []
     }
   }
@@ -351,7 +373,7 @@ export class PermissionService {
       return
     }
     try {
-      const db = drizzleDb
+      const db = this.db
       await db.insert(permissionAuditLogs).values({
         eventType: event.eventType,
         operatorId: event.operatorId,
@@ -362,7 +384,7 @@ export class PermissionService {
         createdAt: new Date(),
       })
     } catch (error) {
-      logger.error('Failed to log audit:', error)
+      this.logger.error('Failed to log audit:', error)
     }
   }
 
@@ -371,10 +393,8 @@ export class PermissionService {
    */
   clearCache(): void {
     this.permissionCache.clear()
-    logger.debug('Permission cache cleared')
+    this.logger.debug('Permission cache cleared')
   }
-
-  // ============ 辅助方法 ============
 
   private getCached(cacheKey: string): UserPermission | null {
     if (!this.isCacheEnabled()) return null
@@ -410,27 +430,27 @@ export class PermissionService {
     return this.options.defaultLevel ?? PermissionLevel.USER
   }
 
-  private matchesUserId(userId: string, rawId?: string | number | null): boolean {
-    if (rawId === null || rawId === undefined) return false
-    const raw = String(rawId)
-    return userId === raw || userId === `qq:u:${raw}` || userId === `tg:u:${raw}`
-  }
-
   /**
    * 检查是否是系统所有者
    */
   private isSystemOwner(userId: string): boolean {
-    return this.matchesUserId(userId, env.ADMIN_QQ) || this.matchesUserId(userId, env.ADMIN_TG)
+    return matchesAnyIdentity(userId, [
+      this.options.systemOwners?.qq,
+      this.options.systemOwners?.tg,
+    ])
   }
 
   /**
    * 检查是否是实例所有者
    */
-  private isInstanceOwner(userId: string, instanceId: number): boolean {
-    const instance = this.instanceResolver?.(instanceId)
+  private async isInstanceOwner(userId: string, instanceId: number): Promise<boolean> {
+    const instance = await this.instanceResolver?.(instanceId)
     if (!instance) return false
 
-    return this.matchesUserId(userId, instance.owner)
+    return matchesAnyIdentity(userId, [
+      instance.owner,
+      instance.ownerTgId,
+    ])
   }
 
   /**
@@ -438,7 +458,7 @@ export class PermissionService {
    */
   private async getCommandConfig(commandName: string, instanceId: number) {
     try {
-      const db = drizzleDb
+      const db = this.db
       const results = await db
         .select()
         .from(commandPermissions)
@@ -470,7 +490,7 @@ export class PermissionService {
       }
 
       return null
-    } catch (error) {
+    } catch {
       return null
     }
   }
@@ -493,18 +513,16 @@ export class PermissionService {
    * 兼容旧版本的 isAdmin 方法
    * @deprecated 使用 getPermissionLevel 替代
    */
-  isAdmin(userId: string, instanceId?: number): boolean {
-    // 简化版本的同步检查，仅用于向后兼容
+  async isAdmin(userId: string, instanceId?: number): Promise<boolean> {
     if (instanceId !== undefined) {
-      const instance = this.instanceResolver?.(instanceId)
-      if (instance && this.matchesUserId(userId, instance.owner)) {
+      const instance = await this.instanceResolver?.(instanceId)
+      if (instance && matchesAnyIdentity(userId, [instance.owner, instance.ownerTgId])) {
         return true
       }
     }
 
-    return this.matchesUserId(userId, env.ADMIN_QQ) || this.matchesUserId(userId, env.ADMIN_TG)
+    return this.isSystemOwner(userId)
   }
 }
 
-// 导出权限等级枚举，方便外部使用
 export { PermissionLevel }

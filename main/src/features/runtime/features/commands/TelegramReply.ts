@@ -1,6 +1,6 @@
-import type { Telegram } from '../../shared-types.js'
+import type { Telegram } from '../../runtime-types.js'
 import { telegramMessage, telegramSend } from '../../../../shared/utils/index.js'
-import { getLogger } from '../../shared-types.js'
+import { getLogger } from '../../capabilities/logging.js'
 
 const logger = getLogger('TelegramReply')
 

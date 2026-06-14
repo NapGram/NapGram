@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { db, eq, schema } from '../../../shared-types.js'
+import { db, eq, schema } from '@napgram/db-kit'
 
 /* ---------- hoisted mocks ---------- */
 const loggerMocks = vi.hoisted(() => ({
@@ -32,7 +32,7 @@ const telegramMessageHandlerMocks = vi.hoisted(() => ({
   instances: [] as any[],
 }))
 
-vi.mock('../../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/db-kit', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
     execute: vi.fn().mockResolvedValue({ rows: [], rowCount: 1 }),
@@ -51,9 +51,25 @@ vi.mock('../../../shared-types.js', async importOriginal => ({
       seq: 'message.seq',
     },
   },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => loggerMocks),
+}))
+
+vi.mock('@napgram/plugin-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getEventPublisher: vi.fn(() => eventPublisherMocks),
+}))
+
+vi.mock('@napgram/infra-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   performanceMonitor: performanceMonitorMocks,
+}))
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   env: { FORWARD_MODE: '11', SHOW_NICKNAME_MODE: '11' },
 }))
 
@@ -1093,7 +1109,7 @@ describe('forwardFeature', () => {
       inst.forwardPairs.findByTG = vi.fn().mockReturnValue(pair)
       const { feature } = buildFeature(inst)
       // Make db.update().set().where() throw
-      const { db: dbMock } = await import('../../../shared-types.js')
+      const { db: dbMock } = await import('@napgram/db-kit')
       ;(dbMock.update as any).mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockRejectedValue(new Error('DB error')),

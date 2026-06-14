@@ -2,11 +2,21 @@ import type { FastifyInstance } from 'fastify'
 import cookie from '@fastify/cookie'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
+import type { WebRuntimeBridge } from '@napgram/runtime-kit'
+import {
+  activatePluginWebRoutes,
+  clearWebRuntimeBridge,
+  hasPluginWebRoutes,
+  isPluginWebRoutesActive,
+  markPluginWebRoutes,
+  resetPluginWebRoutesRegistry,
+  setWebRuntimeBridge,
+  tryGetWebRuntimeBridge,
+} from '@napgram/runtime-kit'
 import Fastify from 'fastify'
 import fileManagerRoutes from './routes/fileManager.js'
 
 const log = getLogger('Web Api')
-const registeredWebPlugins = new Set<string>()
 
 let server: FastifyInstance | null = null
 
@@ -42,15 +52,39 @@ export function registerBaseRoutes(app: App) {
   })
 }
 
+export function configureRuntimeBridge(app: App, bridge: WebRuntimeBridge) {
+  setWebRuntimeBridge(app, bridge)
+}
+
+export function getRuntimeBridge(app: App) {
+  return tryGetWebRuntimeBridge(app)
+}
+
 export function registerWebRoutes(register: (app: App) => void, pluginId?: string) {
   const app = createServer()
 
   if (pluginId) {
-    if (registeredWebPlugins.has(pluginId)) {
-      log.warn(`Web routes already registered for plugin: ${pluginId}`)
+    const id = String(pluginId).trim()
+    if (id) {
+      if (hasPluginWebRoutes(id)) {
+        activatePluginWebRoutes(id)
+        log.debug(`Web routes already registered for plugin: ${id}`)
+        return
+      }
+
+      markPluginWebRoutes(id)
+      app.register(async (scope) => {
+        scope.addHook('onRequest', async (_request, reply) => {
+          if (!isPluginWebRoutesActive(id)) {
+            reply.code(404).send({ message: 'Not Found' })
+            return reply
+          }
+        })
+
+        register(scope as App)
+      })
       return
     }
-    registeredWebPlugins.add(pluginId)
   }
 
   register(app)
@@ -79,6 +113,7 @@ export async function startServer(app = createServer()) {
 
 export async function stopServer() {
   if (!server) {
+    resetPluginWebRoutesRegistry()
     return
   }
 
@@ -96,13 +131,16 @@ export async function stopServer() {
     }
   }
   finally {
-    registeredWebPlugins.clear()
+    clearWebRuntimeBridge(app)
+    resetPluginWebRoutesRegistry()
   }
 }
 
 export default {
   createServer,
   registerBaseRoutes,
+  configureRuntimeBridge,
+  getRuntimeBridge,
   registerWebRoutes,
   startServer,
   stopServer,

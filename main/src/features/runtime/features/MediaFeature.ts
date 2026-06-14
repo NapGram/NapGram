@@ -1,11 +1,12 @@
 import type { AudioContent, ImageContent, VideoContent } from '@napgram/message-kit'
-import type { Instance, IQQClient, Telegram } from '../shared-types.js'
+import type { Instance, IQQClient, Telegram } from '../runtime-types.js'
 
 import { Buffer } from 'node:buffer'
 import fsP from 'node:fs/promises'
 import { fileTypeFromBuffer } from 'file-type'
 import { decode, encode } from 'image-js'
-import { getLogger, temp } from '../shared-types.js'
+import { getLogger } from '../capabilities/logging.js'
+import { temp } from '../capabilities/temp.js'
 
 const logger = getLogger('MediaFeature')
 

@@ -15,7 +15,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch"
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "vitest run"
   },
   "keywords": [
     "napgram",
@@ -27,8 +28,8 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "25.9.3",
-    "drizzle-orm": "^0.45.1",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "4.1.8"
   },
   "publishConfig": {
     "main": "./dist/index.js",
@@ -48,10 +49,8 @@
     "LICENSE"
   ],
   "dependencies": {
-    "@napgram/db-kit": "workspace:*",
     "@napgram/env-kit": "workspace:*",
     "@napgram/sdk": "workspace:*",
-    "@napgram/logger-kit": "workspace:*",
-    "@napgram/runtime-kit": "workspace:*"
+    "drizzle-orm": "^0.45.1"
   }
 }

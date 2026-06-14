@@ -1,24 +1,45 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { env } from '../../../../shared-types.js'
+import { env } from '@napgram/env-kit'
 import { MessageUtils } from '../MessageUtils.js'
 
-vi.mock('../../../../shared-types.js', async importOriginal => ({
-  ...(await importOriginal() as any),
-  db: {
-    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
-    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-    qqRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
-    $queryRaw: vi.fn(),
-  },
-  env: {
+const envKitMocks = vi.hoisted(() => {
+  const env = {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
     DATA_DIR: '/tmp',
     CACHE_DIR: '/tmp/cache',
     WEB_ENDPOINT: 'http://napgram-dev:8080',
+    ADMIN_QQ: undefined as number | string | null | undefined,
+    ADMIN_TG: undefined as number | string | null | undefined,
+  }
+
+  return {
+    env,
+    getSystemOwners: () => ({
+      qq: env.ADMIN_QQ,
+      tg: env.ADMIN_TG,
+    }),
+  }
+})
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
+  env: envKitMocks.env,
+  getSystemOwners: envKitMocks.getSystemOwners,
+  normalizeUserIdentity: (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, ''),
+  isConfiguredIdentity: (value: unknown) => value !== undefined && value !== null && String(value).trim() !== '',
+  matchesUserIdentity: (userId: string, identity: unknown) => {
+    const normalize = (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, '')
+    return String(userId ?? '') !== '' && normalize(userId) === normalize(identity)
   },
-  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  matchesAnyIdentity: (userId: string, identities: unknown[]) => {
+    const normalize = (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, '')
+    return String(userId ?? '') !== '' && identities.some(identity => normalize(userId) === normalize(identity))
+  },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -26,8 +47,6 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     error: vi.fn(),
     trace: vi.fn(),
   })),
-  configureInfraKit: vi.fn(),
-  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
 describe('messageUtils', () => {

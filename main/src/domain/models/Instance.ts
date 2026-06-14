@@ -3,16 +3,12 @@ import type { CommandsFeature, ForwardFeature, MediaFeature } from '../../featur
 import type { IQQClient } from '../../infrastructure/clients/qq'
 import type Telegram from '@napgram/telegram-client'
 import { db, eq, ForwardMap, schema } from '@napgram/db-kit'
-import { env } from '@napgram/env-kit'
-import { getLogger, sentry } from '@napgram/logger-kit'
-import { messageConverter } from '@napgram/message-kit'
+import { getLogger } from '@napgram/logger-kit'
 import { getEventPublisher } from '@napgram/plugin-kit'
 import { instanceRegistry } from '../../features/runtime/instance-registry'
-import { qqClientFactory } from '../../infrastructure/clients/qq'
-import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 import { withDbRetry } from './services/db-retry'
-import { bridgeQQEvents } from './services/QQEventBridge'
-import { enableQQMediaDownloadDiagnostics } from './services/QQMediaDiagnostics'
+import { ConnectionSupervisor } from '../services/ConnectionSupervisor.js'
+import { PersonalUserBotService } from '../services/PersonalUserBotService.js'
 
 export type WorkMode = 'personal' | 'group' | 'public'
 export type InstanceLifecycleStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
@@ -43,7 +39,9 @@ export default class Instance {
   private _userBotStatus: PersonalUserBotStatus = 'disabled'
   private _userBotError?: string
 
-  private readonly log: AppLogger
+  public readonly log: AppLogger
+  private readonly personalUserBotService: PersonalUserBotService
+  private readonly connectionSupervisor: ConnectionSupervisor
 
   public tgBot!: Telegram
   public tgUserBot?: Telegram
@@ -54,11 +52,12 @@ export default class Instance {
   public forwardFeature?: ForwardFeature
   public isInit = false
   public status: InstanceLifecycleStatus = 'stopped'
-  private initPromise?: Promise<void>
   public eventPublisher?: { publishMessageCreated: (...args: any[]) => Promise<void> }
 
   private constructor(public readonly id: number) {
     this.log = getLogger(`Instance - ${this.id}`)
+    this.personalUserBotService = new PersonalUserBotService(this)
+    this.connectionSupervisor = new ConnectionSupervisor(this, this.personalUserBotService)
   }
 
   private dbRetry<T>(action: () => Promise<T>, context: string) {
@@ -94,68 +93,16 @@ export default class Instance {
     this._flags = dbEntry.flags
   }
 
-  private formatError(error: unknown) {
-    return String((error as any)?.message || error)
-  }
-
   private async initPersonalUserBotIfNeeded() {
-    this._userBotError = undefined
-
-    if (this.workMode !== 'personal') {
-      this._userBotStatus = 'disabled'
-      return
-    }
-
-    if (!this._userSessionId) {
-      this._userBotStatus = 'not-configured'
-      this.log.warn('Personal mode enabled but userSessionId is not configured; auto pair provisioning is disabled, manual binding remains available')
-      return
-    }
-
-    this._userBotStatus = 'starting'
-    this.log.debug('TG UserBot 正在登录')
-    try {
-      this.tgUserBot = await telegramClientFactory.connect({
-        type: 'mtcute',
-        sessionId: this._userSessionId,
-        authMode: 'user',
-        appName: 'NapGram User',
-      })
-      this._userBotStatus = 'running'
-      this.log.info('TG UserBot ✓ 登录完成')
-    }
-    catch (error) {
-      this._userBotStatus = 'error'
-      this._userBotError = this.formatError(error)
-      this.log.warn({ error, userSessionId: this._userSessionId }, 'TG UserBot 登录失败；自动建群不可用，手动绑定仍可使用')
-      sentry.captureException(error, { stage: 'personal-userbot-init', instanceId: this.id })
-    }
+    await this.personalUserBotService.initIfNeeded()
   }
 
   public async startUserBot() {
-    if (this.tgUserBot) {
-      try {
-        await (this.tgUserBot as any).disconnect?.()
-      }
-      catch (error) {
-        this.log.debug({ error }, 'Error disconnecting existing UserBot')
-      }
-      this.tgUserBot = undefined
-    }
-    await this.initPersonalUserBotIfNeeded()
+    await this.personalUserBotService.start()
   }
 
   public async stopUserBot() {
-    if (this.tgUserBot) {
-      try {
-        await (this.tgUserBot as any).disconnect?.()
-      }
-      catch (error) {
-        this.log.debug({ error }, 'Error disconnecting UserBot')
-      }
-      this.tgUserBot = undefined
-    }
-    this._userBotStatus = this.workMode === 'personal' && this._userSessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
+    await this.personalUserBotService.stop()
   }
 
   public async reloadCommands() {
@@ -163,228 +110,11 @@ export default class Instance {
   }
 
   private async init(botToken?: string) {
-    if (this.initPromise)
-      return this.initPromise
-
-    this.initPromise = (async () => {
-      this.status = 'starting'
-      this.log.debug('TG Bot 正在登录')
-      const token = botToken ?? env.TG_BOT_TOKEN
-      if (this.botSessionId) {
-        this.tgBot = await telegramClientFactory.connect({
-          type: 'mtcute',
-          sessionId: this._botSessionId,
-          authMode: 'bot',
-          botToken: token,
-          appName: 'NapGram',
-        })
-      }
-      else {
-        if (!token) {
-          throw new Error('botToken 未指定')
-        }
-        this.tgBot = await telegramClientFactory.create({
-          type: 'mtcute',
-          authMode: 'bot',
-          botToken: token,
-          appName: 'NapGram',
-        })
-        this.botSessionId = this.tgBot.sessionId ?? 0
-      }
-      this.log.info('TG Bot ✓ 登录完成')
-
-      await this.initPersonalUserBotIfNeeded()
-
-      const wsUrl = this._qq?.wsUrl || env.NAPCAT_WS_URL
-      if (!wsUrl) {
-        throw new Error('NapCat WebSocket 地址未配置 (qqBot.wsUrl 或 NAPCAT_WS_URL)')
-      }
-      const wsToken = this._qq?.wsToken || (env as any).NAPCAT_WS_TOKEN
-
-      this.log.debug('NapCat 客户端 正在初始化')
-      this.qqClient = await qqClientFactory.create({
-        type: 'napcat',
-        wsUrl,
-        ...(wsToken ? { token: wsToken } : {}),
-        reconnect: true,
-      })
-
-      // 重试连接 NapCat，等待其就绪（如扫码登录）
-      const maxRetries = 3
-      const retryDelay = 5000
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          await this.qqClient.login()
-          break
-        }
-        catch (err) {
-          if (attempt >= maxRetries) {
-            throw err
-          }
-          this.log.warn(`NapCat 连接失败 (${attempt}/${maxRetries})，${retryDelay / 1000}s 后重试...`)
-          await new Promise(resolve => setTimeout(resolve, retryDelay))
-        }
-      }
-
-      enableQQMediaDownloadDiagnostics(this.qqClient, this.log)
-      this.log.info('NapCat 客户端 ✓ 初始化完成')
-
-      // 仅 NapCat 链路，使用轻量转发表
-      this.forwardPairs = await ForwardMap.load(this.id)
-      messageConverter.setInstance(this)
-
-      // 插件系统：桥接 QQ 侧事件到插件 EventBus
-      try {
-        const eventPublisher = getEventPublisher()
-        await eventPublisher.publishInstanceStatus({ instanceId: this.id, status: 'starting' })
-        bridgeQQEvents(this.id, this.qqClient, eventPublisher, this.log, this)
-      }
-      catch (error) {
-        this.log.warn('Plugin event bridge init failed:', error)
-      }
-
-      this.status = 'running'
-      try {
-        await getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'running' })
-      }
-      catch (error) {
-        this.log.warn('Failed to publish instance running status:', error)
-      }
-
-      // 监听掉线/恢复事件，交给插件侧处理通知
-      this.qqClient.on('offline', async () => {
-        this.log.warn('NapCat connection offline (disconnect)')
-        this.isSetup = false
-        if (!this.hasConfiguredWorkMode())
-          return
-        try {
-          getEventPublisher().publishNotice({
-            instanceId: this.id,
-            platform: 'qq',
-            noticeType: 'connection-lost',
-            timestamp: Date.now(),
-          })
-        }
-        catch (error) {
-          this.log.warn('Failed to publish connection-lost notice:', error)
-        }
-      })
-
-      this.qqClient.on('online', async () => {
-        this.log.info('NapCat connection online (connect)')
-        this.isSetup = true
-        if (!this.hasConfiguredWorkMode())
-          return
-        try {
-          getEventPublisher().publishNotice({
-            instanceId: this.id,
-            platform: 'qq',
-            noticeType: 'connection-restored',
-            timestamp: Date.now(),
-          })
-        }
-        catch (error) {
-          this.log.warn('Failed to publish connection-restored notice:', error)
-        }
-      })
-
-      // SDK 级别的永久连接丢失/恢复事件
-      this.qqClient.on('connection:lost', async (event: any) => {
-        this.log.warn('NapCat connection lost:', event)
-        this.isSetup = false
-        if (!this.hasConfiguredWorkMode())
-          return
-        try {
-          getEventPublisher().publishNotice({
-            instanceId: this.id,
-            platform: 'qq',
-            noticeType: 'connection-lost',
-            timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
-            raw: event,
-          })
-        }
-        catch (error) {
-          this.log.warn('Failed to publish connection-lost notice:', error)
-        }
-      })
-
-      this.qqClient.on('connection:restored', async (event: any) => {
-        this.log.info('NapCat connection restored:', event)
-        this.isSetup = true
-        if (!this.hasConfiguredWorkMode())
-          return
-        try {
-          getEventPublisher().publishNotice({
-            instanceId: this.id,
-            platform: 'qq',
-            noticeType: 'connection-restored',
-            timestamp: typeof event?.timestamp === 'number' ? event.timestamp : Date.now(),
-            raw: event,
-          })
-        }
-        catch (error) {
-          this.log.warn('Failed to publish connection-restored notice:', error)
-        }
-      })
-      // }
-
-      this.isSetup = true
-      this.isInit = true
-    })()
-
-    this.initPromise
-      .then(() => this.log.info('Instance ✓ 初始化完成'))
-      .catch((err) => {
-        this.status = 'error'
-        this.log.error('初始化失败', err)
-        void Promise.resolve(
-          getEventPublisher().publishInstanceStatus({ instanceId: this.id, status: 'error', error: err as Error }),
-        )
-          .catch((publishError) => {
-            this.log.warn('Failed to publish instance error status:', publishError)
-          })
-        sentry.captureException(err, { stage: 'instance-init', instanceId: this.id })
-      })
-
-    return this.initPromise
+    return this.connectionSupervisor.login(botToken)
   }
 
   private async disposeRuntimeResources() {
-    this.mediaFeature = undefined
-    this.commandsFeature = undefined
-    this.forwardFeature = undefined
-
-    try {
-      await (this.qqClient as any)?.logout?.()
-    }
-    catch (error) {
-      this.log.warn('Failed to disconnect QQ client during cleanup:', error)
-    }
-    finally {
-      this.qqClient = undefined
-    }
-
-    try {
-      await (this.tgUserBot as any)?.disconnect?.()
-    }
-    catch (error) {
-      this.log.warn('Failed to disconnect Telegram user bot during cleanup:', error)
-    }
-    finally {
-      this.tgUserBot = undefined
-      this._userBotStatus = this.workMode === 'personal' && this._userSessionId ? 'stopped' : this.workMode === 'personal' ? 'not-configured' : 'disabled'
-    }
-
-    try {
-      await (this.tgBot as any)?.disconnect?.()
-    }
-    catch (error) {
-      this.log.warn('Failed to disconnect Telegram client during cleanup:', error)
-    }
-
-    this.isSetup = false
-    this.isInit = false
-    this.initPromise = undefined
+    await this.connectionSupervisor.disposeRuntimeResources()
   }
 
   public async login(botToken?: string) {
@@ -485,25 +215,12 @@ export default class Instance {
   }
 
   getPersonalModeDiagnostics(): PersonalModeDiagnostics {
-    const workMode = this.workMode
-    const userBotRequired = workMode === 'personal'
-    const hasTgUserBot = Boolean(this.tgUserBot?.isOnline)
-    const userBotStatus = userBotRequired ? this._userBotStatus : 'disabled'
-    const manualPairingAvailable = Boolean(this.tgBot && this.qqClient)
+    return this.personalUserBotService.getDiagnostics()
+  }
 
-    return {
-      workMode,
-      userBotRequired,
-      userSessionId: this._userSessionId,
-      userBotStatus,
-      hasTgUserBot,
-      canAutoProvisionPairs: userBotStatus === 'running',
-      manualPairingAvailable,
-      ...(userBotRequired && !this._userSessionId
-        ? { reason: 'personal 模式未配置 TG User session，自动建群不可用；手动绑定仍可使用' }
-        : {}),
-      ...(this._userBotError ? { error: this._userBotError } : {}),
-    }
+  setUserBotState(status: PersonalUserBotStatus, error?: string) {
+    this._userBotStatus = status
+    this._userBotError = error
   }
 
   get flags() {

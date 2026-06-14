@@ -1,33 +1,32 @@
-import type { NapGramPlugin } from '@napgram/plugin-kit'
+import { definePlugin } from '@napgram/sdk'
 import { bindInstanceLifecycle } from '@napgram/plugin-kit'
 import { MediaFeature } from '../features/MediaFeature.js'
+import { createInstanceFeatureBinder } from '../feature-binder.js'
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
   id: 'core-media',
   name: 'Core Media Feature',
   version: '1.0.0',
   description: 'Native media helper used by the forward pipeline',
   install: async (ctx) => {
-    const lifecycle = await bindInstanceLifecycle(ctx, {
-      shouldAttach: instance => Boolean(instance.tgBot && instance.qqClient),
-      attach: (instance: any) => {
-        const existing = instance.mediaFeature as MediaFeature | undefined
-        const feature = existing ?? new MediaFeature(instance, instance.tgBot, instance.qqClient)
-        instance.mediaFeature = feature
-        return true
-      },
-      detach: (instance: any) => {
-        try {
-          instance.mediaFeature?.destroy?.()
-        }
-        finally {
-          instance.mediaFeature = undefined
-        }
-      },
+    const lifecycle = await bindInstanceLifecycle({
+      native: (ctx as any).native,
+      on: ctx.on,
+      logger: ctx.logger,
+    }, {
+      ...createInstanceFeatureBinder<any, MediaFeature>({
+        shouldAttach: instance => Boolean(instance.tgBot && instance.qqClient),
+        getFeature: instance => instance.mediaFeature as MediaFeature | undefined,
+        setFeature: (instance, feature) => {
+          instance.mediaFeature = feature
+        },
+        createFeature: instance => new MediaFeature(instance, instance.tgBot, instance.qqClient),
+        destroyFeature: feature => feature.destroy?.(),
+      }),
     })
 
     ctx.onUnload(() => lifecycle.dispose())
   },
-}
+})
 
 export default plugin

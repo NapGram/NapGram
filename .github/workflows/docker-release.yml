@@ -77,7 +77,7 @@ jobs:
           echo "No usable token found for magisk317/napgram-ui-dist" >&2
           exit 1
 
-      - name: Checkout UI source (private)
+      - name: Checkout napgram-ui-dist source
         uses: actions/checkout@v6
         with:
           repository: magisk317/napgram-ui-dist

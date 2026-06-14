@@ -54,6 +54,7 @@
   - ✅ Docker 镜像内置前端（默认端口 `8080`，访问 `http://<host>:8080/`）
   - 📊 系统状态与性能指标（统计概览、趋势、延迟）
   - ⚙️ 可视化管理（实例/绑定/配置、日志与消息查询）
+  - ⚠️ UI 源码维护在 `napgram-ui-dist` 仓库，当前仓库只保留打包后的 `web/dist`
 
 ## 🏗️ 技术栈列表
 
@@ -128,11 +129,13 @@
 │   │   ├── interfaces/   # Web API + Web 控制台托管（Fastify）
 │   │   └── shared/       # 通用工具、日志、服务
 │   └── tools/            # 数据库迁移与维护工具（Drizzle）
-├── web/                  # Web 控制台静态资源（Docker 镜像内置 dist）
-│   └── dist/             # 前端构建产物（提供 SPA）
+├── web/                  # 外部 UI 仓库在 CI 中 checkout 到此路径
+│   └── dist/             # 前端构建产物（Docker 仅复制该目录）
 ├── Dockerfile            # 容器构建（默认启用 Web 控制台）
 └── compose*.yaml         # Docker Compose 示例
 ```
+
+> 说明：Web console 的源码维护在 `napgram-ui-dist` 仓库，当前仓库只保留构建产物 `web/dist`。CI 会在发布流程中把 `napgram-ui-dist` checkout 到 `./web` 再执行构建。
 
 ### 创建新功能
 得益于模块化架构，添加新功能非常简单：
@@ -153,8 +156,8 @@ class MyFeature {
     }
 }
 
-// 2. 注册到 FeatureManager
-featureManager.register(new MyFeature(...));
+// 2. 注册为插件，并交给 PluginRuntime 管理
+runtime.registerPlugin(new MyPlugin(...));
 ```
 
 ## 🧩 功能模块
@@ -206,9 +209,7 @@ featureManager.register(new MyFeature(...));
 
 ## 💬 加入社区
 
-- **Telegram 群组**: [https://t.me/+BiKryJzcQRYzZjA1](https://t.me/+BiKryJzcQRYzZjA1)
-- **Telegram 频道**: [https://t.me/napgram_offical](https://t.me/napgram_offical)
-- **QQ 群**: 1036505332
+- **Telegram 群组**: [加入群组](https://t.me/+NR2QaQ4dlEgxYmNl)
 
 ## ⭐ Star 趋势
 

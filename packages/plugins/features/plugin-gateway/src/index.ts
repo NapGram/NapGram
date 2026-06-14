@@ -1,4 +1,5 @@
-import type { MessageEvent, MessageSegment, NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { MessageEvent, MessageSegment, PluginContext } from '@napgram/sdk';
 import type { MessageCreatedEvent, MessageSendResult, Segment } from '@napgram/gateway-kit';
 import { GatewayServer } from '@napgram/gateway-kit';
 
@@ -218,7 +219,7 @@ function buildGatewayEvent(event: MessageEvent): MessageCreatedEvent {
     };
 }
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'gateway',
     name: 'Gateway',
     version: '1.0.0',
@@ -263,6 +264,6 @@ const plugin: NapGramPlugin = {
 
         ctx.logger.info(`Gateway plugin started on port ${port}`);
     },
-};
+});
 
 export default plugin;

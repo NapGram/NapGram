@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import Telegram, { telegramClientFactory } from '@napgram/telegram-client';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'adapter-telegram-mtcute',
     name: 'Telegram Adapter (mtcute)',
     version: '1.0.0',
@@ -29,6 +30,6 @@ const plugin: NapGramPlugin = {
         });
         ctx.logger.info('Telegram mtcute adapter registered');
     },
-};
+});
 
 export default plugin;

@@ -1,8 +1,9 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import type { IQQClient, QQClientCreateParams } from '@napgram/qq-client';
 import { NapCatAdapter, qqClientFactory } from '@napgram/qq-client';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'adapter-qq-napcat',
     name: 'QQ Adapter (NapCat)',
     version: '1.0.0',
@@ -15,6 +16,6 @@ const plugin: NapGramPlugin = {
         });
         ctx.logger.info('NapCat QQ adapter registered');
     },
-};
+});
 
 export default plugin;

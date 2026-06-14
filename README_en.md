@@ -127,6 +127,7 @@ pnpm --filter=@napgram/app start
   - **Permission Management**: Role-Based Access Control (RBAC)
   - **System Settings**: Global system configuration
   - **Logs & Database**: Log viewer and database browser
+  - ⚠️ The UI source lives in the `napgram-ui-dist` repository; this repository only ships the built `web/dist` artifacts.
 
 ### 🚀 Advanced
 - **Gateway**: API Gateway (External access support)
@@ -161,6 +162,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 📖 Repository Layout
+
+The Web Console source is maintained in the `napgram-ui-dist` repository. This repository only keeps the built `web/dist` artifacts, and CI checks out that repository into `./web` before building and publishing.
+
 ## 🙏 Credits
 
 - Powered by [NapCat](https://github.com/NapNeko/NapCatQQ) and [mtcute](https://github.com/mtcute/mtcute)
@@ -180,7 +185,7 @@ This project is for educational and personal use only. Please comply with the Te
 ## 📧 Contact
 
 - GitHub Issues: [Report a bug](https://github.com/NapLink/NapGram/issues)
-- Telegram: [Join discussion](https://t.me/napgram) (if available)
+- Telegram: [Join the group](https://t.me/+NR2QaQ4dlEgxYmNl)
 
 ---
 

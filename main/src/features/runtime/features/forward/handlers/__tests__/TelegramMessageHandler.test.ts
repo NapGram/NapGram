@@ -1,6 +1,6 @@
 import { messageConverter } from '@napgram/message-kit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db } from '../../../../shared-types.js'
+import { db } from '@napgram/db-kit'
 import { TelegramMessageHandler } from '../TelegramMessageHandler.js'
 
 vi.mock('@napgram/message-kit', () => ({
@@ -10,7 +10,7 @@ vi.mock('@napgram/message-kit', () => ({
   },
 }))
 
-vi.mock('../../../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/db-kit', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
     insert: vi.fn(() => ({
@@ -22,14 +22,10 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
   schema: {
     message: { id: 'id' },
   },
-  env: {
-    ENABLE_AUTO_RECALL: true,
-    TG_MEDIA_TTL_SECONDS: undefined,
-    DATA_DIR: '/tmp',
-    CACHE_DIR: '/tmp/cache',
-    WEB_ENDPOINT: 'http://napgram-dev:8080',
-  },
-  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -37,7 +33,10 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     error: vi.fn(),
     trace: vi.fn(),
   })),
-  configureInfraKit: vi.fn(),
+}))
+
+vi.mock('@napgram/infra-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn(), recordMessage: vi.fn() },
 }))
 

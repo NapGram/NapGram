@@ -86,13 +86,6 @@ vi.mock('@napgram/plugin-kit', () => ({
   })),
 }))
 
-vi.mock('../../../features/FeatureManager', () => ({
-  FeatureManager: class {
-    initialize = vi.fn().mockResolvedValue(undefined)
-    destroy = vi.fn().mockResolvedValue(undefined)
-  },
-}))
-
 describe('instance Session Coverage', () => {
   it('should default botSessionId to 0 when sessionId is undefined', async () => {
     // Setup mock return values via the global mock

@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { statisticsRoutes } from '@napgram/web-interfaces';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'statistics',
     name: 'Statistics',
     version: '1.0.0',
@@ -12,6 +13,6 @@ const plugin: NapGramPlugin = {
         ctx.logger.info('Statistics plugin installed');
         ctx.web.registerRoutes((app: any) => statisticsRoutes(app));
     },
-};
+});
 
 export default plugin;

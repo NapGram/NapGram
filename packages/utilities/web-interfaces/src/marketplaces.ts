@@ -2,9 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { z } from 'zod'
-import {
-  ApiResponse,
-} from './shared-host.js'
+import { ApiResponse } from './web-deps.js'
 
 import {
   readMarketplaceCache,

@@ -107,13 +107,6 @@ vi.mock('@napgram/plugin-kit', () => ({
   })),
 }))
 
-vi.mock('../../../features/FeatureManager', () => ({
-  FeatureManager: class {
-    initialize = vi.fn().mockResolvedValue(undefined)
-    destroy = vi.fn().mockResolvedValue(undefined)
-  },
-}))
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

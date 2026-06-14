@@ -543,31 +543,25 @@ importers:
 
   packages/plugins/admin/permission-management:
     dependencies:
-      '@napgram/db-kit':
-        specifier: workspace:*
-        version: link:../../../core/db-kit
       '@napgram/env-kit':
         specifier: workspace:*
         version: link:../../../core/env-kit
-      '@napgram/logger-kit':
-        specifier: workspace:*
-        version: link:../../../core/logger-kit
-      '@napgram/runtime-kit':
-        specifier: workspace:*
-        version: link:../../../core/runtime-kit
       '@napgram/sdk':
         specifier: workspace:*
         version: link:../../../sdk
+      drizzle-orm:
+        specifier: ^0.45.1
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.10.0)(pg@8.21.0)
     devDependencies:
       '@types/node':
         specifier: 25.9.3
         version: 25.9.3
-      drizzle-orm:
-        specifier: ^0.45.1
-        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.0)(better-sqlite3@12.10.0)(pg@8.21.0)
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+      vitest:
+        specifier: 4.1.8
+        version: 4.1.8(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/coverage-v8@4.1.8)(vite@8.0.12(@types/node@25.9.3)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.9.0))
 
   packages/plugins/admin/plugin-admin-auth:
     dependencies:
@@ -770,10 +764,14 @@ importers:
         version: 6.0.3
 
   packages/plugins/features/plugin-notifications:
-    devDependencies:
+    dependencies:
+      '@napgram/env-kit':
+        specifier: workspace:*
+        version: link:../../../core/env-kit
       '@napgram/sdk':
         specifier: workspace:*
         version: link:../../../sdk
+    devDependencies:
       '@types/node':
         specifier: 25.9.3
         version: 25.9.3

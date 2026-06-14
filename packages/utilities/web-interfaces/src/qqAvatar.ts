@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { Buffer } from 'node:buffer'
-import { ErrorResponses, getLogger, registerDualRoute } from './shared-host.js'
+import { getLogger } from './web-deps.js'
+import { ErrorResponses, registerDualRoute } from './web-http.js'
 
 const logger = getLogger('QQAvatar')
 
@@ -19,7 +20,7 @@ export default async function (fastify: FastifyInstance) {
       if (contentType) {
         reply.header('content-type', contentType)
       }
-      reply.header('cache-control', 'public, max-age=86400') // Cache for 1 day
+      reply.header('cache-control', 'public, max-age=86400')
 
       const arrayBuffer = await response.arrayBuffer()
       return Buffer.from(arrayBuffer)

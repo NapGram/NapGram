@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { pairsRoutes } from '@napgram/web-interfaces';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'admin-pairs',
     name: 'Admin Pairs API',
     version: '1.0.0',
@@ -14,6 +15,6 @@ const plugin: NapGramPlugin = {
             app.register(pairsRoutes);
         });
     },
-};
+});
 
 export default plugin;

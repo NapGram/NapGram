@@ -24,8 +24,11 @@
   ],
   "author": "NapGram Team",
   "license": "MIT",
+  "dependencies": {
+    "@napgram/env-kit": "workspace:*",
+    "@napgram/sdk": "workspace:*"
+  },
   "devDependencies": {
-    "@napgram/sdk": "workspace:*",
     "@types/node": "25.9.3",
     "typescript": "6.0.3"
   },

@@ -1,11 +1,6 @@
+import { definePlugin } from '@napgram/sdk'
+import type { PluginContext, PluginQqClientLike, PluginRuntimeInstance, PluginTgBotLike } from '@napgram/plugin-kit'
 import type { RecallEvent } from '@napgram/message-kit'
-import type {
-  NapGramPlugin,
-  PluginContext,
-  PluginQqClientLike,
-  PluginRuntimeInstance,
-  PluginTgBotLike,
-} from '@napgram/plugin-kit'
 import { and, db, eq, schema } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
 import { bindInstanceLifecycle } from '@napgram/plugin-kit'
@@ -240,7 +235,7 @@ function createInstanceRecallBinding(
   }
 }
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
   id: 'recall',
   name: 'Recall Plugin',
   version: '2.0.0',
@@ -288,6 +283,6 @@ const plugin: NapGramPlugin = {
       bindings.clear()
     })
   },
-}
+})
 
 export default plugin

@@ -1,10 +1,9 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import fs from 'node:fs/promises'
-import { createWriteStream, unlink } from 'node:fs'
+import { createWriteStream } from 'node:fs'
 import path from 'node:path'
-import { pipeline } from 'node:stream/promises'
 import { authMiddleware } from '@napgram/auth-kit'
-import { getLogger } from './shared-host.js'
+import { getLogger } from './web-deps.js'
 
 const logger = getLogger('FileAPI')
 
@@ -15,10 +14,7 @@ export default function registerRoutes(app: FastifyInstance) {
 // 容器内的数据根目录
 const DATA_ROOT = process.env.FILE_MANAGER_ROOT || '/app/data'
 
-// 允许访问的路径前缀
-const ALLOWED_PATHS = ['/data', '/config', '/logs', '/uploads']
-
-// 文件大小限制 (bytes)
+// 文件大小限制（字节）
 const FILE_SIZE_LIMITS = {
     read: 10 * 1024 * 1024,      // 10MB
     upload: 100 * 1024 * 1024,   // 100MB
@@ -37,15 +33,6 @@ function sanitizePath(userPath: string): { allowed: boolean; fullPath: string; e
             return { allowed: false, fullPath: '', error: 'Access denied: path outside allowed root' }
         }
 
-        // const relativePath = '/' + path.relative(DATA_ROOT, fullPath)
-        // const isAllowed = ALLOWED_PATHS.some(prefix =>
-        //     relativePath === prefix || relativePath.startsWith(prefix + '/')
-        // )
-
-        // if (!isAllowed) {
-        //     return { allowed: false, fullPath: '', error: `Access denied: path not in allowed list` }
-        // }
-
         return { allowed: true, fullPath }
     } catch (error) {
         return { allowed: false, fullPath: '', error: error instanceof Error ? error.message : 'Invalid path' }
@@ -55,31 +42,16 @@ function sanitizePath(userPath: string): { allowed: boolean; fullPath: string; e
 /**
  * 注册文件管理API路由
  */
-// 细粒度权限检查中间件工厂
-function checkPermission(requiredPermission: string) {
+// 这里只做认证，后续再接入细粒度权限
+function requireAuth() {
     return async (request: FastifyRequest, reply: FastifyReply) => {
-        // 先运行 authMiddleware (Authentication)
         await authMiddleware(request, reply)
 
-        // 检查是否有错误 (如果 authMiddleware 失败，通常会抛出错误或虽然没有直接返回但 context 中会有标记，
-        // 这里假设 authMiddleware 成功后会将用户信息注入到 request.user 或类似结构中)
-
-        // 注意：根据 auth.ts，用户信息被注入到 (request as any).auth
         const auth = (request as any).auth
 
-        // 如果是环境变量或 TOKEN 认证，赋予完整权限 (这里假设 admin token 具有所有权限)
         if (auth?.type === 'env' || auth?.type === 'token') {
             return
         }
-
-        // 如果是用户认证，需要检查数据库中的权限
-        // TODO: 这里目前简化处理，后续应查询用户角色和权限表
-        // 暂时假设所有登录用户都有权限，但在生产环境中应在此处添加 RBAC 逻辑
-        // const { db, schema, eq } = await import('@napgram/infra-kit')
-        // const userMetadata = await getUserPermissions(auth.userId)
-        // if (!userMetadata.permissions.includes(requiredPermission)) {
-        //     throw new Error(`Missing permission: ${requiredPermission}`)
-        // }
     }
 }
 
@@ -88,7 +60,7 @@ function checkPermission(requiredPermission: string) {
  */
 export function registerFileManagerRoutes(app: FastifyInstance) {
     // 1. 列出目录内容
-    app.get('/api/files/list', { preHandler: checkPermission('file:read') }, async (request, reply) => {
+    app.get('/api/files/list', { preHandler: requireAuth() }, async (request, reply) => {
         const { path: reqPath } = request.query as { path?: string }
 
         if (!reqPath) {
@@ -137,7 +109,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 2. 读取文件内容
-    app.get('/api/files/read', { preHandler: checkPermission('file:read') }, async (request, reply) => {
+    app.get('/api/files/read', { preHandler: requireAuth() }, async (request, reply) => {
         const { path: reqPath } = request.query as { path?: string }
 
         if (!reqPath) {
@@ -182,7 +154,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 3. 写入文件
-    app.post('/api/files/write', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+    app.post('/api/files/write', { preHandler: requireAuth() }, async (request, reply) => {
         const { path: reqPath, content } = request.body as { path?: string; content?: string }
 
         if (!reqPath || content === undefined) {
@@ -218,7 +190,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 4. 创建文件或目录
-    app.post('/api/files/create', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+    app.post('/api/files/create', { preHandler: requireAuth() }, async (request, reply) => {
         const { path: reqPath, type, content = '' } = request.body as {
             path?: string
             type?: 'file' | 'directory'
@@ -255,7 +227,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 5. 删除文件或目录
-    app.delete('/api/files/delete', { preHandler: checkPermission('file:delete') }, async (request, reply) => {
+    app.delete('/api/files/delete', { preHandler: requireAuth() }, async (request, reply) => {
         const { path: reqPath, recursive = false } = request.body as {
             path?: string
             recursive?: boolean
@@ -291,7 +263,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 6. 移动/重命名
-    app.post('/api/files/move', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+    app.post('/api/files/move', { preHandler: requireAuth() }, async (request, reply) => {
         const { from, to } = request.body as { from?: string; to?: string }
 
         if (!from || !to) {
@@ -324,7 +296,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 7. 下载文件
-    app.get('/api/files/download', { preHandler: checkPermission('file:read') }, async (request, reply) => {
+    app.get('/api/files/download', { preHandler: requireAuth() }, async (request, reply) => {
         const { path: reqPath } = request.query as { path?: string }
 
         if (!reqPath) {
@@ -360,10 +332,10 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     })
 
     // 8. 上传文件
-    app.post('/api/files/upload', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+    app.post('/api/files/upload', { preHandler: requireAuth() }, async (request, reply) => {
         try {
-            // @ts-ignore: fastify-multipart types might not be automatically picked up in this context
-            const data = await request.file()
+            const uploadRequest = request as FastifyRequest & { file: () => Promise<{ filename: string; file: AsyncIterable<Buffer> }> }
+            const data = await uploadRequest.file()
 
             if (!data) {
                 return reply.status(400).send({
@@ -390,7 +362,6 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
             // 检查文件大小
             let uploadedSize = 0
 
-            // 写入文件 - 使用 node:fs 的 createWriteStream
             const writeStream = createWriteStream(fullPath)
 
             // 监控上传大小
@@ -400,7 +371,6 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
                 if (uploadedSize > FILE_SIZE_LIMITS.upload) {
                     writeStream.destroy()
                     // 删除部分上传的文件
-                    // 使用 fs/promises 的 unlink
                     await fs.unlink(fullPath).catch(() => { })
 
                     return reply.status(413).send({

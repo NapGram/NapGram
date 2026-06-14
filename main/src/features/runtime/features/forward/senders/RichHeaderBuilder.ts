@@ -1,7 +1,8 @@
 import type { InputText } from '@mtcute/core'
 import { html } from '@mtcute/node'
 import { telegramSend } from '../../../../../shared/utils/index.js'
-import { env, md5Hex } from '../../../shared-types.js'
+import { env } from '../../../capabilities/env.js'
+import { md5Hex } from '../../../capabilities/hashing.js'
 
 /**
  * Rich Header URL generation and formatting

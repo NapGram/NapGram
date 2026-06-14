@@ -8,6 +8,7 @@ export interface NapGramPlugin {
   description?: string
   homepage?: string
   defaultConfig?: any
+  exports?: Record<string, unknown>
   permissions?: PluginPermissions
   install: (ctx: PluginContext, config?: any) => void | Promise<void>
   uninstall?: () => void | Promise<void>

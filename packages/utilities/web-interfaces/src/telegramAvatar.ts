@@ -1,13 +1,12 @@
 import type { FastifyInstance } from 'fastify'
 import type { default as TelegramClient } from '@napgram/telegram-client'
 import fs from 'node:fs'
+import { convert, getLogger } from './web-deps.js'
 import {
   ErrorResponses,
-  convert,
-  getLogger,
-  InstanceRegistry,
   registerDualRoute,
-} from './shared-host.js'
+} from './web-http.js'
+import { createMessageBridgeContext } from './runtime-context.js'
 
 const log = getLogger('telegramAvatar')
 
@@ -25,11 +24,12 @@ async function getUserAvatarPath(tgBot: TelegramClient, userId: string) {
 }
 
 export default async function (fastify: FastifyInstance) {
+  const messageBridgeContext = createMessageBridgeContext(fastify)
   const handler = async (request: any, reply: any) => {
     const { instanceId, userId } = request.params
     log.debug('请求头像', userId)
 
-    const instance = InstanceRegistry.getById(Number(instanceId)) as any
+    const instance = messageBridgeContext.getInstance(Number(instanceId)) as any
     if (!instance) {
       return ErrorResponses.notFound(reply, 'Instance not found')
     }

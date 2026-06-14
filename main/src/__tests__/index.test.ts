@@ -19,6 +19,20 @@ const dbKitMocks = vi.hoisted(() => ({
 }))
 
 const envKitMocks = vi.hoisted(() => ({
+  normalizeUserIdentity: (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, ''),
+  isConfiguredIdentity: (value: unknown) => value !== undefined && value !== null && String(value).trim() !== '',
+  matchesUserIdentity: (userId: string, identity: unknown) => {
+    const normalize = (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, '')
+    return String(userId ?? '') !== '' && normalize(userId) === normalize(identity)
+  },
+  matchesAnyIdentity: (userId: string, identities: unknown[]) => {
+    const normalize = (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, '')
+    return String(userId ?? '') !== '' && identities.some(identity => normalize(userId) === normalize(identity))
+  },
+  getSystemOwners: () => ({
+    qq: undefined,
+    tg: undefined,
+  }),
   env: {
     FORWARD_MODE: '11',
     SHOW_NICKNAME_MODE: '11',
@@ -76,6 +90,7 @@ const interfaceMocks = vi.hoisted(() => {
   return {
     app,
     createServer: vi.fn(() => app),
+    configureRuntimeBridge: vi.fn(),
     registerWebRoutes: vi.fn(),
     startServer: vi.fn().mockResolvedValue(app),
     stopServer: vi.fn().mockResolvedValue(undefined),
@@ -174,7 +189,6 @@ describe('main startup flow', () => {
     await main()
 
     const startOptions = pluginRuntimeMocks.start.mock.calls[0]?.[0]
-    expect(startOptions.defaultInstances).toEqual([1, 2])
     expect(startOptions.webRoutes).toBe(interfaceMocks.registerWebRoutes)
     expect(startOptions.builtins.map((builtin: any) => builtin.id)).toEqual([
       'core-media',

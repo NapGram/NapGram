@@ -43,7 +43,7 @@ export class PluginRuntimeAPI implements IPluginRuntime {
   /**
    * 启动插件系统
    */
-  async start(options?: { defaultInstances?: number[], webRoutes?: PluginWebRouteRegistrar, builtins?: PluginSpec[] }) {
+  async start(options?: { webRoutes?: PluginWebRouteRegistrar, builtins?: PluginSpec[] }) {
     logger.info('Starting plugin runtime')
 
     try {
@@ -98,7 +98,7 @@ export class PluginRuntimeAPI implements IPluginRuntime {
   /**
    * 重载插件系统
    */
-  async reload(_options?: { defaultInstances?: number[] }) {
+  async reload() {
     logger.info('Reloading plugin runtime')
 
     try {

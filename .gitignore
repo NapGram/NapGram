@@ -50,4 +50,5 @@ cloudflare/
 
 # Documentation (moved to wiki)
 docs/
+# NapGram UI source checkout populated in CI from napgram-ui-dist; keep this workspace path ignored here.
 web/

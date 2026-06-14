@@ -1,12 +1,13 @@
 import type { Message } from '@mtcute/core'
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import type { RuntimePluginHandle } from '@napgram/runtime-kit'
-import type { ForwardMap, Instance, IQQClient, Telegram } from '../../shared-types.js'
+import type { ForwardMap, Instance, IQQClient, Telegram } from '../../runtime-types.js'
 import type { Command } from './types.js'
 import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
-import { getEventPublisher, getLogger } from '../../shared-types.js'
+import { getEventPublisher } from '../../capabilities/events.js'
+import { getLogger } from '../../capabilities/logging.js'
 import { buildWorkModePrompt, hasConfiguredWorkMode, isWorkModeCommand, parseWorkMode, WORK_MODE_LABELS, type WorkMode } from '../../work-mode-gate.js'
 import { BindCommandHandler } from './handlers/BindCommandHandler.js'
 import { CommandContext } from './handlers/CommandContext.js'
@@ -121,11 +122,7 @@ function resolvePermissionExports(entry: RuntimePluginHandle | undefined): Permi
     return null
   }
 
-  const context = asRecord(entry.context)
-
-  return toPermissionExports(context?.exports)
-    ?? toPermissionExports(entry.plugin?.exports)
-    ?? toPermissionExports(context)
+  return toPermissionExports(entry.plugin?.exports)
 }
 
 function getCommandPluginContext(entry: RuntimePluginHandle): CommandCapablePluginContext | null {
@@ -148,7 +145,7 @@ export class CommandsFeature {
   private readonly commandContext: CommandContext
   private permissionPlugin: PermissionPluginExports | null = null
 
-  // Command handlers
+  // 命令处理器
   private readonly helpHandler: HelpCommandHandler
   private readonly statusHandler: StatusCommandHandler
   private readonly bindHandler: BindCommandHandler
@@ -167,7 +164,6 @@ export class CommandsFeature {
     this.permissionChecker = new CommandAccessChecker(instance)
     this.stateManager = new InteractiveStateManager()
 
-    // Create command context
     this.commandContext = new CommandContext(
       instance,
       tgBot,
@@ -179,7 +175,6 @@ export class CommandsFeature {
       this.extractThreadId.bind(this),
     )
 
-    // Initialize handlers
     this.helpHandler = new HelpCommandHandler(this.commandContext)
     this.statusHandler = new StatusCommandHandler(this.commandContext)
     this.bindHandler = new BindCommandHandler(this.commandContext)
@@ -193,7 +188,7 @@ export class CommandsFeature {
       logger.error('Failed to register default commands:', err)
     })
 
-    // 尝试获取权限插件（延迟加载，避免循环依赖）
+    // 延迟加载权限插件，避免循环依赖
     this.initializePermissionPlugin().catch((err) => {
       logger.debug('Permission plugin not available:', err)
     })
@@ -210,13 +205,13 @@ export class CommandsFeature {
     await this.registerDefaultCommands()
     // 重新获取权限插件
     await this.initializePermissionPlugin().catch(() => {
-      // Ignore errors
+      // 忽略错误
     })
     logger.info('CommandsFeature commands reloaded')
   }
 
   /**
-   * 初始化权限插件（延迟加载，避免循环依赖）
+   * 延迟加载权限插件
    */
   private async initializePermissionPlugin() {
     try {
@@ -230,7 +225,6 @@ export class CommandsFeature {
       const report = runtime.getLastReport()
       const loadedPlugins = report?.loadedPlugins || []
 
-      // 查找权限管理插件
       const permPlugin = loadedPlugins.find(plugin => plugin.id === 'permission-management')
       let permissionExports = resolvePermissionExports(permPlugin)
 
@@ -244,18 +238,15 @@ export class CommandsFeature {
       }
     }
     catch {
-      // 插件系统不可用，使用降级模式
       logger.debug('Plugin system not available, using fallback permission checker')
     }
   }
 
   /**
-   * 检查用户是否有执行命令的权限
+   * 检查命令权限
    */
   private async checkPermission(userId: string, command: Command): Promise<{ allowed: boolean, reason?: string }> {
-    // 1. 如果权限插件可用，使用新的权限系统
     if (this.permissionPlugin?.permissionService) {
-      // 确定所需权限等级
       const requiredLevel = command.permission?.level ?? (command.adminOnly ? 1 : 3)
       const requireOwner = command.permission?.requireOwner ?? false
 
@@ -273,7 +264,6 @@ export class CommandsFeature {
       }
     }
 
-    // 2. 降级：使用旧的命令访问检查器
     const fallbackLevel = command.permission?.level
     if (command.adminOnly || (fallbackLevel !== undefined && fallbackLevel <= 1)) {
       const isAdmin = this.permissionChecker.isAdmin(userId)
@@ -283,12 +273,11 @@ export class CommandsFeature {
       }
     }
 
-    // 3. 默认：允许执行
     return { allowed: true }
   }
 
   /**
-   * 记录审计日志（如果权限插件可用）
+   * 记录审计日志
    */
   private async logAudit(event: {
     eventType: string
@@ -438,11 +427,7 @@ export class CommandsFeature {
    * 注册默认命令
    */
   private async registerDefaultCommands() {
-    // === 从插件系统加载命令（双轨并行策略） ===
     await this.loadPluginCommands()
-
-    // TODO: 旧版 constants/commands.ts 中有更细分的指令清单（preSetup/group/private 等），后续可按需合并：
-    // setup/login/flags/alive/add/addfriend/addgroup/refresh_all/newinstance/info/q/rm/rmt/rmq/forwardoff/forwardon/disable_qq_forward/enable_qq_forward/disable_tg_forward/enable_tg_forward/refresh/poke/nick/mute 等。
 
     this.registerCommand({
       name: 'start',
@@ -463,33 +448,30 @@ export class CommandsFeature {
       adminOnly: true,
     })
 
-    // 帮助命令
     this.registerCommand({
       name: 'help',
       aliases: ['h', '帮助'],
       description: '显示帮助信息',
-      permission: { level: 3 }, // USER
+      permission: { level: 3 },
       handler: (msg, args) => this.helpHandler.execute(msg, args),
     })
 
-    // 状态命令
     this.registerCommand({
       name: 'status',
       aliases: ['状态'],
       description: '显示机器人状态',
-      permission: { level: 3 }, // USER
+      permission: { level: 3 },
       handler: (msg, args) => this.statusHandler.execute(msg, args),
     })
 
-    // 绑定命令
     this.registerCommand({
       name: 'bind',
       aliases: ['绑定'],
       description: '绑定指定 QQ 群到当前 TG 聊天',
       usage: '/bind <qq_group_id> [thread_id]',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.bindHandler.execute(msg, args),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
@@ -497,9 +479,9 @@ export class CommandsFeature {
       aliases: ['绑定群'],
       description: '绑定指定 QQ 群到当前 TG 聊天',
       usage: '/bindgroup <qq_group_id> [thread_id]',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.bindHandler.execute(msg, args, 'group'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
@@ -507,9 +489,9 @@ export class CommandsFeature {
       aliases: ['绑定好友'],
       description: '绑定指定 QQ 好友到当前 TG 聊天',
       usage: '/bindfriend <qq_user_id> [thread_id]',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.bindHandler.execute(msg, args, 'private'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
@@ -517,7 +499,7 @@ export class CommandsFeature {
       aliases: ['添加好友'],
       description: '为指定 QQ 好友创建 Telegram 群并绑定',
       usage: '/addfriend <qq_user_id>',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.handleAddQQTargetCommand(msg, args, 'private'),
       adminOnly: true,
     })
@@ -527,96 +509,88 @@ export class CommandsFeature {
       aliases: ['添加群'],
       description: '为指定 QQ 群创建 Telegram 群并绑定',
       usage: '/addgroup <qq_group_id>',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.handleAddQQTargetCommand(msg, args, 'group'),
       adminOnly: true,
     })
 
-    // 解绑命令
     this.registerCommand({
       name: 'unbind',
       aliases: ['解绑'],
       description: '解除当前 TG 聊天的绑定',
       usage: '/unbind [group|friend] [qq_id]',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.unbindHandler.execute(msg, args),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
-    // 撤回命令
     this.registerCommand({
       name: 'rm',
       aliases: ['撤回', 'recall'],
       description: '撤回消息',
       usage: '/rm [count]',
-      permission: { level: 2 }, // MODERATOR
+      permission: { level: 2 },
       handler: (msg, args) => this.recallHandler.execute(msg, args),
     })
 
-    // 转发控制命令
     this.registerCommand({
       name: 'forwardoff',
       description: '暂停双向转发',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.forwardControlHandler.execute(msg, args, 'forwardoff'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
       name: 'forwardon',
       description: '恢复双向转发',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.forwardControlHandler.execute(msg, args, 'forwardon'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
       name: 'disable_qq_forward',
       description: '停止 QQ → TG 的转发',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.forwardControlHandler.execute(msg, args, 'disable_qq_forward'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
       name: 'enable_qq_forward',
       description: '恢复 QQ → TG 的转发',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.forwardControlHandler.execute(msg, args, 'enable_qq_forward'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
       name: 'disable_tg_forward',
       description: '停止 TG → QQ 的转发',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.forwardControlHandler.execute(msg, args, 'disable_tg_forward'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
     this.registerCommand({
       name: 'enable_tg_forward',
       description: '恢复 TG → QQ 的转发',
-      permission: { level: 1 }, // ADMIN
+      permission: { level: 1 },
       handler: (msg, args) => this.forwardControlHandler.execute(msg, args, 'enable_tg_forward'),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
-    // Info 命令
     this.registerCommand({
       name: 'info',
       aliases: ['信息'],
       description: '查看本群或选定消息的详情',
-      permission: { level: 2 }, // MODERATOR
+      permission: { level: 2 },
       handler: (msg, args) => this.infoHandler.execute(msg, args),
-      adminOnly: true, // 保持向后兼容
+      adminOnly: true,
     })
 
-    // 群组管理命令由 plugin-group-management 提供
-
-    // ============ Phase 3: QQ交互增强 ============
-    // Note: QQ 交互命令现在完全由 plugin-qq-interaction 提供
-    // 它们只会在插件启用时可用
+    // QQ 交互命令由交互插件提供
 
     logger.debug(`Registered ${this.registry.getUniqueCommandCount()} commands (${this.registry.getAll().size} including aliases)`)
   }
@@ -662,7 +636,6 @@ export class CommandsFeature {
           logger.debug(`Plugin ${pluginInfo.id}: found ${commands.size} command(s)`)
 
           for (const [, config] of commands) {
-            // 将插件命令注册到 CommandsFeature
             this.registerCommand({
               name: config.name,
               aliases: config.aliases,
@@ -677,7 +650,6 @@ export class CommandsFeature {
                   return
                 }
 
-                // 将 UnifiedMessage 转换为 MessageEvent
                 const event = this.convertToMessageEvent(msg, context.logger)
                 await config.handler(event, args)
               },
@@ -721,7 +693,6 @@ export class CommandsFeature {
    * 将 UnifiedMessage 转换为 MessageEvent（用于插件命令处理）
    */
   private convertToMessageEvent(msg: UnifiedMessage, pluginLogger?: any) {
-    // 捕获 commandContext 供闭包使用
     const commandContext = this.commandContext
     const eventLogger = pluginLogger || logger
     const segmentsToText = (segments: any[]): string => {
@@ -778,7 +749,6 @@ export class CommandsFeature {
         ...msg.metadata?.raw,
         rawReply: msg.metadata?.rawReply,
       },
-      // 便捷方法（使用 CommandContext 的方法）
       reply: async (content: string | any[]) => {
         if (msg.platform === 'telegram') {
           const chatId = msg.chat.id
@@ -792,7 +762,7 @@ export class CommandsFeature {
         return { messageId: `qq:${msg.id}`, timestamp: Date.now() }
       },
       send: async (content: string | any[]) => {
-        // send 与 reply 相同（暂时没有独立的 send API）
+        // 发送与回复一致（暂时没有独立发送接口）
         if (msg.platform === 'telegram') {
           const chatId = msg.chat.id
           const threadId = commandContext.extractThreadId(msg, [])
@@ -805,10 +775,9 @@ export class CommandsFeature {
         return { messageId: `qq:${msg.id}`, timestamp: Date.now() }
       },
       recall: async () => {
-        // recall 功能暂不实现
+        // 撤回功能暂不实现
         throw new Error('recall() not yet implemented')
       },
-      // API 访问
       qq: this.qqClient,
       tg: this.tgBot,
       instance: this.instance,
@@ -1095,7 +1064,7 @@ export class CommandsFeature {
       let commandName = parts[0]
       const shiftArgs = 0
 
-      // Scenario 1: /cmd@bot
+      // 场景 1：/cmd@bot
       if (commandName.includes('@')) {
         const [cmd, targetBot] = commandName.split('@')
 
@@ -1106,21 +1075,21 @@ export class CommandsFeature {
         }
         commandName = cmd
       }
-      // Scenario 2: /cmd ... @bot (check ALL arguments for @mentions)
+      // 场景 2：/cmd ... @bot（检查所有参数中的 @ 提及）
       else {
-        // Find any @mention in the arguments (skip parts[0] which is the command)
+        // 查找参数里的 @ 提及（跳过命令本身）
         const botMentionIndex = parts.findIndex((part, idx) => idx > 0 && part.startsWith('@'))
 
         if (botMentionIndex > 0) {
           const targetBot = parts[botMentionIndex].slice(1)
 
           if (myUsername && targetBot.toLowerCase() !== myUsername) {
-            // Addressed to another bot, ignore this command
+            // 发给别的 bot，忽略
             logger.debug(`Ignored command for other bot at position ${botMentionIndex}: ${targetBot}`)
             return false
           }
           else if (myUsername && targetBot.toLowerCase() === myUsername) {
-            // Addressed to me explicitly, remove the @mention from args
+            // 明确发给我，移除 @ 提及
             parts.splice(botMentionIndex, 1)
           }
         }

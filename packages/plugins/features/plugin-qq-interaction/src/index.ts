@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { sendPoke, handleNick, sendLike, getGroupHonor } from './helpers/qq-helpers.js';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'qq-interaction',
     name: 'QQ Interaction Plugin',
     version: '1.0.0',
@@ -74,6 +75,6 @@ const plugin: NapGramPlugin = {
     uninstall: async () => {
         // 清理工作（如果需要）
     },
-};
+});
 
 export default plugin;

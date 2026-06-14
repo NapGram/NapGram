@@ -1,4 +1,5 @@
-import type { NapGramPlugin, PluginContext, MessageEvent, QQClientAPI, ReplySegment } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext, MessageEvent, QQClientAPI, ReplySegment } from '@napgram/sdk';
 
 const DEFAULT_BAN_DURATION = 30 * 60;
 const MAX_BAN_DURATION = 30 * 86400;
@@ -148,7 +149,7 @@ const canManageUser = async (qqClient: QQClientAPI, groupId: string, operatorId:
     return { canManage: false, reason: '权限不足：无法管理群主或其他管理员' };
 };
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'group-management',
     name: 'Group Management',
     version: '1.0.0',
@@ -622,6 +623,6 @@ const plugin: NapGramPlugin = {
     },
 
     uninstall: async () => {},
-};
+});
 
 export default plugin;

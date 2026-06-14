@@ -7,6 +7,7 @@
 import type { NapGramPlugin } from './interfaces.js'
 import type { PluginContextImpl } from './plugin-context.js'
 import { getLogger } from '@napgram/logger-kit'
+import { deactivatePluginWebRoutes } from '@napgram/runtime-kit'
 
 const logger = getLogger('PluginLifecycle')
 
@@ -100,6 +101,7 @@ export class PluginLifecycleManager {
       return { success: true, duration }
     }
     catch (error) {
+      deactivatePluginWebRoutes(instance.id)
       instance.state = PluginState.Error
       instance.error = error as Error
 
@@ -159,6 +161,9 @@ export class PluginLifecycleManager {
       logger.error({ error, id: instance.id, duration }, 'Plugin uninstallation failed')
 
       return { success: false, error: error as Error, duration }
+    }
+    finally {
+      deactivatePluginWebRoutes(instance.id)
     }
   }
 

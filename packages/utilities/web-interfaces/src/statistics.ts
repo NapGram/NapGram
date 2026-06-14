@@ -1,10 +1,13 @@
 import type { FastifyInstance } from 'fastify'
 import { authMiddleware } from '@napgram/auth-kit'
-import { and, count, db, desc, eq, getGlobalRuntime, gte, InstanceRegistry, lte, or, schema, sql } from './shared-host.js'
+import { and, count, db, desc, eq, gte, lte, or, schema, sql } from './web-deps.js'
+import { createAdminQueryContext } from './runtime-context.js'
+
 /**
  * 统计分析 API
  */
 export default async function (fastify: FastifyInstance) {
+  const adminContext = createAdminQueryContext(fastify)
   /**
    * GET /api/admin/statistics/overview
    * 获取系统概览统计
@@ -38,7 +41,6 @@ export default async function (fastify: FastifyInstance) {
       safeCount(schema.message, gte(schema.message.time, startOfToday)),
     ])
 
-    // Basic health check
     const health = {
       db: true,
       instances: { total: 0, online: 0, details: [] as Array<{ id: number, tg: boolean, qq: boolean }> },
@@ -53,17 +55,17 @@ export default async function (fastify: FastifyInstance) {
     }
 
     try {
-      const runtimeReport = getGlobalRuntime().getLastReport()
+      const runtimeReport = adminContext.getRuntimeReport()
       health.plugins.enabled = Boolean(runtimeReport?.enabled)
       health.plugins.loaded = Array.isArray(runtimeReport?.loaded) ? runtimeReport.loaded.length : 0
       health.plugins.failed = Array.isArray(runtimeReport?.failed) ? runtimeReport.failed.length : 0
     }
     catch {
-      // ignore
+      // 忽略
     }
 
     try {
-      const instances = InstanceRegistry.getAll()
+      const instances = adminContext.listInstances()
       health.instances.total = instances.length
       for (const inst of instances) {
         const tgOk = Boolean((inst as any).tgBot?.isOnline)
@@ -80,26 +82,14 @@ export default async function (fastify: FastifyInstance) {
       }
     }
     catch {
-      // ignore
+      // 忽略
     }
 
-    const status
-      = !health.db
-        ? 'unhealthy'
-        : (health.plugins.failed > 0
-          ? 'degraded'
-          : (health.instances.total > 0 && health.instances.online < health.instances.total ? 'degraded' : 'healthy'))
-
-    // Strict DB health check for status field
-    let dbStatus = 'healthy';
-    try {
-      await db.execute(sql`SELECT 1`);
-    } catch {
-      dbStatus = 'unhealthy';
-    }
-    // If db is unhealthy, overall status must be unhealthy
-    const finalStatus = dbStatus === 'unhealthy' ? 'unhealthy' : status;
-
+    const status = !health.db
+      ? 'unhealthy'
+      : (health.plugins.failed > 0
+        ? 'degraded'
+        : (health.instances.total > 0 && health.instances.online < health.instances.total ? 'degraded' : 'healthy'))
 
     return {
       success: true,
@@ -109,7 +99,7 @@ export default async function (fastify: FastifyInstance) {
         messageCount,
         todayMessageCount,
         avgMessagesPerDay: messageCount > 0 ? Math.round(messageCount / 30) : 0,
-        status: finalStatus,
+        status,
         health,
       },
     }

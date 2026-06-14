@@ -1,8 +1,8 @@
-import type { ForwardMap, Instance, IQQClient } from '../../../shared-types.js'
+import type { ForwardMap, Instance, IQQClient } from '../../../runtime-types.js'
 import type { TypedForwardPair } from '../../commands/utils/ForwardPairChatType.js'
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
-import { getLogger } from '../../../shared-types.js'
+import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('PersonalSyncService')
 

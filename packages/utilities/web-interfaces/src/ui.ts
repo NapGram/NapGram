@@ -3,7 +3,8 @@ import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { env, ErrorResponses, getMimeType } from './shared-host.js'
+import { env } from './web-deps.js'
+import { ErrorResponses, getMimeType } from './web-http.js'
 
 export default async function (fastify: FastifyInstance) {
   if (env.UI_PROXY) {
@@ -21,7 +22,7 @@ export default async function (fastify: FastifyInstance) {
           body: request.body ? JSON.stringify(request.body) : undefined,
         }
 
-        // Remove host header to avoid conflicts
+        // 去掉主机头，避免冲突
         if (fetchOptions.headers) {
           delete (fetchOptions.headers as any).host
         }
@@ -30,12 +31,12 @@ export default async function (fastify: FastifyInstance) {
 
         reply.code(response.status)
 
-        // Copy headers
+        // 复制响应头
         response.headers.forEach((value, key) => {
           reply.header(key, value)
         })
 
-        // Return body as stream
+        // 直接返回响应体
         return Buffer.from(await response.arrayBuffer())
       }
       catch (err) {
@@ -45,7 +46,7 @@ export default async function (fastify: FastifyInstance) {
     })
   }
   else if (env.UI_PATH) {
-    // Serve assets (dynamic, so dev rebuild doesn't require server restart)
+    // 提供静态资源
     const assetsPath = path.join(env.UI_PATH, 'assets')
     fastify.get('/assets/*', async (req: any, reply: any) => {
       const name = String((req.params as any)['*'] || '')
@@ -69,7 +70,7 @@ export default async function (fastify: FastifyInstance) {
       return fs.createReadStream(filePath)
     })
 
-    // Serve vite.svg
+    // 提供站点图标
     fastify.get('/vite.svg', async (req: any, reply: any) => {
       const possiblePaths = [
         path.join(env.UI_PATH!, 'vite.svg'),
@@ -86,7 +87,7 @@ export default async function (fastify: FastifyInstance) {
       return ErrorResponses.notFound(reply)
     })
 
-    // Fallback for SPA (must be last)
+    // 单页应用回退
     fastify.get('/*', async (req: any, reply: any) => {
       reply.header('cache-control', 'no-store')
       reply.header('content-type', 'text/html')

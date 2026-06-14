@@ -1,13 +1,7 @@
 name: Deploy UI to Cloudflare Pages
 
 on:
-  push:
-    branches:
-      - feature/admin-interface
-      - main
-    paths:
-      - 'web/**'
-  workflow_dispatch: # 允许手动触发
+  workflow_dispatch: # 手动从外部 UI 源码仓库拉取并发布
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,27 +13,67 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    env:
+      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
 
     steps:
-      - name: Checkout repository
+      - name: Resolve UI checkout token
+        id: ui-token
+        env:
+          UI_SRC_TOKEN: ${{ secrets.UI_SRC_TOKEN }}
+          SUBMODULE_TOKEN: ${{ secrets.SUBMODULE_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+          GITHUB_TOKEN_FALLBACK: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          ref="refs/heads/dev"
+
+          for token in "$UI_SRC_TOKEN" "$SUBMODULE_TOKEN" "$GH_PAT" "$GH_PACKAGES_TOKEN" "$GITHUB_TOKEN_FALLBACK"; do
+            if [ -z "${token:-}" ]; then
+              continue
+            fi
+            echo "::add-mask::$token"
+            if git ls-remote --exit-code "https://x-access-token:${token}@github.com/magisk317/napgram-ui-dist.git" "$ref" >/dev/null 2>&1; then
+              echo "token=$token" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+
+          echo "No usable token found for magisk317/napgram-ui-dist" >&2
+          exit 1
+
+      - name: Checkout napgram-ui-dist source
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0 # 需要完整历史记录用于subtree
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
+          repository: magisk317/napgram-ui-dist
+          ref: dev
+          token: ${{ steps.ui-token.outputs.token }}
+          path: web
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '26'
+
       - name: Enable corepack
         run: corepack enable
-      
+
+      - name: Configure npm auth for GitHub Packages
+        run: |
+          cat <<'EOF' >> ~/.npmrc
+          @napgram:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
+          EOF
+
       - name: Get pnpm store directory
         id: pnpm-cache
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-      
+
       - name: Setup pnpm cache
         uses: actions/cache@v5
         with:
@@ -47,12 +81,12 @@ jobs:
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
-      
-      - name: Install dependencies
+
+      - name: Install UI dependencies
         run: |
           cd web
           pnpm install --no-frozen-lockfile --ignore-workspace
-      
+
       - name: Build UI
         run: |
           cd web
@@ -61,13 +95,12 @@ jobs:
           NODE_ENV: production
           VITE_API_ORIGIN: ${{ secrets.VITE_API_ORIGIN }}
 
-      # 直接上传 dist 到 Cloudflare Pages，跳过 CF 的自带构建
       - name: Publish to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          projectName: ${{ secrets.CF_PAGES_PROJECT }} # e.g. napgram-ui-dist
+          projectName: ${{ secrets.CF_PAGES_PROJECT }}
           directory: ./web/dist
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
         env:
@@ -75,4 +108,4 @@ jobs:
 
       - name: Deploy summary
         run: |
-          echo "✅ UI built locally and uploaded to Cloudflare Pages (direct upload)"
+          echo "✅ UI built from the external repo and uploaded to Cloudflare Pages"

@@ -1,5 +1,5 @@
 import type { ForwardMode, NicknameMode } from '../types.js'
-import { env } from '../../../shared-types.js'
+import { env } from '../../../capabilities/env.js'
 
 /**
  * 转发模式管理服务

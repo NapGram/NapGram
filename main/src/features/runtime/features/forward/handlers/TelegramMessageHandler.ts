@@ -1,10 +1,11 @@
 import type { Message } from '@mtcute/core'
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { IQQClient } from '../../../shared-types.js'
+import type { IQQClient } from '../../../runtime-types.js'
 import type { ReplyResolver } from '../services/ReplyResolver.js'
 import type { MediaGroupHandler } from './MediaGroupHandler.js'
 import { messageConverter } from '@napgram/message-kit'
-import { getLogger, performanceMonitor } from '../../../shared-types.js'
+import { getLogger } from '../../../capabilities/logging.js'
+import { performanceMonitor } from '../../../capabilities/observability.js'
 import { ForwardMapper } from '../services/MessageMapper.js'
 
 const logger = getLogger('ForwardFeature')

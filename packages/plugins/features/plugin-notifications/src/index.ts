@@ -1,13 +1,39 @@
-import type { NapGramPlugin, NoticeEvent, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { NoticeEvent, PluginContext } from '@napgram/sdk';
+import type { AdminIdentityValue } from '@napgram/env-kit';
+
+const DEFAULT_COOLDOWN_MS = 1000 * 60 * 60;
 
 type NotificationsConfig = {
     enabled?: boolean;
-    adminQQ?: number | string;
-    adminTG?: number | string;
+    systemOwners?: {
+        qq?: AdminIdentityValue;
+        tg?: AdminIdentityValue;
+    };
+    adminQQ?: AdminIdentityValue;
+    adminTG?: AdminIdentityValue;
     cooldownMs?: number;
 };
 
-const plugin: NapGramPlugin = {
+function normalizeCooldownMs(value?: number): number {
+    return typeof value === 'number' && Number.isFinite(value) && value > 0
+        ? value
+        : DEFAULT_COOLDOWN_MS;
+}
+
+function buildBackoffIntervals(cooldownMs: number): number[] {
+    return [
+        0,
+        Math.round(cooldownMs / 60),
+        Math.round(cooldownMs / 30),
+        Math.round(cooldownMs / 12),
+        Math.round(cooldownMs / 6),
+        Math.round(cooldownMs / 2),
+        cooldownMs,
+    ];
+}
+
+const plugin = definePlugin({
     id: 'notifications',
     name: 'Notifications',
     version: '1.0.0',
@@ -21,24 +47,20 @@ const plugin: NapGramPlugin = {
             return;
         }
 
-        const adminQQ = normalizeId(config?.adminQQ);
-        const adminTG = normalizeId(config?.adminTG);
+        const systemOwners = config?.systemOwners ?? {
+            qq: config?.adminQQ,
+            tg: config?.adminTG,
+        };
+        const adminQQ = normalizeId(systemOwners.qq);
+        const adminTG = normalizeId(systemOwners.tg);
+        const cooldownMs = normalizeCooldownMs(config?.cooldownMs);
 
-        // Backoff configuration
-        const BACKOFF_INTERVALS = [
-            0,              // 1st: Immediate
-            1000 * 60 * 1,  // 2nd: 1 min
-            1000 * 60 * 2,  // 3rd: 2 mins
-            1000 * 60 * 5,  // 4th: 5 mins
-            1000 * 60 * 10, // 5th: 10 mins
-            1000 * 60 * 30, // 6th: 30 mins
-            1000 * 60 * 60, // 7th: 60 mins
-        ];
-        const RESET_THRESHOLD = 1000 * 60 * 60 * 2; // Reset after 2 hours of stability
+        const BACKOFF_INTERVALS = buildBackoffIntervals(cooldownMs);
+        const RESET_THRESHOLD = cooldownMs * 2;
 
         let backoffLevel = 0;
         let lastNotifyTime = 0;
-        let isNotifiedDown = false; // Tracks if the current outage has been notified
+        let isNotifiedDown = false;
 
         if (!adminQQ && !adminTG) {
             ctx.logger.warn('Notifications disabled: no admin targets configured');
@@ -52,9 +74,7 @@ const plugin: NapGramPlugin = {
 
             const now = Date.now();
 
-            // Logic for Connection Lost
             if (event.noticeType === 'connection-lost') {
-                // Check if we should reset backoff due to long stability
                 if (now - lastNotifyTime > RESET_THRESHOLD) {
                     backoffLevel = 0;
                 }
@@ -63,23 +83,20 @@ const plugin: NapGramPlugin = {
 
                 if (now - lastNotifyTime < requiredWait) {
                     ctx.logger.debug(`Notification suppressed (Backoff: Level ${backoffLevel}, Wait ${requiredWait}ms)`);
-                    isNotifiedDown = false; // Suppress this outage
+                    isNotifiedDown = false;
                     return;
                 }
 
-                // Allowed to notify
                 backoffLevel++;
                 lastNotifyTime = now;
                 isNotifiedDown = true;
             }
 
-            // Logic for Connection Restored
             if (event.noticeType === 'connection-restored') {
                 if (!isNotifiedDown) {
                     ctx.logger.debug('Restored notification suppressed because loss was silent');
                     return;
                 }
-                // If loss was notified, we notify recovery and clear the "Down" flag
                 isNotifiedDown = false;
             }
 
@@ -97,9 +114,9 @@ const plugin: NapGramPlugin = {
 
         ctx.logger.info('Notifications plugin installed');
     },
-};
+});
 
-function normalizeId(input?: number | string): string | undefined {
+function normalizeId(input?: AdminIdentityValue): string | undefined {
     if (input === undefined || input === null) {
         return undefined;
     }
