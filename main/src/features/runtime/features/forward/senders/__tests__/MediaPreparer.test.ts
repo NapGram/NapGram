@@ -1,9 +1,9 @@
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { env } from '@napgram/env-kit'
 import { silk } from '@napgram/media-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ForwardMediaPreparer } from '../MediaPreparer.js'
 
 vi.mock('@napgram/media-kit', () => ({

@@ -2,9 +2,9 @@ import { Buffer } from 'node:buffer'
 import { execFile } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { env } from '@napgram/env-kit'
 import { silk } from '@napgram/media-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ForwardMediaPreparer } from '../MediaPreparer.js'
 
 vi.mock('node:child_process', () => ({

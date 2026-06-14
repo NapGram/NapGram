@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import type { Flagged } from '../flagControl'
 import fc from 'fast-check'
-import { editFlags, Flagged } from '../flagControl'
+import { describe, expect, it } from 'vitest'
+import { editFlags } from '../flagControl'
 
 describe('flagControl', () => {
   describe('displayFlag (via editFlags with empty params)', () => {
@@ -257,10 +258,10 @@ describe('flagControl', () => {
  * **Validates: Requirements 7.3**
  */
 describe('flagControl — Property-Based Tests', () => {
-  it('Property 4: adding then removing a flag restores the original value', async () => {
+  it('property 4: adding then removing a flag restores the original value', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.integer({ min: 0, max: 0x7fffffff }),
+        fc.integer({ min: 0, max: 0x7FFFFFFF }),
         fc.integer({ min: 0, max: 30 }),
         async (initialFlags, bitPosition) => {
           const bit = 1 << bitPosition

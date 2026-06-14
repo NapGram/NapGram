@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
+import * as performanceMonitorModule from '@napgram/infra-kit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MessageQueue } from '../MessageQueue'
-import * as performanceMonitorModule from '../PerformanceMonitor'
 
 describe('messageQueue', () => {
   let mockHandler: any

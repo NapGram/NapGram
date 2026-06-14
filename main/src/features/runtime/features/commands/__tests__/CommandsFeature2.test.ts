@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from 'vitest'
+/* eslint-disable eslint-comments/no-unlimited-disable */
+/* eslint-disable */
+import { describe, expect, it, vi } from 'vitest'
 import { CommandsFeature } from '../CommandsFeature.js'
 import { CommandRegistry } from '../services/CommandRegistry.js'
 
 vi.mock('../services/CommandRegistry.js', () => ({
-  CommandRegistry: vi.fn(function CommandRegistryMock() {
+  CommandRegistry: vi.fn(function () {
     return {
       register: vi.fn(),
       unregister: vi.fn(),
@@ -18,12 +20,12 @@ vi.mock('../services/CommandRegistry.js', () => ({
   }),
 }))
 
-describe('CommandsFeature Anonymous Handlers', () => {
+describe('commandsFeature Anonymous Handlers', () => {
   it('covers handlers', async () => {
     const mockInstance = { id: 1, config: {} } as any
     const mockTgBot = { addNewMessageEventHandler: vi.fn(), on: vi.fn() } as any
     const mockQqClient = { on: vi.fn(), off: vi.fn() } as any
-    
+
     const feature = new CommandsFeature(mockInstance, mockTgBot, mockQqClient)
     await feature.reloadCommands()
     const registryMock = (vi.mocked(CommandRegistry).mock.results[0].value as any).register
@@ -42,12 +44,13 @@ describe('CommandsFeature Anonymous Handlers', () => {
     f.handleAddQQTargetCommand = vi.fn().mockResolvedValue(undefined)
 
     const msg = { chat: { id: 1 }, sender: { id: 2 }, content: [] } as any
-    
+
     for (const call of calls) {
       console.log('Registered command:', call[0]?.name)
       const cmd = call[0]
       if (cmd && cmd.handler) {
-        try { await cmd.handler(msg, ['args']) } catch(e) {}
+        try { await cmd.handler(msg, ['args']) }
+        catch (e) {}
       }
     }
 

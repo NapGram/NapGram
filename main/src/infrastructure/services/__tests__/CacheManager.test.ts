@@ -1,6 +1,6 @@
+import * as performanceMonitorModule from '@napgram/infra-kit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CacheManager } from '../CacheManager'
-import * as performanceMonitorModule from '../PerformanceMonitor'
 
 describe('cacheManager', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { CommandContext } from '../CommandContext.js'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@napgram/db-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecallCommandHandler } from '../RecallCommandHandler.js'
 
 vi.mock('@napgram/db-kit', async (importOriginal) => {

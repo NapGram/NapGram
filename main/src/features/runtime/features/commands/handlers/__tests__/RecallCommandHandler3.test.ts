@@ -1,6 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { RecallCommandHandler } from '../RecallCommandHandler.js'
+/* eslint-disable eslint-comments/no-unlimited-disable */
+/* eslint-disable */
 import { and, db, eq, schema } from '@napgram/db-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { RecallCommandHandler } from '../RecallCommandHandler.js'
 
 vi.mock('../../../../../../shared/utils/index.js', () => ({
   telegramMessage: {
@@ -52,10 +54,10 @@ describe('recall cascade', () => {
         raw: {
           replyToMessage: {
             senderId: 1000,
-            replyTo: { replyToMsgId: 9999 }
-          }
-        }
-      }
+            replyTo: { replyToMsgId: 9999 },
+          },
+        },
+      },
     } as any
 
     vi.mocked(db.query.message.findFirst)

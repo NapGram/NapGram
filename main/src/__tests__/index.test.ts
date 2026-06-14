@@ -121,7 +121,7 @@ vi.mock('../interfaces', () => interfaceMocks)
 vi.mock('../domain/models/Instance', () => ({
   default: instanceMocks,
 }))
-vi.mock('../infrastructure/services/PerformanceMonitor', () => performanceMonitorMocks)
+vi.mock('@napgram/infra-kit', () => performanceMonitorMocks)
 vi.mock('../shared/utils/random', () => randomMocks)
 
 function createInstance(id: number) {
@@ -202,6 +202,31 @@ describe('main startup flow', () => {
     expect(process.exit).not.toHaveBeenCalled()
   })
 
+  it('handles SIGINT and SIGTERM gracefully', async () => {
+    // Mock successful start so it doesn't shutdown with 'all-instances-failed'
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }])
+    instanceMocks.start.mockResolvedValueOnce(createInstance(1))
+
+    const { main } = await import('../index')
+    await main()
+
+    const sigint = listeners.get('SIGINT')
+    const sigterm = listeners.get('SIGTERM')
+    expect(sigint).toBeDefined()
+    expect(sigterm).toBeDefined()
+
+    // Trigger SIGINT
+    sigint?.()
+
+    // Process multiple ticks to resolve shutdown promises
+    await new Promise(resolve => setImmediate(resolve))
+
+    // Trigger SIGTERM (should early return)
+    sigterm?.()
+
+    expect(loggerMocks.info).toHaveBeenCalledWith(expect.objectContaining({ reason: 'SIGINT' }), 'Shutting down NapGram')
+  })
+
   it('keeps the app running when some instances fail to start', async () => {
     const instance = createInstance(1)
     dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }, { id: 2 }])
@@ -261,5 +286,61 @@ describe('main startup flow', () => {
     expect(instance.stop).toHaveBeenCalled()
     expect(sentryNodeMocks.flush).toHaveBeenCalledWith(3_000)
     expect(process.exit).toHaveBeenCalledWith(0)
+  })
+
+  it('generates a random ADMIN_TOKEN if not provided', async () => {
+    delete process.env.ADMIN_TOKEN
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([])
+
+    const { main } = await import('../index')
+    await main()
+
+    expect(process.env.ADMIN_TOKEN).toBe('generated-admin-token')
+    expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('ADMIN_TOKEN auto-generated for this session'))
+  })
+
+  it('handles error objects with string message', async () => {
+    const { handleFatalStartupError } = await import('../index')
+    handleFatalStartupError({ message: 'some error message' })
+    expect(loggerMocks.error).toHaveBeenCalledWith(expect.objectContaining({ error: { message: 'some error message' } }), 'Fatal startup error')
+  })
+})
+
+describe('initInfra', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('sentry event processor filters transient errors', async () => {
+    const { initInfra } = await import('../bootstrap')
+    await initInfra(loggerMocks as any)
+    const processor = sentryNodeMocks.addEventProcessor.mock.calls[0][0]
+
+    expect(processor({ message: 'ConnectionError: 连接超时' })).toBeNull()
+
+    const event = { message: 'Normal error', exception: { values: [{ type: 'TypeError', value: 'foo' }] } }
+    expect(processor(event)).toBe(event)
+  })
+})
+
+describe('handleFatalStartupError directly', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('handles fatal startup errors', async () => {
+    const { handleFatalStartupError } = await import('../bootstrap')
+    await handleFatalStartupError(new Error('fatal error'))
+
+    expect(loggerMocks.error).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(Error) }), 'Fatal startup error')
+    expect(interfaceMocks.stopServer).toHaveBeenCalled()
+    expect(pluginRuntimeMocks.stop).toHaveBeenCalled()
+    expect(sentryNodeMocks.flush).toHaveBeenCalledWith(3_000)
+    expect(process.exit).toHaveBeenCalledWith(1)
   })
 })

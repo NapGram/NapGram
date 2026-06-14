@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { db } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TelegramSender } from '../TelegramSender.js'
 
 vi.mock('@napgram/db-kit', async importOriginal => ({
@@ -341,6 +341,36 @@ describe('telegramSender', () => {
     // Error is logged and swallowed in sendToTelegram loop, but sendMediaToTG returns null
   })
 
+  it('handles image source failure', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'image', data: { file: 'bad.jpg' } }],
+    }
+    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.jpg')
+    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    expect(mockChat.client.sendMedia).not.toHaveBeenCalled()
+  })
+
+  it('handles empty header in sendMediaToTG gracefully', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const content: any = { type: 'audio', data: { file: 'aud.amr' } }
+
+    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('aud'), fileName: 'aud.ogg' })
+    vi.spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: Buffer.from('voice') })
+    vi.spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: '   ', params: {} }) // empty text
+
+    await (sender as any).sendMediaToTG(mockChat, 'header_present_but_returns_empty', content)
+
+    // Media sent, but caption is empty, sendMessage is not called in sendMediaToTG for header
+    expect(mockChat.client.sendMedia).toHaveBeenCalled()
+    const callArgs = mockChat.client.sendMedia.mock.calls[0][1]
+    expect(callArgs.caption).toBeUndefined()
+  })
+
   it('handles audio source failure', async () => {
     const sender = new TelegramSender(mockInstance)
     const msg: any = {
@@ -514,5 +544,39 @@ describe('telegramSender', () => {
 
     // Default type renders as text
     expect(mockChat.sendMessage).toHaveBeenCalled()
+  })
+
+  it('preserves lastSent when sendMediaGroup returns null', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'text', data: { text: 'initial' } },
+        { type: 'image', data: { file: Buffer.from('img') } },
+        { type: 'video', data: { file: Buffer.from('vid') } },
+      ],
+    }
+    mockChat.sendMessage.mockResolvedValueOnce({ id: 'text-msg' })
+    const sendMediaGroupSpy = vi.spyOn((sender as any).mediaSender, 'sendMediaGroup').mockResolvedValue(null)
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+
+    expect(sendMediaGroupSpy).toHaveBeenCalled()
+    expect(mockChat.sendMessage).toHaveBeenCalled()
+  })
+
+  it('handles error when sending file placeholder fails', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const content: any = { type: 'file', data: { file: 'missing', filename: 'report.txt' } }
+    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('missing')
+    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+
+    // Mock chat.sendMessage to fail
+    mockChat.sendMessage.mockRejectedValueOnce(new Error('Placeholder failed'))
+
+    const result = await (sender as any).sendMediaToTG(mockChat, '', content)
+
+    expect(mockChat.sendMessage).toHaveBeenCalledWith('[文件不可用] report.txt', expect.any(Object))
+    expect(result).toBeNull()
   })
 })

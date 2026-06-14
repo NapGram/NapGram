@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { CommandsFeature } from '../CommandsFeature.js'
 
 vi.mock('@napgram/message-kit', async () => {
@@ -7,7 +7,7 @@ vi.mock('@napgram/message-kit', async () => {
     ...actual,
     messageConverter: {
       fromTelegram: vi.fn().mockReturnValue({ id: '1', content: [] }),
-    }
+    },
   }
 })
 
@@ -15,11 +15,11 @@ vi.mock('../../../../../shared/utils/index.js', async () => {
   const actual = await vi.importActual<any>('../../../../../shared/utils/index.js')
   return {
     ...actual,
-    getLogger: vi.fn().mockReturnValue({ info: vi.fn(), warn: vi.fn(), error: console.error, debug: vi.fn() })
+    getLogger: vi.fn().mockReturnValue({ info: vi.fn(), warn: vi.fn(), error: console.error, debug: vi.fn() }),
   }
 })
 
-describe('CommandsFeature additional coverage', () => {
+describe('commandsFeature additional coverage', () => {
   it('tests handleAddQQTargetCommand', async () => {
     const mockInstance = { id: 1, config: {} } as any
     const mockTgBot = { on: vi.fn(), addNewMessageEventHandler: vi.fn() } as any
@@ -51,7 +51,7 @@ describe('CommandsFeature additional coverage', () => {
     vi.spyOn(feature as any, 'getPersonalPairProvisioner').mockReturnValue(mockProvisioner)
     await (feature as any).handleAddQQTargetCommand({} as any, ['12345'], 'group')
     expect((feature as any).replyWorkModeMessage).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('TG: 999'))
-    
+
     // Test failure
     mockProvisioner.ensurePairForQQTarget.mockResolvedValue(undefined)
     await (feature as any).handleAddQQTargetCommand({} as any, ['12345'], 'group')
@@ -63,7 +63,7 @@ describe('CommandsFeature additional coverage', () => {
     const mockTgBot = { on: vi.fn(), addNewMessageEventHandler: vi.fn() } as any
     const mockQqClient = { on: vi.fn(), off: vi.fn(), recallMessage: vi.fn() } as any
     const feature = new CommandsFeature(mockInstance, mockTgBot, mockQqClient)
-    
+
     // Register command
     const mockHandler = vi.fn().mockResolvedValue(undefined)
     feature.registerCommand({ name: 'cmd', description: 'test command', handler: mockHandler })
@@ -73,7 +73,7 @@ describe('CommandsFeature additional coverage', () => {
       id: '1',
       chat: { id: 'c1' },
       sender: { id: 's1', name: 'user' },
-      content: [{ type: 'text', data: { text: '/cmd arg1' } }]
+      content: [{ type: 'text', data: { text: '/cmd arg1' } }],
     } as any
 
     vi.spyOn(feature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(false)
@@ -86,7 +86,7 @@ describe('CommandsFeature additional coverage', () => {
     // No permission
     vi.spyOn(feature as any, 'checkPermission').mockResolvedValue({ allowed: false, reason: 'no' })
     await (feature as any).handleQqMessage(msg)
-    
+
     // rm command recall
     feature.registerCommand({ name: 'rm', description: 'recall message', handler: vi.fn() })
     msg = { ...msg, content: [{ type: 'text', data: { text: '/rm' } }] }
@@ -97,7 +97,7 @@ describe('CommandsFeature additional coverage', () => {
 
   it('tests workmode and registerDefaultCommands', async () => {
     const feature = new CommandsFeature({ id: 1, config: {} } as any, { on: vi.fn(), addNewMessageEventHandler: vi.fn() } as any, { on: vi.fn(), off: vi.fn() } as any)
-    
+
     // test isWorkModeConfigured
     expect((feature as any).isWorkModeConfigured()).toBe(false)
     ;(feature as any).instance.workMode = 'group'
@@ -122,7 +122,7 @@ describe('CommandsFeature additional coverage', () => {
     const msg = { chat: { id: 1 }, sender: { id: 1 }, platform: 'telegram' } as any
     vi.spyOn(feature as any, 'replyWorkModeMessage').mockResolvedValue(undefined)
     ;(feature as any).instance.setWorkMode = vi.fn().mockResolvedValue(undefined)
-    
+
     await (feature as any).handleWorkModeCommand(msg, [])
     expect((feature as any).replyWorkModeMessage).toHaveBeenCalledWith(msg, expect.stringContaining('/start group'))
 

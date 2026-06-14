@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventBus } from '../../core/event-bus.js'
 import { PluginLifecycleManager } from '../../core/lifecycle.js'
 import { PluginLoader } from '../../core/plugin-loader.js'
-import { getGlobalRuntime, PluginRuntime, resetGlobalRuntime } from '../../core/plugin-runtime.js'
+import { getGlobalRuntime, PluginRuntimeEngine, resetGlobalRuntime } from '../../core/plugin-runtime.js'
 
 // Mock plugin for testing
 const mockPlugin = {
@@ -14,11 +14,11 @@ const mockPlugin = {
 }
 
 describe('pluginRuntime Core', () => {
-  let pluginRuntime: PluginRuntime
+  let pluginRuntime: PluginRuntimeEngine
 
   beforeEach(() => {
     resetGlobalRuntime()
-    pluginRuntime = new PluginRuntime()
+    pluginRuntime = new PluginRuntimeEngine()
   })
 
   afterEach(() => {
@@ -26,7 +26,7 @@ describe('pluginRuntime Core', () => {
   })
 
   it('should initialize with default config', () => {
-    expect(pluginRuntime).toBeInstanceOf(PluginRuntime)
+    expect(pluginRuntime).toBeInstanceOf(PluginRuntimeEngine)
     expect(pluginRuntime.isActive()).toBe(false)
   })
 
@@ -44,14 +44,14 @@ describe('pluginRuntime Core', () => {
       native: { getInstance: vi.fn(), getInstances: vi.fn() },
     }
 
-    const customRuntime = new PluginRuntime({
+    const customRuntime = new PluginRuntimeEngine({
       eventBus,
       loader,
       lifecycleManager,
       apis,
     })
 
-    expect(customRuntime).toBeInstanceOf(PluginRuntime)
+    expect(customRuntime).toBeInstanceOf(PluginRuntimeEngine)
   })
 
   it('should start and stop runtime correctly', async () => {
@@ -81,7 +81,7 @@ describe('pluginRuntime Core', () => {
     })
 
     // Test start
-    const report: RuntimeReport = await pluginRuntime.start(specs)
+    const report: RuntimeReport = await pluginRuntime.start({ specs })
     expect(report).toBeDefined()
     expect(report.enabled).toBe(true)
     expect(pluginRuntime.isActive()).toBe(true)
@@ -121,8 +121,8 @@ describe('pluginRuntime Core', () => {
       failed: [],
     })
 
-    const firstReport = await pluginRuntime.start(specs)
-    const secondReport = await pluginRuntime.start(specs)
+    const firstReport = await pluginRuntime.start({ specs })
+    const secondReport = await pluginRuntime.start({ specs })
 
     expect(secondReport).toBe(firstReport)
     expect(loadSpy).toHaveBeenCalledTimes(1)
@@ -142,7 +142,7 @@ describe('pluginRuntime Core', () => {
       failed: [],
     })
 
-    const report = await pluginRuntime.start(specs)
+    const report = await pluginRuntime.start({ specs })
 
     expect(loadSpy).not.toHaveBeenCalled()
     expect(report.loaded).toHaveLength(0)
@@ -161,7 +161,7 @@ describe('pluginRuntime Core', () => {
       failed: [],
     })
 
-    const report = await pluginRuntime.start(specs)
+    const report = await pluginRuntime.start({ specs })
 
     expect(loadSpy).not.toHaveBeenCalled()
     expect(report.loaded).toHaveLength(0)
@@ -182,7 +182,7 @@ describe('pluginRuntime Core', () => {
 
     vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockRejectedValue(new Error('install failed'))
 
-    await expect(pluginRuntime.start(specs)).rejects.toThrow('install failed')
+    await expect(pluginRuntime.start({ specs })).rejects.toThrow('install failed')
   })
 
   it('should handle plugin loading failure gracefully', async () => {
@@ -218,7 +218,7 @@ describe('pluginRuntime Core', () => {
       failed: [],
     })
 
-    const report: RuntimeReport = await pluginRuntime.start(specs)
+    const report: RuntimeReport = await pluginRuntime.start({ specs })
     expect(report.loaded.length).toBe(1)
     expect(report.failed.length).toBe(1)
     expect(report.failed[0].id).toBe('failing-plugin')
@@ -249,10 +249,10 @@ describe('pluginRuntime Core', () => {
     })
 
     // Start and then reload
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
     expect(pluginRuntime.isActive()).toBe(true)
 
-    const reloadReport = await pluginRuntime.reload(specs)
+    const reloadReport = await pluginRuntime.reload({ specs })
     expect(reloadReport).toBeDefined()
     expect(pluginRuntime.isActive()).toBe(true)
   })
@@ -281,7 +281,7 @@ describe('pluginRuntime Core', () => {
     })
 
     // Start runtime first
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
     // Test reloadPlugin
     const result = await pluginRuntime.reloadPlugin('test-plugin', { newConfig: true })
@@ -311,9 +311,9 @@ describe('pluginRuntime Core', () => {
       error: new Error('Reload failed'),
     })
 
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
-    const result = await pluginRuntime.reloadPlugin('test-plugin')
+    const result = await pluginRuntime.reloadPlugin('test-plugin', {})
     expect(result).toEqual({ id: 'test-plugin', success: false, error: 'Reload failed' })
   })
 
@@ -339,9 +339,9 @@ describe('pluginRuntime Core', () => {
       success: false,
     })
 
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
-    const result = await pluginRuntime.reloadPlugin('test-plugin')
+    const result = await pluginRuntime.reloadPlugin('test-plugin', {})
     expect(result).toEqual({ id: 'test-plugin', success: false, error: 'Unknown error' })
   })
 
@@ -374,10 +374,10 @@ describe('pluginRuntime Core', () => {
     })
 
     // Start runtime (but don't actually store the plugin)
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
     // Try to reload a non-existent plugin
-    const result = await pluginRuntime.reloadPlugin('non-existent-plugin')
+    const result = await pluginRuntime.reloadPlugin('non-existent-plugin', {})
     expect(result).toEqual({
       id: 'non-existent-plugin',
       success: false,
@@ -405,7 +405,7 @@ describe('pluginRuntime Core', () => {
     })
 
     // Start runtime
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
     // Check that plugin is registered
     const pluginInstance = pluginRuntime.getPlugin('test-plugin')
@@ -453,7 +453,7 @@ describe('pluginRuntime Core', () => {
 
     vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstallAll').mockRejectedValue(new Error('stop failed'))
 
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
     await expect(pluginRuntime.stop()).rejects.toThrow('stop failed')
   })
@@ -480,7 +480,7 @@ describe('pluginRuntime Core', () => {
     vi.spyOn((pluginRuntime as any).lifecycleManager, 'uninstall').mockResolvedValue(undefined)
 
     // Start runtime
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
 
     // Check plugin exists
     expect(pluginRuntime.getPlugin('test-plugin')).toBeDefined()
@@ -513,7 +513,7 @@ describe('pluginRuntime Core', () => {
       failed: [],
     })
 
-    const report = await pluginRuntime.start(specs)
+    const report = await pluginRuntime.start({ specs })
     expect(report.failed[0].error).toContain('Plugin id is required')
   })
 
@@ -543,7 +543,7 @@ describe('pluginRuntime Core', () => {
       failed: [],
     })
 
-    const report = await pluginRuntime.start(specs)
+    const report = await pluginRuntime.start({ specs })
     expect(report.failed[0].error).toContain('already loaded')
   })
 
@@ -572,7 +572,7 @@ describe('pluginRuntime Core', () => {
     }
     pluginRuntime.setApis(newApis)
 
-    // This is a bit tricky to test since setApis is a private method in PluginRuntime
+    // This is a bit tricky to test since setApis is a private method in PluginRuntimeEngine
     // But it should at least not throw
     expect(() => pluginRuntime.setApis(newApis)).not.toThrow()
   })
@@ -592,7 +592,7 @@ describe('pluginRuntime Core', () => {
 
     vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
 
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
     const instance = pluginRuntime.getPlugin('spec-id')
     expect(instance?.plugin.id).toBe('spec-id')
   })
@@ -608,7 +608,7 @@ describe('pluginRuntime Core', () => {
     vi.spyOn((pluginRuntime as any).loader, 'load').mockRejectedValue('string error')
     vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
 
-    const report = await pluginRuntime.start(specs)
+    const report = await pluginRuntime.start({ specs })
     expect(report.failed[0].error).toBe('string error')
   })
 
@@ -627,7 +627,7 @@ describe('pluginRuntime Core', () => {
 
     vi.spyOn((pluginRuntime as any).lifecycleManager, 'installAll').mockResolvedValue({ succeeded: [], failed: [] })
 
-    await pluginRuntime.start(specs)
+    await pluginRuntime.start({ specs })
     const instance = pluginRuntime.getPlugin('no-config-plugin')
     expect(instance?.config).toEqual({})
   })

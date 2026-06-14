@@ -183,19 +183,19 @@ describe('web interfaces', () => {
   it('startServer propagates listen errors', async () => {
     const { createServer, startServer, stopServer } = await import('../index')
     const app = createServer()
-    try {
-      await startServer(app)
-    }
-    catch (e: any) {
-      // Port binding may be restricted in sandboxed test runs.
-      if (e.code === 'EADDRINUSE' || e.code === 'EPERM') {
-        expect(['EADDRINUSE', 'EPERM']).toContain(e.code)
-        return
-      }
-      throw e
-    }
-    // If first start succeeded, second should fail
-    await expect(startServer(app)).rejects.toThrow()
+    vi.spyOn(app, 'listen').mockRejectedValueOnce(new Error('Mock listen error'))
+
+    await expect(startServer(app)).rejects.toThrow('Mock listen error')
+    expect(logger.error).toHaveBeenCalledWith('Failed to start web server:', expect.any(Error))
     await stopServer()
+  })
+
+  it('stopServer handles unknown close error', async () => {
+    const { createServer, stopServer } = await import('../index')
+    const app = createServer()
+    // app is currently assigned to 'server' internally since createServer assigns it
+    vi.spyOn(app, 'close').mockRejectedValueOnce(Object.assign(new Error('Unknown close error'), { code: 'UNKNOWN_CODE' }))
+
+    await expect(stopServer()).rejects.toThrow('Unknown close error')
   })
 })
