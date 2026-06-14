@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authMiddleware } from '@napgram/auth-kit'
-import { and, ApiResponse, count, db, desc, eq, getLogger, groupInfoCache, InstanceRegistry, or, schema } from './shared-host.js'
+import { groupInfoCache } from './web-cache.js'
+import { and, ApiResponse, count, db, desc, eq, getLogger, or, schema } from './web-deps.js'
+import { createInstanceRuntimeContext } from './runtime-context.js'
 
 const log = getLogger('PairsApi')
-const getInstanceById = (instanceId: number) => InstanceRegistry.getById(instanceId) as any
 type QqChatType = 'private' | 'group'
 
 function normalizeQqChatType(value: unknown): QqChatType {
@@ -19,6 +20,7 @@ function getQqChatLabel(type: QqChatType) {
  * 配对管理 API
  */
 export default async function (fastify: FastifyInstance) {
+  const runtimeContext = createInstanceRuntimeContext(fastify)
   const bigIntId = z.preprocess((v) => {
     if (typeof v === 'bigint')
       return v
@@ -143,11 +145,55 @@ export default async function (fastify: FastifyInstance) {
   })
 
   const refreshInstanceForwardMap = async (instanceId: number) => {
-    const inst = getInstanceById(instanceId)
-    const map = inst?.forwardPairs as any
-    if (map && typeof map.reload === 'function') {
-      await map.reload()
-      log.info({ instanceId }, 'forward map reloaded')
+    await runtimeContext.reloadForwardMap(instanceId)
+    log.info({ instanceId }, 'forward map reloaded')
+  }
+
+  const resolveQqName = async (qqChatType: QqChatType, instanceId: number, qqRoomId: string) => {
+    const cacheKey = `qqname:${qqChatType}:${instanceId}:${qqRoomId}`
+    const cached = groupInfoCache.get(cacheKey)
+    if (cached)
+      return cached as string
+
+    const instance = runtimeContext.getInstance(instanceId)
+    if (!instance?.qqClient)
+      return null
+    try {
+      const id = qqChatType === 'group' && qqRoomId.startsWith('-') ? qqRoomId.slice(1) : qqRoomId
+      const info = qqChatType === 'private'
+        ? await instance.qqClient.getFriendInfo(id)
+        : await instance.qqClient.getGroupInfo(id)
+      const name = info?.name || info?.nickname || info?.remark || null
+      if (name)
+        groupInfoCache.set(cacheKey, name)
+      return name
+    }
+    catch (e) {
+      log.debug(e, 'Failed to resolve QQ chat name')
+      return null
+    }
+  }
+
+  const resolveTgChatName = async (instanceId: number, tgChatId: string) => {
+    const cacheKey = `tgname:${instanceId}:${tgChatId}`
+    const cached = groupInfoCache.get(cacheKey)
+    if (cached)
+      return cached as string
+
+    const instance = runtimeContext.getInstance(instanceId)
+    const chatIdNum = Number(tgChatId)
+    if (!instance?.tgBot || Number.isNaN(chatIdNum))
+      return null
+    try {
+      const chat = await instance.tgBot.getChat(chatIdNum)
+      const name = (chat.chat as any)?.title || null
+      if (name)
+        groupInfoCache.set(cacheKey, name)
+      return name
+    }
+    catch (e) {
+      log.debug(e, 'Failed to resolve TG chat name')
+      return null
     }
   }
 
@@ -544,7 +590,7 @@ export default async function (fastify: FastifyInstance) {
     if (!options.notifyTelegram && !options.notifyQQ)
       return
 
-    const instance = getInstanceById(pair.instanceId)
+    const instance = runtimeContext.getInstance(pair.instanceId)
     if (!instance) {
       log.warn({ instanceId: pair.instanceId }, 'Instance not available for pair notification')
       return
@@ -660,7 +706,7 @@ export default async function (fastify: FastifyInstance) {
   }, async (request, reply) => {
     try {
       const body = provisionSchema.parse(request.body)
-      const instance = getInstanceById(body.instanceId)
+      const instance = runtimeContext.getInstance(body.instanceId)
       if (!instance) {
         return reply.code(404).send({
           success: false,
@@ -676,7 +722,7 @@ export default async function (fastify: FastifyInstance) {
         })
       }
 
-      // We need a dummy UnifiedMessage to pass to ensurePairForQQMessage
+      // 这里需要一个虚拟 UnifiedMessage
       const dummyMsg: any = {
         id: `manual-provision-${Date.now()}`,
         platform: 'qq',
@@ -721,52 +767,4 @@ export default async function (fastify: FastifyInstance) {
       })
     }
   })
-}
-
-async function resolveQqName(qqChatType: QqChatType, instanceId: number, qqRoomId: string) {
-  const cacheKey = `qqname:${qqChatType}:${instanceId}:${qqRoomId}`
-  const cached = groupInfoCache.get(cacheKey)
-  if (cached)
-    return cached as string
-
-  const instance = getInstanceById(instanceId)
-  if (!instance?.qqClient)
-    return null
-  try {
-    const id = qqChatType === 'group' && qqRoomId.startsWith('-') ? qqRoomId.slice(1) : qqRoomId
-    const info = qqChatType === 'private'
-      ? await instance.qqClient.getFriendInfo(id)
-      : await instance.qqClient.getGroupInfo(id)
-    const name = info?.name || info?.nickname || info?.remark || null
-    if (name)
-      groupInfoCache.set(cacheKey, name)
-    return name
-  }
-  catch (e) {
-    log.debug(e, 'Failed to resolve QQ chat name')
-    return null
-  }
-}
-
-async function resolveTgChatName(instanceId: number, tgChatId: string) {
-  const cacheKey = `tgname:${instanceId}:${tgChatId}`
-  const cached = groupInfoCache.get(cacheKey)
-  if (cached)
-    return cached as string
-
-  const instance = getInstanceById(instanceId)
-  const chatIdNum = Number(tgChatId)
-  if (!instance?.tgBot || Number.isNaN(chatIdNum))
-    return null
-  try {
-    const chat = await instance.tgBot.getChat(chatIdNum)
-    const name = (chat.chat as any)?.title || null
-    if (name)
-      groupInfoCache.set(cacheKey, name)
-    return name
-  }
-  catch (e) {
-    log.debug(e, 'Failed to resolve TG chat name')
-    return null
-  }
 }

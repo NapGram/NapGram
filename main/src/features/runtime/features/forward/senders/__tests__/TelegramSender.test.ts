@@ -1,9 +1,10 @@
 import { Buffer } from 'node:buffer'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db, env } from '../../../../shared-types.js'
+import { db } from '@napgram/db-kit'
+import { env } from '@napgram/env-kit'
 import { TelegramSender } from '../TelegramSender.js'
 
-vi.mock('../../../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/db-kit', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
     insert: vi.fn(() => ({
@@ -15,6 +16,10 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
   schema: {
     forwardMultiple: { id: 'id' },
   },
+}))
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -22,8 +27,13 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     CACHE_DIR: '/tmp/cache',
     WEB_ENDPOINT: 'http://napgram-dev:8080',
   },
-  hashing: { md5Hex: vi.fn((value: string) => value) },
-  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  flags: {
+    DISABLE_RICH_HEADER: 1,
+  },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -31,14 +41,6 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     error: vi.fn(),
     trace: vi.fn(),
   })),
-  configureInfraKit: vi.fn(),
-  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
-  flags: {
-    DISABLE_RICH_HEADER: 1, // Mock value
-    // Add other flags if needed by tests, but TelegramSender usually accesses specific flags.
-    // If it's an enum in code, we might need to match the enum values or object structure.
-    // Since original was enum, referencing flags.DISABLE_RICH_HEADER works if mocked as object.
-  },
 }))
 
 describe('telegramSender', () => {

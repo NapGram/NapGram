@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
 import { authMiddleware } from '@napgram/auth-kit'
-import { env } from './shared-host.js'
+import { env } from './web-deps.js'
 
 /**
  * 系统配置 API

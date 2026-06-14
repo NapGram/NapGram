@@ -1,12 +1,12 @@
 import type { FastifyInstance } from 'fastify'
+import { authMiddleware } from '@napgram/auth-kit'
 import {
   configCache,
   groupInfoCache,
   mediaCache,
-  performanceMonitor,
   userInfoCache,
-} from './shared-host.js'
-import { authMiddleware } from '@napgram/auth-kit'
+} from './web-cache.js'
+import { performanceMonitor } from './web-deps.js'
 
 /**
  * 监控和统计 API

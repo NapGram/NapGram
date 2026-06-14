@@ -3,7 +3,9 @@ import { execFile } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 import { promisify } from 'node:util'
-import { env, getLogger, silk } from '../../../shared-types.js'
+import { env } from '../../../capabilities/env.js'
+import { getLogger } from '../../../capabilities/logging.js'
+import { silk } from '../../../capabilities/media.js'
 
 const execFileAsync = promisify(execFile)
 

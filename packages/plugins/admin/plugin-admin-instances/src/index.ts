@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { instancesRoutes } from '@napgram/web-interfaces';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'admin-instances',
     name: 'Admin Instances API',
     version: '1.0.0',
@@ -14,6 +15,6 @@ const plugin: NapGramPlugin = {
             app.register(instancesRoutes);
         });
     },
-};
+});
 
 export default plugin;

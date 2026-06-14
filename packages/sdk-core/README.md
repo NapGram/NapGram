@@ -11,25 +11,25 @@ pnpm add @napgram/sdk-core
 ## Usage
 
 ```typescript
+import { definePlugin } from '@napgram/sdk';
 import type {
-  NapGramPlugin,
   PluginContext,
   MessageEvent,
   MessageAPI,
   // ... more types
 } from '@napgram/sdk-core';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
   id: 'my-plugin',
   name: 'My Plugin',
   version: '1.0.0',
-  
-  async install(ctx: PluginContext) {
+
+  install(ctx: PluginContext) {
     ctx.on('message', async (event: MessageEvent) => {
       await event.reply('Hello!');
     });
   }
-};
+});
 
 export default plugin;
 ```
@@ -39,6 +39,7 @@ export default plugin;
 ### Plugin
 
 - `NapGramPlugin` - Plugin definition
+- `PluginContext` - Plugin runtime context
 - `PluginSpec` - Plugin specification
 - `PluginPermissions` - Permission system
 

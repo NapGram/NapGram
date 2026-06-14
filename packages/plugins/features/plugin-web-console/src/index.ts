@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { uiRoutes } from '@napgram/web-interfaces';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'web-console',
     name: 'Web Console',
     version: '1.0.0',
@@ -14,6 +15,6 @@ const plugin: NapGramPlugin = {
             app.register(uiRoutes);
         });
     },
-};
+});
 
 export default plugin;

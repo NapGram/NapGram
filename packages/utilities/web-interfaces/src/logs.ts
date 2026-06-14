@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import { authMiddleware } from '@napgram/auth-kit'
-import { env } from './shared-host.js'
+import { env } from './web-deps.js'
 
 /**
  * 系统日志 API
@@ -21,7 +21,7 @@ export default async function (fastify: FastifyInstance) {
     try {
       const logDir = path.dirname(env.LOG_FILE)
 
-      // 获取当前日期的日志文件
+      // 当前日期的日志文件
       const dateFormatter = new Intl.DateTimeFormat('sv-SE', {
         timeZone: process.env.TZ || 'Asia/Shanghai',
         year: 'numeric',
@@ -32,7 +32,7 @@ export default async function (fastify: FastifyInstance) {
       const todayLogFile = path.join(logDir, `${currentDate}.1.log`)
       const todayJsonlFile = path.join(logDir, `${currentDate}.1.jsonl`)
 
-      // 尝试读取今天和昨天的日志文件
+      // 先读今天和昨天的日志文件
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
       const yesterdayDate = dateFormatter.format(yesterday)
@@ -54,7 +54,7 @@ export default async function (fastify: FastifyInstance) {
           const content = await fs.readFile(logFile, 'utf-8')
           const lines = content.split('\n').filter(line => line.trim())
 
-          // Parse JSON log entries
+      // 解析结构化日志
           for (const line of lines) {
             try {
               const entry = JSON.parse(line)
@@ -66,26 +66,26 @@ export default async function (fastify: FastifyInstance) {
               })
             }
             catch {
-              // Skip invalid JSON lines
+              // 跳过无效行
             }
           }
 
-          // If we got enough logs from today, break
+          // 当天日志够了就停
           if (allLogs.length >= limit * 2)
             break
         }
         catch {
-          // File doesn't exist or can't be read, try next
+          // 文件不存在或不可读，继续下一个
           continue
         }
       }
 
-      // Filter by level if specified
+      // 按级别过滤
       if (level) {
         allLogs = allLogs.filter(log => log.level.toLowerCase() === level.toLowerCase())
       }
 
-      // Sort by time descending and limit
+      // 按时间倒序并截断
       allLogs.sort((a, b) => b.time.localeCompare(a.time))
       const logs = allLogs.slice(0, limit)
 
@@ -98,7 +98,7 @@ export default async function (fastify: FastifyInstance) {
     }
     catch (err: any) {
       fastify.log.error(err, 'Failed to read log file')
-      // 返回系统启动日志作为fallback
+      // 回退到启动提示
       return {
         success: true,
         data: [{

@@ -1,8 +1,8 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../shared-types.js'
+import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../runtime-types.js'
 import type { QqChatType, TypedForwardPair } from '../../commands/utils/ForwardPairChatType.js'
 import process from 'node:process'
-import { getLogger } from '../../../shared-types.js'
+import { getLogger } from '../../../capabilities/logging.js'
 import { addForwardPairWithChatType, findPairByQQWithChatType } from '../../commands/utils/ForwardPairChatType.js'
 
 interface ProvisionedQQInfo {

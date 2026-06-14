@@ -1,4 +1,5 @@
-import type { NapGramPlugin, PluginContext, MessageEvent } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext, MessageEvent } from '@napgram/sdk';
 
 type FlagsByInstance = Record<string, Record<string, boolean>>;
 
@@ -27,7 +28,7 @@ const applyInstanceFlags = (event: MessageEvent, flags: Record<string, boolean>)
     instance._flagsStore = new Map(Object.entries(flags));
 };
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'flags',
     name: 'Flags Plugin',
     version: '1.0.0',
@@ -147,6 +148,6 @@ const plugin: NapGramPlugin = {
 
     uninstall: async () => {
     },
-};
+});
 
 export default plugin;

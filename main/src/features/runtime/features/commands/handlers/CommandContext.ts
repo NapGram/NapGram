@@ -1,10 +1,11 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../shared-types.js'
+import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../runtime-types.js'
 import type { CommandRegistry } from '../services/CommandRegistry.js'
 import type { InteractiveStateManager } from '../services/InteractiveStateManager.js'
 import type { CommandAccessChecker } from '../services/CommandAccessChecker.js'
 import type { QqChatType } from '../utils/ForwardPairChatType.js'
-import { env, getLogger } from '../../../shared-types.js'
+import { env } from '../../../capabilities/env.js'
+import { getLogger } from '../../../capabilities/logging.js'
 import { findPairByQQWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage, qqChatTypeToMessageChatType } from '../utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandContext')

@@ -258,6 +258,7 @@ export class PluginRuntime implements IPluginRuntime {
           description: inst.plugin.description,
           homepage: inst.plugin.homepage,
           defaultConfig: inst.plugin.defaultConfig,
+          exports: inst.plugin.exports,
         },
       }))
 

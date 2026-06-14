@@ -102,9 +102,12 @@ psql $DATABASE_URL
 
 ```typescript
 import type { PermissionLevel, PermissionService } from '@napgram/plugin-permission-management'
+import { getGlobalRuntime } from '@napgram/plugin-kit'
 
 // 获取权限服务
-const permissionService = ctx.getPlugin('permission-management').permissionService
+const permissionService = getGlobalRuntime()
+  .getPlugin('permission-management')
+  ?.plugin.exports?.permissionService
 
 // 检查用户权限等级
 const level = await permissionService.getPermissionLevel('tg:u:123456')

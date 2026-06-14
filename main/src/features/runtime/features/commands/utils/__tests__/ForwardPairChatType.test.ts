@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { db } from '../../../../shared-types.js'
+import { db } from '@napgram/db-kit'
 import {
   addForwardPairWithChatType,
   findPairByQQWithChatType,
@@ -31,12 +31,16 @@ const queryResult = vi.hoisted(() => (
   fields: [],
 }))
 
-vi.mock('../../../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/db-kit', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
     execute: vi.fn().mockResolvedValue(queryResult([], 1)),
   },
   sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => loggerMocks),
 }))
 

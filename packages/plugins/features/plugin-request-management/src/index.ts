@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext, MessageEvent } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext, MessageEvent } from '@napgram/sdk';
 import { db, schema, eq, and, desc, gte, sql } from '@napgram/request-kit';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'request-management',
     name: 'Request Management',
     version: '1.0.0',
@@ -489,6 +490,6 @@ const plugin: NapGramPlugin = {
     },
 
     uninstall: async () => {},
-};
+});
 
 export default plugin;

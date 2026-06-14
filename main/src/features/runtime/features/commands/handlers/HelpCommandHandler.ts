@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { CommandContext } from './CommandContext.js'
-import { getLogger } from '../../../shared-types.js'
+import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('HelpCommandHandler')
 

@@ -16,7 +16,7 @@ function createMessage(): UnifiedMessage {
   }
 }
 
-vi.mock('../../../../shared-types', async (importOriginal) => {
+vi.mock('@napgram/plugin-kit', async (importOriginal) => {
   const actual = await importOriginal<any>()
   return {
     ...actual,

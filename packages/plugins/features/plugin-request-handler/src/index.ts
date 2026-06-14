@@ -1,10 +1,11 @@
-import type { FriendRequestEvent, GroupRequestEvent, InstanceInfo, InstanceStatusEvent, NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { FriendRequestEvent, GroupRequestEvent, InstanceInfo, InstanceStatusEvent, PluginContext } from '@napgram/sdk';
 import { db, schema, eq, RequestAutomationService } from '@napgram/request-kit';
 import type { RequestActionGateway } from '@napgram/request-kit';
 
 const automationServices = new Map<number, RequestAutomationService>();
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'request-handler',
     name: 'Request Handler',
     version: '1.0.0',
@@ -206,6 +207,6 @@ const plugin: NapGramPlugin = {
         }
         automationServices.clear();
     },
-};
+});
 
 export default plugin;

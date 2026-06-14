@@ -1,7 +1,8 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardMap, ForwardPairRecord } from '../../../shared-types.js'
+import type { ForwardMap, ForwardPairRecord } from '../../../runtime-types.js'
 import { randomUUID } from 'node:crypto'
-import { db, getLogger, sql } from '../../../shared-types.js'
+import { db, sql } from '../../../capabilities/db.js'
+import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('ForwardPairChatType')
 

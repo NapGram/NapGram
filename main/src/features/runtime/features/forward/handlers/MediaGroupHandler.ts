@@ -1,8 +1,8 @@
 import type { Message } from '@mtcute/core'
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { IQQClient } from '../../../shared-types.js'
+import type { IQQClient } from '../../../runtime-types.js'
 import { messageConverter } from '@napgram/message-kit'
-import { getLogger } from '../../../shared-types.js'
+import { getLogger } from '../../../capabilities/logging.js'
 import { ForwardMapper } from '../services/MessageMapper.js'
 
 const logger = getLogger('MediaGroupHandler')

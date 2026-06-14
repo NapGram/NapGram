@@ -1,5 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { IQQClient } from '../../../../shared-types.js'
+import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HelpCommandHandler } from '../HelpCommandHandler.js'

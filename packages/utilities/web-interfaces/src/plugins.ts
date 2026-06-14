@@ -4,11 +4,7 @@ import path from 'node:path'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
-import {
-  ApiResponse,
-  env,
-  getLogger,
-} from './shared-host.js'
+import { ApiResponse, env, getLogger } from './web-deps.js'
 import {
   normalizeModuleSpecifierForPluginsConfig,
   patchPluginConfig,
@@ -113,18 +109,18 @@ async function loadPluginDefaultConfig(rootDir: string): Promise<any | null> {
 }
 
 /**
- * Infer tags and categories from plugin ID and keywords
+ * 从插件 ID 和关键字推断标签与分类
  */
 function inferPluginMetadata(pluginId: string, keywords?: string[]): { tags: string[], categories: string[] } {
   const tags = new Set<string>()
   const categories = new Set<string>()
 
-  // Use keywords as tags
+  // 关键字直接作为标签
   if (keywords) {
     keywords.forEach(k => tags.add(k))
   }
 
-  // Infer from plugin ID patterns
+  // 从插件 ID 规则推断分类
   const id = pluginId.toLowerCase()
 
   if (id.includes('admin')) {
@@ -168,7 +164,7 @@ function inferPluginMetadata(pluginId: string, keywords?: string[]): { tags: str
     tags.add('database')
   }
 
-  // Default category if none matched
+  // 没有命中时归到其他
   if (categories.size === 0) {
     categories.add('其他')
   }
@@ -199,7 +195,7 @@ async function extractPluginCommands(rootDir: string): Promise<Array<{ name: str
         return meta.commands
     }
     catch {
-      // Ignore parse errors
+      // 忽略解析错误
     }
   }
 
@@ -207,7 +203,7 @@ async function extractPluginCommands(rootDir: string): Promise<Array<{ name: str
 }
 
 /**
- * Extract dependencies from package.json
+ * 从 package.json 提取依赖
  */
 function extractPluginDependencies(dependencies?: Record<string, string>): Array<{ name: string, type: 'required' | 'optional' }> {
   if (!dependencies)
@@ -222,7 +218,7 @@ function extractPluginDependencies(dependencies?: Record<string, string>): Array
 }
 
 /**
- * Load plugin config schema
+ * 读取插件配置 Schema
  */
 async function loadPluginConfigSchema(rootDir: string): Promise<any | null> {
   const candidates = [
@@ -238,7 +234,7 @@ async function loadPluginConfigSchema(rootDir: string): Promise<any | null> {
       return JSON.parse(raw)
     }
     catch {
-      // Ignore parse errors
+      // 忽略解析错误
     }
   }
 
@@ -273,17 +269,9 @@ export default async function (fastify: FastifyInstance) {
     await authMiddleware(request, reply)
   }
 
-  const reloadSchema = z.object({
-    instances: z.array(z.number().int()).optional(),
-  })
-
   fastify.post('/api/admin/plugins/reload', { preHandler: requirePluginAdmin }, async (request, reply) => {
     try {
-      const body = reloadSchema.safeParse(request.body ?? {})
-      if (!body.success) {
-        return reply.code(400).send({ success: false, error: 'Invalid request', details: body.error.issues })
-      }
-      const result = await PluginRuntime.reload({ defaultInstances: body.data.instances })
+      const result = await PluginRuntime.reload()
       return ApiResponse.success(sanitizeRuntimeReport(result))
     }
     catch (error: any) {
@@ -297,6 +285,16 @@ export default async function (fastify: FastifyInstance) {
       if (!pluginId)
         return reply.code(400).send(ApiResponse.error('Missing plugin id'))
       const result = await PluginRuntime.reloadPlugin(pluginId)
+      if (!result.success) {
+        const message = result.error || 'Plugin reload failed'
+        const normalized = message.toLowerCase()
+        const status = normalized.includes('not found')
+          ? 404
+          : normalized.includes('not running')
+            ? 409
+            : 500
+        return reply.code(status).send(ApiResponse.error(message))
+      }
       return ApiResponse.success(sanitizeRuntimeReport(result))
     }
     catch (error: any) {
@@ -306,7 +304,7 @@ export default async function (fastify: FastifyInstance) {
 
   fastify.get('/api/admin/plugins/status', { preHandler: requirePluginAdmin }, async () => {
     const report = PluginRuntime.getLastReport()
-    // Avoid circular structures (plugin context can include DB schema objects)
+    // 避免循环结构（插件上下文可能包含 DB schema 对象）
     const safeReport = {
       enabled: report.enabled,
       loaded: report.loaded,
@@ -384,7 +382,7 @@ export default async function (fastify: FastifyInstance) {
       const name = runtimeMeta?.name || pkgMeta?.name
       const homepage = runtimeMeta?.homepage || pkgMeta?.homepage
 
-      // Extract extended metadata
+      // 提取扩展元数据
       const { tags, categories } = inferPluginMetadata(p.id, pkgMeta?.keywords)
       const commands = rootDir ? await extractPluginCommands(rootDir) : []
       const dependencies = extractPluginDependencies(pkgMeta?.dependencies)
@@ -646,7 +644,7 @@ export default async function (fastify: FastifyInstance) {
               })
             }
             catch {
-              // ignore
+              // 忽略
             }
           }
           if (out.length >= max * 4)

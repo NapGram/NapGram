@@ -120,7 +120,7 @@ jobs:
           echo "No usable token found for magisk317/napgram-ui-dist" >&2
           exit 1
 
-      - name: Checkout UI source
+      - name: Checkout napgram-ui-dist source
         uses: actions/checkout@v6
         with:
           repository: magisk317/napgram-ui-dist
@@ -143,21 +143,20 @@ jobs:
           //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
           EOF
 
-      - name: Install dependencies
-        # CI 默认会启用 frozen-lockfile；但这里会用私有 UI 仓库覆盖 ./web，
-        # 可能导致根目录 pnpm-lock.yaml 与 ./web/package.json 不一致，从而安装失败。
-        # 优先冻结安装，失败后再允许更新 lockfile。
+      - name: Install root dependencies
+        # 根仓库负责后端和工作区依赖；UI 源码由 napgram-ui-dist checkout 到 ./web，
+        # 因此 root lockfile 与 web lockfile 是两套独立输入。
         run: |
           pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
-      - name: Build web dist
+      - name: Build external UI dist
         run: |
           if [ -d web/dist ] && [ -n "$(ls -A web/dist 2>/dev/null)" ]; then
             echo "web/dist already present, skip build"
             exit 0
           fi
-          # --ignore-scripts: skip postinstall (esbuild etc.) to avoid pnpm v11
-          # ERR_PNPM_IGNORED_BUILDS; vite fetches the platform binary on demand.
+          # --ignore-scripts: skip postinstall (esbuild etc.) in the napgram-ui-dist repo;
+          # vite fetches the platform binary on demand.
           pnpm -C web install --frozen-lockfile --ignore-scripts || pnpm -C web install --no-frozen-lockfile --ignore-scripts
           pnpm -C web run build
 
@@ -330,7 +329,7 @@ jobs:
           echo "No usable token found for magisk317/napgram-ui-dist" >&2
           exit 1
 
-      - name: Checkout UI source (private)
+      - name: Checkout napgram-ui-dist source
         uses: actions/checkout@v6
         with:
           repository: magisk317/napgram-ui-dist
@@ -353,21 +352,20 @@ jobs:
           //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
           EOF
 
-      - name: Install dependencies
-        # CI 默认会启用 frozen-lockfile；但这里会用私有 UI 仓库覆盖 ./web，
-        # 可能导致根目录 pnpm-lock.yaml 与 ./web/package.json 不一致，从而安装失败。
-        # 优先冻结安装，失败后再允许更新 lockfile。
+      - name: Install root dependencies
+        # 根仓库负责后端和工作区依赖；UI 源码由 napgram-ui-dist checkout 到 ./web，
+        # 因此 root lockfile 与 web lockfile 是两套独立输入。
         run: |
           pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
-      - name: Build web dist
+      - name: Build external UI dist
         run: |
           if [ -d web/dist ] && [ -n "$(ls -A web/dist 2>/dev/null)" ]; then
             echo "web/dist already present, skip build"
             exit 0
           fi
-          # --ignore-scripts: skip postinstall (esbuild etc.) to avoid pnpm v11
-          # ERR_PNPM_IGNORED_BUILDS; vite fetches the platform binary on demand.
+          # --ignore-scripts: skip postinstall (esbuild etc.) in the napgram-ui-dist repo;
+          # vite fetches the platform binary on demand.
           pnpm -C web install --frozen-lockfile --ignore-scripts || pnpm -C web install --no-frozen-lockfile --ignore-scripts
           pnpm -C web run build
 

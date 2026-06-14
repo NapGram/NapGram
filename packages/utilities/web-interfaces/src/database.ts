@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authMiddleware } from '@napgram/auth-kit'
-import { ApiResponse, and, count, db, desc, eq, getLogger, schema, sql, stringifyBigInts } from './shared-host.js'
+import { ApiResponse, and, count, db, desc, eq, getLogger, schema, sql } from './web-deps.js'
+import { stringifyBigInts } from './web-http.js'
 
 const logger = getLogger('database')
 
@@ -17,6 +18,14 @@ function normalizeBigInt(value: any): any {
     return Object.fromEntries(entries)
   }
   return value
+}
+
+function quoteIdentifier(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`
+}
+
+function quoteQualifiedName(schemaName: string, tableName: string): string {
+  return `${quoteIdentifier(schemaName)}.${quoteIdentifier(tableName)}`
 }
 
 /**
@@ -170,14 +179,12 @@ column_name,
         })
       }
 
-      const pageNum = Number.parseInt(page, 10)
-      const pageSizeNum = Math.min(Number.parseInt(pageSize, 10), 200) // 最大 200 条
+      const pageNum = Math.max(Number.parseInt(page, 10) || 1, 1)
+      const pageSizeNum = Math.min(Number.parseInt(pageSize, 10) || 50, 200) // 最大 200 条
       const offset = (pageNum - 1) * pageSizeNum
 
-      // 构建排序子句
       let orderClause = ''
       if (sortBy) {
-        // 验证列名存在
         const columnsResult = await db.execute(sql`
                     SELECT column_name 
                     FROM information_schema.columns
@@ -189,20 +196,26 @@ column_name,
 
         if (columns.length > 0) {
           const order = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'
-          orderClause = `ORDER BY "${sortBy}" ${order} `
+          orderClause = `ORDER BY ${quoteIdentifier(sortBy)} ${order}`
         }
       }
 
-      // 查询数据
-      const dataResult = await db.execute(sql.raw(
-        `SELECT * FROM "${schema}"."${tableName}" ${orderClause} LIMIT ${pageSizeNum} OFFSET ${offset} `,
-      ))
+      const tableRef = sql.raw(quoteQualifiedName(schema, tableName))
+      const orderChunk = orderClause ? sql.raw(orderClause) : sql.raw('')
+
+      const dataResult = await db.execute(sql`
+        SELECT *
+        FROM ${tableRef}
+        ${orderChunk}
+        LIMIT ${pageSizeNum}
+        OFFSET ${offset}
+      `)
       const data = dataResult.rows as any[]
 
-      // 查询总数
-      const countResult = await db.execute(sql.raw(
-        `SELECT COUNT(*) as count FROM "${schema}"."${tableName}"`,
-      ))
+      const countResult = await db.execute(sql`
+        SELECT COUNT(*) as count
+        FROM ${tableRef}
+      `)
       const countRows = countResult.rows as any[]
 
       return {
@@ -345,25 +358,15 @@ column_name,
         })
       }
 
-      // 构建 UPDATE SQL
       const setEntries = Object.entries(updates)
-      const setClauses = setEntries
-        .map((_, idx) => `"${setEntries[idx][0]}" = $${idx + 1} `)
-        .join(', ')
-      const values = setEntries.map(([_, value]) => value)
+      const setFragments = setEntries.map(([column, value]) => sql`${sql.raw(quoteIdentifier(column))} = ${value}`)
 
-      await db.execute(sql.raw(`UPDATE "${schemaName}"."."${tableName} " SET ${setClauses} WHERE id = '${id}'`))
-      // Values are actually safer if passed separately, but Drizzle execute(sql.raw) doesn't support params like Prisma.
-      // Wait, Drizzle's sql.raw is just raw. I should use sql with parameters.
-      // But setClauses is dynamically built.
-      // Let's use a simpler mapping for now or fix this properly.
-      // Actually, $executeRawUnsafe in Prisma takes ...values.
-      // In Drizzle, we can do db.execute(sql`...`) with interpolated values.
-      // But we can't interpolate setClauses as a string without escaping issues.
-      // For now, I'll use a semi-safe approach.
+      await db.execute(sql`
+        UPDATE ${sql.raw(quoteQualifiedName(schemaName, tableName))}
+        SET ${sql.join(setFragments, sql.raw(', '))}
+        WHERE id = ${id}
+      `)
 
-
-      // 审计日志
       await db.insert(schema.adminAuditLog).values({
         userId: auth.userId,
         action: 'database_update',
@@ -416,10 +419,11 @@ column_name,
         })
       }
 
-      // 删除记录
-      await db.execute(sql.raw(`DELETE FROM "${schemaName}"."${tableName}" WHERE id = '${id}'`))
+      await db.execute(sql`
+        DELETE FROM ${sql.raw(quoteQualifiedName(schemaName, tableName))}
+        WHERE id = ${id}
+      `)
 
-      // 审计日志
       await db.insert(schema.adminAuditLog).values({
         userId: auth.userId,
         action: 'database_delete',

@@ -1,6 +1,7 @@
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import process from 'node:process'
-import { db, getLogger, sql } from '../../../shared-types.js'
+import { db, sql } from '../../../capabilities/db.js'
+import { getLogger } from '../../../capabilities/logging.js'
 import { renderContent } from '../utils/render.js'
 
 type QqChatType = 'private' | 'group'

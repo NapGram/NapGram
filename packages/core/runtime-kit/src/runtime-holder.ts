@@ -1,30 +1,48 @@
 import { IInstance, IPluginRuntime } from './runtime-types.js'
 
 let globalRuntime: IPluginRuntime | null = null
-const globalInstances: IInstance[] = []
+ 
+export interface RuntimeRegistryEntry {
+    id: number
+}
+
+export class RuntimeRegistry<T extends RuntimeRegistryEntry> {
+    private items: T[] = []
+
+    add(instance: T) {
+        if (!this.items.find(i => i.id === instance.id)) {
+            this.items.push(instance)
+        }
+    }
+
+    remove(id: number) {
+        const index = this.items.findIndex(i => i.id === id)
+        if (index !== -1) {
+            this.items.splice(index, 1)
+        }
+    }
+
+    getAll(): T[] {
+        return [...this.items]
+    }
+
+    getById(id: number): T | undefined {
+        return this.items.find(i => i.id === id)
+    }
+
+    reset(): void {
+        this.items = []
+    }
+
+    dispose(): void {
+        this.reset()
+    }
+}
 
 /**
  * Registry for active instances.
  */
-export const InstanceRegistry = {
-    add(instance: IInstance) {
-        if (!globalInstances.find(i => i.id === instance.id)) {
-            globalInstances.push(instance)
-        }
-    },
-    remove(id: number) {
-        const index = globalInstances.findIndex(i => i.id === id)
-        if (index !== -1) {
-            globalInstances.splice(index, 1)
-        }
-    },
-    getAll(): IInstance[] {
-        return globalInstances
-    },
-    getById(id: number): IInstance | undefined {
-        return globalInstances.find(i => i.id === id)
-    }
-}
+export const InstanceRegistry = new RuntimeRegistry<IInstance>()
 
 /**
  * Set the global runtime instance.

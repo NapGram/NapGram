@@ -115,11 +115,6 @@ export type PluginInstancesResolver = () => PluginRuntimeInstance[]
 
 export type RuntimePluginExports = Record<string, unknown>
 
-export interface RuntimePluginContextLike {
-  pluginId?: string
-  exports?: RuntimePluginExports
-}
-
 export interface RuntimePluginDefinition {
   id: string
   name: string

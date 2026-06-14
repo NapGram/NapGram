@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { env } from '../../../../shared-types.js'
+import { env } from '@napgram/env-kit'
 import { MediaSender } from '../MediaSender.js'
 
 describe('mediaSender', () => {

@@ -81,11 +81,6 @@ const forwardMapMocks = vi.hoisted(() => ({
   load: vi.fn(),
 }))
 
-const featureManagerMocks = vi.hoisted(() => ({
-  initialize: vi.fn().mockResolvedValue(undefined),
-  destroy: vi.fn().mockResolvedValue(undefined),
-}))
-
 const telegramMocks = vi.hoisted(() => ({
   connect: vi.fn(),
   create: vi.fn(),
@@ -158,13 +153,6 @@ vi.mock('@napgram/plugin-kit', () => ({
 vi.mock('../ForwardMap', () => ({
   default: {
     load: forwardMapMocks.load,
-  },
-}))
-
-vi.mock('../../../features/FeatureManager', () => ({
-  FeatureManager: class {
-    initialize = featureManagerMocks.initialize
-    destroy = featureManagerMocks.destroy
   },
 }))
 

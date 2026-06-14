@@ -1,6 +1,9 @@
 import { definePlugin } from '@napgram/sdk'
-import { drizzleDb, getLogger, InstanceRegistry, sql } from './shared-runtime.js'
+import type { PluginContext, PluginLogger } from '@napgram/sdk'
+import { getSystemOwners, type AdminIdentityValue } from '@napgram/env-kit'
+import { sql } from 'drizzle-orm'
 import { PermissionService } from './services/PermissionService.js'
+import type { PermissionDatabase, PermissionServiceExports } from './services/PermissionService.js'
 import { PermissionCommands } from './commands/PermissionCommands.js'
 import { PermissionLevel } from './types/index.js'
 import { commandPermissions, permissionAuditLogs, userPermissions } from './database/schema.js'
@@ -8,18 +11,19 @@ import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const logger = getLogger('PermissionManagementPlugin')
-
-// ESM __dirname alternative
 const moduleFilePath = fileURLToPath(import.meta.url)
 const moduleDir = dirname(moduleFilePath)
+
+type SystemOwnersConfig = {
+    qq?: AdminIdentityValue
+    tg?: AdminIdentityValue
+}
 
 /**
  * 检查权限管理表是否存在
  */
-async function checkPermissionTablesExist(): Promise<boolean> {
+async function checkPermissionTablesExist(db: PermissionDatabase, logger: PluginLogger): Promise<boolean> {
     try {
-        const db = drizzleDb
         const result = await db.execute(sql`
             SELECT COUNT(*) as count
             FROM information_schema.tables
@@ -38,9 +42,8 @@ async function checkPermissionTablesExist(): Promise<boolean> {
 /**
  * 自动执行数据库迁移
  */
-async function runAutoMigration(): Promise<void> {
+async function runAutoMigration(db: PermissionDatabase, logger: PluginLogger): Promise<void> {
     try {
-        const db = drizzleDb
         const migrationPath = join(moduleDir, 'database/migrations/001_initial.sql')
         const migrationSQL = readFileSync(migrationPath, 'utf-8')
 
@@ -71,50 +74,56 @@ const plugin = definePlugin({
         commandPermissions,
         permissionAuditLogs,
     },
-    async install(ctx) {
-        logger.info('Initializing Permission Management Plugin')
-
-        // 1. 检查并执行数据库迁移
-        const tablesExist = await checkPermissionTablesExist()
-        if (!tablesExist) {
-            logger.info('Permission tables not found, running auto-migration...')
-            await runAutoMigration()
-        } else {
-            logger.info('Permission tables already exist, skipping migration')
+    async install(ctx: PluginContext) {
+        const db = ctx.database as PermissionDatabase | null | undefined
+        if (!db || typeof db.execute !== 'function') {
+            throw new Error('Permission management plugin requires a database client')
         }
 
-        // 2. 创建权限服务实例
-        const permissionService = new PermissionService(InstanceRegistry.getById, {
-            cacheEnabled: ctx.config?.cacheEnabled,
-            cacheExpireMinutes: ctx.config?.cacheExpireMinutes,
-            defaultLevel: typeof ctx.config?.defaultLevel === 'number'
-                ? (ctx.config.defaultLevel as PermissionLevel)
-                : undefined,
-            enableAuditLog: ctx.config?.enableAuditLog,
-        })
+        ctx.logger.info('Initializing Permission Management Plugin')
 
-        // 3. 创建并注册命令
+        const tablesExist = await checkPermissionTablesExist(db, ctx.logger)
+        if (!tablesExist) {
+            ctx.logger.info('Permission tables not found, running auto-migration...')
+            await runAutoMigration(db, ctx.logger)
+        } else {
+            ctx.logger.info('Permission tables already exist, skipping migration')
+        }
+
+        const permissionService = new PermissionService(
+            db,
+            ctx.logger,
+            async (instanceId: number) => ctx.instance.get(instanceId),
+            {
+                cacheEnabled: ctx.config?.cacheEnabled,
+                cacheExpireMinutes: ctx.config?.cacheExpireMinutes,
+                defaultLevel: typeof ctx.config?.defaultLevel === 'number'
+                    ? (ctx.config.defaultLevel as PermissionLevel)
+                    : undefined,
+                enableAuditLog: ctx.config?.enableAuditLog,
+                systemOwners: (ctx.config?.systemOwners as SystemOwnersConfig | undefined) ?? getSystemOwners(),
+            },
+        )
+
         const permissionCommands = new PermissionCommands(ctx, permissionService)
         permissionCommands.register()
 
-            // 4. 暴露给命令系统/其他插件使用
-            ; (ctx as any).exports = {
-                permissionService,
-                PermissionLevel,
-            }
+        const pluginExports: PermissionServiceExports = {
+            permissionService,
+        }
+        ;(plugin as typeof plugin & { exports?: PermissionServiceExports }).exports = pluginExports
 
         ctx.onUnload(() => {
             permissionService.clearCache()
-            logger.info('Permission Management Plugin unloaded')
+            ctx.logger.info('Permission Management Plugin unloaded')
         })
 
-        logger.info('Permission Management Plugin initialized successfully')
+        ctx.logger.info('Permission Management Plugin initialized successfully')
     },
 })
 
 export default plugin
 
-// 导出类型供其他插件使用
 export { PermissionLevel } from './types/index.js'
 export type {
     UserPermission,
@@ -124,6 +133,6 @@ export type {
     AuditLogEntry,
 } from './types/index.js'
 export { PermissionService } from './services/PermissionService.js'
+export type { PermissionServiceExports } from './services/PermissionService.js'
 
-// 导出数据库Schema供其他包使用
 export { userPermissions, commandPermissions, permissionAuditLogs } from './database/schema.js'

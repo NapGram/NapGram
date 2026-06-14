@@ -3,7 +3,7 @@ import process from 'node:process'
 import '@fastify/cookie'
 import { z } from 'zod'
 import { AuthService } from '@napgram/auth-kit'
-import { ApiResponse, db, eq, schema } from './shared-host.js'
+import { ApiResponse, db, eq, schema } from './web-deps.js'
 
 /**
  * 认证 API 路由

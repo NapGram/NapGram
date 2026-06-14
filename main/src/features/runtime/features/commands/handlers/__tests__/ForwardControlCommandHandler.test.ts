@@ -1,13 +1,12 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { IQQClient } from '../../../../shared-types.js'
+import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db, schema } from '../../../../shared-types.js'
+import { db, schema } from '@napgram/db-kit'
 
 import { ForwardControlCommandHandler } from '../ForwardControlCommandHandler.js'
 
-// Mock database
-vi.mock('../../../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/db-kit', async importOriginal => ({
   ...(await importOriginal() as any),
   db: {
     update: vi.fn(() => ({
@@ -20,6 +19,10 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     forwardPair: { id: 'id' },
   },
   eq: vi.fn(),
+}))
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -27,7 +30,10 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     CACHE_DIR: '/tmp/cache',
     WEB_ENDPOINT: 'http://napgram-dev:8080',
   },
-  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -35,8 +41,6 @@ vi.mock('../../../../shared-types.js', async importOriginal => ({
     error: vi.fn(),
     trace: vi.fn(),
   })),
-  configureInfraKit: vi.fn(),
-  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
 }))
 
 // Mock QQ Client

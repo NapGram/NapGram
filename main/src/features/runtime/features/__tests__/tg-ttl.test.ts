@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 const envMock = vi.hoisted(() => ({
   TG_MEDIA_TTL_SECONDS: 10,
   WEB_ENDPOINT: 'http://example.test',
+  DATA_DIR: '/tmp',
+  CACHE_DIR: '/tmp/cache',
 }))
 
 const loggerMocks = vi.hoisted(() => ({
@@ -13,22 +15,14 @@ const loggerMocks = vi.hoisted(() => ({
   error: vi.fn(),
 }))
 
-vi.mock('../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/env-kit', async importOriginal => ({
   ...(await importOriginal() as any),
-  db: {
-    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
-    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-    qqRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
-    $queryRaw: vi.fn(),
-  },
-  get env() { return envMock }, // 使用hoisted的envMock
-  hashing: { md5Hex: vi.fn((value: string) => value) },
-  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
+  get env() { return envMock },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => loggerMocks),
-  configureInfraKit: vi.fn(),
-  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
-  flags: { DISABLE_RICH_HEADER: 1 },
 }))
 
 describe('telegram media TTL', () => {

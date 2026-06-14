@@ -62,7 +62,7 @@ RUN pnpm -r --filter "./packages/**" run build
 COPY main/ /app/main/
 RUN pnpm --filter ./main run build
 
-# Copy prebuilt web assets
+# `web/dist` is populated by the external UI checkout in CI; only the built assets are copied here.
 COPY web/dist/ /app/web/dist/
 
 # Keep production dependencies only
@@ -84,6 +84,7 @@ COPY --from=workspace --chown=node:node /app/main/tools/drizzle /app/main/tools/
 COPY --from=workspace --chown=node:node /app/main/tools/run-drizzle-migrations.sh /app/main/tools/run-drizzle-migrations.sh
 COPY --from=workspace --chown=node:node /app/packages/clients/database/dist/schema /app/main/tools/runtime-schemas/database
 COPY --from=workspace --chown=node:node /app/packages/plugins/admin/permission-management/dist/database /app/main/tools/runtime-schemas/permission-management
+# Hand the prebuilt UI bundle into the runtime image.
 COPY --from=workspace --chown=node:node /app/web/dist /app/public
 
 # Prepare runtime directories

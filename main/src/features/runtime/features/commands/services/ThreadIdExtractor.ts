@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import { telegramMessage } from '../../../../../shared/utils/index.js'
-import { getLogger } from '../../../shared-types.js'
+import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('ThreadIdExtractor')
 

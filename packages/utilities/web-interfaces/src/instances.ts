@@ -1,13 +1,51 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { authMiddleware } from '@napgram/auth-kit'
-import { ApiResponse, count, db, desc, env, eq, InstanceRegistry, schema } from './shared-host.js'
+import { ApiResponse, count, db, desc, env, eq, getSystemOwners, schema } from './web-deps.js'
+import { createInstanceRuntimeContext } from './runtime-context.js'
 
 /**
  * 实例管理 API
  */
 export default async function (fastify: FastifyInstance) {
+  const runtimeContext = createInstanceRuntimeContext(fastify)
+  const systemOwners = getSystemOwners()
   const isNumeric = (val: any) => typeof val === 'string' && /^\d+$/.test(val)
+
+  const resolveDefaultOwner = (owner: bigint, isDefaultInstance: boolean): string => {
+    if (isDefaultInstance && owner === 0n && systemOwners.tg !== undefined && systemOwners.tg !== null) {
+      return String(systemOwners.tg)
+    }
+    return owner.toString()
+  }
+
+  const serializeQqBot = (qqBot: any) => {
+    if (!qqBot) {
+      return null
+    }
+    return {
+      ...qqBot,
+      uin: qqBot.uin?.toString() ?? null,
+    }
+  }
+
+  const createBootstrapQqBot = () => {
+    if (!env.NAPCAT_WS_URL) {
+      return null
+    }
+    return {
+      type: 'napcat',
+      name: 'System Bootstrapped',
+      wsUrl: env.NAPCAT_WS_URL,
+      uin: systemOwners.qq?.toString() ?? null,
+      id: -1,
+      password: null,
+      platform: null,
+      signApi: null,
+      signVer: null,
+      signDockerId: null,
+    }
+  }
 
   const toOptionalBigInt = z.preprocess(
     (val) => {
@@ -80,113 +118,12 @@ export default async function (fastify: FastifyInstance) {
     qqBot: qqBotSchema.optional(),
   })
 
-  const toJsonSafe = (value: any): any => {
-    if (typeof value === 'bigint')
-      return value.toString()
-    if (Array.isArray(value))
-      return value.map(toJsonSafe)
-    if (value && typeof value === 'object') {
-      if (value instanceof Date)
-        return value
-      const out: Record<string, any> = {}
-      for (const [key, val] of Object.entries(value))
-        out[key] = toJsonSafe(val)
-      return out
-    }
-    return value
-  }
-
   const createQqBotSchema = z.object({
     type: z.literal('napcat').default('napcat'),
     name: optionalString,
     wsUrl: optionalString,
     uin: toOptionalBigInt,
   })
-
-  const getRuntimeInstance = (instanceId: number) => {
-    try {
-      return InstanceRegistry.getById(instanceId) as any
-    }
-    catch {
-      return undefined
-    }
-  }
-
-  const syncRuntimeInstance = async (instanceId: number, body: z.infer<typeof updateInstanceSchema>) => {
-    const runtimeInstance = getRuntimeInstance(instanceId)
-    if (!runtimeInstance)
-      return
-
-    if (body.owner !== undefined && 'owner' in runtimeInstance)
-      runtimeInstance.owner = Number(body.owner)
-    if (body.flags !== undefined && 'flags' in runtimeInstance)
-      runtimeInstance.flags = body.flags
-    if (body.isSetup !== undefined && 'isSetup' in runtimeInstance)
-      runtimeInstance.isSetup = body.isSetup
-
-    const nextWorkMode = body.workMode ?? runtimeInstance.workMode
-    if (body.userSessionId !== undefined && 'userSessionId' in runtimeInstance)
-      runtimeInstance.userSessionId = body.userSessionId
-
-    if (body.workMode !== undefined) {
-      if (typeof runtimeInstance.setWorkMode === 'function') {
-        await runtimeInstance.setWorkMode(body.workMode)
-      }
-      else {
-        runtimeInstance.workMode = body.workMode
-      }
-      return
-    }
-
-    if (body.userSessionId !== undefined && nextWorkMode === 'personal') {
-      if (body.userSessionId && typeof runtimeInstance.startUserBot === 'function')
-        await runtimeInstance.startUserBot()
-      else if (!body.userSessionId && typeof runtimeInstance.stopUserBot === 'function')
-        await runtimeInstance.stopUserBot()
-    }
-  }
-
-  const buildPersonalModeDiagnostics = (instance: any, runtimeInstance?: any) => {
-    if (typeof runtimeInstance?.getPersonalModeDiagnostics === 'function') {
-      return runtimeInstance.getPersonalModeDiagnostics()
-    }
-
-    const workMode = runtimeInstance?.workMode ?? instance.workMode
-    const userSessionId = runtimeInstance?.userSessionId ?? instance.userSessionId ?? null
-    const userBotRequired = workMode === 'personal'
-    const userBotStatus = userBotRequired
-      ? (userSessionId ? (runtimeInstance?.userBotStatus ?? 'stopped') : 'not-configured')
-      : 'disabled'
-
-    return {
-      workMode,
-      userBotRequired,
-      userSessionId,
-      userBotStatus,
-      hasTgUserBot: Boolean(runtimeInstance?.tgUserBot?.isOnline),
-      canAutoProvisionPairs: userBotStatus === 'running',
-      manualPairingAvailable: Boolean(runtimeInstance?.tgBot && runtimeInstance?.qqClient),
-      ...(userBotRequired && !userSessionId
-        ? { reason: 'personal 模式未配置 TG User session，自动建群不可用；手动绑定仍可使用' }
-        : {}),
-      ...(runtimeInstance?.userBotError ? { error: runtimeInstance.userBotError } : {}),
-    }
-  }
-
-  const decorateInstance = (instance: any, extra: Record<string, any> = {}) => {
-    const runtimeInstance = getRuntimeInstance(instance.id)
-    const personalMode = buildPersonalModeDiagnostics(instance, runtimeInstance)
-    return {
-      ...toJsonSafe(instance),
-      ...extra,
-      runtimeStatus: runtimeInstance?.status ?? 'stopped',
-      hasQqClient: Boolean(runtimeInstance?.qqClient),
-      hasTgBot: Boolean(runtimeInstance?.tgBot),
-      hasTgUserBot: Boolean(runtimeInstance?.tgUserBot?.isOnline),
-      userBotStatus: personalMode.userBotStatus,
-      personalMode,
-    }
-  }
 
   /**
    * GET /api/admin/instances
@@ -215,36 +152,14 @@ export default async function (fastify: FastifyInstance) {
 
     return ApiResponse.paginated(
       items.map((item: any) => {
-        // Fallback to env vars for Instance 0
         const isDefaultInstance = item.id === 0
-        const owner = (item.owner === BigInt(0) && isDefaultInstance && env.ADMIN_TG) ? env.ADMIN_TG.toString() : item.owner.toString()
+        const owner = resolveDefaultOwner(item.owner, isDefaultInstance)
+        const qqBot = serializeQqBot(item.qqBot) ?? createBootstrapQqBot()
 
-        let qqBot = item.qqBot
-          ? {
-            ...item.qqBot,
-            uin: item.qqBot.uin?.toString() || null,
-          }
-          : null
-
-        if (!qqBot && isDefaultInstance && env.NAPCAT_WS_URL) {
-          qqBot = {
-            type: 'napcat',
-            name: 'System Bootstrapped',
-            wsUrl: env.NAPCAT_WS_URL,
-            uin: env.ADMIN_QQ?.toString() || null,
-            id: -1, // Virtual ID
-            password: null,
-            platform: null,
-            signApi: null,
-            signVer: null,
-            signDockerId: null,
-          }
-        }
-
-        return decorateInstance(item, {
+        return runtimeContext.describeInstance(item, {
           owner,
           qqBot,
-          ForwardPair: item.forwardPairs.map((pair: any) => ({
+          forwardPairs: item.forwardPairs.map((pair: any) => ({
             ...pair,
             qqRoomId: pair.qqRoomId.toString(),
             tgChatId: pair.tgChatId.toString(),
@@ -283,36 +198,14 @@ export default async function (fastify: FastifyInstance) {
       )
     }
 
-    // Fallback logic
     const isDefaultInstance = instance.id === 0
-    const owner = (instance.owner === BigInt(0) && isDefaultInstance && env.ADMIN_TG) ? env.ADMIN_TG.toString() : instance.owner.toString()
-
-    let qqBot = instance.qqBot
-      ? {
-        ...instance.qqBot,
-        uin: instance.qqBot.uin?.toString() || null,
-      }
-      : null
-
-    if (!qqBot && isDefaultInstance && env.NAPCAT_WS_URL) {
-      qqBot = {
-        type: 'napcat',
-        name: 'System Bootstrapped',
-        wsUrl: env.NAPCAT_WS_URL,
-        uin: env.ADMIN_QQ?.toString() || null,
-        id: -1,
-        password: null,
-        platform: null,
-        signApi: null,
-        signVer: null,
-        signDockerId: null,
-      }
-    }
+    const owner = resolveDefaultOwner(instance.owner, isDefaultInstance)
+    const qqBot = serializeQqBot(instance.qqBot) ?? createBootstrapQqBot()
 
     return {
       success: true,
       data: {
-        ...decorateInstance(instance, { owner, qqBot }),
+        ...runtimeContext.describeInstance(instance, { owner, qqBot }),
       },
     }
   })
@@ -445,7 +338,7 @@ export default async function (fastify: FastifyInstance) {
         .returning()
       const instance = updatedArr[0]
 
-      await syncRuntimeInstance(instanceId, body)
+      await runtimeContext.syncInstance(instanceId, body)
 
       // 审计日志
       const { AuthService } = await import('@napgram/auth-kit')
@@ -462,7 +355,7 @@ export default async function (fastify: FastifyInstance) {
       return {
         success: true,
         data: {
-          ...decorateInstance(instance),
+          ...runtimeContext.describeInstance(instance),
           owner: instance.owner.toString(),
         },
       }
@@ -591,10 +484,6 @@ export default async function (fastify: FastifyInstance) {
     }
   })
 
-  // ==========================================
-  // UserBot 认证及控制接口 (Phase 3)
-  // ==========================================
-
   interface PendingLogin {
     phone: string
     status: 'waiting-code' | 'waiting-password' | 'done' | 'error'
@@ -653,7 +542,7 @@ export default async function (fastify: FastifyInstance) {
     const runLogin = async () => {
       try {
         const { telegramClientFactory } = await import('@napgram/telegram-client')
-        const bot = await telegramClientFactory.connect({
+        await telegramClientFactory.connect({
           type: 'mtcute',
           sessionId: userSessionId!,
           authMode: 'user',
@@ -673,27 +562,11 @@ export default async function (fastify: FastifyInstance) {
         state.status = 'done'
         pendingLogins.delete(instanceId)
 
-        const runtimeInstance = InstanceRegistry.getById(instanceId) as any
-        if (runtimeInstance) {
-          if (typeof runtimeInstance.startUserBot === 'function') {
-            await runtimeInstance.startUserBot()
-          } else {
-            if (runtimeInstance.tgUserBot) {
-              try { await (runtimeInstance.tgUserBot as any).disconnect?.() } catch {}
-            }
-            runtimeInstance.tgUserBot = bot
-            runtimeInstance._userBotStatus = 'running'
-          }
-        }
+        await runtimeContext.startUserBot(instanceId)
       }
       catch (error: any) {
         state.status = 'error'
         state.error = error?.message || String(error)
-        const runtimeInstance = InstanceRegistry.getById(instanceId) as any
-        if (runtimeInstance) {
-          runtimeInstance._userBotStatus = 'error'
-          runtimeInstance._userBotError = state.error
-        }
       }
     }
 
@@ -796,19 +669,9 @@ export default async function (fastify: FastifyInstance) {
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
 
-    const runtimeInstance = InstanceRegistry.getById(instanceId) as any
-    if (!runtimeInstance) {
+    const stopped = await runtimeContext.stopUserBot(instanceId)
+    if (!stopped) {
       return reply.code(404).send(ApiResponse.error('Runtime instance not found or not running'))
-    }
-
-    if (typeof runtimeInstance.stopUserBot === 'function') {
-      await runtimeInstance.stopUserBot()
-    } else {
-      if (runtimeInstance.tgUserBot) {
-        try { await (runtimeInstance.tgUserBot as any).disconnect?.() } catch {}
-        runtimeInstance.tgUserBot = undefined
-      }
-      runtimeInstance._userBotStatus = 'stopped'
     }
 
     return {
@@ -825,35 +688,17 @@ export default async function (fastify: FastifyInstance) {
     preHandler: authMiddleware,
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
-
-    const runtimeInstance = InstanceRegistry.getById(instanceId) as any
-    if (!runtimeInstance) {
-      return reply.code(404).send(ApiResponse.error('Runtime instance not found or not running'))
+    try {
+      const started = await runtimeContext.startUserBot(instanceId)
+      if (!started) {
+        return reply.code(404).send(ApiResponse.error('Runtime instance not found or not running'))
+      }
     }
-
-    if (typeof runtimeInstance.startUserBot === 'function') {
-      await runtimeInstance.startUserBot()
-    } else {
-      const { telegramClientFactory } = await import('@napgram/telegram-client')
-      if (runtimeInstance.userSessionId) {
-        runtimeInstance._userBotStatus = 'starting'
-        try {
-          const bot = await telegramClientFactory.connect({
-            type: 'mtcute',
-            sessionId: runtimeInstance.userSessionId,
-            authMode: 'user',
-            appName: 'NapGram User',
-          })
-          runtimeInstance.tgUserBot = bot
-          runtimeInstance._userBotStatus = 'running'
-        } catch (error: any) {
-          runtimeInstance._userBotStatus = 'error'
-          runtimeInstance._userBotError = error?.message || String(error)
-          return reply.code(500).send(ApiResponse.error(`Failed to start UserBot: ${runtimeInstance._userBotError}`))
-        }
-      } else {
+    catch (error: any) {
+      if (/not configured/i.test(String(error?.message || error))) {
         return reply.code(400).send(ApiResponse.error('UserBot session is not configured'))
       }
+      return reply.code(500).send(ApiResponse.error(`Failed to start UserBot: ${error?.message || String(error)}`))
     }
 
     return {

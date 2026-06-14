@@ -1,8 +1,6 @@
-import { env } from '@napgram/env-kit'
+import { env, getSystemOwners } from '@napgram/env-kit'
 
-// ---------------------------------------------------------------------------
-// Plugin import map — static strings required for bundler compatibility
-// ---------------------------------------------------------------------------
+// 插件导入映射，必须保持静态字符串以兼容打包器
 type BuiltinModuleLoader = () => Promise<unknown>
 
 const IMPORT_MAP: Record<string, BuiltinModuleLoader> = {
@@ -34,9 +32,7 @@ const IMPORT_MAP: Record<string, BuiltinModuleLoader> = {
   'web-console': () => import('@napgram/plugin-web-console'),
 }
 
-// ---------------------------------------------------------------------------
-// Declarative plugin registry: [id, enabled, config?]
-// ---------------------------------------------------------------------------
+// 声明式插件注册表：[id, enabled, config?]
 interface BuiltinPlugin {
   id: string
   module: string
@@ -47,12 +43,14 @@ interface BuiltinPlugin {
 
 type PluginDef = [id: string, enabled: boolean] | [id: string, enabled: boolean, config: Record<string, unknown>]
 
+const systemOwners = getSystemOwners()
+
 const REGISTRY: PluginDef[] = [
-  // Adapters
+  // 适配器
   ['adapter-qq-napcat', true],
   ['adapter-telegram-mtcute', true],
 
-  // Core features
+  // 核心功能
   ['ping-pong', false],
   ['qq-interaction', true],
   ['refresh', true],
@@ -64,16 +62,15 @@ const REGISTRY: PluginDef[] = [
   ['monitoring', true],
   ['statistics', true],
 
-  // Optional / env-gated
+  // 可选，由环境变量控制
   ['gateway', false],
   ['notifications', Boolean(env.ENABLE_OFFLINE_NOTIFICATION), {
     enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
-    adminQQ: env.ADMIN_QQ,
-    adminTG: env.ADMIN_TG,
+    systemOwners,
     cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
   }],
 
-  // Admin panel
+  // 管理面板
   ['admin-auth', false],
   ['admin-instances', false],
   ['admin-pairs', false],
@@ -83,9 +80,11 @@ const REGISTRY: PluginDef[] = [
   ['admin-plugins', false],
   ['admin-database', false],
   ['admin-suite', true],
-  ['permission-management', true],
+  ['permission-management', true, {
+    systemOwners,
+  }],
 
-  // Web UI
+  // 前端界面
   ['web-assets', true],
   ['web-console', true],
 ]

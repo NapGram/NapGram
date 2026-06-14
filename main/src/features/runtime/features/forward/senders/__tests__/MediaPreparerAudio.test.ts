@@ -3,7 +3,8 @@ import { execFile } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { env, silk } from '../../../../shared-types.js'
+import { env } from '@napgram/env-kit'
+import { silk } from '@napgram/media-kit'
 import { ForwardMediaPreparer } from '../MediaPreparer.js'
 
 vi.mock('node:child_process', () => ({
@@ -14,6 +15,17 @@ vi.mock('@napgram/media-kit', () => ({
   silk: {
     encode: vi.fn(),
     decode: vi.fn(),
+  },
+}))
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
+  env: {
+    ENABLE_AUTO_RECALL: true,
+    TG_MEDIA_TTL_SECONDS: undefined,
+    DATA_DIR: '/tmp',
+    CACHE_DIR: '/tmp/cache',
+    WEB_ENDPOINT: 'http://napgram-dev:8080',
   },
 }))
 

@@ -8,7 +8,8 @@ const loggerMocks = vi.hoisted(() => ({
   error: vi.fn(),
 }))
 
-vi.mock('../../../../shared-types.js', () => ({
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
   getLogger: vi.fn(() => loggerMocks),
 }))
 

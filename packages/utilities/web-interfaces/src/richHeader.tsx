@@ -2,12 +2,14 @@
 /** @jsxFrag Html.Fragment */
 import type { FastifyInstance } from 'fastify'
 import Html from '@kitajs/html'
-import { env, formatDate, getLogger, InstanceRegistry, sentry } from './shared-host.js'
+import { env, getLogger, sentry } from './web-deps.js'
+import { formatDate } from './web-http.js'
+import { createAdminQueryContext } from './runtime-context.js'
 
 const logger = getLogger('Rich Header')
-void Html // Keep Html in scope for JSX factory
+void Html
 
-async function handler(request: any, reply: any) {
+async function handler(adminContext: ReturnType<typeof createAdminQueryContext>, request: any, reply: any) {
   const params = request.params
 
   try {
@@ -40,8 +42,8 @@ async function handler(request: any, reply: any) {
     let pairRecord: any
     let instance: any
 
-    // Find pair by apiKey across all instances
-    for (const inst of InstanceRegistry.getAll()) {
+    const instances = adminContext.listInstances()
+    for (const inst of instances) {
       if (inst.forwardPairs) {
         const pairs = inst.forwardPairs.getAll()
         const found = pairs.find((p: any) => p.apiKey === params.apiKey)
@@ -65,7 +67,6 @@ async function handler(request: any, reply: any) {
     let memberInfo
     let strangerInfo
     try {
-      // Fetch group member info
       memberInfo = await instance.qqClient.getGroupMemberInfo(groupId, userId)
       if (!memberInfo) {
         logger.warn(`[richHeader] Member info is null for userId=${userId} in groupId=${groupId}`)
@@ -73,7 +74,6 @@ async function handler(request: any, reply: any) {
         return fallback()
       }
 
-      // Fetch stranger info for extra details (birthday, email, etc.)
       strangerInfo = await instance.qqClient.getUserInfo(userId)
     }
     catch (e) {
@@ -84,9 +84,7 @@ async function handler(request: any, reply: any) {
 
     const profile: any = {
       ...memberInfo,
-      // Merge stranger info if available
       ...(strangerInfo || {}),
-      // Map fields to match what the template expects
       birthday: strangerInfo ? [strangerInfo.birthday_year, strangerInfo.birthday_month, strangerInfo.birthday_day] : [],
       email: strangerInfo?.email,
       QID: strangerInfo?.qid,
@@ -256,5 +254,6 @@ async function handler(request: any, reply: any) {
 };
 
 export default async function (fastify: FastifyInstance) {
-  fastify.get('/richHeader/:apiKey/:userId', handler)
+  const adminContext = createAdminQueryContext(fastify)
+  fastify.get('/richHeader/:apiKey/:userId', async (request, reply) => handler(adminContext, request, reply))
 }

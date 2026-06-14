@@ -1,7 +1,8 @@
-import type { NapGramPlugin, PluginContext } from '@napgram/sdk'
+import { definePlugin } from '@napgram/sdk';
+import type { PluginContext } from '@napgram/sdk';
 import { monitoringRoutes } from '@napgram/web-interfaces'
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'monitoring',
     name: 'Monitoring',
     version: '1.0.0',
@@ -15,6 +16,6 @@ const plugin: NapGramPlugin = {
             monitoringRoutes(app)
         })
     },
-}
+})
 
 export default plugin

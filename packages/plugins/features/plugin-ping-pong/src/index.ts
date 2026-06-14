@@ -1,6 +1,7 @@
-import type { MessageEvent, NapGramPlugin, PluginContext } from '@napgram/sdk';
+import { definePlugin } from '@napgram/sdk';
+import type { MessageEvent, PluginContext } from '@napgram/sdk';
 
-const plugin: NapGramPlugin = {
+const plugin = definePlugin({
     id: 'ping-pong',
     name: 'Ping Pong Plugin',
     version: '1.0.0',
@@ -24,6 +25,6 @@ const plugin: NapGramPlugin = {
             ctx.logger.info('Ping Pong plugin unloaded');
         });
     },
-};
+});
 
 export default plugin;

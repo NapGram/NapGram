@@ -156,27 +156,9 @@ const { mockLogger } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('../../../shared-types.js', async importOriginal => ({
+vi.mock('@napgram/logger-kit', async importOriginal => ({
   ...(await importOriginal() as any),
-  db: {
-    message: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-    forwardPair: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn() },
-    forwardMultiple: { findFirst: vi.fn(), findUnique: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
-    qqRequest: { findFirst: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), groupBy: vi.fn(), update: vi.fn(), create: vi.fn() },
-    $queryRaw: vi.fn(),
-  },
-  env: {
-    ENABLE_AUTO_RECALL: true,
-    TG_MEDIA_TTL_SECONDS: undefined,
-    DATA_DIR: '/tmp',
-    CACHE_DIR: '/tmp/cache',
-    WEB_ENDPOINT: 'http://napgram-dev:8080',
-  },
-  hashing: { md5Hex: vi.fn((value: string) => value) },
-  temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
-  getLogger: vi.fn(() => mockLogger), // Use hoisted mockLogger
-  configureInfraKit: vi.fn(),
-  performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
+  getLogger: vi.fn(() => mockLogger),
 }))
 
 describe('commandsFeature', () => {
@@ -227,7 +209,7 @@ describe('commandsFeature', () => {
 
   it('check for initialization errors', async () => {
     await new Promise(resolve => setTimeout(resolve, 500))
-    const logger = (await import('../../../shared-types.js')).getLogger('CommandsFeature')
+    const logger = (await import('@napgram/logger-kit')).getLogger('CommandsFeature')
     expect(logger.error).not.toHaveBeenCalled()
   })
 

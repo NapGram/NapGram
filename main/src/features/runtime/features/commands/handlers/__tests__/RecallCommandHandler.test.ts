@@ -1,10 +1,10 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { CommandContext } from '../CommandContext.js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { db } from '../../../../shared-types.js'
+import { db } from '@napgram/db-kit'
 import { RecallCommandHandler } from '../RecallCommandHandler.js'
 
-vi.mock('../../../../shared-types.js', async (importOriginal) => {
+vi.mock('@napgram/db-kit', async (importOriginal) => {
   const mockDb = {
     query: {
       message: { findFirst: vi.fn(), findMany: vi.fn() },
@@ -48,25 +48,30 @@ vi.mock('../../../../shared-types.js', async (importOriginal) => {
     gte: vi.fn(),
     sql: vi.fn(),
     count: vi.fn(),
-    env: {
-      ENABLE_AUTO_RECALL: true,
-      TG_MEDIA_TTL_SECONDS: undefined,
-      DATA_DIR: '/tmp',
-      CACHE_DIR: '/tmp/cache',
-      WEB_ENDPOINT: 'http://napgram-dev:8080',
-    },
-    temp: { TEMP_PATH: '/tmp', createTempFile: vi.fn(() => ({ path: '/tmp/test', cleanup: vi.fn() })) },
-    getLogger: vi.fn(() => ({
-      debug: vi.fn(),
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      trace: vi.fn(),
-    })),
-    configureInfraKit: vi.fn(),
-    performanceMonitor: { recordCall: vi.fn(), recordError: vi.fn() },
   }
 })
+
+vi.mock('@napgram/env-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
+  env: {
+    ENABLE_AUTO_RECALL: true,
+    TG_MEDIA_TTL_SECONDS: undefined,
+    DATA_DIR: '/tmp',
+    CACHE_DIR: '/tmp/cache',
+    WEB_ENDPOINT: 'http://napgram-dev:8080',
+  },
+}))
+
+vi.mock('@napgram/logger-kit', async importOriginal => ({
+  ...(await importOriginal() as any),
+  getLogger: vi.fn(() => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    trace: vi.fn(),
+  })),
+}))
 
 function createMockContext(): CommandContext {
   return {

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { ApiResponse, drizzleDb, getLogger, sql } from './shared-host.js'
+import { ApiResponse, drizzleDb, getLogger, sql } from './web-deps.js'
 
 const logger = getLogger('PermissionAdmin')
 

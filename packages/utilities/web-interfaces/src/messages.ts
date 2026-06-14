@@ -1,9 +1,9 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify'
+import { authMiddleware } from '@napgram/auth-kit'
+import { processNestedForward } from '@napgram/message-kit'
+import { TTLCache } from './web-cache.js'
 import {
-  ErrorResponses,
   getLogger,
-  InstanceRegistry,
-  TTLCache,
   and,
   count,
   db,
@@ -13,9 +13,9 @@ import {
   lt,
   or,
   schema,
-} from './shared-host.js'
-import { authMiddleware } from '@napgram/auth-kit'
-import { processNestedForward } from '@napgram/message-kit'
+} from './web-deps.js'
+import { ErrorResponses } from './web-http.js'
+import { createMessageBridgeContext } from './runtime-context.js'
 
 const forwardCache = new TTLCache<string, any>(60000) // 1 minute TTL
 const tgSenderNameCache = new TTLCache<string, string | null>(5 * 60 * 1000)
@@ -33,64 +33,63 @@ const normalizeTgSenderName = (chat: any): string | null => {
   return name || null
 }
 
-const getInstanceById = (instanceId: number) => InstanceRegistry.getById(instanceId) as any
-
-const resolveTgSenderName = async (instanceId: number, senderId: string): Promise<string | null> => {
-  const cacheKey = `${instanceId}:${senderId}`
-  const cached = tgSenderNameCache.get(cacheKey)
-  if (cached !== undefined)
-    return cached
-
-  const inflight = tgSenderNameInflight.get(cacheKey)
-  if (inflight)
-    return inflight
-
-  const task = (async () => {
-    const instance = getInstanceById(instanceId)
-    const bot = (instance as any)?.tgBot
-    if (!bot?.getChat) {
-      tgSenderNameCache.set(cacheKey, null, 60000)
-      return null
-    }
-    const botMe = (bot as any)?.me
-    const botId = botMe?.id ? String(botMe.id) : ''
-    if (botId && botId === senderId) {
-      const name = normalizeTgSenderName(botMe)
-      tgSenderNameCache.set(cacheKey, name)
-      return name
-    }
-    try {
-      const numericId = Number(senderId)
-      const chatId = Number.isNaN(numericId) ? senderId : numericId
-      const chat = await bot.getChat(chatId)
-      const name = normalizeTgSenderName(chat)
-      tgSenderNameCache.set(cacheKey, name)
-      return name
-    }
-    catch (error) {
-      logger.debug({ error, senderId, instanceId }, 'Failed to resolve TG sender name')
-      tgSenderNameCache.set(cacheKey, null, 60000)
-      return null
-    }
-    finally {
-      tgSenderNameInflight.delete(cacheKey)
-    }
-  })()
-
-  tgSenderNameInflight.set(cacheKey, task)
-  return task
-}
-
-const resolveQqBotIdentity = (instanceId: number): { id: string | null, name: string | null } => {
-  const instance = getInstanceById(instanceId)
-  const qqClient = (instance as any)?.qqClient
-  const rawId = qqClient?.uin
-  const id = rawId !== undefined && rawId !== null ? String(rawId) : null
-  const name = typeof qqClient?.nickname === 'string' ? qqClient.nickname : null
-  return { id, name }
-}
-
 export default async function (fastify: FastifyInstance) {
+  const messageBridgeContext = createMessageBridgeContext(fastify)
+  const resolveTgSenderName = async (instanceId: number, senderId: string): Promise<string | null> => {
+    const cacheKey = `${instanceId}:${senderId}`
+    const cached = tgSenderNameCache.get(cacheKey)
+    if (cached !== undefined)
+      return cached
+
+    const inflight = tgSenderNameInflight.get(cacheKey)
+    if (inflight)
+      return inflight
+
+    const task = (async () => {
+      const instance = messageBridgeContext.getInstance(instanceId)
+      const bot = (instance as any)?.tgBot
+      if (!bot?.getChat) {
+        tgSenderNameCache.set(cacheKey, null, 60000)
+        return null
+      }
+      const botMe = (bot as any)?.me
+      const botId = botMe?.id ? String(botMe.id) : ''
+      if (botId && botId === senderId) {
+        const name = normalizeTgSenderName(botMe)
+        tgSenderNameCache.set(cacheKey, name)
+        return name
+      }
+      try {
+        const numericId = Number(senderId)
+        const chatId = Number.isNaN(numericId) ? senderId : numericId
+        const chat = await bot.getChat(chatId)
+        const name = normalizeTgSenderName(chat)
+        tgSenderNameCache.set(cacheKey, name)
+        return name
+      }
+      catch (error) {
+        logger.debug({ error, senderId, instanceId }, 'Failed to resolve TG sender name')
+        tgSenderNameCache.set(cacheKey, null, 60000)
+        return null
+      }
+      finally {
+        tgSenderNameInflight.delete(cacheKey)
+      }
+    })()
+
+    tgSenderNameInflight.set(cacheKey, task)
+    return task
+  }
+
+  const resolveQqBotIdentity = (instanceId: number): { id: string | null, name: string | null } => {
+    const instance = messageBridgeContext.getInstance(instanceId)
+    const qqClient = (instance as any)?.qqClient
+    const rawId = qqClient?.uin
+    const id = rawId !== undefined && rawId !== null ? String(rawId) : null
+    const name = typeof qqClient?.nickname === 'string' ? qqClient.nickname : null
+    return { id, name }
+  }
+
   // 管理端 - 消息列表
   fastify.get('/api/admin/messages', {
     preHandler: authMiddleware,
@@ -185,15 +184,14 @@ export default async function (fastify: FastifyInstance) {
     }
   })
 
-  // 转发搜索/预览 (由转发逻辑调用)
+  // 转发搜索/预览
   fastify.post('/api/admin/messages/forward-preview', {
     preHandler: authMiddleware,
   }, async (request: FastifyRequest, reply) => {
-    const { content, sourcePlatform, targetPlatform } = request.body as any
+    const { content } = request.body as any
 
     try {
-      // processNestedForward modifies content in-place
-      await processNestedForward(content, 0) // Using 0 as a dummy ID for preview
+      await processNestedForward(content, 0)
       return { code: 0, data: content }
     }
     catch (error) {

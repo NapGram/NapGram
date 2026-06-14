@@ -81,12 +81,6 @@ describe('config', () => {
     process.env.PLUGINS_GATEWAY_URL = 'ws://example.com'
     expect(config.resolveGatewayEndpoint()).toBe('ws://example.com')
 
-    expect(config.resolvePluginsInstances()).toEqual([0])
-    process.env.PLUGINS_INSTANCES = '1,2,3'
-    expect(config.resolvePluginsInstances()).toEqual([1, 2, 3])
-    process.env.PLUGINS_INSTANCES = 'invalid'
-    expect(config.resolvePluginsInstances([4])).toEqual([4])
-
     expect(config.resolveAllowTsPlugins()).toBe(false)
     process.env.PLUGINS_ALLOW_TS = 'true'
     expect(config.resolveAllowTsPlugins()).toBe(true)
@@ -309,8 +303,7 @@ describe('config', () => {
       return p as string
     })
 
-    // resolvePathUnderDataDir is not exported. It is used by resolvePluginsInstances? No.
-    // It's used by loadPluginSpecs when processing config paths.
+    // resolvePathUnderDataDir is not exported, but loadPluginSpecs relies on it for config paths.
 
     process.env.PLUGINS_CONFIG_PATH = '/app/data/hack/config.json'
 
@@ -446,36 +439,6 @@ describe('config helper functions', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     process.env = {}
-  })
-
-  it('resolvePluginsInstances should parse comma-separated instances', () => {
-    process.env.PLUGINS_INSTANCES = '1,2,3'
-    const instances = config.resolvePluginsInstances()
-    expect(instances).toEqual([1, 2, 3])
-  })
-
-  it('resolvePluginsInstances should filter invalid numbers', () => {
-    process.env.PLUGINS_INSTANCES = '1,invalid,2,NaN,3'
-    const instances = config.resolvePluginsInstances()
-    expect(instances).toEqual([1, 2, 3])
-  })
-
-  it('resolvePluginsInstances should use default when env is empty', () => {
-    process.env.PLUGINS_INSTANCES = ''
-    const instances = config.resolvePluginsInstances([5, 6])
-    expect(instances).toEqual([5, 6])
-  })
-
-  it('resolvePluginsInstances should use [0] when no default and no env', () => {
-    delete process.env.PLUGINS_INSTANCES
-    const instances = config.resolvePluginsInstances()
-    expect(instances).toEqual([0])
-  })
-
-  it('resolvePluginsInstances should return default when parsed is empty', () => {
-    process.env.PLUGINS_INSTANCES = 'invalid,text,only'
-    const instances = config.resolvePluginsInstances([7])
-    expect(instances).toEqual([7])
   })
 
   it('resolveAllowTsPlugins should read bool env', () => {
@@ -1141,12 +1104,6 @@ describe('additional edge cases and helper functions', () => {
     const spec = specs.find(s => s.id === 'file-url')
     expect(spec).toBeDefined()
     expect(spec?.module).toBe('/app/data/plugins/plugin.js')
-  })
-
-  it('should cover resolvePluginsInstances with default value', () => {
-    // Already covered mostly, but let's ensure full function coverage
-    const res = config.resolvePluginsInstances([1, 2])
-    expect(res).toEqual([1, 2])
   })
 
   it('should handle readdir failure in local scan', async () => {

@@ -1,7 +1,8 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import type { ForwardMap } from '../../../shared-types.js'
+import type { ForwardMap } from '../../../runtime-types.js'
 import type { CommandContext } from './CommandContext.js'
-import { db, eq, getLogger, schema } from '../../../shared-types.js'
+import { db, eq, schema } from '../../../capabilities/db.js'
+import { getLogger } from '../../../capabilities/logging.js'
 import { findPairByTGWithChatType, formatQqChatTypeLabel } from '../utils/ForwardPairChatType.js'
 
 const logger = getLogger('ForwardControlCommandHandler')

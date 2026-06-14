@@ -36,6 +36,9 @@ export interface NapGramPlugin {
     /** 默认配置（可选） */
     defaultConfig?: any;
 
+    /** 插件公开导出（供主程序或其他插件读取） */
+    exports?: Record<string, unknown>;
+
     /** 所需权限 */
     permissions?: PluginPermissions;
 

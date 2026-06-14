@@ -5,17 +5,35 @@ import { beforeAll, vi } from 'vitest'
 
 const mockedLogger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), trace: vi.fn() }
 
+const envMock = vi.hoisted(() => ({
+  DATA_DIR: '/tmp',
+  CACHE_DIR: '/tmp/cache',
+  TG_INITIAL_DCID: 2,
+  TG_INITIAL_SERVER: '149.154.167.50',
+  NAPCAT_WS_URL: 'ws://localhost:3000',
+  TG_BOT_TOKEN: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
+  LOG_LEVEL: 'info',
+  ADMIN_QQ: undefined as number | string | null | undefined,
+  ADMIN_TG: undefined as number | string | null | undefined,
+}))
+
 vi.mock('@napgram/env-kit', () => ({
-  env: {
-    DATA_DIR: '/tmp',
-    CACHE_DIR: '/tmp/cache',
-    TG_INITIAL_DCID: 2,
-    TG_INITIAL_SERVER: '149.154.167.50',
-    NAPCAT_WS_URL: 'ws://localhost:3000',
-    TG_BOT_TOKEN: '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11',
-    LOG_LEVEL: 'info',
-  },
+  env: envMock,
   flags: {},
+  getSystemOwners: () => ({
+    qq: envMock.ADMIN_QQ,
+    tg: envMock.ADMIN_TG,
+  }),
+  isConfiguredIdentity: (value: unknown) => value !== undefined && value !== null && String(value).trim() !== '',
+  matchesUserIdentity: (userId: string, identity: unknown) => {
+    const normalize = (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, '')
+    return String(userId ?? '') !== '' && normalize(userId) === normalize(identity)
+  },
+  matchesAnyIdentity: (userId: string, identities: unknown[]) => {
+    const normalize = (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, '')
+    return String(userId ?? '') !== '' && identities.some(identity => normalize(userId) === normalize(identity))
+  },
+  normalizeUserIdentity: (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, ''),
 }))
 
 vi.mock('@napgram/logger-kit', () => ({
