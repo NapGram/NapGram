@@ -2,13 +2,17 @@ import type { Message } from '@mtcute/core'
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import type { RuntimePluginHandle } from '@napgram/runtime-kit'
 import type { ForwardMap, Instance, IQQClient, Telegram } from '../../runtime-types.js'
+import type { WorkMode } from '../../work-mode-gate.js'
 import type { Command } from './types.js'
+import type { QqChatType } from './utils/ForwardPairChatType.js'
 import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { getEventPublisher } from '../../capabilities/events.js'
 import { getLogger } from '../../capabilities/logging.js'
-import { buildWorkModePrompt, hasConfiguredWorkMode, isWorkModeCommand, parseWorkMode, WORK_MODE_LABELS, type WorkMode } from '../../work-mode-gate.js'
+import { hasQ2tgSkipMarker } from '../../utils/QqLoopbackMarker.js'
+import { buildWorkModePrompt, hasConfiguredWorkMode, isWorkModeCommand, parseWorkMode, WORK_MODE_LABELS } from '../../work-mode-gate.js'
+import { PersonalPairProvisioner } from '../forward/services/PersonalPairProvisioner.js'
 import { BindCommandHandler } from './handlers/BindCommandHandler.js'
 import { CommandContext } from './handlers/CommandContext.js'
 import { ForwardControlCommandHandler } from './handlers/ForwardControlCommandHandler.js'
@@ -17,13 +21,11 @@ import { InfoCommandHandler } from './handlers/InfoCommandHandler.js'
 import { RecallCommandHandler } from './handlers/RecallCommandHandler.js'
 import { StatusCommandHandler } from './handlers/StatusCommandHandler.js'
 import { UnbindCommandHandler } from './handlers/UnbindCommandHandler.js'
+import { CommandAccessChecker } from './services/CommandAccessChecker.js'
 import { CommandRegistry } from './services/CommandRegistry.js'
 import { InteractiveStateManager } from './services/InteractiveStateManager.js'
-import { CommandAccessChecker } from './services/CommandAccessChecker.js'
 import { ThreadIdExtractor } from './services/ThreadIdExtractor.js'
-import { PersonalPairProvisioner } from '../forward/services/PersonalPairProvisioner.js'
-import { hasQ2tgSkipMarker } from '../../utils/QqLoopbackMarker.js'
-import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage, type QqChatType } from './utils/ForwardPairChatType.js'
+import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage } from './utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandsFeature')
 
@@ -51,9 +53,9 @@ const QQ_GROUP_ONLY_PLUGIN_COMMANDS = new Set([
 export type CommandHandler = (msg: UnifiedMessage, args: string[]) => Promise<void>
 export type { Command }
 
-type CommandPermissionResult = { allowed: boolean, reason?: string }
+interface CommandPermissionResult { allowed: boolean, reason?: string }
 
-type PermissionAuditEvent = {
+interface PermissionAuditEvent {
   eventType: string
   operatorId?: string
   targetUserId?: string
@@ -62,7 +64,7 @@ type PermissionAuditEvent = {
   details?: Record<string, unknown>
 }
 
-type PermissionServiceLike = {
+interface PermissionServiceLike {
   checkCommandPermission: (
     userId: string,
     commandName: string,
@@ -73,11 +75,11 @@ type PermissionServiceLike = {
   logAudit?: (event: PermissionAuditEvent) => Promise<void>
 }
 
-type PermissionPluginExports = {
+interface PermissionPluginExports {
   permissionService: PermissionServiceLike
 }
 
-type CommandCapablePluginContext = {
+interface CommandCapablePluginContext {
   logger?: unknown
   getCommands: () => Map<string, {
     name: string
@@ -215,7 +217,7 @@ export class CommandsFeature {
    */
   private async initializePermissionPlugin() {
     try {
-      const { getGlobalRuntime } = await import('@napgram/plugin-kit')
+      const { getGlobalRuntime } = await import('@napgram/runtime-kit')
       const runtime = getGlobalRuntime()
 
       if (!runtime) {
@@ -225,7 +227,7 @@ export class CommandsFeature {
       const report = runtime.getLastReport()
       const loadedPlugins = report?.loadedPlugins || []
 
-      const permPlugin = loadedPlugins.find(plugin => plugin.id === 'permission-management')
+      const permPlugin = loadedPlugins.find((plugin: any) => plugin.id === 'permission-management')
       let permissionExports = resolvePermissionExports(permPlugin)
 
       if (!permissionExports) {
@@ -612,7 +614,7 @@ export class CommandsFeature {
 
     try {
       // 动态导入 plugin runtime（避免循环依赖，ESM 兼容）
-      const { getGlobalRuntime } = await import('@napgram/plugin-kit')
+      const { getGlobalRuntime } = await import('@napgram/runtime-kit')
       const runtime = getGlobalRuntime()
 
       if (!runtime) {

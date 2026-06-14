@@ -68,18 +68,26 @@ export interface PluginQqSendReceipt {
   }
 }
 
-export interface PluginQqClientLike {
+export interface PluginQqUserInfoLike {
   uin?: string | number
   nickname?: string
   isConnected?: boolean
   isOnline?: () => Promise<boolean>
+}
+
+export interface PluginQqMessageSenderLike {
   sendMessage?: (channelId: string, message: any) => Promise<PluginQqSendReceipt>
   recallMessage?: (messageId: string) => Promise<void>
   getMessage?: (messageId: string) => Promise<PluginQqMessageLike | null>
+}
+
+export interface PluginQqForwardSenderLike {
   sendGroupForwardMsg?: (channelId: string, nodes: unknown[]) => Promise<PluginQqSendReceipt>
   sendPrivateForwardMessage?: (payload: { user_id: string, messages: unknown[] }) => Promise<PluginQqSendReceipt>
   sendForwardMsg?: (payload: { user_id: string, messages: unknown[] }) => Promise<PluginQqSendReceipt>
 }
+
+export interface PluginQqClientLike extends PluginQqUserInfoLike, PluginQqMessageSenderLike, PluginQqForwardSenderLike {}
 
 export interface PluginForwardPairsLike {
   getAll: () => unknown[]

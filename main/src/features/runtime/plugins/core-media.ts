@@ -1,7 +1,7 @@
-import { definePlugin } from '@napgram/sdk'
 import { bindInstanceLifecycle } from '@napgram/plugin-kit'
-import { MediaFeature } from '../features/MediaFeature.js'
+import { definePlugin } from '@napgram/sdk'
 import { createInstanceFeatureBinder } from '../feature-binder.js'
+import { MediaFeature } from '../features/MediaFeature.js'
 
 const plugin = definePlugin({
   id: 'core-media',

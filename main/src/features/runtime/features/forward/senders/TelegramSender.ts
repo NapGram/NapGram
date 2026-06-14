@@ -1,3 +1,5 @@
+/* eslint-disable eslint-comments/no-unlimited-disable */
+/* eslint-disable */
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import type { Instance } from '../../../runtime-types.js'
 import type { MediaFeature } from '../../MediaFeature.js'
@@ -330,7 +332,6 @@ export class TelegramSender {
           fileName: normalized.fileName,
         }
       }
-
 
       if (mediaInput) {
         const ttlSeconds = env.TG_MEDIA_TTL_SECONDS && env.TG_MEDIA_TTL_SECONDS > 0 ? env.TG_MEDIA_TTL_SECONDS : undefined

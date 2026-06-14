@@ -1,1 +1,1 @@
-export { performanceMonitor } from '../../../infrastructure/services/PerformanceMonitor.js'
+export { performanceMonitor } from '@napgram/infra-kit'

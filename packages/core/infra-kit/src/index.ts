@@ -5,8 +5,7 @@ import qface from './qface.js'
 export { ForwardMap, type ForwardPairRecord } from '@napgram/db-kit'
 export { Pair } from '@napgram/db-kit'
 
-import { CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache } from './CacheManager.js'
-export type { CacheConfig } from './CacheManager.js'
+// Removed CacheManager imports
 import { MessageQueue } from './MessageQueue.js'
 export type { MessageHandler, QueueConfig } from './MessageQueue.js'
 import { performanceMonitor, PerformanceMonitor, startMonitoring } from './PerformanceMonitor.js'
@@ -37,7 +36,6 @@ export const { TEMP_PATH } = temp
 
 // Named exports
 export {
-  CacheManager, configCache, groupInfoCache, mediaCache, userInfoCache,
   MessageQueue,
   performanceMonitor, PerformanceMonitor, startMonitoring,
   env,
@@ -87,7 +85,6 @@ const kit = {
   drizzleDb,
   temp,
   performanceMonitor,
-  CacheManager,
   MessageQueue,
   qface,
 }

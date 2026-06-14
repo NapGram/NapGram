@@ -31,8 +31,9 @@ import { createInstanceAPI } from '../api/instance.js'
 import { createMessageAPI } from '../api/message.js'
 import { createUserAPI } from '../api/user.js'
 import { createWebAPI } from '../api/web.js'
+import { loadPluginSpecs } from '../internal/config.js'
 
-const logger = getLogger('PluginRuntime')
+const logger = getLogger('PluginRuntimeEngine')
 
 export type { ReloadPluginResult, RuntimeReport } from '@napgram/runtime-kit'
 
@@ -58,7 +59,7 @@ export interface RuntimeConfig {
  *
  * 单例模式，全局只有一个运行时实例
  */
-export class PluginRuntime implements IPluginRuntime {
+export class PluginRuntimeEngine implements IPluginRuntime {
   /** 事件总线 */
   private eventBus: EventBus
 
@@ -205,10 +206,23 @@ export class PluginRuntime implements IPluginRuntime {
    *
    * @param specs 插件规范列表
    */
-  async start(specs: PluginSpec[]): Promise<RuntimeReport> {
+  async start(options?: { webRoutes?: PluginWebRouteRegistrar, builtins?: PluginSpec[], specs?: PluginSpec[] }): Promise<RuntimeReport> {
     if (this.isRunning) {
       logger.warn('PluginRuntime is already running')
       return this.lastReport
+    }
+
+    if (options?.builtins) {
+      this.setBuiltins(options.builtins)
+    }
+    if (options?.webRoutes) {
+      this.setWebRoutes(options.webRoutes)
+    }
+
+    let specs = options?.specs;
+    if (!specs) {
+      specs = await loadPluginSpecs(this.getBuiltins())
+      logger.debug({ count: specs.length }, 'Plugin specs loaded')
     }
 
     this.configureApis()
@@ -315,12 +329,18 @@ export class PluginRuntime implements IPluginRuntime {
    *
    * @param specs 插件规范列表
    */
-  async reload(options?: unknown): Promise<RuntimeReport> {
-    const specs: PluginSpec[] = Array.isArray(options) ? options : []
+  async reload(options?: { specs?: PluginSpec[] }): Promise<RuntimeReport> {
     logger.info('Reloading PluginRuntime')
 
+    let specs = options?.specs;
+    if (!specs) {
+      specs = await loadPluginSpecs(this.getBuiltins())
+    }
+
     await this.stop()
-    return await this.start(specs)
+    const report = await this.start({ specs })
+    await this.reloadCommandsForInstances()
+    return report
   }
 
   /**
@@ -337,19 +357,33 @@ export class PluginRuntime implements IPluginRuntime {
     if (!this.isRunning) {
       return { id: pluginId, success: false, error: 'PluginRuntime is not running' }
     }
+    
+    const id = String(pluginId || '').trim()
+    if (!id)
+      return { id: pluginId, success: false, error: 'Missing pluginId' }
 
-    const instance = this.plugins.get(pluginId)
+    if (!newConfig) {
+      const specs = await loadPluginSpecs(this.getBuiltins())
+      const spec = specs.find(s => s.id === id)
+      if (!spec) {
+        return { id: pluginId, success: false, error: `Plugin spec not found: ${id}` }
+      }
+      newConfig = spec.config ?? {}
+    }
+
+    const instance = this.plugins.get(id)
     if (!instance) {
-      return { id: pluginId, success: false, error: `Plugin not loaded: ${pluginId}` }
+      return { id, success: false, error: `Plugin not loaded: ${id}` }
     }
 
     const result = await this.lifecycleManager.reload(instance, newConfig)
     if (!result.success) {
-      return { id: pluginId, success: false, error: result.error?.message || 'Unknown error' }
+      return { id, success: false, error: result.error?.message || 'Unknown error' }
     }
 
-    this.eventBus.publishSync('plugin-reload', { pluginId, timestamp: Date.now() })
-    return { id: pluginId, success: true }
+    this.eventBus.publishSync('plugin-reload', { pluginId: id, timestamp: Date.now() })
+    await this.reloadCommandsForInstances()
+    return { id, success: true }
   }
 
   /**
@@ -490,17 +524,17 @@ export class PluginRuntime implements IPluginRuntime {
  * @param config 运行时配置（仅在首次创建时使用）
  * @returns 全局运行时实例
  */
-export function getGlobalRuntime(config?: RuntimeConfig): PluginRuntime {
+export function getGlobalRuntime(config?: RuntimeConfig): PluginRuntimeEngine {
   const existing = tryGetKitRuntime()
   if (existing) {
-    const runtime = existing as PluginRuntime
+    const runtime = existing as PluginRuntimeEngine
     if (config?.apis) {
       runtime.setApis(config.apis)
     }
     return runtime
   }
 
-  const runtime = new PluginRuntime(config)
+  const runtime = new PluginRuntimeEngine(config)
   setKitRuntime(runtime)
   return runtime
 }
@@ -511,3 +545,5 @@ export function getGlobalRuntime(config?: RuntimeConfig): PluginRuntime {
 export function resetGlobalRuntime(): void {
   resetKitRuntime()
 }
+
+export const PluginRuntime = getGlobalRuntime();
