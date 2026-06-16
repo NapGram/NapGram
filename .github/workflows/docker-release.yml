@@ -93,13 +93,6 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
-          EOF
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
@@ -160,8 +153,6 @@ jobs:
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
             NODE_VERSION=25-alpine${{ env.ALPINE_BRANCH }}
-          secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Sentry release (optional)
         continue-on-error: true

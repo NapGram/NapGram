@@ -20,8 +20,7 @@ jobs:
     env:
       BUILD_REF: refs/heads/dev
       BUILD_REF_NAME: dev
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
     outputs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
@@ -136,12 +135,6 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
-          EOF
 
       - name: Install root dependencies
         # 根仓库负责后端和工作区依赖；UI 源码由 napgram-ui-dist checkout 到 ./web，
@@ -212,8 +205,6 @@ jobs:
             REF=${{ env.BUILD_REF }}
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
-          secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
 
       - name: Mark pushed
         if: success()
@@ -229,8 +220,7 @@ jobs:
     env:
       BUILD_REF: refs/heads/dev
       BUILD_REF_NAME: dev
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
     outputs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
@@ -345,12 +335,6 @@ jobs:
       - name: Enable corepack
         run: corepack enable
 
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
-          EOF
 
       - name: Install root dependencies
         # 根仓库负责后端和工作区依赖；UI 源码由 napgram-ui-dist checkout 到 ./web，
@@ -421,8 +405,6 @@ jobs:
             REF=${{ env.BUILD_REF }}
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
-          secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
 
       - name: Mark pushed
         if: success()

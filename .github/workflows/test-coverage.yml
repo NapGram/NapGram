@@ -13,9 +13,7 @@ jobs:
     permissions:
       contents: read
       packages: read
-    env:
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+    env: {}
 
     services:
       postgres:
@@ -61,13 +59,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
-          EOF
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
@@ -78,6 +69,11 @@ jobs:
         run: bash ./main/tools/run-drizzle-migrations.sh
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: napgram_test
 
       - name: Prepare test environment
         run: |
@@ -89,6 +85,11 @@ jobs:
         run: pnpm --filter @napgram/app test:coverage
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: napgram_test
           DATA_DIR: ${{ runner.temp }}/napgram-data
 
       - name: Upload coverage to Codecov
