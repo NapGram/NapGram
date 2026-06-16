@@ -72,12 +72,12 @@
     "@types/probe-image-size": "^7.2.5",
     "@types/tmp": "^0.2.6",
     "@types/ws": "^8.18.1",
-    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/coverage-v8": "4.1.9",
     "esbuild": "^0.28.0",
     "eslint": "10.5.0",
     "fast-check": "^4.8.0",
     "tsx": "^4.21.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.8"
+    "vitest": "4.1.9"
   }
 }
