@@ -77,38 +77,15 @@ jobs:
           echo "No usable token found for magisk317/napgram-ui-dist" >&2
           exit 1
 
-      - name: Checkout napgram-ui-dist source
-        uses: actions/checkout@v6
+      - name: Download UI dist artifact
+        uses: dawidd6/action-download-artifact@v6
         with:
-          repository: magisk317/napgram-ui-dist
-          ref: dev
-          token: ${{ steps.ui-token.outputs.token }}
-          path: web
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 26
-
-      - name: Enable corepack
-        run: corepack enable
-
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
-          EOF
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Build web dist
-        run: |
-          # --ignore-scripts: skip postinstall (esbuild etc.) to avoid pnpm v11
-          # ERR_PNPM_IGNORED_BUILDS; vite fetches the platform binary on demand.
-          pnpm -C web install --no-frozen-lockfile --ignore-scripts
-          pnpm -C web run build
+          github_token: ${{ steps.ui-token.outputs.token }}
+          repo: magisk317/napgram-ui-dist
+          branch: dev
+          workflow: build.yml
+          name: napgram-ui-dist
+          path: web/dist
 
 
       - name: OCI meta (Alpine)
@@ -160,8 +137,6 @@ jobs:
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
             NODE_VERSION=25-alpine${{ env.ALPINE_BRANCH }}
-          secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish Sentry release (optional)
         continue-on-error: true

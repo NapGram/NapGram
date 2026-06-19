@@ -20,8 +20,7 @@ jobs:
     env:
       BUILD_REF: refs/heads/dev
       BUILD_REF_NAME: dev
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
     outputs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
@@ -120,45 +119,15 @@ jobs:
           echo "No usable token found for magisk317/napgram-ui-dist" >&2
           exit 1
 
-      - name: Checkout napgram-ui-dist source
-        uses: actions/checkout@v6
+      - name: Download UI dist artifact
+        uses: dawidd6/action-download-artifact@v6
         with:
-          repository: magisk317/napgram-ui-dist
-          ref: dev
-          token: ${{ steps.ui-token.outputs.token }}
-          path: web
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 26
-
-      - name: Enable corepack
-        run: corepack enable
-
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
-          EOF
-
-      - name: Install root dependencies
-        # 根仓库负责后端和工作区依赖；UI 源码由 napgram-ui-dist checkout 到 ./web，
-        # 因此 root lockfile 与 web lockfile 是两套独立输入。
-        run: |
-          pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
-
-      - name: Build external UI dist
-        run: |
-          if [ -d web/dist ] && [ -n "$(ls -A web/dist 2>/dev/null)" ]; then
-            echo "web/dist already present, skip build"
-            exit 0
-          fi
-          # --ignore-scripts: skip postinstall (esbuild etc.) in the napgram-ui-dist repo;
-          # vite fetches the platform binary on demand.
-          pnpm -C web install --frozen-lockfile --ignore-scripts || pnpm -C web install --no-frozen-lockfile --ignore-scripts
-          pnpm -C web run build
+          github_token: ${{ steps.ui-token.outputs.token }}
+          repo: magisk317/napgram-ui-dist
+          branch: dev
+          workflow: build.yml
+          name: napgram-ui-dist
+          path: web/dist
 
       - name: Prepare tag date
         run: echo "DATE=$(date -u +%Y%m%d)" >> "$GITHUB_ENV"
@@ -212,8 +181,6 @@ jobs:
             REF=${{ env.BUILD_REF }}
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
-          secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
 
       - name: Mark pushed
         if: success()
@@ -229,8 +196,7 @@ jobs:
     env:
       BUILD_REF: refs/heads/dev
       BUILD_REF_NAME: dev
-      NPM_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN || secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
     outputs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
@@ -329,45 +295,15 @@ jobs:
           echo "No usable token found for magisk317/napgram-ui-dist" >&2
           exit 1
 
-      - name: Checkout napgram-ui-dist source
-        uses: actions/checkout@v6
+      - name: Download UI dist artifact
+        uses: dawidd6/action-download-artifact@v6
         with:
-          repository: magisk317/napgram-ui-dist
-          ref: dev
-          token: ${{ steps.ui-token.outputs.token }}
-          path: web
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 26
-
-      - name: Enable corepack
-        run: corepack enable
-
-      - name: Configure npm auth for GitHub Packages
-        run: |
-          cat <<'EOF' >> ~/.npmrc
-          @napgram:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
-          EOF
-
-      - name: Install root dependencies
-        # 根仓库负责后端和工作区依赖；UI 源码由 napgram-ui-dist checkout 到 ./web，
-        # 因此 root lockfile 与 web lockfile 是两套独立输入。
-        run: |
-          pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
-
-      - name: Build external UI dist
-        run: |
-          if [ -d web/dist ] && [ -n "$(ls -A web/dist 2>/dev/null)" ]; then
-            echo "web/dist already present, skip build"
-            exit 0
-          fi
-          # --ignore-scripts: skip postinstall (esbuild etc.) in the napgram-ui-dist repo;
-          # vite fetches the platform binary on demand.
-          pnpm -C web install --frozen-lockfile --ignore-scripts || pnpm -C web install --no-frozen-lockfile --ignore-scripts
-          pnpm -C web run build
+          github_token: ${{ steps.ui-token.outputs.token }}
+          repo: magisk317/napgram-ui-dist
+          branch: dev
+          workflow: build.yml
+          name: napgram-ui-dist
+          path: web/dist
 
       - name: Prepare tag date
         run: echo "DATE=$(date -u +%Y%m%d)" >> "$GITHUB_ENV"
@@ -421,8 +357,6 @@ jobs:
             REF=${{ env.BUILD_REF }}
             COMMIT=${{ env.BUILD_SHA }}
             USE_MIRROR=false
-          secrets: |
-            npmrc=//npm.pkg.github.com/:_authToken=${{ env.NPM_TOKEN }}
 
       - name: Mark pushed
         if: success()
