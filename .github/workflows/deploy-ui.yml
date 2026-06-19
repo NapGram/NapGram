@@ -43,7 +43,7 @@ jobs:
           exit 1
 
       - name: Checkout napgram-ui-dist source
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: magisk317/napgram-ui-dist
           ref: dev
