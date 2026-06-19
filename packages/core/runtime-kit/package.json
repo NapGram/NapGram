@@ -27,6 +27,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
     "dev": "tsc -p tsconfig.json --watch"
   },
   "keywords": [
@@ -36,6 +37,7 @@
   "author": "NapGram Team",
   "license": "MIT",
   "devDependencies": {
+    "vitest": "4.1.9",
     "@types/node": "25.9.3",
     "typescript": "6.0.3"
   },

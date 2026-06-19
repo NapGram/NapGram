@@ -1030,7 +1030,7 @@ describe('commandsFeature', () => {
           }],
         }),
       })
-      vi.doMock('@napgram/plugin-kit', () => ({ getGlobalRuntime: mockGetGlobalRuntime }))
+      vi.doMock('@napgram/runtime-kit', () => ({ getGlobalRuntime: mockGetGlobalRuntime }))
 
       const loaded = await (commandsFeature as any).loadPluginCommands()
       expect(loaded.has('mycmd')).toBe(true)
