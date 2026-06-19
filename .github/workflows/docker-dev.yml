@@ -25,7 +25,7 @@ jobs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
       - name: Checkout (dev)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
           fetch-depth: 0
@@ -201,7 +201,7 @@ jobs:
       pushed: ${{ steps.pushed.outputs.pushed }}
     steps:
       - name: Checkout (dev)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
           fetch-depth: 0
@@ -378,7 +378,7 @@ jobs:
       BUILD_REF_NAME: dev
     steps:
       - name: Checkout (dev)
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ env.BUILD_REF }}
           fetch-depth: 0
