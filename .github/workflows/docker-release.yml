@@ -78,7 +78,7 @@ jobs:
           exit 1
 
       - name: Download UI dist artifact
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v21
         with:
           github_token: ${{ steps.ui-token.outputs.token }}
           repo: magisk317/napgram-ui-dist
