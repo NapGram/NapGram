@@ -61,7 +61,7 @@
     "@napgram/plugin-web-console": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "25.9.3",
+    "@types/node": "25.9.4",
     "typescript": "6.0.3"
   }
 }
