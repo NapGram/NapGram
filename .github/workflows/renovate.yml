@@ -2,7 +2,7 @@ name: Renovate
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 0 * * 1"  # Weekly on Monday at midnight
   push:
     branches:
       - dev
@@ -17,7 +17,7 @@ on:
       - dev
 
 permissions:
-  contents: read
+  contents: write
   issues: read
   pull-requests: read
 
@@ -79,3 +79,37 @@ jobs:
         with:
           configurationFile: .github/renovate-config.js
           token: ${{ secrets.GH_PAT }}
+
+      - name: Cleanup orphan renovate branches
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          set -euo pipefail
+          echo "Checking for orphan renovate branches..."
+
+          # Configure git authentication
+          git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+          # List all remote branches starting with renovate/
+          branches=$(git ls-remote --heads origin | awk '{print $2}' | grep 'refs/heads/renovate/' || true)
+
+          if [[ -z "$branches" ]]; then
+            echo "No renovate branches found."
+            exit 0
+          fi
+
+          for branch in $branches; do
+            branch_name=${branch#refs/heads/}
+            echo "Checking branch: $branch_name"
+
+            # Check if there is an open PR for this branch
+            if ! gh pr list --head "$branch_name" --state open --json number --jq '.[].number' | grep -q .; then
+              echo "Deleting orphan branch: $branch_name"
+              git push origin --delete "$branch_name" || echo "Failed to delete $branch_name (may already be deleted)"
+            else
+              echo "Branch $branch_name has an open PR, skipping."
+            fi
+          done
+
+          echo "Orphan branch cleanup completed."
