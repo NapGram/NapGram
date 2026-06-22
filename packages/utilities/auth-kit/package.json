@@ -33,7 +33,7 @@
   "devDependencies": {
     "vitest": "4.1.9",
     "@fastify/cookie": "^11.0.2",
-    "@types/node": "25.9.3",
+    "@types/node": "25.9.4",
     "typescript": "6.0.3"
   },
   "publishConfig": {
