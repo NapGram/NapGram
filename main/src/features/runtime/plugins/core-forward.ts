@@ -11,7 +11,7 @@ const plugin = definePlugin({
   install: async (ctx) => {
     const lifecycle = await bindInstanceLifecycle({
       native: (ctx as any).native,
-      on: ctx.on,
+      on: ctx.on.bind(ctx),
       logger: ctx.logger,
     }, {
       ...createInstanceFeatureBinder<any, ForwardFeature>({
