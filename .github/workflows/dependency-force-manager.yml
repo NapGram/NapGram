@@ -45,7 +45,8 @@ jobs:
         github.event_name == 'pull_request_target' &&
         github.event.pull_request.head.ref == 'chore/dependency-force-update'
       )
-    env: {}
+    env:
+      DEPENDENCY_FORCE_HISTORICAL_ALERT_COOLDOWN_HOURS: 168
     steps:
       - name: Checkout
         uses: actions/checkout@v7
