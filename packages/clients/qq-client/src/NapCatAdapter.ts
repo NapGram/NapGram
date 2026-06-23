@@ -62,7 +62,14 @@ export class NapCatAdapter extends EventEmitter {
         logger: {
           debug: (_msg, ..._args) => { },
           info: (msg, ...args) => clientLogger.info(msg, ...args),
-          warn: (msg, ...args) => clientLogger.warn(msg, ...args),
+          warn: (msg, ...args) => {
+            // Suppress "收到未知请求的响应: undefined" warning
+            // This is caused by NapCat sending responses without echo field
+            if (typeof msg === 'string' && msg.includes('收到未知请求的响应: undefined')) {
+              return
+            }
+            clientLogger.warn(msg, ...args)
+          },
           error: (msg, err, ...args) => clientLogger.error(msg, err, ...args),
         },
       },
