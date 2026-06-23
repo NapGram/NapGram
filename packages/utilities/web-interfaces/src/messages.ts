@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyRequest } from 'fastify'
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { authMiddleware } from '@napgram/auth-kit'
 import { processNestedForward } from '@napgram/message-kit'
 import { TTLCache } from './web-cache.js'
@@ -196,6 +196,43 @@ export default async function (fastify: FastifyInstance) {
     }
     catch (error) {
       return ErrorResponses.internalError(reply, 'Forward preview failed')
+    }
+  })
+
+  // 公开接口 - 根据 UUID 获取合并转发消息
+  fastify.get('/api/messages/merged/:uuid', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { uuid } = request.params as { uuid: string }
+
+    if (!uuid) {
+      return ErrorResponses.badRequest(reply, 'uuid is required')
+    }
+
+    try {
+      // 1. 从 forwardMultiple 表查找 resId
+      const entry = await db.query.forwardMultiple.findFirst({
+        where: eq(schema.forwardMultiple.id, uuid),
+      })
+
+      if (!entry) {
+        return ErrorResponses.notFound(reply, 'Forward record not found')
+      }
+
+      // 2. 通过 instance 获取 QQ client 的 getForwardMsg
+      const instance = messageBridgeContext.getInstance(0)
+      const qqClient = (instance as any)?.qqClient
+
+      if (!qqClient || typeof qqClient.getForwardMsg !== 'function') {
+        return ErrorResponses.internalError(reply, 'QQ client not available')
+      }
+
+      // 3. 调用 getForwardMsg 获取合并转发内容
+      const messages = await qqClient.getForwardMsg(entry.resId)
+
+      return messages
+    }
+    catch (error) {
+      logger.error(error, `Failed to fetch merged messages for uuid ${uuid}`)
+      return ErrorResponses.internalError(reply, 'Failed to fetch merged messages')
     }
   })
 }
