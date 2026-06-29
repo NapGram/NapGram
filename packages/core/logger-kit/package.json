@@ -32,7 +32,7 @@
   "license": "MIT",
   "dependencies": {
     "@napgram/env-kit": "workspace:*",
-    "@sentry/node": "10.59.0"
+    "@sentry/node": "10.62.0"
   },
   "devDependencies": {
     "@types/node": "25.9.4",
