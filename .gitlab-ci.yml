@@ -226,8 +226,8 @@ ui:build:
       if [[ "$package_manager" == pnpm@* ]]; then
         corepack prepare "$package_manager" --activate
       fi
-      pnpm install --frozen-lockfile --ignore-workspace
-      pnpm --ignore-workspace run build
+      pnpm install --frozen-lockfile
+      pnpm run build
       test -n "$(find dist -type f -print -quit)"
   artifacts:
     name: "NapGram-ui-$CI_COMMIT_REF_SLUG"
@@ -299,7 +299,7 @@ app:lint:
 security:gitleaks:
   extends: .napgram_ci_rules
   image:
-    name: zricethezav/gitleaks:v8.28.0
+    name: ghcr.io/gitleaks/gitleaks:v8.28.0
     entrypoint: [""]
   stage: quality
   needs: []
