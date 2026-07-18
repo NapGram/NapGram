@@ -63,7 +63,6 @@ variables:
   NAPGRAM_DOCKER_DIND_IMAGE: "docker:29-dind"
   DOCKER_HOST: "tcp://docker:2375"
   DOCKER_TLS_CERTDIR: ""
-  DOCKER_DRIVER: overlay2
 
 .napgram_ci_rules:
   rules:
