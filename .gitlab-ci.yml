@@ -27,6 +27,7 @@ default:
     - $NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG
 
 stages:
+  - prepare
   - build
   - validate
   - test
@@ -125,7 +126,7 @@ variables:
       prefix: "napgram-node-26"
     paths:
       - .pnpm-store/
-    policy: pull-push
+    policy: pull
   before_script:
     - |
       set -euo pipefail
@@ -160,11 +161,32 @@ variables:
       docker version
       docker buildx version
 
+app:dependencies:
+  extends:
+    - .napgram_node
+    - .napgram_ci_rules
+  stage: prepare
+  cache:
+    policy: pull-push
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - api_failure
+      - script_failure
+  script:
+    - pnpm install --frozen-lockfile
+
 ui:build:
   extends:
     - .napgram_node
     - .napgram_docker_rules
   stage: build
+  cache:
+    key: "napgram-ui-node-26"
+    paths:
+      - .pnpm-store/
+    policy: pull-push
   script:
     - |
       set -euo pipefail
@@ -218,7 +240,9 @@ app:typecheck:
     - .napgram_node
     - .napgram_ci_rules
   stage: validate
-  needs: []
+  needs:
+    - job: app:dependencies
+      artifacts: false
   script:
     - pnpm install --frozen-lockfile
     - pnpm -r --filter "./packages/**" run build
@@ -229,7 +253,9 @@ app:test:coverage:
     - .napgram_node
     - .napgram_ci_rules
   stage: test
-  needs: []
+  needs:
+    - job: app:dependencies
+      artifacts: false
   services:
     - name: postgres:18-alpine
       alias: postgres
@@ -262,7 +288,9 @@ app:lint:
     - .napgram_node
     - .napgram_ci_rules
   stage: quality
-  needs: []
+  needs:
+    - job: app:dependencies
+      artifacts: false
   allow_failure: true
   script:
     - pnpm install --frozen-lockfile
