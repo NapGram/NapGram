@@ -130,8 +130,10 @@ variables:
   before_script:
     - |
       set -euo pipefail
+      corepack_registry="${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}"
+      export COREPACK_NPM_REGISTRY="$corepack_registry"
       if ! command -v corepack >/dev/null 2>&1; then
-        npm install --global corepack@latest
+        npm install --global --registry="$corepack_registry" corepack@latest
       fi
       corepack enable
       corepack prepare "pnpm@${NAPGRAM_PNPM_VERSION}" --activate
