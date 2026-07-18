@@ -141,6 +141,12 @@ variables:
 
 .napgram_docker:
   image: "$NAPGRAM_DOCKER_IMAGE"
+  retry:
+    max: 1
+    when:
+      - runner_system_failure
+      - api_failure
+      - script_failure
   services:
     - name: "$NAPGRAM_DOCKER_DIND_IMAGE"
       alias: docker
