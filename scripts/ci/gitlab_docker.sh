@@ -142,6 +142,7 @@ build_arch() {
     --build-arg "USE_MIRROR=${NAPGRAM_DOCKER_USE_MIRROR:-false}" \
     --build-arg "LOTTIE_IMAGE=$(lottie_image)" \
     --build-arg "NODE_IMAGE=$(docker_node_image)" \
+    --build-arg "PNPM_VERSION=${NAPGRAM_PNPM_VERSION:-11.8.0}" \
     "${tag_args[@]}" \
     .
 }

@@ -1,6 +1,7 @@
 ARG INSTALL_PG_CLIENT=true
 ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif:latest
 ARG NODE_IMAGE=node:26-alpine3.24
+ARG PNPM_VERSION=11.8.0
 
 # Extract TGS conversion tools
 FROM ${LOTTIE_IMAGE} AS lottie
@@ -9,6 +10,7 @@ FROM ${LOTTIE_IMAGE} AS lottie
 FROM ${NODE_IMAGE} AS base
 ARG USE_MIRROR=true
 ARG INSTALL_PG_CLIENT=true
+ARG PNPM_VERSION
 
 # Base Alpine packages
 RUN if [ "$USE_MIRROR" = "true" ]; then \
@@ -28,7 +30,7 @@ COPY --from=lottie /usr/bin/gifski /usr/bin/
 # Compat layer for Debian-built binaries
 RUN apk add --no-cache gcompat
 
-RUN npm install -g pnpm@latest && npm install -g npm@latest
+RUN npm install -g "pnpm@${PNPM_VERSION}"
 WORKDIR /app
 
 # Workspace build image
