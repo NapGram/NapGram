@@ -18,9 +18,24 @@ registry_image() {
   printf '%s\n' "$CI_REGISTRY_IMAGE"
 }
 
+dockerhub_enabled() {
+  [[ "${NAPGRAM_DOCKERHUB_PUBLISH:-false}" == "true" ]]
+}
+
 dockerhub_image() {
-  [[ -n "${DOCKERHUB_USERNAME:-}" && -n "${DOCKERHUB_TOKEN:-}" ]] || return 1
+  dockerhub_enabled || return 1
+  require_env DOCKERHUB_USERNAME
+  require_env DOCKERHUB_TOKEN
   printf '%s\n' "${DOCKERHUB_IMAGE:-docker.io/${DOCKERHUB_USERNAME}/napgram}"
+}
+
+dependency_proxy_prefix() {
+  local prefix="${CI_DEPENDENCY_PROXY_GROUP_IMAGE_PREFIX:-}"
+  [[ -n "$prefix" ]] || return 1
+  prefix="${prefix#http://}"
+  prefix="${prefix#https://}"
+  [[ "$prefix" != *'"'* && "$prefix" != *$'\n'* ]] || return 1
+  printf '%s\n' "$prefix"
 }
 
 login_registries() {
@@ -31,13 +46,18 @@ login_registries() {
   printf '%s' "$CI_REGISTRY_PASSWORD" \
     | docker login "$CI_REGISTRY" --username "$CI_REGISTRY_USER" --password-stdin
 
-  if [[ -n "${DOCKERHUB_USERNAME:-}" || -n "${DOCKERHUB_TOKEN:-}" ]]; then
-    if [[ -z "${DOCKERHUB_USERNAME:-}" || -z "${DOCKERHUB_TOKEN:-}" ]]; then
-      echo "Both DOCKERHUB_USERNAME and DOCKERHUB_TOKEN are required to enable Docker Hub publishing" >&2
-      exit 2
-    fi
+  if dockerhub_enabled; then
+    require_env DOCKERHUB_USERNAME
+    require_env DOCKERHUB_TOKEN
     printf '%s' "$DOCKERHUB_TOKEN" \
       | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin
+  fi
+
+  if [[ -n "${CI_DEPENDENCY_PROXY_SERVER:-}" && -n "${CI_DEPENDENCY_PROXY_USER:-}" && -n "${CI_DEPENDENCY_PROXY_PASSWORD:-}" ]]; then
+    printf '%s' "$CI_DEPENDENCY_PROXY_PASSWORD" \
+      | docker login "$CI_DEPENDENCY_PROXY_SERVER" \
+          --username "$CI_DEPENDENCY_PROXY_USER" \
+          --password-stdin
   fi
 }
 
@@ -67,8 +87,19 @@ release_tags() {
 
 create_builder() {
   BUILDX_BUILDER="napgram-${CI_JOB_ID:-$$}"
-  docker buildx create --name "$BUILDX_BUILDER" --use
-  trap 'docker buildx rm "$BUILDX_BUILDER" >/dev/null 2>&1 || true' EXIT
+  BUILDKIT_CONFIG=""
+  local create_args=(--name "$BUILDX_BUILDER" --use)
+  local proxy_prefix
+  if proxy_prefix="$(dependency_proxy_prefix)"; then
+    BUILDKIT_CONFIG="$(mktemp)"
+    printf '[registry."docker.io"]\n  mirrors = ["%s"]\n' "$proxy_prefix" >"$BUILDKIT_CONFIG"
+    create_args+=(
+      --driver-opt "image=${NAPGRAM_BUILDKIT_IMAGE:-${proxy_prefix}/moby/buildkit:buildx-stable-1}"
+      --buildkitd-config "$BUILDKIT_CONFIG"
+    )
+  fi
+  docker buildx create "${create_args[@]}"
+  trap 'docker buildx rm "${BUILDX_BUILDER}" >/dev/null 2>&1 || true; [[ -z "${BUILDKIT_CONFIG:-}" ]] || rm -f "$BUILDKIT_CONFIG"' EXIT
 }
 
 build_arch() {

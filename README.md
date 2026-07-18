@@ -82,9 +82,9 @@
 - 稳定版（Release 构建）：`latest` + `vX.Y.Z`
 - 开发版（每日构建）：`dev-latest` + `dev-YYYYMMDD`
 
-GitLab 流水线会发布到项目自带的 Container Registry；配置
-`DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN` 后会同时发布到 Docker Hub，也可通过
-`DOCKERHUB_IMAGE` 覆盖目标镜像名。
+GitLab 流水线会发布到项目自带的 Container Registry。若要同时发布到 Docker Hub，需将
+`NAPGRAM_DOCKERHUB_PUBLISH` 设为 `true`，并配置 `DOCKERHUB_USERNAME` 与
+`DOCKERHUB_TOKEN`；可通过 `DOCKERHUB_IMAGE` 覆盖目标镜像名。
 
 ### GitLab 自动化
 

@@ -60,9 +60,9 @@
 **Note**: NapGram requires connection to a deployed NapCat instance. Please ensure NapCat is running first.
 
 GitLab pipelines publish multi-architecture images to the project Container Registry from the
-`dev` branch and `vX.Y.Z` tags. Docker Hub publishing is also enabled when
-`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are configured; `DOCKERHUB_IMAGE` can override the
-target image name.
+`dev` branch and `vX.Y.Z` tags. To publish the same tags to Docker Hub, set
+`NAPGRAM_DOCKERHUB_PUBLISH` to `true` and configure `DOCKERHUB_USERNAME` and
+`DOCKERHUB_TOKEN`; `DOCKERHUB_IMAGE` can override the target image name.
 
 The Web Dashboard is built from a separate repository. The pipeline defaults to the
 `napgram-ui-dist` mirror in the same GitLab namespace; private mirrors require the protected,
