@@ -1,10 +1,12 @@
 ARG INSTALL_PG_CLIENT=true
+ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif:latest
+ARG NODE_IMAGE=node:26-alpine3.24
 
 # Extract TGS conversion tools
-FROM edasriyan/lottie-to-gif:latest AS lottie
+FROM ${LOTTIE_IMAGE} AS lottie
 
 # Base runtime image
-FROM node:26-alpine3.24 AS base
+FROM ${NODE_IMAGE} AS base
 ARG USE_MIRROR=true
 ARG INSTALL_PG_CLIENT=true
 

@@ -38,6 +38,23 @@ dependency_proxy_prefix() {
   printf '%s\n' "$prefix"
 }
 
+docker_node_image() {
+  if [[ -n "${NAPGRAM_DOCKER_NODE_IMAGE:-}" ]]; then
+    printf '%s\n' "$NAPGRAM_DOCKER_NODE_IMAGE"
+    return
+  fi
+  local proxy_prefix
+  if proxy_prefix="$(dependency_proxy_prefix)"; then
+    printf '%s/library/node@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66\n' "$proxy_prefix"
+    return
+  fi
+  printf '%s\n' 'node:26-alpine3.24'
+}
+
+lottie_image() {
+  printf '%s\n' "${NAPGRAM_LOTTIE_IMAGE:-edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649}"
+}
+
 login_registries() {
   require_env CI_REGISTRY
   require_env CI_REGISTRY_USER
@@ -87,19 +104,13 @@ release_tags() {
 
 create_builder() {
   BUILDX_BUILDER="napgram-${CI_JOB_ID:-$$}"
-  BUILDKIT_CONFIG=""
   local create_args=(--name "$BUILDX_BUILDER" --use)
   local proxy_prefix
   if proxy_prefix="$(dependency_proxy_prefix)"; then
-    BUILDKIT_CONFIG="$(mktemp)"
-    printf '[registry."docker.io"]\n  mirrors = ["%s"]\n' "$proxy_prefix" >"$BUILDKIT_CONFIG"
-    create_args+=(
-      --driver-opt "image=${NAPGRAM_BUILDKIT_IMAGE:-${proxy_prefix}/moby/buildkit:buildx-stable-1}"
-      --buildkitd-config "$BUILDKIT_CONFIG"
-    )
+    create_args+=(--driver-opt "image=${NAPGRAM_BUILDKIT_IMAGE:-${proxy_prefix}/moby/buildkit:buildx-stable-1}")
   fi
   docker buildx create "${create_args[@]}"
-  trap 'docker buildx rm "${BUILDX_BUILDER}" >/dev/null 2>&1 || true; [[ -z "${BUILDKIT_CONFIG:-}" ]] || rm -f "$BUILDKIT_CONFIG"' EXIT
+  trap 'docker buildx rm "${BUILDX_BUILDER}" >/dev/null 2>&1 || true' EXIT
 }
 
 build_arch() {
@@ -135,6 +146,8 @@ build_arch() {
     --build-arg "REF=${CI_COMMIT_REF_NAME:-unknown}" \
     --build-arg "COMMIT=${CI_COMMIT_SHA:-unknown}" \
     --build-arg "USE_MIRROR=${NAPGRAM_DOCKER_USE_MIRROR:-false}" \
+    --build-arg "LOTTIE_IMAGE=$(lottie_image)" \
+    --build-arg "NODE_IMAGE=$(docker_node_image)" \
     "${tag_args[@]}" \
     .
 }
