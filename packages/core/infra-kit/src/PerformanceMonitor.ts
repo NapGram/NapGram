@@ -1,7 +1,7 @@
 import process from 'node:process'
-import { getInfraLogger } from './deps.js'
+import { getLogger } from '@napgram/logger-kit'
 
-const logger = getInfraLogger('PerformanceMonitor')
+const logger = getLogger('PerformanceMonitor')
 
 export interface PerformanceMetrics {
   messageProcessed: number

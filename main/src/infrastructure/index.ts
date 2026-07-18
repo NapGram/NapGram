@@ -71,4 +71,4 @@ export {
   PerformanceMonitor,
   performanceMonitor,
   type PerformanceStats,
-} from './services/PerformanceMonitor'
+} from '@napgram/infra-kit'

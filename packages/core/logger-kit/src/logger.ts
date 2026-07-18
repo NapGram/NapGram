@@ -130,8 +130,20 @@ export function rotateIfNeeded() {
   }
 }
 
-function formatArgs(args: unknown[], color = false) {
-  return args.map(arg => (typeof arg === 'string' ? arg : inspect(arg, { depth: 4, colors: color, breakLength: 120 })))
+export function redactSensitiveLogText(value: string): string {
+  return value
+    .replace(/(\bBearer\s+)[A-Za-z0-9._~+/=-]+/gi, '$1[REDACTED]')
+    .replace(/([?&](?:access_token|auth_token|api_token|admin_token|token|password|secret)=)[^&#\s]+/gi, '$1[REDACTED]')
+    .replace(/(\b(?:access_token|auth_token|api_token|admin_token|token|password|secret)\b(?:\s*\([^)]*\))?\s*[:=]\s*['"]?)[^'"\s,;&}]+/gi, '$1[REDACTED]')
+}
+
+function formatArgs(args: unknown[]) {
+  return args.map((arg) => {
+    if (typeof arg === 'string')
+      return redactSensitiveLogText(arg)
+
+    return redactSensitiveLogText(inspect(arg, { depth: 4, colors: false, breakLength: 120 }))
+  })
 }
 
 const resetColor = '\x1B[0m'
@@ -234,7 +246,7 @@ function writeFileLog(level: LogLevel, name: string, args: unknown[]) {
     ts: new Date().toISOString(),
     level,
     name,
-    args: formatArgs(args, false),
+    args: formatArgs(args),
   }
   fileStream.write(`${JSON.stringify(record)}\n`)
 }
@@ -245,7 +257,7 @@ function writeConsole(level: LogLevel, name: string, args: unknown[]) {
   const color = getLoggerColor(name)
   const levelLabel = level.toUpperCase().padEnd(5)
   const prefix = `${color}[${name}]${resetColor}`
-  process.stdout.write(`${ts} ${levelLabel} ${prefix} ${formatArgs(args, true).join(' ')}\n`)
+  process.stdout.write(`${ts} ${levelLabel} ${prefix} ${formatArgs(args).join(' ')}\n`)
 }
 
 export function setConsoleLogLevel(level: string) {

@@ -36,6 +36,32 @@ describe('logger', () => {
     })
   })
 
+  describe('redactSensitiveLogText', () => {
+    it('redacts credentials in URLs, key-value logs, and authorization headers', async () => {
+      const { redactSensitiveLogText } = await import('../logger.js')
+
+      expect(redactSensitiveLogText('connecting to ws://service/?access_token=secret-value&mode=ws'))
+        .toBe('connecting to ws://service/?access_token=[REDACTED]&mode=ws')
+      expect(redactSensitiveLogText("{ token: 'secret-value', status: 'ready' }"))
+        .toBe("{ token: '[REDACTED]', status: 'ready' }")
+      expect(redactSensitiveLogText('Authorization: Bearer secret-value'))
+        .toBe('Authorization: Bearer [REDACTED]')
+    })
+
+    it('redacts credentials inside structured console arguments', async () => {
+      const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const { default: getLogger, setConsoleLogLevel } = await import('../logger.js')
+      setConsoleLogLevel('info')
+
+      getLogger('test').info({ token: 'secret-value', status: 'ready' })
+
+      const output = stdout.mock.calls.flat().join(' ')
+      expect(output).toContain("token: '[REDACTED]'")
+      expect(output).not.toContain('secret-value')
+      stdout.mockRestore()
+    })
+  })
+
   describe('rotateIfNeeded', () => {
     it('should not throw when called', async () => {
       const { rotateIfNeeded } = await import('../logger.js')
