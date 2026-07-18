@@ -1,0 +1,12 @@
+# Known false positives in imported history. Keep these fingerprint-specific so
+# new instances of the same rules are still reported.
+e567ef27820796593d4b4005d94fdf5068bdfe76:packages/infra-kit/src/flags.d.ts:qq-number:16
+e567ef27820796593d4b4005d94fdf5068bdfe76:packages/infra-kit/src/flags.js:qq-number:19
+30468dcd552c94cf3b6e67b0e13b16b8905c8b6b:packages/infra-kit/src/flags.d.ts:qq-number:16
+30468dcd552c94cf3b6e67b0e13b16b8905c8b6b:packages/infra-kit/src/flags.js:qq-number:19
+ab016afcdbc6276753bbe63a30a9967dcd56c012:packages/infra-kit/src/flags.ts:qq-number:18
+6b523aba565076778cce7712fb4ff69205314438:main/src/domain/constants/flags.ts:qq-number:18
+ba0917db2f9f763270d875e4152936435ab5ea9a:compose.example.yaml:database-url:112
+0e2790ab39633f5bdcf7277b3ec300e7f6d76bcb:main/package.json:database-url:13
+7772653d962a65ddb2b94b03adf7ed5aa01d6cfc:compose.example.yaml:database-url:24
+f4cd7a6c68ae3394855449891f27c492d0601868:Dockerfile:database-url:10

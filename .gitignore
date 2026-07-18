@@ -6,10 +6,12 @@ Thumbs.db
 *.swp
 *~
 
-# Hidden directories (keep GitHub workflows tracked)
+# Hidden directories (keep CI configuration tracked)
 .*/
 !.github/
 !.github/**
+!.gitlab/
+!.gitlab/**
 
 # Logs
 *.log

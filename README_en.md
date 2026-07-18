@@ -6,8 +6,10 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-25-green.svg" alt="Node.js" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-26-green.svg" alt="Node.js" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram"><img src="https://img.shields.io/badge/GitLab-magisk3171%2FNapGram-FC6D26?logo=gitlab&logoColor=white" alt="GitLab" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram/-/pipelines?ref=dev"><img src="https://img.shields.io/gitlab/pipeline-status/magisk3171%2FNapGram?branch=dev&logo=gitlab&label=GitLab%20CI" alt="GitLab CI" /></a>
   <a href="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml"><img src="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml/badge.svg?event=release&label=Release%20Build" alt="Release Build" /></a>
   <a href="https://codecov.io/gh/NapGram/NapGram"><img src="https://codecov.io/gh/NapGram/NapGram/branch/dev/graph/badge.svg" alt="Codecov" /></a>
   <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapLink/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
@@ -40,7 +42,7 @@
 | **TG adapter** | [mtcute](https://github.com/mtcute/mtcute) | Native MTProto (no Bot API proxy) |
 | **Language** | TypeScript 5.0+ | Strict mode, end-to-end type safety |
 | **Frontend** | React 19 + Vite | Tailwind CSS 4, Shadcn UI, Recharts |
-| **Runtime** | Node.js 25 (ESM) | Modern module system |
+| **Runtime** | Node.js 26 (ESM) | Modern module system |
 | **Persistence** | PostgreSQL + Prisma 7 | Typed ORM, schema & migrations |
 | **Testing** | Vitest | Unit tests |
 
@@ -48,7 +50,7 @@
 
 ### Prerequisites
 
-- Node.js 25+
+- Node.js 26+
 - PostgreSQL 14+
 - **NapCat (required)**: deploy [NapCatQQ](https://napneko.github.io/) and enable WebSocket
 - Network access from NapGram to NapCat
@@ -56,6 +58,21 @@
 ### Docker (Recommended)
 
 **Note**: NapGram requires connection to a deployed NapCat instance. Please ensure NapCat is running first.
+
+GitLab pipelines publish multi-architecture images to the project Container Registry from the
+`dev` branch and `vX.Y.Z` tags. Docker Hub publishing is also enabled when
+`DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are configured; `DOCKERHUB_IMAGE` can override the
+target image name.
+
+The Web Dashboard is built from a separate repository. The pipeline defaults to the
+`napgram-ui-dist` mirror in the same GitLab namespace; private mirrors require the protected,
+masked `UI_SRC_TOKEN` variable; set `UI_SRC_USERNAME` only when the token requires a specific
+username. `NAPGRAM_UI_REPOSITORY` and `NAPGRAM_UI_REF` can override the source, while
+`NAPGRAM_UI_RELEASE_REF` can pin a UI commit for reproducible releases. GitLab
+Renovate inherits the shared `magisk-ci-toolkit` policy and keeps NapGram-specific rules in
+`.gitlab/renovate.json`; scheduled pipelines require `RENOVATE_TOKEN`. Telegram and Sentry
+variables are optional. Runner tags can be overridden with `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`,
+`NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG`, and `NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG`.
 
 ```bash
 # Clone the repository

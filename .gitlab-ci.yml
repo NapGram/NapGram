@@ -1,0 +1,437 @@
+include:
+  - project: magisk3171/magisk-ci-toolkit
+    ref: 80c97bce4285efac8d6cfea21c0078498c400e28
+    file: /.gitlab/ci/telegram.yml
+  - project: magisk3171/magisk-ci-toolkit
+    ref: 80c97bce4285efac8d6cfea21c0078498c400e28
+    file: /.gitlab/ci/renovate.yml
+
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH'
+
+default:
+  interruptible: true
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - api_failure
+  tags:
+    - $NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG
+
+stages:
+  - build
+  - validate
+  - test
+  - quality
+  - package
+  - release-build
+  - release-publish
+  - notify
+  - maintenance
+
+variables:
+  GIT_DEPTH: "0"
+  GIT_SUBMODULE_STRATEGY: none
+  FF_USE_FASTZIP: "true"
+  CACHE_COMPRESSION_LEVEL: fast
+  MAGISK_CI_TOOLKIT_REF: "80c97bce4285efac8d6cfea21c0078498c400e28"
+
+  NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-local-linux"
+  NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "saas-linux-small-amd64"
+  NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG: "saas-linux-small-arm64"
+  NAPGRAM_NODE_IMAGE: "node:26-bookworm"
+  NAPGRAM_PNPM_VERSION: "11.8.0"
+
+  # Override this when the UI mirror uses another namespace or host.
+  NAPGRAM_UI_REPOSITORY: "https://gitlab.com/magisk3171/napgram-ui-dist.git"
+  NAPGRAM_UI_REF: "dev"
+  NAPGRAM_UI_RELEASE_REF: ""
+  NAPGRAM_DOCKER_PUBLISH: "true"
+  NAPGRAM_DOCKER_USE_MIRROR: "false"
+
+  NAPGRAM_DOCKER_IMAGE: "docker:29-cli"
+  NAPGRAM_DOCKER_DIND_IMAGE: "docker:29-dind"
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
+.napgram_ci_rules:
+  rules:
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
+      when: never
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "api"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_COMMIT_BRANCH'
+
+.napgram_docker_rules:
+  rules:
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
+      when: never
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "api"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
+    - when: never
+
+.napgram_docker_dev_rules:
+  rules:
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
+      when: never
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "api"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - when: never
+
+.napgram_docker_release_rules:
+  rules:
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
+      when: never
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "api"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
+      when: never
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
+    - when: never
+
+.napgram_node:
+  image: "$NAPGRAM_NODE_IMAGE"
+  cache:
+    key:
+      files:
+        - package.json
+        - pnpm-lock.yaml
+      prefix: "napgram-node-26"
+    paths:
+      - .pnpm-store/
+    policy: pull-push
+  before_script:
+    - |
+      set -euo pipefail
+      if ! command -v corepack >/dev/null 2>&1; then
+        npm install --global corepack@latest
+      fi
+      corepack enable
+      corepack prepare "pnpm@${NAPGRAM_PNPM_VERSION}" --activate
+      pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+      pnpm --version
+
+.napgram_docker:
+  image: "$NAPGRAM_DOCKER_IMAGE"
+  services:
+    - name: "$NAPGRAM_DOCKER_DIND_IMAGE"
+      alias: docker
+      command: ["--tls=false", "--mtu=1400"]
+  before_script:
+    - apk add --no-cache bash curl git
+    - |
+      set -euo pipefail
+      for attempt in $(seq 1 30); do
+        if docker info >/dev/null 2>&1; then
+          break
+        fi
+        if [ "$attempt" -eq 30 ]; then
+          echo "Docker daemon did not become ready" >&2
+          exit 1
+        fi
+        sleep 1
+      done
+      docker version
+      docker buildx version
+
+ui:build:
+  extends:
+    - .napgram_node
+    - .napgram_docker_rules
+  stage: build
+  script:
+    - |
+      set -euo pipefail
+      toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
+      ui_ref="$NAPGRAM_UI_REF"
+      if [ -n "${CI_COMMIT_TAG:-}" ] && [ -n "${NAPGRAM_UI_RELEASE_REF:-}" ]; then
+        ui_ref="$NAPGRAM_UI_RELEASE_REF"
+      fi
+
+      auth_key=""
+      cleanup_ui_auth() {
+        if [ -n "$auth_key" ]; then
+          git config --global --unset-all "$auth_key" || true
+        fi
+      }
+      trap cleanup_ui_auth EXIT
+      if [ -n "${UI_SRC_TOKEN:-}" ]; then
+        if [[ "$NAPGRAM_UI_REPOSITORY" != https://* ]]; then
+          echo "UI_SRC_TOKEN requires an HTTPS UI repository URL" >&2
+          exit 2
+        fi
+        auth_key="http.${NAPGRAM_UI_REPOSITORY}.extraHeader"
+        auth_value="$(printf '%s' "${UI_SRC_USERNAME:-oauth2}:$UI_SRC_TOKEN" | base64 | tr -d '\n')"
+        git config --global "$auth_key" "Authorization: Basic $auth_value"
+        unset auth_value
+      fi
+
+      "$toolkit_dir/ci/resolve_git_checkout.sh" \
+        "$NAPGRAM_UI_REPOSITORY" \
+        "$ui_ref" \
+        "$CI_PROJECT_DIR/web"
+      cleanup_ui_auth
+      trap - EXIT
+
+      cd "$CI_PROJECT_DIR/web"
+      package_manager="$(node -p "require('./package.json').packageManager || ''")"
+      if [[ "$package_manager" == pnpm@* ]]; then
+        corepack prepare "$package_manager" --activate
+      fi
+      pnpm install --frozen-lockfile --ignore-workspace
+      pnpm --ignore-workspace run build
+      test -n "$(find dist -type f -print -quit)"
+  artifacts:
+    name: "NapGram-ui-$CI_COMMIT_REF_SLUG"
+    expire_in: 2 days
+    paths:
+      - web/dist/
+
+app:typecheck:
+  extends:
+    - .napgram_node
+    - .napgram_ci_rules
+  stage: validate
+  needs: []
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm -r --filter "./packages/**" run build
+    - pnpm --filter @napgram/app type-check
+
+app:test:coverage:
+  extends:
+    - .napgram_node
+    - .napgram_ci_rules
+  stage: test
+  needs: []
+  services:
+    - name: postgres:18-alpine
+      alias: postgres
+  variables:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: napgram_test
+    PGUSER: postgres
+    PGPASSWORD: postgres
+    PGHOST: postgres
+    PGPORT: "5432"
+    PGDATABASE: napgram_test
+    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/napgram_test"
+    DATA_DIR: "$CI_PROJECT_DIR/.ci-data"
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm -r --filter "./packages/**" run build
+    - bash main/tools/run-drizzle-migrations.sh
+    - mkdir -p "$DATA_DIR/temp" "$DATA_DIR/cache" "$DATA_DIR/logs"
+    - pnpm --filter @napgram/app test:coverage
+  artifacts:
+    name: "NapGram-coverage-$CI_COMMIT_REF_SLUG"
+    when: always
+    expire_in: 14 days
+    paths:
+      - main/coverage/
+
+app:lint:
+  extends:
+    - .napgram_node
+    - .napgram_ci_rules
+  stage: quality
+  needs: []
+  allow_failure: true
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm --filter @napgram/app lint
+
+security:gitleaks:
+  extends: .napgram_ci_rules
+  image:
+    name: zricethezav/gitleaks:v8.28.0
+    entrypoint: [""]
+  stage: quality
+  needs: []
+  script:
+    - gitleaks detect --source . --redact --no-banner
+
+container:dev:amd64:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_dev_rules
+  stage: package
+  tags:
+    - $NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG
+  needs:
+    - job: ui:build
+      artifacts: true
+    - job: app:typecheck
+      artifacts: false
+    - job: app:test:coverage
+      artifacts: false
+    - job: security:gitleaks
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh build-arch amd64
+
+container:dev:arm64:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_dev_rules
+  stage: package
+  tags:
+    - $NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG
+  needs:
+    - job: ui:build
+      artifacts: true
+    - job: app:typecheck
+      artifacts: false
+    - job: app:test:coverage
+      artifacts: false
+    - job: security:gitleaks
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh build-arch arm64
+
+container:dev:manifest:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_dev_rules
+  stage: release-publish
+  needs:
+    - job: container:dev:amd64
+      artifacts: false
+    - job: container:dev:arm64
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh publish-manifests
+
+container:release:amd64:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_release_rules
+  stage: release-build
+  tags:
+    - $NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG
+  needs:
+    - job: ui:build
+      artifacts: true
+    - job: app:typecheck
+      artifacts: false
+    - job: app:test:coverage
+      artifacts: false
+    - job: security:gitleaks
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh build-arch amd64
+
+container:release:arm64:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_release_rules
+  stage: release-build
+  tags:
+    - $NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG
+  needs:
+    - job: ui:build
+      artifacts: true
+    - job: app:typecheck
+      artifacts: false
+    - job: app:test:coverage
+      artifacts: false
+    - job: security:gitleaks
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh build-arch arm64
+
+container:release:manifest:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_release_rules
+  stage: release-publish
+  needs:
+    - job: container:release:amd64
+      artifacts: false
+    - job: container:release:arm64
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh publish-manifests
+
+sentry:publish:
+  extends:
+    - .napgram_node
+    - .napgram_docker_rules
+  stage: release-publish
+  allow_failure: true
+  needs:
+    - job: container:dev:manifest
+      artifacts: false
+      optional: true
+    - job: container:release:manifest
+      artifacts: false
+      optional: true
+  script:
+    - |
+      set -euo pipefail
+      if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
+        echo "SENTRY_AUTH_TOKEN not set, skip Sentry release publication."
+        exit 0
+      fi
+      export SENTRY_ORG="${SENTRY_ORG:-napgram}"
+      export SENTRY_PROJECT="${SENTRY_PROJECT:-napgram}"
+      npm install --global @sentry/cli
+      sentry-cli releases new "$CI_COMMIT_SHA"
+      sentry-cli releases set-commits "$CI_COMMIT_SHA" --auto
+      sentry-cli releases finalize "$CI_COMMIT_SHA"
+
+telegram:ci:
+  extends: .magisk_telegram_ci
+  stage: notify
+  allow_failure: true
+  variables:
+    MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
+    MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
+    MAGISK_TELEGRAM_CI_BRANCH: "dev"
+    MAGISK_TELEGRAM_CI_ARTIFACT_PATTERN: "*.napgram-no-artifact"
+
+telegram:release:
+  extends: .magisk_telegram_release
+  stage: notify
+  allow_failure: true
+  variables:
+    MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
+    MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
+    MAGISK_TELEGRAM_RELEASE_ARTIFACT_PATTERN: "*.napgram-no-artifact"
+  needs:
+    - job: container:release:manifest
+      artifacts: false
+      optional: true
+
+renovate:gitlab:
+  extends: .magisk_renovate_gitlab
+  stage: maintenance
+  variables:
+    MAGISK_RENOVATE_REPOSITORY: "magisk3171/NapGram"

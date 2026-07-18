@@ -1,0 +1,87 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "gitlab>magisk3171/magisk-ci-toolkit"
+  ],
+  "baseBranchPatterns": [
+    "dev"
+  ],
+  "minimumReleaseAgeBehaviour": "timestamp-required",
+  "packageRules": [
+    {
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "groupName": "all non-major dependencies",
+      "groupSingleUpdates": false,
+      "groupSlug": "all-minor-patch",
+      "commitMessageExtra": ""
+    },
+    {
+      "description": "Match pnpm's default 24h package cooldown before opening or automerging npm updates.",
+      "matchDatasources": [
+        "npm"
+      ],
+      "minimumReleaseAge": "1 day"
+    },
+    {
+      "enabled": false,
+      "matchPackageNames": [
+        "/^@napgram\\//",
+        "/^@naplink\\//"
+      ]
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "addLabels": [
+        "dependencies",
+        "javascript"
+      ]
+    },
+    {
+      "matchPackageNames": [
+        "@mtcute/**"
+      ],
+      "matchManagers": [
+        "npm"
+      ],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Root pnpm overrides are maintained by dependency-force-manager.",
+      "enabled": false,
+      "matchManagers": [
+        "npm"
+      ],
+      "matchFileNames": [
+        "package.json"
+      ],
+      "matchDepTypes": [
+        "pnpm.overrides",
+        "x-managedPnpmOverrides"
+      ]
+    },
+    {
+      "description": "Workspace pnpm overrides are maintained by dependency-force-manager.",
+      "enabled": false,
+      "matchManagers": [
+        "npm"
+      ],
+      "matchFileNames": [
+        "pnpm-workspace.yaml"
+      ]
+    }
+  ],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
+    ]
+  }
+}

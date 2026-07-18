@@ -6,8 +6,10 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-25-green.svg" alt="Node.js" /></a>
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-26-green.svg" alt="Node.js" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram"><img src="https://img.shields.io/badge/GitLab-magisk3171%2FNapGram-FC6D26?logo=gitlab&logoColor=white" alt="GitLab" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram/-/pipelines?ref=dev"><img src="https://img.shields.io/gitlab/pipeline-status/magisk3171%2FNapGram?branch=dev&logo=gitlab&label=GitLab%20CI" alt="GitLab CI" /></a>
   <a href="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml"><img src="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml/badge.svg?event=release&label=Release%20Build" alt="Release Build" /></a>
   <a href="https://codecov.io/gh/NapGram/NapGram"><img src="https://codecov.io/gh/NapGram/NapGram/branch/dev/graph/badge.svg" alt="Codecov" /></a>
   <a href="https://github.com/NapGram/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapGram/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
@@ -64,7 +66,7 @@
 | **TG 适配** | [mtcute](https://github.com/mtcute/mtcute) | 原生 MTProto 实现，无需 Bot API 中转 |
 | **核心语言** | TypeScript 5.0+ | 严格模式，全链路类型安全 |
 | **前端框架** | React 19 + Vite | Tailwind CSS 4, Shadcn UI, Recharts |
-| **运行时** | Node.js 25 (ESM) | 现代化模块系统 |
+| **运行时** | Node.js 26 (ESM) | 现代化模块系统 |
 | **数据持久化** | PostgreSQL + Drizzle ORM | 强类型 ORM，支持自动迁移 |
 | **测试框架** | Vitest | 单元测试覆盖率 >80% |
 
@@ -79,6 +81,25 @@
 
 - 稳定版（Release 构建）：`latest` + `vX.Y.Z`
 - 开发版（每日构建）：`dev-latest` + `dev-YYYYMMDD`
+
+GitLab 流水线会发布到项目自带的 Container Registry；配置
+`DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN` 后会同时发布到 Docker Hub，也可通过
+`DOCKERHUB_IMAGE` 覆盖目标镜像名。
+
+### GitLab 自动化
+
+- `dev` 分支和 `vX.Y.Z` 标签触发多架构容器构建，分别产出 `linux/amd64` 与
+  `linux/arm64` 镜像并合并 manifest。
+- Web 控制台由独立仓库构建。默认读取同组的 `napgram-ui-dist` GitLab 镜像；仓库私有时需
+  配置受保护、掩码变量 `UI_SRC_TOKEN`，特殊 token 可通过 `UI_SRC_USERNAME` 指定用户名。
+  也可覆盖 `NAPGRAM_UI_REPOSITORY` 和 `NAPGRAM_UI_REF`；正式标签可通过
+  `NAPGRAM_UI_RELEASE_REF` 固定 UI commit，保证可复现。
+- GitLab Renovate 继承 `magisk-ci-toolkit` 共享策略，并在 `.gitlab/renovate.json` 保留
+  NapGram 专属规则；定时任务需配置掩码变量 `RENOVATE_TOKEN`。
+- Telegram 与 Sentry 通知均为可选；未配置相应变量时不会阻塞流水线。
+- Runner 标签可通过 `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`、
+  `NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG` 和
+  `NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG` 覆盖。
 
 ### Docker Compose 部署 (推荐)
 
