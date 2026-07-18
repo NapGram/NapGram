@@ -102,15 +102,9 @@ release_tags() {
   exit 1
 }
 
-create_builder() {
-  BUILDX_BUILDER="napgram-${CI_JOB_ID:-$$}"
-  local create_args=(--name "$BUILDX_BUILDER" --use)
-  local proxy_prefix
-  if proxy_prefix="$(dependency_proxy_prefix)"; then
-    create_args+=(--driver-opt "image=${NAPGRAM_BUILDKIT_IMAGE:-${proxy_prefix}/moby/buildkit:buildx-stable-1}")
-  fi
-  docker buildx create "${create_args[@]}"
-  trap 'docker buildx rm "${BUILDX_BUILDER}" >/dev/null 2>&1 || true' EXIT
+select_builder() {
+  docker buildx use default
+  docker buildx inspect default
 }
 
 build_arch() {
@@ -122,7 +116,7 @@ build_arch() {
 
   login_registries
   docker buildx version
-  create_builder
+  select_builder
 
   local registry
   registry="$(registry_image)"
