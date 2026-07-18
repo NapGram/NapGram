@@ -143,6 +143,7 @@ build_arch() {
     --build-arg "LOTTIE_IMAGE=$(lottie_image)" \
     --build-arg "NODE_IMAGE=$(docker_node_image)" \
     --build-arg "PNPM_VERSION=${NAPGRAM_PNPM_VERSION:-11.8.0}" \
+    --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}" \
     "${tag_args[@]}" \
     .
 }
