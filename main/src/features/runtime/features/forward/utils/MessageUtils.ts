@@ -76,8 +76,11 @@ export class MessageUtils {
     replyTo?: string | number | bigint,
   ): Promise<void> {
     try {
-      const chat = await tgBot.getChat(telegramSend.normalizeTelegramChatId(chatId) as any)
-      await chat.sendMessage(text, telegramSend.buildTelegramTextSendParams(replyTo))
+      await tgBot.sendText(
+        telegramSend.normalizeTelegramChatId(chatId),
+        text,
+        telegramSend.buildTelegramTextSendParams(replyTo),
+      )
     }
     catch (error) {
       logger.warn('Failed to send TG reply:', error)

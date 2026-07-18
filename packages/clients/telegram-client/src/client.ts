@@ -1,4 +1,4 @@
-import type { InputPeerLike, User } from '@mtcute/core'
+import type { InputPeerLike, InputText, User } from '@mtcute/core'
 import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -360,7 +360,7 @@ export default class Telegram {
    * 直接发送文本消息（支持用户 ID、群组 ID 等所有 peer 类型）
    * 与 getChat().sendMessage() 不同，此方法不依赖 getChat，可正确处理私聊用户 ID
    */
-  public async sendText(chatId: number | string | bigint, text: string, params?: Parameters<TelegramClient['sendText']>[2]) {
+  public async sendText(chatId: number | string | bigint, text: InputText, params?: Parameters<TelegramClient['sendText']>[2]) {
     return await this.client.sendText(chatId as any, text, params)
   }
 

@@ -259,45 +259,37 @@ describe('messageUtils', () => {
 
   describe('replyTG', () => {
     it('sends message to Telegram chat', async () => {
-      const mockChat = {
-        sendMessage: vi.fn().mockResolvedValue({}),
-      }
       const mockTgBot: any = {
-        getChat: vi.fn().mockResolvedValue(mockChat),
+        sendText: vi.fn().mockResolvedValue({}),
       }
 
       await MessageUtils.replyTG(mockTgBot, '123456', 'Test message')
 
-      expect(mockTgBot.getChat).toHaveBeenCalledWith(123456)
-      expect(mockChat.sendMessage).toHaveBeenCalledWith('Test message', {
+      expect(mockTgBot.sendText).toHaveBeenCalledWith(123456, 'Test message', {
         linkPreview: { disable: true },
       })
     })
 
     it('converts string chat ID to number', async () => {
-      const mockChat = {
-        sendMessage: vi.fn().mockResolvedValue({}),
-      }
       const mockTgBot: any = {
-        getChat: vi.fn().mockResolvedValue(mockChat),
+        sendText: vi.fn().mockResolvedValue({}),
       }
 
       await MessageUtils.replyTG(mockTgBot, '-100123456789', 'Message')
 
-      expect(mockTgBot.getChat).toHaveBeenCalledWith(-100123456789)
+      expect(mockTgBot.sendText).toHaveBeenCalledWith(-100123456789, 'Message', {
+        linkPreview: { disable: true },
+      })
     })
 
     it('sends message with replyTo parameter', async () => {
-      const mockChat = {
-        sendMessage: vi.fn().mockResolvedValue({}),
-      }
       const mockTgBot: any = {
-        getChat: vi.fn().mockResolvedValue(mockChat),
+        sendText: vi.fn().mockResolvedValue({}),
       }
 
       await MessageUtils.replyTG(mockTgBot, 123456, 'Reply message', 789)
 
-      expect(mockChat.sendMessage).toHaveBeenCalledWith('Reply message', {
+      expect(mockTgBot.sendText).toHaveBeenCalledWith(123456, 'Reply message', {
         linkPreview: { disable: true },
         replyTo: 789,
       })
@@ -305,7 +297,7 @@ describe('messageUtils', () => {
 
     it('handles error when sending message', async () => {
       const mockTgBot: any = {
-        getChat: vi.fn().mockRejectedValue(new Error('Chat not found')),
+        sendText: vi.fn().mockRejectedValue(new Error('Chat not found')),
       }
 
       await expect(
@@ -314,16 +306,15 @@ describe('messageUtils', () => {
     })
 
     it('keeps non-numeric string chatId as-is', async () => {
-      const mockChat = {
-        sendMessage: vi.fn().mockResolvedValue({}),
-      }
       const mockTgBot: any = {
-        getChat: vi.fn().mockResolvedValue(mockChat),
+        sendText: vi.fn().mockResolvedValue({}),
       }
 
       await MessageUtils.replyTG(mockTgBot, '@username', 'Message to username')
 
-      expect(mockTgBot.getChat).toHaveBeenCalledWith('@username')
+      expect(mockTgBot.sendText).toHaveBeenCalledWith('@username', 'Message to username', {
+        linkPreview: { disable: true },
+      })
     })
   })
 })

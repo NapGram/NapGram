@@ -45,8 +45,7 @@ export class TelegramReply {
         rawKeys: raw ? Object.keys(raw) : [],
       }, 'TelegramReply params')
 
-      const chat = await this.tgBot.getChat(peer as any)
-      await chat.sendMessage(text, telegramSend.buildTelegramTextSendParams(effectiveThread))
+      await this.tgBot.sendText(peer, text, telegramSend.buildTelegramTextSendParams(effectiveThread))
     }
     catch (error) {
       logger.warn(error, 'Failed to send reply:')

@@ -1211,23 +1211,23 @@ export class CommandsFeature {
           },
           raw: tgMsg,
           reply: async (content) => {
-            const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
+            const chatId = telegramSend.normalizeTelegramChatId(tgMsg.chat.id)
             const textContent = contentToText(content)
             const params: any = {}
             const replyTo = telegramSend.normalizeTelegramMessageId(tgMsg.id)
             if (replyTo)
               params.replyTo = replyTo
-            const sent = await chat.sendMessage(textContent, params)
+            const sent = await this.tgBot.sendText(chatId, textContent, params)
             return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           send: async (content) => {
-            const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(tgMsg.chat.id) as any)
+            const chatId = telegramSend.normalizeTelegramChatId(tgMsg.chat.id)
             const textContent = contentToText(content)
             const params: any = {}
             const replyTo = telegramSend.normalizeTelegramMessageId(threadId)
             if (replyTo)
               params.replyTo = replyTo
-            const sent = await chat.sendMessage(textContent, params)
+            const sent = await this.tgBot.sendText(chatId, textContent, params)
             return { messageId: `tg:${String(tgMsg.chat.id)}:${String((sent as any)?.id ?? '')}`, timestamp: Date.now() }
           },
           recall: async () => {
@@ -1369,7 +1369,7 @@ export class CommandsFeature {
 
   private async replyTG(chatId: string | number | bigint, text: any, threadId?: bigint | number) {
     try {
-      const chat = await this.tgBot.getChat(telegramSend.normalizeTelegramChatId(chatId) as any)
+      const normalizedChatId = telegramSend.normalizeTelegramChatId(chatId)
 
       // 使用 parseMode: 'markdown' 并不稳定，我们直接使用 mtcute 的 md 解析器
       // 能够将包含 markdown 语法的动态字符串解析为 InputText
@@ -1380,7 +1380,7 @@ export class CommandsFeature {
         msgContent = md(parts as TemplateStringsArray)
       }
 
-      await chat.sendMessage(msgContent, telegramSend.buildTelegramTextSendParams(threadId))
+      await this.tgBot.sendText(normalizedChatId, msgContent, telegramSend.buildTelegramTextSendParams(threadId))
     }
     catch (error) {
       logger.warn(`Failed to send reply to ${chatId}: ${error}`)

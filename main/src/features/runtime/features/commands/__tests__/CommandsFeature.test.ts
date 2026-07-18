@@ -211,6 +211,7 @@ describe('commandsFeature', () => {
         getMessages: vi.fn(),
       },
       getChat: vi.fn(),
+      sendText: vi.fn().mockResolvedValue({ id: 321 }),
     }
     mockQqClient = {
       on: vi.fn(),
@@ -357,9 +358,8 @@ describe('commandsFeature', () => {
         publishInstanceStatus: vi.fn(),
       } as any)
 
-      const sendMessage = vi.fn().mockResolvedValue({ id: 321 })
       const deleteMessages = vi.fn().mockResolvedValue(undefined)
-      mockTgBot.getChat.mockResolvedValue({ sendMessage, deleteMessages })
+      mockTgBot.getChat.mockResolvedValue({ deleteMessages })
 
       const { ThreadIdExtractor } = await import('../services/ThreadIdExtractor.js')
       vi.mocked(ThreadIdExtractor).mockImplementationOnce(function ThreadIdExtractorMock() {
@@ -387,8 +387,8 @@ describe('commandsFeature', () => {
       await capturedEvent.send('plain')
       await capturedEvent.recall()
 
-      expect(sendMessage).toHaveBeenCalledWith('@hi', expect.objectContaining({ replyTo: 99999 }))
-      expect(sendMessage).toHaveBeenCalledWith('plain', expect.objectContaining({ replyTo: 888 }))
+      expect(mockTgBot.sendText).toHaveBeenCalledWith(123, '@hi', expect.objectContaining({ replyTo: 99999 }))
+      expect(mockTgBot.sendText).toHaveBeenCalledWith(123, 'plain', expect.objectContaining({ replyTo: 888 }))
       expect(deleteMessages).toHaveBeenCalledWith([99999])
     })
 
@@ -1394,18 +1394,18 @@ describe('commandsFeature', () => {
     })
 
     describe('replyTG', () => {
-      it('sends message via tgBot.getChat', async () => {
-        const sendMessage = vi.fn().mockResolvedValue({ id: 321 })
-        mockTgBot.getChat.mockResolvedValue({ sendMessage })
+      it('sends message directly to a Telegram peer', async () => {
 
         await (commandsFeature as any).replyTG(123, 'test message')
 
-        expect(mockTgBot.getChat).toHaveBeenCalled()
-        expect(sendMessage).toHaveBeenCalled()
+        expect(mockTgBot.getChat).not.toHaveBeenCalled()
+        expect(mockTgBot.sendText).toHaveBeenCalledWith(123, expect.anything(), {
+          linkPreview: { disable: true },
+        })
       })
 
       it('handles replyTG error gracefully', async () => {
-        mockTgBot.getChat.mockRejectedValue(new Error('chat not found'))
+        mockTgBot.sendText.mockRejectedValue(new Error('chat not found'))
         // Should not throw
         await (commandsFeature as any).replyTG(123, 'test')
       })
