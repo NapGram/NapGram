@@ -147,8 +147,31 @@ variables:
       alias: docker
       # Enable the containerd image store so the built-in driver can export registry caches.
       command: ["--tls=false", "--mtu=1400", "--feature", "containerd-snapshotter=true"]
+  variables:
+    HTTP_PROXY: "$CI_HTTP_PROXY"
+    HTTPS_PROXY: "$CI_HTTPS_PROXY"
+    http_proxy: "$CI_HTTP_PROXY"
+    https_proxy: "$CI_HTTPS_PROXY"
+    NO_PROXY: "$CI_NO_PROXY,auth.docker.io,registry-1.docker.io,production.cloudflare.docker.com,docker.io"
+    no_proxy: "$CI_NO_PROXY,auth.docker.io,registry-1.docker.io,production.cloudflare.docker.com,docker.io"
   before_script:
     - apk add --no-cache bash curl git
+    - |
+      set -euo pipefail
+      if [ -n "${HTTP_PROXY:-${http_proxy:-}}" ] || [ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]; then
+        mkdir -p "$HOME/.docker"
+        cat > "$HOME/.docker/config.json" <<EOF
+      {
+        "proxies": {
+          "default": {
+            "httpProxy": "${HTTP_PROXY:-${http_proxy:-}}",
+            "httpsProxy": "${HTTPS_PROXY:-${https_proxy:-}}",
+            "noProxy": "${NO_PROXY:-${no_proxy:-}}"
+          }
+        }
+      }
+      EOF
+      fi
     - |
       set -euo pipefail
       for attempt in $(seq 1 30); do
