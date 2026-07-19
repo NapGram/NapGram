@@ -58,6 +58,7 @@ variables:
   NAPGRAM_DOCKER_PUBLISH: "true"
   NAPGRAM_DOCKERHUB_PUBLISH: "false"
   NAPGRAM_DOCKER_USE_MIRROR: "false"
+  NAPGRAM_DOCKER_USE_DEPENDENCY_PROXY: "false"
 
   NAPGRAM_DOCKER_IMAGE: "docker:29-cli"
   NAPGRAM_DOCKER_DIND_IMAGE: "docker:29-dind"
@@ -152,8 +153,9 @@ variables:
     HTTPS_PROXY: "$CI_HTTPS_PROXY"
     http_proxy: "$CI_HTTP_PROXY"
     https_proxy: "$CI_HTTPS_PROXY"
-    NO_PROXY: "$CI_NO_PROXY"
-    no_proxy: "$CI_NO_PROXY"
+    # Dependency Proxy redirects blobs to object storage; those hosts must use the proxy.
+    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
+    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
   before_script:
     - apk add --no-cache bash curl git
     - |

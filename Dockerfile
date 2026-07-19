@@ -1,6 +1,6 @@
 ARG INSTALL_PG_CLIENT=true
-ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif:latest
-ARG NODE_IMAGE=node:26-alpine3.24
+ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649
+ARG NODE_IMAGE=node@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66
 ARG PNPM_VERSION=11.8.0
 ARG PNPM_CONFIG_REGISTRY=https://registry.npmjs.org
 
