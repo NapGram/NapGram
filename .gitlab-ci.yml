@@ -130,13 +130,7 @@ variables:
   before_script:
     - |
       set -euo pipefail
-      corepack_registry="${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}"
-      export COREPACK_NPM_REGISTRY="$corepack_registry"
-      if ! command -v corepack >/dev/null 2>&1; then
-        npm install --global --registry="$corepack_registry" corepack@latest
-      fi
-      corepack enable
-      corepack prepare "pnpm@${NAPGRAM_PNPM_VERSION}" --activate
+      bash scripts/ci/ensure_pnpm.sh "$NAPGRAM_PNPM_VERSION"
       pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
       pnpm --version
 
@@ -233,7 +227,7 @@ ui:build:
       cd "$CI_PROJECT_DIR/web"
       package_manager="$(node -p "require('./package.json').packageManager || ''")"
       if [[ "$package_manager" == pnpm@* ]]; then
-        corepack prepare "$package_manager" --activate
+        bash "$CI_PROJECT_DIR/scripts/ci/ensure_pnpm.sh" "$package_manager"
       fi
       pnpm install --frozen-lockfile
       pnpm run build
