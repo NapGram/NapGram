@@ -52,7 +52,16 @@ docker_node_image() {
 }
 
 lottie_image() {
-  printf '%s\n' "${NAPGRAM_LOTTIE_IMAGE:-edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649}"
+  if [[ -n "${NAPGRAM_LOTTIE_IMAGE:-}" ]]; then
+    printf '%s\n' "$NAPGRAM_LOTTIE_IMAGE"
+    return
+  fi
+  local proxy_prefix
+  if proxy_prefix="$(dependency_proxy_prefix)"; then
+    printf '%s/edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649\n' "$proxy_prefix"
+    return
+  fi
+  printf '%s\n' 'edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649'
 }
 
 login_registries() {
