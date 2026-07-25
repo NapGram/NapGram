@@ -19,6 +19,3 @@ allowBuilds:
   silk-sdk: true
   skia-canvas: true
   ssh2: true
-
-overrides:
-  'esbuild': '0.28.1'
