@@ -37,8 +37,8 @@
   "author": "NapGram Team",
   "license": "MIT",
   "devDependencies": {
-    "vitest": "4.1.9",
-    "@types/node": "25.9.4",
+    "vitest": "4.1.10",
+    "@types/node": "25.9.5",
     "typescript": "6.0.3"
   },
   "files": [

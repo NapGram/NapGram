@@ -28,12 +28,12 @@
     "@napgram/db-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",
-    "fastify": "5.8.5"
+    "fastify": "5.10.0"
   },
   "devDependencies": {
-    "vitest": "4.1.9",
+    "vitest": "4.1.10",
     "@fastify/cookie": "^11.0.2",
-    "@types/node": "25.9.4",
+    "@types/node": "25.9.5",
     "typescript": "6.0.3"
   },
   "publishConfig": {

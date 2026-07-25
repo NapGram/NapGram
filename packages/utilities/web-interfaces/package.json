@@ -31,7 +31,7 @@
     "@napgram/plugin-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
-    "fastify": "5.8.5",
+    "fastify": "5.10.0",
     "zod": "4.4.3"
   },
   "keywords": [
@@ -44,7 +44,7 @@
   "devDependencies": {
     "@fastify/cookie": "^11.0.2",
     "@kitajs/ts-html-plugin": "^4.1.3",
-    "@types/node": "25.9.4",
+    "@types/node": "25.9.5",
     "typescript": "6.0.3"
   },
   "publishConfig": {
