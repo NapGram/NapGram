@@ -172,8 +172,7 @@ publish_manifests() {
       [[ -n "$image" ]] || continue
       docker buildx imagetools create \
         --tag "${image}:${tag}" \
-        "${image}:${tag}-amd64" \
-        "${image}:${tag}-arm64"
+        "${image}:${tag}-amd64"
       docker buildx imagetools inspect "${image}:${tag}"
     done < <(image_targets)
   done < <(release_tags)
