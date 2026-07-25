@@ -70,7 +70,9 @@ masked `UI_SRC_TOKEN` variable; set `UI_SRC_USERNAME` only when the token requir
 username. `NAPGRAM_UI_REPOSITORY` and `NAPGRAM_UI_REF` can override the source, while
 `NAPGRAM_UI_RELEASE_REF` can pin a UI commit for reproducible releases. GitLab
 Renovate inherits the shared `magisk-ci-toolkit` policy and keeps NapGram-specific rules in
-`.gitlab/renovate.json`; scheduled pipelines require `RENOVATE_TOKEN`. Telegram and Sentry
+`.gitlab/renovate.json`. Group-level `RENOVATE_TOKEN` plus a project Pipeline Schedule
+(`Renovate dependency maintenance` on `dev`, daily 08:00 Asia/Shanghai) run
+`renovate:gitlab` and `dependency-force:gitlab`. Telegram and Sentry
 variables are optional. Runner tags can be overridden with `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`,
 `NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG`, and `NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG`.
 

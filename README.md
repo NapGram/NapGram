@@ -95,7 +95,9 @@ GitLab 流水线会发布到项目自带的 Container Registry。若要同时发
   也可覆盖 `NAPGRAM_UI_REPOSITORY` 和 `NAPGRAM_UI_REF`；正式标签可通过
   `NAPGRAM_UI_RELEASE_REF` 固定 UI commit，保证可复现。
 - GitLab Renovate 继承 `magisk-ci-toolkit` 共享策略，并在 `.gitlab/renovate.json` 保留
-  NapGram 专属规则；定时任务需配置掩码变量 `RENOVATE_TOKEN`。
+  NapGram 专属规则；组级 `RENOVATE_TOKEN` + 项目 Pipeline Schedule
+  （`Renovate dependency maintenance`，`dev`，每天 08:00 Asia/Shanghai）触发
+  `renovate:gitlab` 与 `dependency-force:gitlab`。
 - Telegram 与 Sentry 通知均为可选；未配置相应变量时不会阻塞流水线。
 - Runner 标签可通过 `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`、
   `NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG` 和
