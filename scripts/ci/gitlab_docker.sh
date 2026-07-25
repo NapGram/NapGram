@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 build-arch <amd64|arm64> | publish-manifests" >&2
+  echo "Usage: $0 build-arch <amd64|arm64> | publish-manifests | list-images" >&2
 }
 
 require_env() {
@@ -179,8 +179,21 @@ publish_manifests() {
   done < <(release_tags)
 }
 
+
+list_images() {
+  local tag image
+  while IFS= read -r tag; do
+    [[ -n "$tag" ]] || continue
+    while IFS= read -r image; do
+      [[ -n "$image" ]] || continue
+      printf '%s:%s\n' "$image" "$tag"
+    done < <(image_targets)
+  done < <(release_tags)
+}
+
 case "${1:-}" in
   build-arch) build_arch "${2:-}" ;;
   publish-manifests) publish_manifests ;;
+  list-images) list_images ;;
   *) usage; exit 2 ;;
 esac
