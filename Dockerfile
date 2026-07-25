@@ -1,7 +1,8 @@
 ARG INSTALL_PG_CLIENT=true
 ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649
 ARG NODE_IMAGE=node@sha256:0473e7dc433a1310f436edee02aa79737ec78a4b345433ab0963d4a256f9ad85
-ARG PNPM_VERSION=11.8.0
+# renovate: datasource=npm depName=pnpm
+ARG PNPM_VERSION=11.17.0
 ARG PNPM_CONFIG_REGISTRY=https://registry.npmjs.org
 
 # Extract TGS conversion tools

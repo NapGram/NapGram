@@ -5,6 +5,18 @@ usage() {
   echo "Usage: $0 build-arch <amd64|arm64> | publish-manifests | list-images" >&2
 }
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Resolve pnpm version from package.json (single source of truth). The resolver
+# lives in magisk-ci-toolkit and works without node (grep/sed fallback), so it
+# runs fine in the alpine-based docker:*-cli image used by container jobs.
+pnpm_version() {
+  local toolkit_dir
+  toolkit_dir="$(cd "$REPO_ROOT" && bash scripts/resolve_ci_toolkit.sh)"
+  bash "$toolkit_dir/ci/resolve_pnpm_version.sh" "$REPO_ROOT/package.json"
+}
+
 require_env() {
   local name="$1"
   if [[ -z "${!name:-}" ]]; then
@@ -156,7 +168,7 @@ build_arch() {
     --build-arg "USE_MIRROR=${NAPGRAM_DOCKER_USE_MIRROR:-false}" \
     --build-arg "LOTTIE_IMAGE=$(lottie_image)" \
     --build-arg "NODE_IMAGE=$(docker_node_image)" \
-    --build-arg "PNPM_VERSION=${NAPGRAM_PNPM_VERSION:-11.8.0}" \
+    --build-arg "PNPM_VERSION=$(pnpm_version)" \
     --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}" \
     "${tag_args[@]}" \
     .

@@ -7,7 +7,26 @@
     "beta"
   ],
   "minimumReleaseAgeBehaviour": "timestamp-required",
+  "customManagers": [
+    {
+      "description": "Keep the Dockerfile pnpm ARG in sync with package.json's packageManager.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s+ARG PNPM_VERSION=(?<currentValue>\\S+)"
+      ]
+    }
+  ],
   "packageRules": [
+    {
+      "description": "Bump the Dockerfile pnpm ARG together with the pnpm packageManager version.",
+      "matchPackageNames": [
+        "pnpm"
+      ],
+      "groupName": "pnpm toolchain"
+    },
     {
       "matchUpdateTypes": [
         "minor",

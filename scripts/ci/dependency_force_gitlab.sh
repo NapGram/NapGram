@@ -12,7 +12,8 @@ COOLDOWN_HOURS="${DEPENDENCY_FORCE_HISTORICAL_ALERT_COOLDOWN_HOURS:-168}"
 BRANCH="${DEPENDENCY_FORCE_BRANCH:-chore/dependency-force-update}"
 BASE_REF="${DEPENDENCY_FORCE_BASE:-${CI_DEFAULT_BRANCH:-beta}}"
 GITHUB_REPO="${DEPENDENCY_FORCE_GITHUB_REPO:-NapGram/NapGram}"
-PNPM_VERSION="${NAPGRAM_PNPM_VERSION:-11.8.0}"
+# pnpm version follows package.json's packageManager (single source of truth);
+# magisk-ci-toolkit's ci/ensure_pnpm.sh resolves and installs it (see ensure_tools).
 
 mkdir -p "$(dirname "$ALERTS_JSON")" "$(dirname "$REMOVABLE_JSON")"
 
@@ -89,7 +90,9 @@ PY
 }
 
 ensure_tools() {
-  bash scripts/ci/ensure_pnpm.sh "$PNPM_VERSION"
+  local toolkit_dir
+  toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
+  bash "$toolkit_dir/ci/ensure_pnpm.sh"
   pnpm config set store-dir "${CI_PROJECT_DIR:-$ROOT_DIR}/.pnpm-store" >/dev/null 2>&1 || true
   command -v curl >/dev/null
   command -v python3 >/dev/null
