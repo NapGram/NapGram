@@ -1,9 +1,9 @@
 include:
   - project: magisk3171/magisk-ci-toolkit
-    ref: 0d1ba5c86ecfd269d5772b865ea9f091248d6048
+    ref: d88061b293a6fb042a26b2feb8e60769d336f813
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/magisk-ci-toolkit
-    ref: 0d1ba5c86ecfd269d5772b865ea9f091248d6048
+    ref: d88061b293a6fb042a26b2feb8e60769d336f813
     file: /.gitlab/ci/renovate.yml
 
 workflow:
@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "0d1ba5c86ecfd269d5772b865ea9f091248d6048"
+  MAGISK_CI_TOOLKIT_REF: "d88061b293a6fb042a26b2feb8e60769d336f813"
 
   NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-local-linux"
   NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "saas-linux-small-amd64"
@@ -400,6 +400,12 @@ container:dev:manifest:
       artifacts: false
   script:
     - bash scripts/ci/gitlab_docker.sh publish-manifests
+  artifacts:
+    reports:
+      dotenv: telegram_images.env
+    paths:
+      - telegram_images.env
+    expire_in: 1 day
 
 container:release:amd64:
   extends:
@@ -451,6 +457,12 @@ container:release:manifest:
       artifacts: false
   script:
     - bash scripts/ci/gitlab_docker.sh publish-manifests
+  artifacts:
+    reports:
+      dotenv: telegram_images.env
+    paths:
+      - telegram_images.env
+    expire_in: 1 day
 
 sentry:publish:
   extends:
@@ -486,7 +498,7 @@ telegram:images:dev:
   allow_failure: true
   needs:
     - job: container:dev:manifest
-      artifacts: false
+      artifacts: true
   rules:
     - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
       when: never
@@ -497,6 +509,7 @@ telegram:images:dev:
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: on_success
     - when: never
   variables:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
@@ -512,7 +525,7 @@ telegram:images:release:
   allow_failure: true
   needs:
     - job: container:release:manifest
-      artifacts: false
+      artifacts: true
   rules:
     - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
       when: never
@@ -523,6 +536,7 @@ telegram:images:release:
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
+      when: on_success
     - when: never
   variables:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"

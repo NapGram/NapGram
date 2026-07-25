@@ -177,6 +177,11 @@ publish_manifests() {
       docker buildx imagetools inspect "${image}:${tag}"
     done < <(image_targets)
   done < <(release_tags)
+
+  # Signal successful publish for Telegram image-list notify (dotenv).
+  local signal_file="${MAGISK_TELEGRAM_IMAGE_PUBLISH_ENV_FILE:-telegram_images.env}"
+  printf 'MAGISK_TELEGRAM_IMAGE_PUBLISH_OK=1\n' >"$signal_file"
+  echo "Wrote publish success signal: $signal_file"
 }
 
 
