@@ -11,14 +11,15 @@ vi.mock('@napgram/plugin-kit', () => ({
   bindInstanceLifecycle: vi.fn().mockResolvedValue({ dispose: vi.fn() }),
 }))
 
+/* eslint-disable prefer-arrow-callback -- class mocks must use function expressions to be constructable via `new` */
 vi.mock('../../features/commands/CommandsFeature.js', () => ({
-  CommandsFeature: vi.fn(function() { return { destroy: vi.fn() } })
+  CommandsFeature: vi.fn(function () { return { destroy: vi.fn() } }),
 }))
 vi.mock('../../features/forward/ForwardFeature.js', () => ({
-  ForwardFeature: vi.fn(function() { return { destroy: vi.fn() } })
+  ForwardFeature: vi.fn(function () { return { destroy: vi.fn() } }),
 }))
 vi.mock('../../features/MediaFeature.js', () => ({
-  MediaFeature: vi.fn(function() { return { destroy: vi.fn() } })
+  MediaFeature: vi.fn(function () { return { destroy: vi.fn() } }),
 }))
 
 describe('core Plugins', () => {
