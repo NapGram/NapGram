@@ -18,16 +18,28 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event.pull_request.base.ref == 'dev' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
       (
-        github.event.pull_request.user.login == 'github-actions[bot]' ||
-        github.event.pull_request.user.login == 'renovate[bot]' ||
-        github.event.pull_request.user.login == 'app/renovate' ||
+        (
+          (
+            github.event.pull_request.user.login == 'dependabot[bot]' ||
+            github.event.pull_request.user.login == 'renovate[bot]' ||
+            github.event.pull_request.user.login == 'app/renovate'
+          ) &&
+          (
+            startsWith(github.head_ref, 'dependabot/') ||
+            startsWith(github.head_ref, 'renovate/')
+          )
+        ) ||
+        (
+          github.event.pull_request.user.login == 'github-actions[bot]' &&
+          github.head_ref == 'chore/dependency-force-update' &&
+          github.event.pull_request.title == 'build: update forced dependencies'
+        ) ||
         (
           github.event.pull_request.user.login == 'magisk317' &&
           (
             startsWith(github.head_ref, 'renovate/') ||
-            startsWith(github.head_ref, 'dependabot/') ||
-            startsWith(github.head_ref, 'janitor/') ||
             (
               github.head_ref == 'chore/dependency-force-update' &&
               github.event.pull_request.title == 'build: update forced dependencies'
@@ -41,5 +53,29 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GH_PAT != '' && secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           test -n "$GH_TOKEN"
-          gh pr merge --auto --merge --delete-branch "$PR_URL"
+
+          pr_state="$(gh pr view "$PR_URL" --json state --jq '.state')"
+          pr_merged_at="$(gh pr view "$PR_URL" --json mergedAt --jq '.mergedAt // ""')"
+          if [ "$pr_state" != "OPEN" ]; then
+            echo "::notice::Dependency PR is $pr_state (mergedAt=$pr_merged_at); skipping auto-merge."
+            exit 0
+          fi
+
+          set +e
+          merge_output="$(gh pr merge --auto --merge --delete-branch "$PR_URL" 2>&1)"
+          merge_status=$?
+          set -e
+          printf '%s\n' "$merge_output"
+
+          if [ "$merge_status" -eq 0 ]; then
+            exit 0
+          fi
+
+          if printf '%s\n' "$merge_output" | grep -Eiq 'Pull request is closed|Protected branch rules not configured'; then
+            echo "::notice::Auto-merge is unavailable for this PR state/repository setup; skipping."
+            exit 0
+          fi
+
+          exit "$merge_status"

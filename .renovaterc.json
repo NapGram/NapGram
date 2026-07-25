@@ -10,6 +10,12 @@
         "dev"
     ],
     "dependencyDashboard": true,
+    "dependencyDashboardOSVVulnerabilitySummary": "all",
+    "automerge": true,
+    "automergeType": "pr",
+    "platformAutomerge": false,
+    "ignoreTests": true,
+    "prCreation": "immediate",
     "internalChecksFilter": "strict",
     "minimumReleaseAgeBehaviour": "timestamp-required",
     "packageRules": [
@@ -94,8 +100,13 @@
     "osvVulnerabilityAlerts": true,
     "vulnerabilityAlerts": {
         "enabled": true,
+        "automerge": true,
         "labels": [
             "security"
         ]
+    },
+    "lockFileMaintenance": {
+        "enabled": true,
+        "automerge": true
     }
 }

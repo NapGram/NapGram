@@ -6,6 +6,12 @@
   "baseBranchPatterns": [
     "beta"
   ],
+  "automerge": true,
+  "automergeType": "pr",
+  "platformAutomerge": false,
+  "ignoreTests": true,
+  "prCreation": "immediate",
+  "internalChecksFilter": "strict",
   "minimumReleaseAgeBehaviour": "timestamp-required",
   "customManagers": [
     {
@@ -99,6 +105,7 @@
   "osvVulnerabilityAlerts": true,
   "vulnerabilityAlerts": {
     "enabled": true,
+    "automerge": true,
     "labels": [
       "security"
     ]
