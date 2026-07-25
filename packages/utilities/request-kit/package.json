@@ -34,7 +34,7 @@
   "devDependencies": {
     "vitest": "4.1.10",
     "@types/node": "25.9.5",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "publishConfig": {
     "main": "./dist/index.js",
