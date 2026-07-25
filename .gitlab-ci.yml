@@ -1,9 +1,9 @@
 include:
   - project: magisk3171/magisk-ci-toolkit
-    ref: bcdb55f5f5c0fbef3c8b1466855100ca6c16dea8
+    ref: 2e8ae3ce243e9008b09156ebac789a0e8cdc355f
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/magisk-ci-toolkit
-    ref: bcdb55f5f5c0fbef3c8b1466855100ca6c16dea8
+    ref: 2e8ae3ce243e9008b09156ebac789a0e8cdc355f
     file: /.gitlab/ci/renovate.yml
 
 workflow:
@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "bcdb55f5f5c0fbef3c8b1466855100ca6c16dea8"
+  MAGISK_CI_TOOLKIT_REF: "2e8ae3ce243e9008b09156ebac789a0e8cdc355f"
 
   NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-local-linux"
   NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "saas-linux-small-amd64"
@@ -172,7 +172,16 @@ variables:
     NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
     no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
   before_script:
-    - apk add --no-cache bash curl git
+    - |
+      for attempt in 1 2 3; do
+        if apk add --no-cache bash curl git; then
+          break
+        fi
+        if [ "$attempt" -eq 3 ]; then
+          exit 1
+        fi
+        sleep "$((attempt * 5))"
+      done
     - |
       set -euo pipefail
       if [ -n "${HTTP_PROXY:-${http_proxy:-}}" ] || [ -n "${HTTPS_PROXY:-${https_proxy:-}}" ]; then
@@ -557,4 +566,3 @@ dependency-force:gitlab:
     DEPENDENCY_FORCE_GITHUB_REPO: "NapGram/NapGram"
   script:
     - bash scripts/ci/dependency_force_gitlab.sh
-

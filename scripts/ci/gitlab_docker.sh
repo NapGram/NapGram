@@ -67,6 +67,21 @@ docker_node_image() {
   printf '%s\n' 'node@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66'
 }
 
+append_proxy_build_arg() {
+  local -n args_ref=$1
+  local build_arg_name=$2
+  shift 2
+
+  local env_name value
+  for env_name in "$@"; do
+    value="${!env_name:-}"
+    if [[ -n "$value" ]]; then
+      args_ref+=(--build-arg "${build_arg_name}=${value}")
+      return 0
+    fi
+  done
+}
+
 lottie_image() {
   if [[ -n "${NAPGRAM_LOTTIE_IMAGE:-}" ]]; then
     printf '%s\n' "$NAPGRAM_LOTTIE_IMAGE"
@@ -155,13 +170,23 @@ build_arch() {
     done < <(image_targets)
   done < <(release_tags)
 
+  local build_args=()
+  append_proxy_build_arg build_args HTTP_PROXY NAPGRAM_BUILD_HTTP_PROXY HTTP_PROXY CI_HTTP_PROXY
+  append_proxy_build_arg build_args HTTPS_PROXY NAPGRAM_BUILD_HTTPS_PROXY HTTPS_PROXY CI_HTTPS_PROXY
+  append_proxy_build_arg build_args ALL_PROXY NAPGRAM_BUILD_ALL_PROXY ALL_PROXY CI_ALL_PROXY
+  append_proxy_build_arg build_args NO_PROXY NAPGRAM_BUILD_NO_PROXY NO_PROXY CI_NO_PROXY
+  append_proxy_build_arg build_args http_proxy NAPGRAM_BUILD_HTTP_PROXY http_proxy HTTP_PROXY CI_HTTP_PROXY
+  append_proxy_build_arg build_args https_proxy NAPGRAM_BUILD_HTTPS_PROXY https_proxy HTTPS_PROXY CI_HTTPS_PROXY
+  append_proxy_build_arg build_args all_proxy NAPGRAM_BUILD_ALL_PROXY all_proxy ALL_PROXY CI_ALL_PROXY
+  append_proxy_build_arg build_args no_proxy NAPGRAM_BUILD_NO_PROXY no_proxy NO_PROXY CI_NO_PROXY
+
   docker buildx build \
     --platform "linux/${arch}" \
     --file Dockerfile \
     --push \
     --provenance=false \
     --cache-from "type=registry,ref=${registry}:buildcache-${arch}" \
-    --cache-to "type=registry,ref=${registry}:buildcache-${arch},mode=max" \
+    --cache-to "type=registry,ref=${registry}:buildcache-${arch},mode=max,ignore-error=true" \
     --build-arg "REPO=${CI_PROJECT_PATH:-NapGram/NapGram}" \
     --build-arg "REF=${CI_COMMIT_REF_NAME:-unknown}" \
     --build-arg "COMMIT=${CI_COMMIT_SHA:-unknown}" \
@@ -170,6 +195,7 @@ build_arch() {
     --build-arg "NODE_IMAGE=$(docker_node_image)" \
     --build-arg "PNPM_VERSION=$(pnpm_version)" \
     --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}" \
+    "${build_args[@]}" \
     "${tag_args[@]}" \
     .
 }

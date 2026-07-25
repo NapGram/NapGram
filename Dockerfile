@@ -15,23 +15,45 @@ ARG INSTALL_PG_CLIENT=true
 ARG PNPM_VERSION
 ARG PNPM_CONFIG_REGISTRY
 
-# Base Alpine packages
-RUN if [ "$USE_MIRROR" = "true" ]; then \
+# Base Alpine packages. Keep APKINDEX files until triggers finish; postgresql-common
+# reads them during post-install and can turn transient index fetches into failures.
+RUN set -eux; \
+    if [ "$USE_MIRROR" = "true" ]; then \
       sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories; \
-    fi && \
-    apk upgrade --no-cache && \
-    apk add --no-cache \
-    curl wget bash \
-    font-wqy-zenhei \
-    pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg yt-dlp \
-    $(if [ "$INSTALL_PG_CLIENT" = "true" ]; then echo postgresql-client; fi)
+    fi; \
+    packages="curl wget bash font-wqy-zenhei pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg yt-dlp"; \
+    if [ "$INSTALL_PG_CLIENT" = "true" ]; then \
+      packages="$packages postgresql-client"; \
+    fi; \
+    for attempt in 1 2 3; do \
+      rm -rf /var/cache/apk/*; \
+      if apk update && apk upgrade && apk add $packages; then \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      sleep "$((attempt * 5))"; \
+    done; \
+    rm -rf /var/cache/apk/*
 
 # Copy TGS conversion tools
 COPY --from=lottie /usr/bin/lottie_to_png /usr/bin/
 COPY --from=lottie /usr/bin/gifski /usr/bin/
 
 # Compat layer for Debian-built binaries
-RUN apk add --no-cache gcompat
+RUN set -eux; \
+    for attempt in 1 2 3; do \
+      rm -rf /var/cache/apk/*; \
+      if apk update && apk add gcompat; then \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      sleep "$((attempt * 5))"; \
+    done; \
+    rm -rf /var/cache/apk/*
 
 RUN npm install --global --registry="${PNPM_CONFIG_REGISTRY}" "pnpm@${PNPM_VERSION}"
 WORKDIR /app
@@ -45,9 +67,20 @@ ENV PNPM_STORE_PATH=/pnpm-store \
     CI=true
 
 # Build dependencies
-RUN apk add --no-cache \
-    python3 make g++ pkgconfig \
-    pixman-dev cairo-dev pango-dev giflib-dev libjpeg-turbo-dev libpng-dev librsvg-dev vips-dev
+RUN set -eux; \
+    for attempt in 1 2 3; do \
+      rm -rf /var/cache/apk/*; \
+      if apk update && apk add \
+        python3 make g++ pkgconfig \
+        pixman-dev cairo-dev pango-dev giflib-dev libjpeg-turbo-dev libpng-dev librsvg-dev vips-dev; then \
+        break; \
+      fi; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      sleep "$((attempt * 5))"; \
+    done; \
+    rm -rf /var/cache/apk/*
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
 COPY main/package.json /app/main/
