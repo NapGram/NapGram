@@ -480,17 +480,13 @@ sentry:publish:
       sentry-cli releases finalize "$CI_COMMIT_SHA"
 
 
-telegram:images:
+telegram:images:dev:
   extends: .magisk_telegram_images
   stage: notify
   allow_failure: true
   needs:
     - job: container:dev:manifest
       artifacts: false
-      optional: true
-    - job: container:release:manifest
-      artifacts: false
-      optional: true
   rules:
     - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
       when: never
@@ -501,13 +497,37 @@ telegram:images:
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
     - when: never
   variables:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
     MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
     MAGISK_TELEGRAM_CI_BRANCH: "beta"
-    MAGISK_TELEGRAM_IMAGE_EVENT: "docker"
+    MAGISK_TELEGRAM_IMAGE_EVENT: "docker-dev"
+    MAGISK_TELEGRAM_PLATFORMS: "linux/amd64, linux/arm64"
+    MAGISK_TELEGRAM_IMAGE_LIST_COMMAND: "scripts/ci/gitlab_docker.sh list-images"
+
+telegram:images:release:
+  extends: .magisk_telegram_images
+  stage: notify
+  allow_failure: true
+  needs:
+    - job: container:release:manifest
+      artifacts: false
+  rules:
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
+      when: never
+    - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "api"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
+      when: never
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
+    - when: never
+  variables:
+    MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
+    MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
+    MAGISK_TELEGRAM_IMAGE_EVENT: "docker-release"
     MAGISK_TELEGRAM_PLATFORMS: "linux/amd64, linux/arm64"
     MAGISK_TELEGRAM_IMAGE_LIST_COMMAND: "scripts/ci/gitlab_docker.sh list-images"
 
