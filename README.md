@@ -13,6 +13,7 @@
   <a href="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml"><img src="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml/badge.svg?event=release&label=Release%20Build" alt="Release Build" /></a>
   <a href="https://codecov.io/gh/NapGram/NapGram"><img src="https://codecov.io/gh/NapGram/NapGram/branch/beta/graph/badge.svg" alt="Codecov" /></a>
   <a href="https://github.com/NapGram/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapGram/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram/container_registry"><img src="https://img.shields.io/badge/registry.gitlab.com%2Fmagisk3171%2Fnapgram-fc6d26?logo=gitlab&label=Container" alt="GitLab Registry" /></a>
   <a href="https://github.com/NapGram/NapGram/pkgs/container/napgram"><img src="https://img.shields.io/badge/ghcr.io%2FNapGram%2Fnapgram-blue?logo=docker&label=Container" alt="GHCR Image" /></a>
   <a href="https://github.com/NapGram/NapGram/commits/main"><img src="https://img.shields.io/github/last-commit/NapGram/NapGram/main?logo=github&label=Last%20Commit" alt="Last Commit" /></a>
   <a href="https://github.com/NapGram/NapGram/pulse"><img src="https://img.shields.io/github/commit-activity/m/NapGram/NapGram?logo=github&label=Commit%20Activity" alt="Commit Activity" /></a>
@@ -82,9 +83,23 @@
 - 稳定版（Release 构建）：`latest` + `vX.Y.Z`
 - 开发版（每日构建）：`dev-latest` + `dev-YYYYMMDD`
 
-GitLab 流水线会发布到项目自带的 Container Registry。若要同时发布到 Docker Hub，需将
-`NAPGRAM_DOCKERHUB_PUBLISH` 设为 `true`，并配置 `DOCKERHUB_USERNAME` 与
-`DOCKERHUB_TOKEN`；可通过 `DOCKERHUB_IMAGE` 覆盖目标镜像名。
+### 镜像托管
+
+| 仓库 | 镜像 | 说明 |
+|---|---|---|
+| **GitLab Container Registry（默认）** | `registry.gitlab.com/magisk3171/napgram:<tag>` | GitLab CI 默认推送目标 |
+| GHCR | `ghcr.io/napgram/napgram:<tag>` | 历史/可选镜像源 |
+| Docker Hub（可选） | `docker.io/<user>/napgram:<tag>` | 需 `NAPGRAM_DOCKERHUB_PUBLISH=true` |
+
+拉取示例：
+
+```bash
+docker pull registry.gitlab.com/magisk3171/napgram:dev-latest
+docker pull registry.gitlab.com/magisk3171/napgram:v0.1.5
+```
+
+若要同时发布到 Docker Hub，将 `NAPGRAM_DOCKERHUB_PUBLISH` 设为 `true`，并配置
+`DOCKERHUB_USERNAME` 与 `DOCKERHUB_TOKEN`；可通过 `DOCKERHUB_IMAGE` 覆盖目标镜像名。
 
 ### GitLab 自动化
 

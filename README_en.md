@@ -14,6 +14,7 @@
   <a href="https://codecov.io/gh/NapGram/NapGram"><img src="https://codecov.io/gh/NapGram/NapGram/branch/beta/graph/badge.svg" alt="Codecov" /></a>
   <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapLink/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
   <a href="https://github.com/NapLink/NapGram/releases"><img src="https://img.shields.io/github/downloads/NapLink/NapGram/total?label=Release%20Downloads&logo=github" alt="Downloads" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram/container_registry"><img src="https://img.shields.io/badge/registry.gitlab.com%2Fmagisk3171%2Fnapgram-fc6d26?logo=gitlab&label=Container" alt="GitLab Registry" /></a>
   <a href="https://github.com/NapGram/NapGram/pkgs/container/napgram"><img src="https://img.shields.io/badge/ghcr.io%2FNapGram%2Fnapgram-blue?logo=docker&label=Container" alt="GHCR Image" /></a>
   <a href="https://github.com/NapLink/NapGram/commits/main"><img src="https://img.shields.io/github/last-commit/NapLink/NapGram/main?logo=github&label=Last%20Commit" alt="Last Commit" /></a>
   <a href="https://github.com/NapLink/NapGram/pulse"><img src="https://img.shields.io/github/commit-activity/m/NapLink/NapGram?logo=github&label=Commit%20Activity" alt="Commit Activity" /></a>
@@ -59,10 +60,14 @@
 
 **Note**: NapGram requires connection to a deployed NapCat instance. Please ensure NapCat is running first.
 
-GitLab pipelines publish multi-architecture images to the project Container Registry from the
-`beta` branch and `vX.Y.Z` tags. To publish the same tags to Docker Hub, set
-`NAPGRAM_DOCKERHUB_PUBLISH` to `true` and configure `DOCKERHUB_USERNAME` and
-`DOCKERHUB_TOKEN`; `DOCKERHUB_IMAGE` can override the target image name.
+GitLab pipelines publish multi-architecture images to the project Container Registry by default:
+
+- GitLab Registry (default): `registry.gitlab.com/magisk3171/napgram:<tag>`
+- GHCR (optional/historical): `ghcr.io/napgram/napgram:<tag>`
+- Docker Hub (optional): set `NAPGRAM_DOCKERHUB_PUBLISH=true` with `DOCKERHUB_USERNAME` /
+  `DOCKERHUB_TOKEN`; `DOCKERHUB_IMAGE` can override the target image name
+
+Tags still follow `dev-latest` / `dev-YYYYMMDD` on `beta`, and `latest` / `vX.Y.Z` on release tags.
 
 The Web Dashboard is built from a separate repository. The pipeline defaults to the
 `napgram-ui-dist` mirror in the same GitLab namespace; private mirrors require the protected,
