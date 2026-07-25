@@ -52,8 +52,8 @@
     "@napgram/plugin-permission-management": "workspace:*",
     "@napgram/plugin-ping-pong": "workspace:*",
     "@napgram/plugin-qq-interaction": "workspace:*",
-    "@napgram/plugin-refresh": "workspace:*",
     "@napgram/plugin-recall": "workspace:*",
+    "@napgram/plugin-refresh": "workspace:*",
     "@napgram/plugin-request-handler": "workspace:*",
     "@napgram/plugin-request-management": "workspace:*",
     "@napgram/plugin-statistics": "workspace:*",
@@ -62,6 +62,7 @@
   },
   "devDependencies": {
     "@types/node": "25.9.5",
-    "typescript": "7.0.2"
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   }
 }

@@ -17,8 +17,9 @@
     "devDependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
         "@types/node": "25.9.5",
+        "@typescript/native": "npm:typescript@^7.0.2",
         "turbo": "^2.9.18",
-        "typescript": "7.0.2"
+        "typescript": "npm:@typescript/typescript6@6.0.2"
     },
     "peerDependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*"
