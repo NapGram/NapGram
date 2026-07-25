@@ -9,9 +9,9 @@
   <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-26-green.svg" alt="Node.js" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
   <a href="https://gitlab.com/magisk3171/NapGram"><img src="https://img.shields.io/badge/GitLab-magisk3171%2FNapGram-FC6D26?logo=gitlab&logoColor=white" alt="GitLab" /></a>
-  <a href="https://gitlab.com/magisk3171/NapGram/-/pipelines?ref=dev"><img src="https://img.shields.io/gitlab/pipeline-status/magisk3171%2FNapGram?branch=dev&logo=gitlab&label=GitLab%20CI" alt="GitLab CI" /></a>
+  <a href="https://gitlab.com/magisk3171/NapGram/-/pipelines?ref=beta"><img src="https://img.shields.io/gitlab/pipeline-status/magisk3171%2FNapGram?branch=beta&logo=gitlab&label=GitLab%20CI" alt="GitLab CI" /></a>
   <a href="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml"><img src="https://github.com/NapGram/NapGram/actions/workflows/docker-release.yml/badge.svg?event=release&label=Release%20Build" alt="Release Build" /></a>
-  <a href="https://codecov.io/gh/NapGram/NapGram"><img src="https://codecov.io/gh/NapGram/NapGram/branch/dev/graph/badge.svg" alt="Codecov" /></a>
+  <a href="https://codecov.io/gh/NapGram/NapGram"><img src="https://codecov.io/gh/NapGram/NapGram/branch/beta/graph/badge.svg" alt="Codecov" /></a>
   <a href="https://github.com/NapGram/NapGram/releases"><img src="https://img.shields.io/github/v/release/NapGram/NapGram?display_name=tag&include_prereleases&logo=git&label=Latest" alt="Release" /></a>
   <a href="https://github.com/NapGram/NapGram/pkgs/container/napgram"><img src="https://img.shields.io/badge/ghcr.io%2FNapGram%2Fnapgram-blue?logo=docker&label=Container" alt="GHCR Image" /></a>
   <a href="https://github.com/NapGram/NapGram/commits/main"><img src="https://img.shields.io/github/last-commit/NapGram/NapGram/main?logo=github&label=Last%20Commit" alt="Last Commit" /></a>
@@ -88,7 +88,7 @@ GitLab 流水线会发布到项目自带的 Container Registry。若要同时发
 
 ### GitLab 自动化
 
-- `dev` 分支和 `vX.Y.Z` 标签触发多架构容器构建，分别产出 `linux/amd64` 与
+- `beta` 分支和 `vX.Y.Z` 标签触发多架构容器构建，分别产出 `linux/amd64` 与
   `linux/arm64` 镜像并合并 manifest。
 - Web 控制台由独立仓库构建。默认读取同组的 `napgram-ui-dist` GitLab 镜像；仓库私有时需
   配置受保护、掩码变量 `UI_SRC_TOKEN`，特殊 token 可通过 `UI_SRC_USERNAME` 指定用户名。
@@ -96,7 +96,7 @@ GitLab 流水线会发布到项目自带的 Container Registry。若要同时发
   `NAPGRAM_UI_RELEASE_REF` 固定 UI commit，保证可复现。
 - GitLab Renovate 继承 `magisk-ci-toolkit` 共享策略，并在 `.gitlab/renovate.json` 保留
   NapGram 专属规则；组级 `RENOVATE_TOKEN` + 项目 Pipeline Schedule
-  （`Renovate dependency maintenance`，`dev`，每天 08:00 Asia/Shanghai）触发
+  （`Renovate dependency maintenance`，`beta`，每天 08:00 Asia/Shanghai）触发
   `renovate:gitlab` 与 `dependency-force:gitlab`。
 - Telegram 与 Sentry 通知均为可选；未配置相应变量时不会阻塞流水线。
 - Runner 标签可通过 `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`、

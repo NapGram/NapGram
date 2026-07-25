@@ -104,7 +104,8 @@ release_tags() {
     return
   fi
 
-  if [[ "${CI_COMMIT_BRANCH:-}" == dev ]]; then
+  # Integration branch is beta; image channel tags remain dev-* for compatibility.
+  if [[ "${CI_COMMIT_BRANCH:-}" == "${CI_DEFAULT_BRANCH:-beta}" || "${CI_COMMIT_BRANCH:-}" == beta ]]; then
     local build_date
     build_date="$(date -u -d "${CI_PIPELINE_CREATED_AT:-now}" +%Y%m%d 2>/dev/null || date -u +%Y%m%d)"
     printf 'dev-latest\ndev-%s\n' "$build_date"

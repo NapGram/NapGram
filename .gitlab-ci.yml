@@ -95,7 +95,7 @@ variables:
       when: never
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
-    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
     - when: never
 
@@ -113,7 +113,7 @@ variables:
       when: never
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
-    - if: '$CI_COMMIT_BRANCH == "dev"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - when: never
 
 .napgram_docker_release_rules:
@@ -486,7 +486,7 @@ telegram:ci:
   variables:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
     MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
-    MAGISK_TELEGRAM_CI_BRANCH: "dev"
+    MAGISK_TELEGRAM_CI_BRANCH: "beta"
     MAGISK_TELEGRAM_CI_ARTIFACT_PATTERN: "*.napgram-no-artifact"
 
 telegram:release:
@@ -522,7 +522,7 @@ dependency-force:gitlab:
   variables:
     DEPENDENCY_FORCE_HISTORICAL_ALERT_COOLDOWN_HOURS: "168"
     DEPENDENCY_FORCE_BRANCH: "chore/dependency-force-update"
-    DEPENDENCY_FORCE_BASE: "dev"
+    DEPENDENCY_FORCE_BASE: "beta"
     # GitHub Dependabot alerts mirror; falls back to [] when unavailable.
     DEPENDENCY_FORCE_GITHUB_REPO: "NapGram/NapGram"
   script:

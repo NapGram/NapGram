@@ -4,7 +4,7 @@
     "gitlab>magisk3171/magisk-ci-toolkit"
   ],
   "baseBranchPatterns": [
-    "dev"
+    "beta"
   ],
   "minimumReleaseAgeBehaviour": "timestamp-required",
   "packageRules": [
