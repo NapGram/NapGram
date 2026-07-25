@@ -18,6 +18,10 @@ on:
   schedule:
     - cron: '37 7 * * 0'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   eslint:
     name: Run eslint scanning

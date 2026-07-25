@@ -13,6 +13,10 @@ on:
         options:
           - alpine
 
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
   build-alpine:
     name: Build Alpine multi-platform
