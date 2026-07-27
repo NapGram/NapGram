@@ -179,6 +179,7 @@ describe('instance', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     qqMocks.handlers.clear()
+    qqMocks.client.login.mockReset().mockResolvedValue(undefined)
     qqMocks.client.on.mockImplementation((event: string, handler: any) => {
       qqMocks.handlers.set(event, handler)
     })
@@ -241,7 +242,7 @@ describe('instance', () => {
     expect(qqMocks.factory.create).toHaveBeenCalledWith({
       type: 'napcat',
       wsUrl: 'ws://db',
-      reconnect: true,
+      reconnect: { maxAttempts: 3, interval: 5000 },
     })
     expect(qqMocks.client.login).toHaveBeenCalled()
     expect(instance.forwardPairs).toEqual({ map: true })
@@ -1158,7 +1159,7 @@ describe('instance', () => {
   it('handles publish error when instance init fails', async () => {
     dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
 
-    // Make qq login fail all retries to trigger init failure
+    // The lower-level client owns retries, so the supervisor calls login once.
     qqMocks.client.login.mockRejectedValue(new Error('init fail'))
 
     // Make publishInstanceStatus throw to cover catch block
@@ -1166,18 +1167,12 @@ describe('instance', () => {
 
     loggerMocks.warn.mockClear()
 
-    const timeoutSpy = vi.spyOn(globalThis, 'setTimeout').mockImplementation(((cb: any) => {
-      cb()
-      return 0 as any
-    }) as any)
-
     await expect(Instance.start(107, 'token')).rejects.toThrow('init fail')
 
     // Floating promise catch takes a tick
     await new Promise(resolve => setImmediate(resolve))
 
     expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish instance error status:', expect.any(Error))
-
-    timeoutSpy.mockRestore()
+    expect(qqMocks.client.login).toHaveBeenCalledTimes(1)
   })
 })

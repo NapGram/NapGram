@@ -317,7 +317,33 @@ export class NapCatAdapter extends EventEmitter {
   }
 
   async login(): Promise<void> {
-    return this.client.connect() // NCWebsocket has connect()
+    try {
+      await this.client.connect()
+    }
+    catch (error) {
+      if (this.params.reconnect === false) {
+        throw error
+      }
+
+      this.logger.warn('Initial NapCat connection failed; waiting for NapLink reconnect', error)
+      await new Promise<void>((resolve, reject) => {
+        const cleanup = () => {
+          this.client.off('connect', handleConnect)
+          this.client.off('connection:lost', handleConnectionLost)
+        }
+        const handleConnect = () => {
+          cleanup()
+          resolve()
+        }
+        const handleConnectionLost = () => {
+          cleanup()
+          reject(error)
+        }
+
+        this.client.once('connect', handleConnect)
+        this.client.once('connection:lost', handleConnectionLost)
+      })
+    }
   }
 
   async logout(): Promise<void> {

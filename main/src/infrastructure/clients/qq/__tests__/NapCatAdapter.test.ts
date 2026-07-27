@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstructor } = vi.hoisted(() => {
   const mockNapLink = {
     on: vi.fn(),
+    once: vi.fn(),
+    off: vi.fn(),
     connect: vi.fn(),
     disconnect: vi.fn(),
     sendMessage: vi.fn(),
@@ -169,11 +171,10 @@ describe('napCatAdapter', () => {
 
   // Helper to trigger an event on the mock client
   const triggerClientEvent = (event: string, ...args: any[]) => {
-    // Find the call to .on(event, handler)
-    const calls = mockNapLinkInstance.on.mock.calls
-    const handler = calls.find((c: any) => c[0] === event)?.[1]
-    if (handler)
-      handler(...args)
+    const calls = [...mockNapLinkInstance.on.mock.calls, ...mockNapLinkInstance.once.mock.calls]
+    calls
+      .filter((call: any) => call[0] === event)
+      .forEach((call: any) => call[1](...args))
   }
 
   beforeEach(async () => {
@@ -206,6 +207,7 @@ describe('napCatAdapter', () => {
     mockNapLinkInstance.handleGroupRequest.mockReset()
     mockNapLinkInstance.sendLike.mockReset()
     mockNapLinkInstance.getGroupHonorInfo.mockReset()
+    mockNapLinkInstance.connect.mockReset().mockResolvedValue(undefined)
 
     // Default success overrides
     mockNapLinkInstance.hydrateMessage.mockResolvedValue(undefined)
@@ -224,6 +226,48 @@ describe('napCatAdapter', () => {
     expect(mockNapLinkInstance.on).toHaveBeenCalledWith('connect', expect.any(Function))
     expect(mockNapLinkInstance.on).toHaveBeenCalledWith('disconnect', expect.any(Function))
     expect(mockNapLinkInstance.on).toHaveBeenCalledWith('message', expect.any(Function))
+  })
+
+  it('should pass a fixed reconnect policy to NapLink', () => {
+    const customAdapter = new NapCatAdapter({
+      type: 'napcat',
+      wsUrl: 'ws://localhost:3000',
+      reconnect: { maxAttempts: 3, interval: 5000 },
+    })
+
+    expect(customAdapter.clientType).toBe('napcat')
+    const lastCall = mockNapLinkConstructor.mock.calls.at(-1)
+    expect(lastCall).toBeDefined()
+    const config = lastCall![0]
+    expect(config.reconnect).toEqual({
+      enabled: true,
+      maxAttempts: 3,
+      backoff: { initial: 5000, max: 5000, multiplier: 1 },
+    })
+  })
+
+  it('should let NapLink finish an initial reconnect without calling connect again', async () => {
+    const initialError = new Error('initial connection failed')
+    mockNapLinkInstance.connect.mockRejectedValueOnce(initialError)
+
+    const loginPromise = adapter.login()
+    await new Promise(process.nextTick)
+    triggerClientEvent('connect')
+
+    await expect(loginPromise).resolves.toBeUndefined()
+    expect(mockNapLinkInstance.connect).toHaveBeenCalledTimes(1)
+  })
+
+  it('should reject the initial login error after NapLink exhausts reconnects', async () => {
+    const initialError = new Error('initial connection failed')
+    mockNapLinkInstance.connect.mockRejectedValueOnce(initialError)
+
+    const loginPromise = adapter.login()
+    await new Promise(process.nextTick)
+    triggerClientEvent('connection:lost', { attempts: 3 })
+
+    await expect(loginPromise).rejects.toBe(initialError)
+    expect(mockNapLinkInstance.connect).toHaveBeenCalledTimes(1)
   })
 
   it('should forward NapLink warn/error logs', () => {

@@ -94,25 +94,11 @@ export class ConnectionSupervisor {
         type: 'napcat',
         wsUrl,
         ...(wsToken ? { token: wsToken } : {}),
-        reconnect: true,
+        reconnect: { maxAttempts: 3, interval: 5000 },
       })
       this.host.qqClient = qqClient
 
-      const maxRetries = 3
-      const retryDelay = 5000
-      for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-          await qqClient.login()
-          break
-        }
-        catch (error) {
-          if (attempt >= maxRetries) {
-            throw error
-          }
-          this.host.log.warn(`NapCat 连接失败 (${attempt}/${maxRetries})，${retryDelay / 1000}s 后重试...`)
-          await new Promise(resolve => setTimeout(resolve, retryDelay))
-        }
-      }
+      await qqClient.login()
 
       enableQQMediaDownloadDiagnostics(qqClient, this.host.log)
       this.host.log.info('NapCat 客户端 ✓ 初始化完成')

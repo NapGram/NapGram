@@ -1,9 +1,9 @@
 ARG INSTALL_PG_CLIENT=true
 ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649
-ARG NODE_IMAGE=node@sha256:0473e7dc433a1310f436edee02aa79737ec78a4b345433ab0963d4a256f9ad85
+ARG NODE_IMAGE=node:26-alpine@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66
 # renovate: datasource=npm depName=pnpm
 ARG PNPM_VERSION=11.17.0
-ARG PNPM_CONFIG_REGISTRY=https://registry.npmjs.org
+ARG PNPM_CONFIG_REGISTRY=https://registry.npmmirror.com
 
 # Extract TGS conversion tools
 FROM ${LOTTIE_IMAGE} AS lottie
@@ -55,14 +55,15 @@ RUN set -eux; \
     done; \
     rm -rf /var/cache/apk/*
 
-RUN npm install --global --registry="${PNPM_CONFIG_REGISTRY}" "pnpm@${PNPM_VERSION}"
+RUN npm install --global --registry="${PNPM_CONFIG_REGISTRY}" "pnpm@${PNPM_VERSION}" || \
+    npm install --global --registry="https://registry.npmjs.org" "pnpm@${PNPM_VERSION}"
 WORKDIR /app
 
 # Workspace build image
 FROM base AS workspace
 ARG USE_MIRROR=true
 ARG PNPM_CONFIG_REGISTRY
-ENV PNPM_STORE_PATH=/pnpm-store \
+ENV PNPM_CONFIG_STORE_DIR=/pnpm-store \
     PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY} \
     CI=true
 
@@ -89,15 +90,18 @@ COPY packages/ /app/packages/
 # Install dependencies
 RUN --mount=type=cache,target=/pnpm-store \
     --mount=type=secret,id=npmrc \
+    printf '@naplink:registry=https://gitlab.com/api/v4/projects/84834294/packages/npm/\n' > /app/.npmrc && \
     if [ -f /run/secrets/npmrc ]; then \
-        echo "@napgram:registry=https://npm.pkg.github.com" > /app/.npmrc; \
+        echo "@napgram:registry=https://npm.pkg.github.com" >> /app/.npmrc; \
         cat /run/secrets/npmrc >> /app/.npmrc; \
     fi && \
-    pnpm install --frozen-lockfile --shamefully-hoist && \
+    (pnpm install --frozen-lockfile --shamefully-hoist || \
+      PNPM_CONFIG_REGISTRY=https://registry.npmjs.org pnpm install --frozen-lockfile --shamefully-hoist) && \
     rm -f /app/.npmrc
 
 # Build workspace packages first
-RUN pnpm -r --filter "./packages/**" run build
+RUN --mount=type=cache,target=/pnpm-store \
+    pnpm -r --filter "./packages/**" run build
 
 # Build the main app
 COPY main/ /app/main/
@@ -108,7 +112,8 @@ COPY web/dist/ /app/web/dist/
 
 # Keep production dependencies only
 FROM workspace AS build
-RUN pnpm prune --prod
+RUN --mount=type=cache,target=/pnpm-store \
+    pnpm prune --prod
 
 # Release image
 FROM base AS release

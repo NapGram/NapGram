@@ -54,10 +54,10 @@ docker_node_image() {
   fi
   local proxy_prefix
   if dependency_proxy_enabled && proxy_prefix="$(dependency_proxy_prefix)"; then
-    printf '%s/library/node@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66\n' "$proxy_prefix"
+    printf '%s/library/node:26-alpine@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66\n' "$proxy_prefix"
     return
   fi
-  printf '%s\n' 'node@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66'
+  printf '%s\n' 'node:26-alpine@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66'
 }
 
 append_proxy_build_arg() {
@@ -172,7 +172,7 @@ build_arch() {
     --build-arg "LOTTIE_IMAGE=$(lottie_image)"
     --build-arg "NODE_IMAGE=$(docker_node_image)"
     --build-arg "PNPM_VERSION=$(pnpm_version)"
-    --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}"
+    --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
   )
   append_proxy_build_arg build_args HTTP_PROXY NAPGRAM_BUILD_HTTP_PROXY HTTP_PROXY CI_HTTP_PROXY
   append_proxy_build_arg build_args HTTPS_PROXY NAPGRAM_BUILD_HTTPS_PROXY HTTPS_PROXY CI_HTTPS_PROXY
