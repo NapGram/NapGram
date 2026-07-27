@@ -7,14 +7,14 @@ usage() {
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+TOOLKIT_DIR="${MAGISK_CI_TOOLKIT_DIR:-$(cd "$REPO_ROOT" && bash scripts/resolve_ci_toolkit.sh)}"
+source "$TOOLKIT_DIR/ci/optional_registry.sh"
 
 # Resolve pnpm version from package.json (single source of truth). The resolver
 # lives in magisk-ci-toolkit and works without node (grep/sed fallback), so it
 # runs fine in the alpine-based docker:*-cli image used by container jobs.
 pnpm_version() {
-  local toolkit_dir
-  toolkit_dir="$(cd "$REPO_ROOT" && bash scripts/resolve_ci_toolkit.sh)"
-  bash "$toolkit_dir/ci/resolve_pnpm_version.sh" "$REPO_ROOT/package.json"
+  bash "$TOOLKIT_DIR/ci/resolve_pnpm_version.sh" "$REPO_ROOT/package.json"
 }
 
 require_env() {
@@ -30,15 +30,8 @@ registry_image() {
   printf '%s\n' "$CI_REGISTRY_IMAGE"
 }
 
-dockerhub_enabled() {
-  [[ "${NAPGRAM_DOCKERHUB_PUBLISH:-false}" == "true" ]]
-}
-
 dockerhub_image() {
-  dockerhub_enabled || return 1
-  require_env DOCKERHUB_USERNAME
-  require_env DOCKERHUB_TOKEN
-  printf '%s\n' "${DOCKERHUB_IMAGE:-docker.io/${DOCKERHUB_USERNAME}/napgram}"
+  printf '%s\n' "${DOCKERHUB_IMAGE:-docker.io/${DOCKERHUB_USERNAME:-unknown}/napgram}"
 }
 
 dependency_proxy_prefix() {
@@ -95,7 +88,7 @@ lottie_image() {
   printf '%s\n' 'edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649'
 }
 
-login_registries() {
+login_primary_registries() {
   require_env CI_REGISTRY
   require_env CI_REGISTRY_USER
   require_env CI_REGISTRY_PASSWORD
@@ -103,26 +96,12 @@ login_registries() {
   printf '%s' "$CI_REGISTRY_PASSWORD" \
     | docker login "$CI_REGISTRY" --username "$CI_REGISTRY_USER" --password-stdin
 
-  if dockerhub_enabled; then
-    require_env DOCKERHUB_USERNAME
-    require_env DOCKERHUB_TOKEN
-    printf '%s' "$DOCKERHUB_TOKEN" \
-      | docker login docker.io --username "$DOCKERHUB_USERNAME" --password-stdin
-  fi
-
   if [[ -n "${CI_DEPENDENCY_PROXY_SERVER:-}" && -n "${CI_DEPENDENCY_PROXY_USER:-}" && -n "${CI_DEPENDENCY_PROXY_PASSWORD:-}" ]]; then
     printf '%s' "$CI_DEPENDENCY_PROXY_PASSWORD" \
       | docker login "$CI_DEPENDENCY_PROXY_SERVER" \
           --username "$CI_DEPENDENCY_PROXY_USER" \
           --password-stdin
   fi
-}
-
-image_targets() {
-  local gitlab_image
-  gitlab_image="$(registry_image)"
-  printf '%s\n' "$gitlab_image"
-  dockerhub_image || true
 }
 
 release_tags() {
@@ -148,6 +127,27 @@ select_builder() {
   docker buildx inspect default
 }
 
+build_target() {
+  local image=$1
+  local arch=$2
+  shift 2
+  local build_args=("$@")
+  local tag_args=()
+  while IFS= read -r tag; do
+    [[ -n "$tag" ]] || continue
+    tag_args+=(--tag "${image}:${tag}-${arch}")
+  done < <(release_tags)
+
+  docker buildx build \
+    --platform "linux/${arch}" \
+    --file Dockerfile \
+    --push \
+    --provenance=false \
+    "${build_args[@]}" \
+    "${tag_args[@]}" \
+    .
+}
+
 build_arch() {
   local arch="${1:-}"
   case "$arch" in
@@ -155,22 +155,25 @@ build_arch() {
     *) usage; exit 2 ;;
   esac
 
-  login_registries
+  login_primary_registries
   docker buildx version
   select_builder
 
   local registry
   registry="$(registry_image)"
-  local tag_args=()
-  while IFS= read -r tag; do
-    [[ -n "$tag" ]] || continue
-    while IFS= read -r image; do
-      [[ -n "$image" ]] || continue
-      tag_args+=(--tag "${image}:${tag}-${arch}")
-    done < <(image_targets)
-  done < <(release_tags)
 
-  local build_args=()
+  local build_args=(
+    --cache-from "type=registry,ref=${registry}:buildcache-${arch}"
+    --cache-to "type=registry,ref=${registry}:buildcache-${arch},mode=max,ignore-error=true"
+    --build-arg "REPO=${CI_PROJECT_PATH:-NapGram/NapGram}"
+    --build-arg "REF=${CI_COMMIT_REF_NAME:-unknown}"
+    --build-arg "COMMIT=${CI_COMMIT_SHA:-unknown}"
+    --build-arg "USE_MIRROR=${NAPGRAM_DOCKER_USE_MIRROR:-false}"
+    --build-arg "LOTTIE_IMAGE=$(lottie_image)"
+    --build-arg "NODE_IMAGE=$(docker_node_image)"
+    --build-arg "PNPM_VERSION=$(pnpm_version)"
+    --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}"
+  )
   append_proxy_build_arg build_args HTTP_PROXY NAPGRAM_BUILD_HTTP_PROXY HTTP_PROXY CI_HTTP_PROXY
   append_proxy_build_arg build_args HTTPS_PROXY NAPGRAM_BUILD_HTTPS_PROXY HTTPS_PROXY CI_HTTPS_PROXY
   append_proxy_build_arg build_args ALL_PROXY NAPGRAM_BUILD_ALL_PROXY ALL_PROXY CI_ALL_PROXY
@@ -180,56 +183,55 @@ build_arch() {
   append_proxy_build_arg build_args all_proxy NAPGRAM_BUILD_ALL_PROXY all_proxy ALL_PROXY CI_ALL_PROXY
   append_proxy_build_arg build_args no_proxy NAPGRAM_BUILD_NO_PROXY no_proxy NO_PROXY CI_NO_PROXY
 
-  docker buildx build \
-    --platform "linux/${arch}" \
-    --file Dockerfile \
-    --push \
-    --provenance=false \
-    --cache-from "type=registry,ref=${registry}:buildcache-${arch}" \
-    --cache-to "type=registry,ref=${registry}:buildcache-${arch},mode=max,ignore-error=true" \
-    --build-arg "REPO=${CI_PROJECT_PATH:-NapGram/NapGram}" \
-    --build-arg "REF=${CI_COMMIT_REF_NAME:-unknown}" \
-    --build-arg "COMMIT=${CI_COMMIT_SHA:-unknown}" \
-    --build-arg "USE_MIRROR=${NAPGRAM_DOCKER_USE_MIRROR:-false}" \
-    --build-arg "LOTTIE_IMAGE=$(lottie_image)" \
-    --build-arg "NODE_IMAGE=$(docker_node_image)" \
-    --build-arg "PNPM_VERSION=$(pnpm_version)" \
-    --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmjs.org}" \
-    "${build_args[@]}" \
-    "${tag_args[@]}" \
-    .
+  build_target "$registry" "$arch" "${build_args[@]}"
+  magisk_publish_optional_registry \
+    "${NAPGRAM_DOCKERHUB_PUBLISH:-true}" \
+    "Docker Hub" \
+    docker.io \
+    "${DOCKERHUB_USERNAME:-}" \
+    "${DOCKERHUB_TOKEN:-}" \
+    build_target "$(dockerhub_image)" "$arch" "${build_args[@]}"
+}
+
+publish_image_manifests() {
+  local image=$1
+  local tag
+  while IFS= read -r tag; do
+    [[ -n "$tag" ]] || continue
+    docker buildx imagetools create --tag "${image}:${tag}" "${image}:${tag}-amd64" || return 1
+    docker buildx imagetools inspect "${image}:${tag}" || return 1
+  done < <(release_tags)
 }
 
 publish_manifests() {
-  login_registries
+  login_primary_registries
   docker buildx version
 
-  while IFS= read -r tag; do
-    [[ -n "$tag" ]] || continue
-    while IFS= read -r image; do
-      [[ -n "$image" ]] || continue
-      docker buildx imagetools create \
-        --tag "${image}:${tag}" \
-        "${image}:${tag}-amd64"
-      docker buildx imagetools inspect "${image}:${tag}"
-    done < <(image_targets)
-  done < <(release_tags)
+  publish_image_manifests "$(registry_image)"
+  magisk_publish_optional_registry \
+    "${NAPGRAM_DOCKERHUB_PUBLISH:-true}" \
+    "Docker Hub" \
+    docker.io \
+    "${DOCKERHUB_USERNAME:-}" \
+    "${DOCKERHUB_TOKEN:-}" \
+    publish_image_manifests "$(dockerhub_image)"
 
   # Signal successful publish for Telegram image-list notify (dotenv).
   local signal_file="${MAGISK_TELEGRAM_IMAGE_PUBLISH_ENV_FILE:-telegram_images.env}"
-  printf 'MAGISK_TELEGRAM_IMAGE_PUBLISH_OK=1\n' >"$signal_file"
+  printf 'MAGISK_TELEGRAM_IMAGE_PUBLISH_OK=1\nNAPGRAM_DOCKERHUB_PUBLISH_OK=%s\n' \
+    "$MAGISK_OPTIONAL_REGISTRY_PUBLISH_OK" >"$signal_file"
   echo "Wrote publish success signal: $signal_file"
 }
 
 
 list_images() {
-  local tag image
+  local tag
   while IFS= read -r tag; do
     [[ -n "$tag" ]] || continue
-    while IFS= read -r image; do
-      [[ -n "$image" ]] || continue
-      printf '%s:%s\n' "$image" "$tag"
-    done < <(image_targets)
+    printf '%s:%s\n' "$(registry_image)" "$tag"
+    if [[ "${NAPGRAM_DOCKERHUB_PUBLISH_OK:-0}" == "1" ]]; then
+      printf '%s:%s\n' "$(dockerhub_image)" "$tag"
+    fi
   done < <(release_tags)
 }
 

@@ -40,6 +40,9 @@ jobs:
       - name: Derive build info
         run: echo "BUILD_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
+      - name: Resolve CI toolkit
+        run: bash scripts/resolve_ci_toolkit.sh >/dev/null
+
       - name: Derive Docker Hub target (optional)
         run: |
           if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
@@ -96,9 +99,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: |
-            ghcr.io/${{ github.repository }}
-            ${{ env.DOCKERHUB_IMAGE }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=raw,value=latest
             type=semver,pattern=v{{version}}
@@ -115,14 +116,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Login to Docker Hub
-        if: env.DOCKERHUB_ENABLED == '1' && github.actor != 'dependabot[bot]'
-        uses: docker/login-action@v4
-        with:
-          registry: docker.io
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push (Alpine)
         uses: docker/build-push-action@v7
@@ -162,12 +155,40 @@ jobs:
           sentry-cli releases set-commits "$BUILD_SHA" --auto
           sentry-cli releases finalize "$BUILD_SHA"
 
+      - name: Mirror images to Docker Hub (optional)
+        id: dockerhub_mirror
+        if: env.DOCKERHUB_ENABLED == '1' && github.actor != 'dependabot[bot]'
+        continue-on-error: true
+        env:
+          MAGISK_SOURCE_REGISTRY: ghcr.io
+          MAGISK_SOURCE_USERNAME: ${{ github.actor }}
+          MAGISK_SOURCE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          MAGISK_TARGET_REGISTRY: docker.io
+          MAGISK_TARGET_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          MAGISK_TARGET_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          MAGISK_TARGET_IMAGE: ${{ env.DOCKERHUB_IMAGE }}
+          GHCR_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          MAGISK_SOURCE_IMAGE="${GHCR_TAGS%%:*}"
+           MAGISK_CONTAINER_TAGS="$(sed '/^$/d; s/.*://' <<<"$GHCR_TAGS")"
+           export MAGISK_SOURCE_IMAGE MAGISK_CONTAINER_TAGS
+           bash .magisk-ci-toolkit/ci/container_mirror.sh mirror
+
       - name: Send Telegram Notification (Alpine)
         if: success()
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
+          DOCKERHUB_PUBLISH_OK: ${{ steps.dockerhub_mirror.outcome == 'success' }}
         run: |
-          IMAGES="$(printf '%s\n' "$TAGS" | sed '/^$/d' | sed 's/^/  - /')"
+          MAGISK_CONTAINER_TAGS="$(sed '/^$/d; s/.*://' <<<"$TAGS")"
+          export MAGISK_CONTAINER_TAGS
+          IMAGES="$(
+            MAGISK_PRIMARY_IMAGE="${TAGS%%:*}" \
+            MAGISK_OPTIONAL_IMAGE="$DOCKERHUB_IMAGE" \
+            MAGISK_OPTIONAL_PUBLISHED="$DOCKERHUB_PUBLISH_OK" \
+              bash .magisk-ci-toolkit/ci/container_mirror.sh list | sed 's/^/  - /'
+          )"
           PROJECT_TAG="📌 #NapGram"
           MESSAGE="$(cat <<EOF
           ✅ NapGram：docker-release

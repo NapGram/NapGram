@@ -19,6 +19,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:coverage:ci": "vitest --coverage --maxWorkers=4 --testTimeout=15000 --hookTimeout=30000",
     "import": "ts-node tools/import"
   },
   "dependencies": {
