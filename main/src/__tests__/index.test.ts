@@ -51,9 +51,13 @@ const envKitMocks = vi.hoisted(() => ({
 
 const loggerKitMocks = vi.hoisted(() => ({
   getLogger: vi.fn(() => loggerMocks),
-  sentry: {
+  telemetry: {
     init: vi.fn(),
     captureException: vi.fn(),
+    event: vi.fn(),
+    flush: vi.fn().mockResolvedValue(true),
+    setExceptionFilter: vi.fn(),
+    shutdown: vi.fn().mockResolvedValue(true),
   },
 }))
 
@@ -97,11 +101,6 @@ const interfaceMocks = vi.hoisted(() => {
   }
 })
 
-const sentryNodeMocks = vi.hoisted(() => ({
-  addEventProcessor: vi.fn(),
-  flush: vi.fn().mockResolvedValue(true),
-}))
-
 const instanceMocks = vi.hoisted(() => ({
   start: vi.fn(),
 }))
@@ -113,7 +112,6 @@ vi.mock('@napgram/plugin-kit', () => ({
   PluginRuntime: pluginRuntimeMocks,
 }))
 vi.mock('../features/runtime/instance-registry', () => runtimeRegistryMocks)
-vi.mock('@sentry/node', () => sentryNodeMocks)
 vi.mock('@napgram/builtins', () => ({
   builtins: [{ id: 'builtin-test' }],
 }))
@@ -167,7 +165,8 @@ describe('main startup flow', () => {
     pluginRuntimeMocks.stop.mockResolvedValue(undefined)
     interfaceMocks.startServer.mockResolvedValue(interfaceMocks.app)
     interfaceMocks.stopServer.mockResolvedValue(undefined)
-    sentryNodeMocks.flush.mockResolvedValue(true)
+    loggerKitMocks.telemetry.flush.mockResolvedValue(true)
+    loggerKitMocks.telemetry.shutdown.mockResolvedValue(true)
   })
 
   afterEach(() => {
@@ -263,7 +262,8 @@ describe('main startup flow', () => {
 
     expect(interfaceMocks.stopServer).toHaveBeenCalled()
     expect(pluginRuntimeMocks.stop).toHaveBeenCalled()
-    expect(sentryNodeMocks.flush).toHaveBeenCalledWith(3_000)
+    expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
+    expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
     expect(process.exit).toHaveBeenCalledWith(1)
   })
 
@@ -284,7 +284,8 @@ describe('main startup flow', () => {
     expect(interfaceMocks.stopServer).toHaveBeenCalled()
     expect(pluginRuntimeMocks.stop).toHaveBeenCalled()
     expect(instance.stop).toHaveBeenCalled()
-    expect(sentryNodeMocks.flush).toHaveBeenCalledWith(3_000)
+    expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
+    expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
     expect(process.exit).toHaveBeenCalledWith(0)
   })
 
@@ -311,15 +312,14 @@ describe('initInfra', () => {
     vi.clearAllMocks()
   })
 
-  it('sentry event processor filters transient errors', async () => {
+  it('configures telemetry to filter transient errors', async () => {
     const { initInfra } = await import('../bootstrap')
     await initInfra(loggerMocks as any)
-    const processor = sentryNodeMocks.addEventProcessor.mock.calls[0][0]
+    const filter = loggerKitMocks.telemetry.setExceptionFilter.mock.calls[0][0]
 
-    expect(processor({ message: 'ConnectionError: 连接超时' })).toBeNull()
-
-    const event = { message: 'Normal error', exception: { values: [{ type: 'TypeError', value: 'foo' }] } }
-    expect(processor(event)).toBe(event)
+    expect(filter(new Error('ConnectionError: 连接超时'))).toBe(false)
+    expect(filter(new TypeError('Normal error'))).toBe(true)
+    expect(loggerKitMocks.telemetry.event).toHaveBeenCalledWith('app.boot', { stage: 'infrastructure' })
   })
 })
 
@@ -340,7 +340,8 @@ describe('handleFatalStartupError directly', () => {
     expect(loggerMocks.error).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(Error) }), 'Fatal startup error')
     expect(interfaceMocks.stopServer).toHaveBeenCalled()
     expect(pluginRuntimeMocks.stop).toHaveBeenCalled()
-    expect(sentryNodeMocks.flush).toHaveBeenCalledWith(3_000)
+    expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
+    expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
     expect(process.exit).toHaveBeenCalledWith(1)
   })
 })

@@ -1,7 +1,7 @@
 {
   "name": "@napgram/logger-kit",
   "version": "2.0.0",
-  "description": "Logger and Sentry primitives for NapGram",
+  "description": "Logger and OpenTelemetry primitives for NapGram",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
@@ -26,13 +26,17 @@
   "keywords": [
     "napgram",
     "logger",
-    "sentry"
+    "opentelemetry"
   ],
   "author": "NapGram Team",
   "license": "MIT",
   "dependencies": {
     "@napgram/env-kit": "workspace:*",
-    "@sentry/node": "10.68.0"
+    "@opentelemetry/api": "1.9.1",
+    "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
+    "@opentelemetry/resources": "2.10.0",
+    "@opentelemetry/sdk-trace-node": "2.10.0",
+    "@opentelemetry/semantic-conventions": "1.41.1"
   },
   "devDependencies": {
     "@types/node": "25.9.5",

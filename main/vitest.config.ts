@@ -43,7 +43,7 @@ export default defineConfig({
         '**/*.config.*',
         '**/__tests__/**',
         // Tier 3 exclusions: untestable entry-point / infrastructure code
-        // src/index.ts — Process entry point with Sentry init, signal handlers, and setInterval; integration test territory
+        // src/index.ts - Process entry point with telemetry init, signal handlers, and setInterval; integration test territory
         'src/index.ts',
         // src/infrastructure/temp.ts — File system side effects depending on env.DATA_DIR; not unit-testable
         'src/infrastructure/temp.ts',

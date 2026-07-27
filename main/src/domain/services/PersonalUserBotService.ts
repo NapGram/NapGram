@@ -1,7 +1,7 @@
 import type { AppLogger } from '@napgram/logger-kit'
 import type Telegram from '@napgram/telegram-client'
 import type { PersonalModeDiagnostics, PersonalUserBotStatus, WorkMode } from '../models/Instance.js'
-import { sentry } from '@napgram/logger-kit'
+import { telemetry } from '@napgram/logger-kit'
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 
 export interface PersonalUserBotHost {
@@ -53,7 +53,7 @@ export class PersonalUserBotService {
       const message = this.formatError(error)
       this.host.setUserBotState('error', message)
       this.host.log.warn({ error, userSessionId: this.host.userSessionId }, 'TG UserBot 登录失败；自动建群不可用，手动绑定仍可使用')
-      sentry.captureException(error, { stage: 'personal-userbot-init', instanceId: this.host.id })
+      telemetry.captureException(error, { stage: 'personal-userbot-init', instanceId: this.host.id })
     }
   }
 

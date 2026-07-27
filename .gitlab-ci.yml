@@ -427,34 +427,6 @@ container:release:manifest:
       - telegram_images.env
     expire_in: 1 day
 
-sentry:publish:
-  extends:
-    - .napgram_node
-    - .napgram_docker_rules
-  stage: release-publish
-  allow_failure: true
-  needs:
-    - job: container:dev:manifest
-      artifacts: false
-      optional: true
-    - job: container:release:manifest
-      artifacts: false
-      optional: true
-  script:
-    - |
-      set -euo pipefail
-      if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
-        echo "SENTRY_AUTH_TOKEN not set, skip Sentry release publication."
-        exit 0
-      fi
-      export SENTRY_ORG="${SENTRY_ORG:-napgram}"
-      export SENTRY_PROJECT="${SENTRY_PROJECT:-napgram}"
-      npm install --global @sentry/cli
-      sentry-cli releases new "$CI_COMMIT_SHA"
-      sentry-cli releases set-commits "$CI_COMMIT_SHA" --auto
-      sentry-cli releases finalize "$CI_COMMIT_SHA"
-
-
 telegram:images:dev:
   extends:
     - .magisk_telegram_images

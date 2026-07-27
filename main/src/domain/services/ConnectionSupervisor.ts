@@ -7,7 +7,7 @@ import type { InstanceLifecycleStatus, WorkMode } from '../models/Instance.js'
 import type { PersonalUserBotService } from './PersonalUserBotService.js'
 import { ForwardMap as ForwardMapModel } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
-import { sentry } from '@napgram/logger-kit'
+import { telemetry } from '@napgram/logger-kit'
 import { messageConverter } from '@napgram/message-kit'
 import { getEventPublisher } from '@napgram/plugin-kit'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
@@ -230,7 +230,7 @@ export class ConnectionSupervisor {
           .catch((publishError) => {
             this.host.log.warn('Failed to publish instance error status:', publishError)
           })
-        sentry.captureException(err, { stage: 'instance-init', instanceId: this.host.id })
+        telemetry.captureException(err, { stage: 'instance-init', instanceId: this.host.id })
       })
 
     return this.initPromise

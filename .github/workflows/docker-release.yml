@@ -135,26 +135,6 @@ jobs:
             USE_MIRROR=false
             NODE_VERSION=25-alpine${{ env.ALPINE_BRANCH }}
 
-      - name: Publish Sentry release (optional)
-        continue-on-error: true
-        if: success()
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          BUILD_SHA: ${{ env.BUILD_SHA }}
-        run: |
-          if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
-            echo "SENTRY_AUTH_TOKEN not set, skip Sentry release publish."
-            exit 0
-          fi
-          : "${SENTRY_ORG:=napgram}"
-          : "${SENTRY_PROJECT:=napgram}"
-          npm i -g @sentry/cli
-          sentry-cli releases new "$BUILD_SHA"
-          sentry-cli releases set-commits "$BUILD_SHA" --auto
-          sentry-cli releases finalize "$BUILD_SHA"
-
       - name: Mirror images to Docker Hub (optional)
         id: dockerhub_mirror
         if: env.DOCKERHUB_ENABLED == '1' && github.actor != 'dependabot[bot]'
@@ -171,9 +151,9 @@ jobs:
         run: |
           set -euo pipefail
           MAGISK_SOURCE_IMAGE="${GHCR_TAGS%%:*}"
-           MAGISK_CONTAINER_TAGS="$(sed '/^$/d; s/.*://' <<<"$GHCR_TAGS")"
-           export MAGISK_SOURCE_IMAGE MAGISK_CONTAINER_TAGS
-           bash .magisk-ci-toolkit/ci/container_mirror.sh mirror
+          MAGISK_CONTAINER_TAGS="$(sed '/^$/d; s/.*://' <<<"$GHCR_TAGS")"
+          export MAGISK_SOURCE_IMAGE MAGISK_CONTAINER_TAGS
+          bash .magisk-ci-toolkit/ci/container_mirror.sh mirror
 
       - name: Send Telegram Notification (Alpine)
         if: success()

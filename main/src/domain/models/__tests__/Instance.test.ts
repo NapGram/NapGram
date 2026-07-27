@@ -66,7 +66,7 @@ const loggerMocks = vi.hoisted(() => ({
   error: vi.fn(),
 }))
 
-const sentryMocks = vi.hoisted(() => ({
+const telemetryMocks = vi.hoisted(() => ({
   captureException: vi.fn(),
 }))
 
@@ -141,11 +141,7 @@ vi.mock('@napgram/db-kit', () => ({
 
 vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => loggerMocks),
-  sentry: sentryMocks,
-}))
-
-vi.mock('../sentry', () => ({
-  default: sentryMocks,
+  telemetry: telemetryMocks,
 }))
 
 vi.mock('@napgram/plugin-kit', () => ({
@@ -412,7 +408,7 @@ describe('instance', () => {
       manualPairingAvailable: true,
       error: 'user login failed',
     }))
-    expect(sentryMocks.captureException).toHaveBeenCalledWith(error, {
+    expect(telemetryMocks.captureException).toHaveBeenCalledWith(error, {
       stage: 'personal-userbot-init',
       instanceId: 28,
     })
@@ -425,7 +421,7 @@ describe('instance', () => {
     await expect((instance as any).init()).rejects.toThrow('botToken 未指定')
     await Promise.resolve()
 
-    expect(sentryMocks.captureException).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
+    expect(telemetryMocks.captureException).toHaveBeenCalledWith(expect.any(Error), expect.objectContaining({
       stage: 'instance-init',
     }))
   })

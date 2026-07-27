@@ -1,6 +1,6 @@
 import { performanceMonitor } from '@napgram/infra-kit'
 import { describe, expect, it, vi } from 'vitest'
-import { getSentryMessage, isTransientConnectionError, maskProxyUrl, startWindowedPerformanceLog } from '../bootstrap.js'
+import { getTelemetryErrorMessage, isTransientConnectionError, maskProxyUrl, startWindowedPerformanceLog } from '../bootstrap.js'
 
 vi.mock('@napgram/infra-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@napgram/infra-kit')>()
@@ -19,20 +19,10 @@ describe('bootstrap utils', () => {
     expect(maskProxyUrl('//invalid-url-user:pass@host.com/')).toBe('//invalid-url-user:***@host.com/')
   })
 
-  it('getSentryMessage extracts message and exception values', () => {
-    const event = {
-      message: 'Test message',
-      exception: {
-        values: [
-          { type: 'Error', value: 'Value 1' },
-          { type: 'TypeError', value: 'Value 2' },
-        ],
-      },
-    }
-    expect(getSentryMessage(event as any)).toBe('Test message | Error | Value 1 | TypeError | Value 2')
-
-    const emptyEvent = {}
-    expect(getSentryMessage(emptyEvent as any)).toBe('')
+  it('getTelemetryErrorMessage normalizes errors and message-like values', () => {
+    expect(getTelemetryErrorMessage(new TypeError('Value 1'))).toBe('TypeError: Value 1')
+    expect(getTelemetryErrorMessage({ message: 'Value 2' })).toBe('Value 2')
+    expect(getTelemetryErrorMessage(undefined)).toBe('')
   })
 
   it('isTransientConnectionError identifies correct errors', () => {

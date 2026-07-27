@@ -3,4 +3,15 @@ export { configureLoggerKit as configureInfraKit, getInfraLogger } from './deps.
 export type { InfraLogger, LoggerFactory } from './deps.js'
 export { default as getLogger, redactSensitiveLogText, rotateIfNeeded, setConsoleLogLevel } from './logger.js'
 export type { AppLogger } from './logger.js'
-export { default as sentry, captureException, captureMessage, flush, initSentry } from './sentry.js'
+export {
+  default as telemetry,
+  activeWindows,
+  captureException,
+  captureMessage,
+  event,
+  flush,
+  initTelemetry,
+  resolveServiceInstanceId,
+  setExceptionFilter,
+  shutdown,
+} from './telemetry.js'

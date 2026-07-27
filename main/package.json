@@ -49,7 +49,6 @@
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
     "@naplink/naplink": "^1.1.0",
-    "@sentry/node": "10.68.0",
     "drizzle-kit": "^0.31.10",
     "fastify": "^5.8.5",
     "fflate": "^0.8.2",

@@ -51,7 +51,7 @@ vi.mock('@napgram/logger-kit', () => ({
     warn: vi.fn(),
     trace: vi.fn(),
   })),
-  sentry: {
+  telemetry: {
     captureException: vi.fn(),
   },
 }))

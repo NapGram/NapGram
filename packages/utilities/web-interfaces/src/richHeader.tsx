@@ -2,7 +2,7 @@
 /** @jsxFrag Html.Fragment */
 import type { FastifyInstance } from 'fastify'
 import Html from '@kitajs/html'
-import { env, getLogger, sentry } from './web-deps.js'
+import { env, getLogger, telemetry } from './web-deps.js'
 import { formatDate } from './web-http.js'
 import { createAdminQueryContext } from './runtime-context.js'
 
@@ -248,7 +248,7 @@ async function handler(adminContext: ReturnType<typeof createAdminQueryContext>,
   }
   catch (e) {
     logger.error('Error:', e)
-    sentry.captureException(e, { scope: 'richHeader' })
+    telemetry.captureException(e, { scope: 'richHeader' })
     reply.status(500).send('Internal Server Error')
   }
 };

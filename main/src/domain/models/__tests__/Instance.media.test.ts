@@ -72,7 +72,7 @@ vi.mock('@napgram/logger-kit', () => ({
     warn: vi.fn(),
     trace: vi.fn(),
   })),
-  sentry: { captureException: vi.fn() },
+  telemetry: { captureException: vi.fn() },
 }))
 
 vi.mock('../../../infrastructure/clients/qq', () => ({

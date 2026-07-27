@@ -77,8 +77,8 @@ username. `NAPGRAM_UI_REPOSITORY` and `NAPGRAM_UI_REF` can override the source, 
 Renovate inherits the shared `magisk-ci-toolkit` policy and keeps NapGram-specific rules in
 `.gitlab/renovate.json`. Group-level `RENOVATE_TOKEN` plus a project Pipeline Schedule
 (`Renovate dependency maintenance` on `beta`, daily 08:00 Asia/Shanghai) run
-`renovate:gitlab` and `dependency-force:gitlab`. Telegram and Sentry
-variables are optional. Runner tags can be overridden with `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`,
+`renovate:gitlab` and `dependency-force:gitlab`. Telegram variables are optional. Runner tags can
+be overridden with `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`,
 `NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG`, and `NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG`.
 
 ```bash
@@ -188,7 +188,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📖 Repository Layout
 
-The Web Console source is maintained in the `napgram-ui-dist` repository. This repository only keeps the built `web/dist` artifacts, and CI checks out that repository into `./web` before building and publishing.
+NapGram is one pnpm monorepo: `main` owns process assembly, `packages/clients` owns protocol and
+storage adapters, `packages/core` owns internal runtime kits, `packages/utilities` owns reusable
+capabilities, and `packages/plugins` owns adapter, feature, and administration plugins. `sdk-core`,
+`sdk-utils`, and `sdk` are the public plugin-facing boundary; plugins should not depend directly on
+internal runtime kits. `builtins` owns the shipped plugin composition.
+
+The dependency direction is `main/builtins -> plugins -> sdk -> core/utilities/clients`. Add a new
+shared package only when at least two stable consumers need the same semantics; avoid orphan
+packages and barrel-only layers.
+
+The Web Console source is maintained in the `napgram-ui-dist` repository. This repository only
+keeps the built `web/dist` artifacts, and CI checks out that repository into `./web` before building
+and publishing.
 
 ## 🙏 Credits
 

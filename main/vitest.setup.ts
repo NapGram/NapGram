@@ -40,7 +40,7 @@ vi.mock('@napgram/logger-kit', () => ({
   getLogger: vi.fn(() => mockedLogger),
   setConsoleLogLevel: vi.fn(),
   configureInfraKit: vi.fn(),
-  sentry: { captureException: vi.fn() },
+  telemetry: { captureException: vi.fn() },
 }))
 
 vi.mock('@napgram/db-kit', () => ({

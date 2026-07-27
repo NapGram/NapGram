@@ -10,7 +10,7 @@ import { MessageQueue } from './MessageQueue.js'
 export type { MessageHandler, QueueConfig } from './MessageQueue.js'
 import { performanceMonitor, PerformanceMonitor, startMonitoring } from './PerformanceMonitor.js'
 export type { PerformanceMetrics, PerformanceStats } from './PerformanceMonitor.js'
-import { getLogger, sentry, setConsoleLogLevel } from '@napgram/logger-kit'
+import { getLogger, telemetry, setConsoleLogLevel } from '@napgram/logger-kit'
 import type { AppLogger } from '@napgram/logger-kit'
 import db, { drizzleDb, schema, eq, and, or, lt, lte, gt, gte, like, inArray, isNull, isNotNull, desc, sql, count } from '@napgram/db-kit'
 import * as temp from './temp.js'
@@ -67,7 +67,7 @@ export {
   ApiResponse,
   urls,
   flagControl,
-  sentry,
+  telemetry,
   arrays,
   cache,
   date,

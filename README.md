@@ -113,7 +113,7 @@ docker pull registry.gitlab.com/magisk3171/napgram:v0.1.5
   NapGram 专属规则；组级 `RENOVATE_TOKEN` + 项目 Pipeline Schedule
   （`Renovate dependency maintenance`，`beta`，每天 08:00 Asia/Shanghai）触发
   `renovate:gitlab` 与 `dependency-force:gitlab`。
-- Telegram 与 Sentry 通知均为可选；未配置相应变量时不会阻塞流水线。
+- Telegram 通知为可选；未配置相应变量时不会阻塞流水线。
 - Runner 标签可通过 `NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG`、
   `NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG` 和
   `NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG` 覆盖。
@@ -159,7 +159,7 @@ docker pull registry.gitlab.com/magisk3171/napgram:v0.1.5
 ### 目录结构
 ```bash
 .
-├── main/                 # 后端核心（Fastify + mtcute + NapCat）
+├── main/                 # 后端宿主与进程装配（Fastify + mtcute + NapCat）
 │   ├── src/
 │   │   ├── domain/       # 领域模型、转换器与业务逻辑
 │   │   ├── features/     # 功能模块（Forward/Media/Recall/Commands）
@@ -167,6 +167,15 @@ docker pull registry.gitlab.com/magisk3171/napgram:v0.1.5
 │   │   ├── interfaces/   # Web API + Web 控制台托管（Fastify）
 │   │   └── shared/       # 通用工具、日志、服务
 │   └── tools/            # 数据库迁移与维护工具（Drizzle）
+├── packages/
+│   ├── clients/          # 数据库、QQ、Telegram 客户端适配
+│   ├── core/             # env/db/logger/plugin/runtime 等内部核心 kit
+│   ├── utilities/        # auth/gateway/media/message/request 等可复用能力
+│   ├── plugins/          # adapter、feature 和 admin 插件
+│   ├── sdk-core/         # 插件公共类型与最小合同
+│   ├── sdk-utils/        # 插件可用的无状态 helper
+│   ├── sdk/              # 面向插件作者的统一入口
+│   └── builtins/         # 内置插件组合清单
 ├── web/                  # 外部 UI 仓库在 CI 中 checkout 到此路径
 │   └── dist/             # 前端构建产物（Docker 仅复制该目录）
 ├── Dockerfile            # 容器构建（默认启用 Web 控制台）
@@ -174,6 +183,10 @@ docker pull registry.gitlab.com/magisk3171/napgram:v0.1.5
 ```
 
 > 说明：Web console 的源码维护在 `napgram-ui-dist` 仓库，当前仓库只保留构建产物 `web/dist`。CI 会在发布流程中把 `napgram-ui-dist` checkout 到 `./web` 再执行构建。
+
+依赖方向保持为 `main/builtins -> plugins -> sdk -> core/utilities/clients`。插件只依赖公开
+SDK，不直接耦合内部 runtime kit；宿主装配和进程生命周期留在 `main`。新增共享包前先确认
+至少有两个稳定消费者，避免重新引入孤儿 package 或只做 re-export 的胖 barrel。
 
 ### 创建新功能
 得益于模块化架构，添加新功能非常简单：

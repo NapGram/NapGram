@@ -3,10 +3,9 @@ import { builtins } from '@napgram/builtins'
 import { db } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
 import { performanceMonitor } from '@napgram/infra-kit'
-import { getLogger, sentry } from '@napgram/logger-kit'
+import { getLogger, telemetry } from '@napgram/logger-kit'
 import { PluginRuntime } from '@napgram/plugin-kit'
 import { resetGlobalRuntime as resetRuntimeKit } from '@napgram/runtime-kit'
-import * as Sentry from '@sentry/node'
 import Instance from './domain/models/Instance'
 import { coreFeatureBuiltins } from './features/runtime/builtins'
 import { instanceRegistry } from './features/runtime/instance-registry'
@@ -60,18 +59,12 @@ export function startWindowedPerformanceLog(log: ReturnType<typeof getLogger>) {
   }, 60_000)
 }
 
-export function getSentryMessage(event: Sentry.Event): string {
-  const parts: string[] = []
-  if (event.message)
-    parts.push(event.message)
-  const values = event.exception?.values ?? []
-  for (const value of values) {
-    if (value?.type)
-      parts.push(value.type)
-    if (value?.value)
-      parts.push(value.value)
-  }
-  return parts.join(' | ')
+export function getTelemetryErrorMessage(error: unknown): string {
+  if (error instanceof Error)
+    return `${error.name}: ${error.message}`
+  if (typeof error === 'object' && error != null && 'message' in error)
+    return String((error as { message?: unknown }).message ?? '')
+  return String(error ?? '')
 }
 
 export function isTransientConnectionError(message: string): boolean {
@@ -88,23 +81,19 @@ export interface BootstrapOptions {
 }
 
 export async function initInfra(log: ReturnType<typeof getLogger>) {
-  sentry.init()
-  Sentry.addEventProcessor((event: Sentry.Event) => {
-    const message = getSentryMessage(event)
-    if (isTransientConnectionError(message))
-      return null
-    return event
-  })
+  telemetry.init()
+  telemetry.setExceptionFilter(error => !isTransientConnectionError(getTelemetryErrorMessage(error)))
+  telemetry.event('app.boot', { stage: 'infrastructure' })
   startWindowedPerformanceLog(log)
 
   process.on('unhandledRejection', (error) => {
     log.error(error, 'UnhandledRejection: ')
-    sentry.captureException(error, { type: 'unhandledRejection' })
+    telemetry.captureException(error, { type: 'unhandledRejection' })
   })
 
   process.on('uncaughtException', (error) => {
     log.error(error, 'UncaughtException: ')
-    sentry.captureException(error, { type: 'uncaughtException' })
+    telemetry.captureException(error, { type: 'uncaughtException' })
   })
 }
 
@@ -219,10 +208,11 @@ export async function bootstrap(options: BootstrapOptions = {}) {
     }
 
     try {
-      await Sentry.flush(3_000)
+      await telemetry.flush(3_000)
+      await telemetry.shutdown(3_000)
     }
     catch (error) {
-      log.error({ error }, 'Failed to flush Sentry')
+      log.error({ error }, 'Failed to shut down telemetry')
     }
 
     try {
@@ -309,7 +299,7 @@ export async function bootstrap(options: BootstrapOptions = {}) {
 export async function handleFatalStartupError(error: unknown) {
   const log = getLogger('Main')
   log.error({ error }, 'Fatal startup error')
-  sentry.captureException(error, { stage: 'main-startup' })
+  telemetry.captureException(error, { stage: 'main-startup' })
   try {
     await stopServer()
   }
@@ -319,7 +309,8 @@ export async function handleFatalStartupError(error: unknown) {
   }
   catch {}
   try {
-    await Sentry.flush(3_000)
+    await telemetry.flush(3_000)
+    await telemetry.shutdown(3_000)
   }
   catch {}
   process.exit(1)
