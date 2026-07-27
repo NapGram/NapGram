@@ -11,6 +11,9 @@ esbuild.buildSync({
   sourcemap: true,
   platform: 'node',
   format: 'esm',
+  banner: {
+    js: `import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);`,
+  },
   splitting: true,
   chunkNames: 'chunks/[name]-[hash]',
   external: externalDeps,

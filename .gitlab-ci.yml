@@ -292,6 +292,8 @@ app:typecheck:
     - pnpm install --frozen-lockfile
     - pnpm -r --filter "./packages/**" run build
     - pnpm --filter @napgram/app type-check
+    - pnpm --filter @napgram/app build
+    - pnpm --filter @napgram/app check:bundle
 
 app:test:coverage:
   extends:

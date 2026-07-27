@@ -105,7 +105,8 @@ RUN --mount=type=cache,target=/pnpm-store \
 
 # Build the main app
 COPY main/ /app/main/
-RUN pnpm --filter ./main run build
+RUN pnpm --filter ./main run build && \
+    pnpm --filter ./main run check:bundle
 
 # `web/dist` is populated by the external UI checkout in CI; only the built assets are copied here.
 COPY web/dist/ /app/web/dist/
@@ -138,8 +139,18 @@ RUN rm -rf /app/node_modules/@napgram && \
     mkdir -p /app/data /app/.config/QQ && \
     chown -R node:node /app/data /app/.config/QQ
 
+# External plugins import the public SDK at runtime. Keep only that API surface
+# and its runtime dependencies; the application bundles the other workspaces.
+COPY --from=workspace --chown=node:node /app/packages/sdk/package.json /app/node_modules/@napgram/sdk/package.json
+COPY --from=workspace --chown=node:node /app/packages/sdk/dist /app/node_modules/@napgram/sdk/dist
+COPY --from=workspace --chown=node:node /app/packages/sdk-core/package.json /app/node_modules/@napgram/sdk-core/package.json
+COPY --from=workspace --chown=node:node /app/packages/sdk-core/dist /app/node_modules/@napgram/sdk-core/dist
+COPY --from=workspace --chown=node:node /app/packages/sdk-utils/package.json /app/node_modules/@napgram/sdk-utils/package.json
+COPY --from=workspace --chown=node:node /app/packages/sdk-utils/dist /app/node_modules/@napgram/sdk-utils/dist
+
 COPY --chown=node:node docker-entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh /app/main/tools/run-drizzle-migrations.sh
+RUN chmod +x /app/entrypoint.sh /app/main/tools/run-drizzle-migrations.sh && \
+    node -e "import('@napgram/sdk')"
 
 ENV DATA_DIR=/app/data \
     CACHE_DIR=/app/.config/QQ/NapCat/temp \
