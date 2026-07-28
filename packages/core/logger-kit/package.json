@@ -33,10 +33,10 @@
   "dependencies": {
     "@napgram/env-kit": "workspace:*",
     "@opentelemetry/api": "1.9.1",
-    "@opentelemetry/exporter-trace-otlp-http": "0.220.0",
+    "@opentelemetry/exporter-trace-otlp-http": "0.221.0",
     "@opentelemetry/resources": "2.10.0",
     "@opentelemetry/sdk-trace-node": "2.10.0",
-    "@opentelemetry/semantic-conventions": "1.41.1"
+    "@opentelemetry/semantic-conventions": "1.43.0"
   },
   "devDependencies": {
     "@types/node": "25.9.5",
