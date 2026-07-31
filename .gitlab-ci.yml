@@ -478,6 +478,8 @@ telegram:images:dev:
     - .napgram_docker_dev_rules
   stage: notify
   allow_failure: true
+  tags:
+    - magisk-remote-linux
   needs:
     - job: container:dev:manifest
       artifacts: true
@@ -493,6 +495,8 @@ telegram:images:release:
   extends: .magisk_telegram_images
   stage: notify
   allow_failure: true
+  tags:
+    - magisk-remote-linux
   needs:
     - job: container:release:manifest
       artifacts: true
@@ -519,6 +523,8 @@ telegram:release:
   extends: .magisk_telegram_release
   stage: notify
   allow_failure: true
+  tags:
+    - magisk-remote-linux
   variables:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
     MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
