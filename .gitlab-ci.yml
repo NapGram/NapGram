@@ -47,6 +47,7 @@ variables:
 
   NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-local-linux"
   NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "magisk-local-linux"
+  NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG: "magisk-remote-linux"
   NAPGRAM_NODE_IMAGE: "node:26-bookworm"
 
   # Override this when the UI mirror uses another namespace or host.
@@ -373,6 +374,26 @@ container:dev:amd64:
   script:
     - bash scripts/ci/gitlab_docker.sh build-arch amd64
 
+container:dev:arm64:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_dev_rules
+  resource_group: napgram-docker-arm64
+  stage: package
+  tags:
+    - $NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG
+  needs:
+    - job: ui:build
+      artifacts: true
+    - job: app:typecheck
+      artifacts: false
+    - job: app:test:coverage
+      artifacts: false
+    - job: security:gitleaks
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh build-arch arm64
+
 container:dev:manifest:
   extends:
     - .napgram_docker
@@ -381,6 +402,8 @@ container:dev:manifest:
   stage: release-publish
   needs:
     - job: container:dev:amd64
+      artifacts: false
+    - job: container:dev:arm64
       artifacts: false
   script:
     - bash scripts/ci/gitlab_docker.sh publish-manifests
@@ -411,6 +434,26 @@ container:release:amd64:
   script:
     - bash scripts/ci/gitlab_docker.sh build-arch amd64
 
+container:release:arm64:
+  extends:
+    - .napgram_docker
+    - .napgram_docker_release_rules
+  resource_group: napgram-docker-arm64
+  stage: release-build
+  tags:
+    - $NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG
+  needs:
+    - job: ui:build
+      artifacts: true
+    - job: app:typecheck
+      artifacts: false
+    - job: app:test:coverage
+      artifacts: false
+    - job: security:gitleaks
+      artifacts: false
+  script:
+    - bash scripts/ci/gitlab_docker.sh build-arch arm64
+
 container:release:manifest:
   extends:
     - .napgram_docker
@@ -419,6 +462,8 @@ container:release:manifest:
   stage: release-publish
   needs:
     - job: container:release:amd64
+      artifacts: false
+    - job: container:release:arm64
       artifacts: false
   script:
     - bash scripts/ci/gitlab_docker.sh publish-manifests
@@ -443,7 +488,7 @@ telegram:images:dev:
     MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
     MAGISK_TELEGRAM_CI_BRANCH: "beta"
     MAGISK_TELEGRAM_IMAGE_EVENT: "docker-dev"
-    MAGISK_TELEGRAM_PLATFORMS: "linux/amd64"
+    MAGISK_TELEGRAM_PLATFORMS: "linux/amd64,linux/arm64"
     MAGISK_TELEGRAM_IMAGE_LIST_COMMAND: "scripts/ci/gitlab_docker.sh list-images"
 
 telegram:images:release:
@@ -469,7 +514,7 @@ telegram:images:release:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
     MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
     MAGISK_TELEGRAM_IMAGE_EVENT: "docker-release"
-    MAGISK_TELEGRAM_PLATFORMS: "linux/amd64"
+    MAGISK_TELEGRAM_PLATFORMS: "linux/amd64,linux/arm64"
     MAGISK_TELEGRAM_IMAGE_LIST_COMMAND: "scripts/ci/gitlab_docker.sh list-images"
 
 telegram:release:
