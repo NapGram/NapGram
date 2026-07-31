@@ -198,7 +198,10 @@ publish_image_manifests() {
   local tag
   while IFS= read -r tag; do
     [[ -n "$tag" ]] || continue
-    docker buildx imagetools create --tag "${image}:${tag}" "${image}:${tag}-amd64" || return 1
+    docker buildx imagetools create \
+      --tag "${image}:${tag}" \
+      "${image}:${tag}-amd64" \
+      "${image}:${tag}-arm64" || return 1
     docker buildx imagetools inspect "${image}:${tag}" || return 1
   done < <(release_tags)
 }
