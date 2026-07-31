@@ -23,8 +23,6 @@ default:
     when:
       - runner_system_failure
       - api_failure
-  tags:
-    - $NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG
 
 stages:
   - prepare
