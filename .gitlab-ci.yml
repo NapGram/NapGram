@@ -46,8 +46,8 @@ variables:
   MAGISK_CI_TOOLKIT_REF: "ad6caa88fdb7bb395fb935a6ff261134103d6dd6"
 
   NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-linux"
-  NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "magisk-local-linux"
-  NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG: "magisk-remote-linux"
+  NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "magisk-amd64-linux"
+  NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG: "magisk-arm64-linux"
   NAPGRAM_NODE_IMAGE: "node:26-bookworm"
 
   # Override this when the UI mirror uses another namespace or host.
@@ -481,7 +481,7 @@ telegram:images:dev:
   stage: notify
   allow_failure: true
   tags:
-    - magisk-remote-linux
+    - magisk-arm64-linux
   needs:
     - job: container:dev:manifest
       artifacts: true
@@ -498,7 +498,7 @@ telegram:images:release:
   stage: notify
   allow_failure: true
   tags:
-    - magisk-remote-linux
+    - magisk-arm64-linux
   needs:
     - job: container:release:manifest
       artifacts: true
@@ -526,7 +526,7 @@ telegram:release:
   stage: notify
   allow_failure: true
   tags:
-    - magisk-remote-linux
+    - magisk-arm64-linux
   variables:
     MAGISK_TELEGRAM_PROJECT_TAG: "#NapGram"
     MAGISK_TELEGRAM_PROJECT_NAME: "NapGram"
