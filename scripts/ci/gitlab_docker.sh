@@ -75,6 +75,10 @@ append_proxy_build_arg() {
   done
 }
 
+network_use_mirror() {
+  [[ "${MAGISK_LINUX_USE_MIRROR:-${NAPGRAM_DOCKER_USE_MIRROR:-true}}" == "true" ]]
+}
+
 lottie_image() {
   if [[ -n "${NAPGRAM_LOTTIE_IMAGE:-}" ]]; then
     printf '%s\n' "$NAPGRAM_LOTTIE_IMAGE"
@@ -162,17 +166,24 @@ build_arch() {
   local registry
   registry="$(registry_image)"
 
+  local use_mirror=false
+  local pnpm_registry=https://registry.npmjs.org
+  if network_use_mirror; then
+    use_mirror=true
+    pnpm_registry="${PNPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
+  fi
+
   local build_args=(
     --cache-from "type=registry,ref=${registry}:buildcache-${arch}"
     --cache-to "type=registry,ref=${registry}:buildcache-${arch},mode=max,ignore-error=true"
     --build-arg "REPO=${CI_PROJECT_PATH:-NapGram/NapGram}"
     --build-arg "REF=${CI_COMMIT_REF_NAME:-unknown}"
     --build-arg "COMMIT=${CI_COMMIT_SHA:-unknown}"
-    --build-arg "USE_MIRROR=${NAPGRAM_DOCKER_USE_MIRROR:-false}"
+    --build-arg "USE_MIRROR=${use_mirror}"
     --build-arg "LOTTIE_IMAGE=$(lottie_image)"
     --build-arg "NODE_IMAGE=$(docker_node_image)"
     --build-arg "PNPM_VERSION=$(pnpm_version)"
-    --build-arg "PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
+    --build-arg "PNPM_CONFIG_REGISTRY=${pnpm_registry}"
   )
   append_proxy_build_arg build_args HTTP_PROXY NAPGRAM_BUILD_HTTP_PROXY HTTP_PROXY CI_HTTP_PROXY
   append_proxy_build_arg build_args HTTPS_PROXY NAPGRAM_BUILD_HTTPS_PROXY HTTPS_PROXY CI_HTTPS_PROXY

@@ -1,9 +1,9 @@
 include:
   - project: magisk3171/magisk-ci-toolkit
-    ref: ad6caa88fdb7bb395fb935a6ff261134103d6dd6
+    ref: f7f01cd8b4bfb7c541dbab9b17cf84e10930ab79
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/magisk-ci-toolkit
-    ref: ad6caa88fdb7bb395fb935a6ff261134103d6dd6
+    ref: f7f01cd8b4bfb7c541dbab9b17cf84e10930ab79
     file: /.gitlab/ci/renovate.yml
 
 workflow:
@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "ad6caa88fdb7bb395fb935a6ff261134103d6dd6"
+  MAGISK_CI_TOOLKIT_REF: "f7f01cd8b4bfb7c541dbab9b17cf84e10930ab79"
 
   NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-linux"
   NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "magisk-amd64-linux"
@@ -56,7 +56,6 @@ variables:
   NAPGRAM_UI_RELEASE_REF: ""
   NAPGRAM_DOCKER_PUBLISH: "true"
   NAPGRAM_DOCKERHUB_PUBLISH: "true"
-  NAPGRAM_DOCKER_USE_MIRROR: "false"
   NAPGRAM_DOCKER_USE_DEPENDENCY_PROXY: "false"
 
   NAPGRAM_DOCKER_IMAGE: "docker:29-cli"
@@ -138,9 +137,15 @@ variables:
   before_script:
     - |
       set -euo pipefail
+      if [[ "${MAGISK_LINUX_USE_MIRROR:-true}" == "true" ]]; then
+        export PNPM_CONFIG_REGISTRY="${PNPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
+      else
+        export PNPM_CONFIG_REGISTRY="https://registry.npmjs.org"
+      fi
       toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
       bash "$toolkit_dir/ci/ensure_pnpm.sh"
       pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+      pnpm config set registry "$PNPM_CONFIG_REGISTRY"
       pnpm --version
 
 .napgram_docker:
@@ -166,6 +171,10 @@ variables:
     no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
   before_script:
     - |
+      use_mirror="${MAGISK_LINUX_USE_MIRROR:-true}"
+      if [ "$use_mirror" = "true" ]; then
+        sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories 2>/dev/null || true
+      fi
       for attempt in 1 2 3; do
         if apk add --no-cache bash curl git; then
           break
@@ -173,6 +182,7 @@ variables:
         if [ "$attempt" -eq 3 ]; then
           exit 1
         fi
+        sed -i 's#https://mirrors.tuna.tsinghua.edu.cn/alpine#https://dl-cdn.alpinelinux.org/alpine#g' /etc/apk/repositories 2>/dev/null || true
         sleep "$((attempt * 5))"
       done
     - |
