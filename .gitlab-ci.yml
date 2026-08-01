@@ -540,6 +540,8 @@ renovate:gitlab:
   extends: .magisk_renovate_gitlab
   interruptible: false
   stage: maintenance
+  tags:
+    - magisk-arm64-linux
   variables:
     MAGISK_RENOVATE_REPOSITORY: "magisk3171/NapGram"
 
