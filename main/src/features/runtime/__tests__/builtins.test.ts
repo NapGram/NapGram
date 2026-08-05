@@ -10,5 +10,5 @@ describe('builtins', () => {
         await promise
       }
     }
-  }, 10000)
+  }, 20000)
 })

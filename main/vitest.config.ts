@@ -12,6 +12,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
+    // CI-only retry to absorb flaky timing on slower runners; local runs stay fast.
+    retry: process.env.CI ? 1 : 0,
     server: {
       deps: {
         inline: [

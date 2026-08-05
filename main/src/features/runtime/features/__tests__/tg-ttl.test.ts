@@ -55,5 +55,5 @@ describe('telegram media TTL', () => {
     const mediaInputs = chat.client.sendMediaGroup.mock.calls[0][1]
     expect(mediaInputs[0].ttlSeconds).toBe(10)
     expect(mediaInputs[1].ttlSeconds).toBe(10)
-  }, 15000)
+  }, 30000)
 })

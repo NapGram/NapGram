@@ -59,6 +59,14 @@ while page <= 20:
             chunk = json.load(resp)
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
+        if exc.code == 403:
+            # 403 = authz/rate-limit that hides real security upgrades; fail loud
+            # instead of silently writing an empty array and exiting 0.
+            print(
+                f"ERROR: Dependabot alerts fetch forbidden (HTTP 403): {body[:300]}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
         print(
             f"WARN: Dependabot alerts fetch failed (HTTP {exc.code}): {body[:300]}",
             file=sys.stderr,
