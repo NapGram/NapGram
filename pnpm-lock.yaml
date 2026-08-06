@@ -162,7 +162,7 @@ importers:
         version: 25.9.5
       '@types/pg':
         specifier: ^8.20.0
-        version: 8.20.3
+        version: 8.20.4
       '@types/probe-image-size':
         specifier: ^7.2.5
         version: 7.2.5
@@ -295,7 +295,7 @@ importers:
     dependencies:
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(better-sqlite3@12.11.1)(pg@8.22.0)
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.4)(better-sqlite3@12.11.1)(pg@8.22.0)
       pg:
         specifier: ^8.16.3
         version: 8.22.0
@@ -305,7 +305,7 @@ importers:
         version: 25.9.5
       '@types/pg':
         specifier: ^8.16.0
-        version: 8.20.3
+        version: 8.20.4
       '@typescript/native':
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
@@ -379,7 +379,7 @@ importers:
         version: link:../../clients/telegram-client
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(better-sqlite3@12.11.1)(pg@8.22.0)
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.4)(better-sqlite3@12.11.1)(pg@8.22.0)
     devDependencies:
       '@types/node':
         specifier: 25.9.5
@@ -439,7 +439,7 @@ importers:
         version: 25.9.5
       '@types/pg':
         specifier: ^8.16.0
-        version: 8.20.3
+        version: 8.20.4
       '@typescript/native':
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
@@ -602,7 +602,7 @@ importers:
         version: link:../../../sdk
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(better-sqlite3@12.11.1)(pg@8.22.0)
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.4)(better-sqlite3@12.11.1)(pg@8.22.0)
     devDependencies:
       '@types/node':
         specifier: 25.9.5
@@ -1282,7 +1282,7 @@ importers:
         version: link:../../clients/qq-client
       drizzle-orm:
         specifier: ^0.45.1
-        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(better-sqlite3@12.11.1)(pg@8.22.0)
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.4)(better-sqlite3@12.11.1)(pg@8.22.0)
     devDependencies:
       '@types/node':
         specifier: 25.9.5
@@ -2449,8 +2449,8 @@ packages:
   '@types/node@25.9.5':
     resolution: {integrity: sha512-OScDchr2fwuUmWdf4kZ9h7PcJiYDVInhJizG/biAq3cAvqwYktuy/TYGGdZNMtNTFUP7rnb0NU4TUdm82kt4Rg==}
 
-  '@types/pg@8.20.3':
-    resolution: {integrity: sha512-4Tvg+HO6+oQaAkpT8GTYoSExzpGGZz532GXgbbCElWJQeQdMozBWxEKNBhJJpHFjWXsMxqPbyypvj/89FWNoSQ==}
+  '@types/pg@8.20.4':
+    resolution: {integrity: sha512-Jz7UDOlIiFJuacC0TlBoLyNtmwlA/wpIyPDd3tvUqlRM+HzkWy2xUgpFpaXtbfTAFF6sIGq5lsCDBdJnhky1Xg==}
 
   '@types/probe-image-size@7.2.5':
     resolution: {integrity: sha512-9Bg6d/GNnjmhMMxadDstwrSlquuuLf0jQuPszbU6n3QUfybif3V/ryD3J2i9iaiC5JB/FU/8E41n88SM/UB+Tg==}
@@ -5696,7 +5696,7 @@ snapshots:
     dependencies:
       undici-types: 7.24.6
 
-  '@types/pg@8.20.3':
+  '@types/pg@8.20.4':
     dependencies:
       '@types/node': 25.9.5
       pg-protocol: 1.15.0
@@ -6217,10 +6217,10 @@ snapshots:
       esbuild: 0.25.12
       tsx: 4.23.5
 
-  drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.3)(better-sqlite3@12.11.1)(pg@8.22.0):
+  drizzle-orm@0.45.2(@opentelemetry/api@1.9.1)(@types/pg@8.20.4)(better-sqlite3@12.11.1)(pg@8.22.0):
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
-      '@types/pg': 8.20.3
+      '@types/pg': 8.20.4
       better-sqlite3: 12.11.1
       pg: 8.22.0
 
