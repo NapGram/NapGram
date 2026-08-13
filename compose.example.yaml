@@ -2,7 +2,7 @@ services:
   napgram:
     # 镜像版本：可用 latest，或固定到某个发布标签（例如 v0.1.1）以避免自动变化
     # Primary: GitLab Container Registry (CI publishes here by default)
-    image: registry.gitlab.com/magisk3171/napgram:dev-latest
+    image: registry.gitlab.com/magisk3171/napgram-ecosystem/napgram:dev-latest
     # Optional mirrors:
     # image: ghcr.io/napgram/napgram:dev-latest
     # image: docker.io/<user>/napgram:dev-latest

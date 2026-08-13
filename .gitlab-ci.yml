@@ -51,7 +51,7 @@ variables:
   NAPGRAM_NODE_IMAGE: "node:26-bookworm"
 
   # Override this when the UI mirror uses another namespace or host.
-  NAPGRAM_UI_REPOSITORY: "https://gitlab.com/magisk3171/napgram-ui-dist.git"
+  NAPGRAM_UI_REPOSITORY: "https://gitlab.com/magisk3171/napgram-ecosystem/napgram-ui-dist.git"
   NAPGRAM_UI_REF: "dev"
   NAPGRAM_UI_RELEASE_REF: ""
   NAPGRAM_DOCKER_PUBLISH: "true"
@@ -553,7 +553,7 @@ renovate:gitlab:
   tags:
     - magisk-arm64-linux
   variables:
-    MAGISK_RENOVATE_REPOSITORY: "magisk3171/NapGram"
+    MAGISK_RENOVATE_REPOSITORY: "magisk3171/napgram-ecosystem/NapGram"
 
 dependency-force:gitlab:
   extends:
