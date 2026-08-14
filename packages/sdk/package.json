@@ -55,6 +55,7 @@
         "import": "./dist/index.js",
         "default": "./dist/index.js"
       }
-    }
+    },
+    "registry": "https://gitlab.com/api/v4/projects/84583729/packages/npm/"
   }
 }
