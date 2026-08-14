@@ -624,17 +624,19 @@ sdk:publish:
     # rewrites workspace:* to concrete versions. Publish is idempotent: a
     # version already on the registry is ignored so re-triggering the tag
     # pipeline does not fail the job.
-    - publish_pkg() {
-        local filter="$1";
-        if pnpm "$filter" publish --no-git-checks 2>&1 | tee /tmp/publish.log; then
-          return 0;
-        fi;
+    - |
+      publish_pkg() {
+        # $1 = package filter (e.g. @napgram/sdk-core); pnpm --filter splits the
+        # flag from the value so they must be separate argv elements.
+        if pnpm --filter "$1" publish --no-git-checks 2>&1 | tee /tmp/publish.log; then
+          return 0
+        fi
         if grep -qiE 'cannot publish over|already exist|EPUBLISHCONFLICT|"code":"E403"' /tmp/publish.log; then
-          echo "Version already published; skipping $filter";
-          return 0;
-        fi;
-        return 1;
+          echo "Version already published; skipping $1"
+          return 0
+        fi
+        return 1
       }
-    - publish_pkg "--filter @napgram/sdk-core"
-    - publish_pkg "--filter @napgram/sdk-utils"
-    - publish_pkg "--filter @napgram/sdk"
+    - publish_pkg "@napgram/sdk-core"
+    - publish_pkg "@napgram/sdk-utils"
+    - publish_pkg "@napgram/sdk"
