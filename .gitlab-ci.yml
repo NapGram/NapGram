@@ -575,3 +575,66 @@ dependency-force:gitlab:
     DEPENDENCY_FORCE_GITHUB_REPO: "NapGram/NapGram"
   script:
     - bash scripts/ci/dependency_force_gitlab.sh
+
+# Publish @napgram/sdk (+sdk-core, sdk-utils) to the GitLab project npm registry.
+# Triggered by version tags when GitLab owns the release (RELEASE_OWNER=gitlab).
+# pnpm resolves workspace:* protocol to concrete versions at publish time.
+sdk:publish:
+  extends: .napgram_node
+  interruptible: false
+  stage: release-publish
+  needs: []
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/ && $RELEASE_OWNER == "gitlab"'
+      when: on_success
+    - when: never
+  before_script:
+    - |
+      set -euo pipefail
+      toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
+      bash "$toolkit_dir/ci/ensure_pnpm.sh"
+      pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
+      REGISTRY="https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/npm/"
+      pnpm config set "@napgram:registry" "$REGISTRY"
+      # Publish is gated on SDK_PUBLISH_TOKEN: when set, it is used as the npm
+      # auth token (a project/group access token with write to the registry).
+      # When unset, the job builds the sdk packages but skips publish — this is
+      # the "manual second confirmation" gate (set the variable to opt in).
+      if [ -n "${SDK_PUBLISH_TOKEN:-}" ]; then
+        printf '//gitlab.com/api/v4/projects/%s/packages/npm/:_authToken=%s\n' "$CI_PROJECT_ID" "$SDK_PUBLISH_TOKEN" >> ~/.npmrc
+        printf 'always-auth=true\n' >> ~/.npmrc
+      else
+        printf '//gitlab.com/api/v4/projects/%s/packages/npm/:_authToken=%s\n' "$CI_PROJECT_ID" "$CI_JOB_TOKEN" >> ~/.npmrc
+        printf 'always-auth=true\n' >> ~/.npmrc
+      fi
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm -r --filter "@napgram/sdk-core" --filter "@napgram/sdk-utils" --filter "@napgram/sdk" run build
+    # Publish is skipped entirely when SDK_PUBLISH_TOKEN is unset (build-only).
+    # The previous GitHub flow used changesets: a "Version Packages" PR had to
+    # be manually merged before publish — setting SDK_PUBLISH_TOKEN is the
+    # GitLab-side equivalent of that manual confirmation.
+    - |
+      if [ -z "${SDK_PUBLISH_TOKEN:-}" ]; then
+        echo "SDK_PUBLISH_TOKEN unset; built sdk packages but skipping publish."
+        exit 0
+      fi
+    # Publish order: sdk-core (no deps) -> sdk-utils (deps on core) -> sdk.
+    # --no-git-checks allows publishing from a shallow CI checkout; pnpm
+    # rewrites workspace:* to concrete versions. Publish is idempotent: a
+    # version already on the registry is ignored so re-triggering the tag
+    # pipeline does not fail the job.
+    - publish_pkg() {
+        local filter="$1";
+        if pnpm "$filter" publish --no-git-checks 2>&1 | tee /tmp/publish.log; then
+          return 0;
+        fi;
+        if grep -qiE 'cannot publish over|already exist|EPUBLISHCONFLICT|"code":"E403"' /tmp/publish.log; then
+          echo "Version already published; skipping $filter";
+          return 0;
+        fi;
+        return 1;
+      }
+    - publish_pkg "--filter @napgram/sdk-core"
+    - publish_pkg "--filter @napgram/sdk-utils"
+    - publish_pkg "--filter @napgram/sdk"
