@@ -45,7 +45,10 @@ variables:
   CACHE_COMPRESSION_LEVEL: fast
   MAGISK_CI_TOOLKIT_REF: "3e5823c5c22fac593c329b24221925f63f44ccfe"
 
-  NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-linux"
+  # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
+  # ui:build/etc.). Pinned to arm64 to stop depending on the amd64 runner for
+  # architecture-agnostic work. Container builds keep their per-arch tags below.
+  NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-arm64-linux"
   NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "magisk-amd64-linux"
   NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG: "magisk-arm64-linux"
   NAPGRAM_NODE_IMAGE: "node:26-bookworm"
