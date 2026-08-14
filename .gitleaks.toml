@@ -56,6 +56,13 @@ paths = [
   '''^\.github/workflows/''',     # GitHub Actions（可能包含示例）
   '''^docs/''',                  # 文档目录
   '''packages/core/env-kit/src/flags\.ts$''',  # 位掩码枚举（HIDE_ALL_QQ_NUMBER 等），非凭据
+  '''packages/(core/)?infra-kit/src/flags\.ts$''',
+  '''packages/(core/)?infra-kit/src/flags\.js$''',
+  '''packages/(core/)?infra-kit/src/flags\.d\.ts$''',
+  '''main/src/domain/constants/flags\.ts$''',
+  '''compose\.example\.yaml$''',
+  '''Dockerfile$''',
+  '''main/package\.json$''',
 ]
 
 # 排除的正则表达式（整行匹配）
