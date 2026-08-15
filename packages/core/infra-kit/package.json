@@ -41,7 +41,7 @@
     "@napgram/logger-kit": "workspace:*",
     "@napgram/qq-client": "workspace:^",
     "@napgram/telegram-client": "workspace:^",
-    "fastify": "5.11.3"
+    "fastify": "5.12.0"
   },
   "devDependencies": {
     "@types/node": "25.9.5",
