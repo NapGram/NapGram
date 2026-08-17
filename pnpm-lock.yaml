@@ -119,7 +119,7 @@ importers:
         version: 0.8.3
       file-type:
         specifier: ^22.0.1
-        version: 22.0.1(supports-color@7.2.0)
+        version: 22.0.2(supports-color@7.2.0)
       image-js:
         specifier: ^1.6.0
         version: 1.7.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -1202,7 +1202,7 @@ importers:
         version: link:../../core/logger-kit
       file-type:
         specifier: ^22.0.0
-        version: 22.0.1(supports-color@7.2.0)
+        version: 22.0.2(supports-color@7.2.0)
       image-js:
         specifier: ^1.3.0
         version: 1.7.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -1248,7 +1248,7 @@ importers:
         version: link:../../core/runtime-kit
       file-type:
         specifier: ^22.0.0
-        version: 22.0.1(supports-color@7.2.0)
+        version: 22.0.2(supports-color@7.2.0)
       image-js:
         specifier: ^1.3.0
         version: 1.7.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
@@ -3478,8 +3478,8 @@ packages:
     resolution: {integrity: sha512-uzk64HRpUZyTGZtVuvrjP0FYxzQrBf4rojot6J65YMEbwBLB0CWm0CLojVpwpmFmxcE/lkvYICgfcGozbBq6rw==}
     engines: {node: '>=6'}
 
-  file-type@22.0.1:
-    resolution: {integrity: sha512-ww5Mhre0EE+jmBvOXTmXAbEMuZE7uX4a3+oRCQFNj8w++g3ev913N6tXQz0XTXbueQ5TWQfm6BdaViEHHn8bhA==}
+  file-type@22.0.2:
+    resolution: {integrity: sha512-0H8TsCUGBLx+V5adH3EY52hTAcyLKbV1D4gq5cIOJ6DnQAHeV9Z2Hhuc5CoBX4YmvB2oL+JIC84z0qO7JsCoNw==}
     engines: {node: '>=22'}
 
   file-uri-to-path@1.0.0:
@@ -6758,7 +6758,7 @@ snapshots:
 
   file-type@10.11.0: {}
 
-  file-type@22.0.1(supports-color@7.2.0):
+  file-type@22.0.2(supports-color@7.2.0):
     dependencies:
       '@tokenizer/inflate': 0.4.1(supports-color@7.2.0)
       strtok3: 10.3.5
