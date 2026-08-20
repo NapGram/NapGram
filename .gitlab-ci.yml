@@ -1,9 +1,9 @@
 include:
   - project: magisk3171/magisk-ci-toolkit
-    ref: 35b91c639ca992556640c0f1a32cbb3dce6752e1
+    ref: a0395821d16a500fd17eed42b0521799cebb761d
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/magisk-ci-toolkit
-    ref: 35b91c639ca992556640c0f1a32cbb3dce6752e1
+    ref: a0395821d16a500fd17eed42b0521799cebb761d
     file: /.gitlab/ci/renovate.yml
 
 workflow:
@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "35b91c639ca992556640c0f1a32cbb3dce6752e1"
+  MAGISK_CI_TOOLKIT_REF: "a0395821d16a500fd17eed42b0521799cebb761d"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
   # ui:build/etc.). Pinned to arm64 to stop depending on the amd64 runner for
@@ -557,6 +557,8 @@ renovate:gitlab:
     - magisk-arm64-linux
   variables:
     MAGISK_RENOVATE_REPOSITORY: "magisk3171/napgram-ecosystem/NapGram"
+    MAGISK_RENOVATE_PLATFORM_AUTOMERGE: "false"
+    MAGISK_RENOVATE_IGNORE_TESTS: "true"
 
 dependency-force:gitlab:
   extends:
