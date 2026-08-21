@@ -108,6 +108,7 @@ RUN --mount=type=cache,target=/pnpm-store \
 # Copy source code and build
 COPY --from=pruner /app/out/full/ /app/
 COPY tsconfig.base.json tsconfig.json /app/
+COPY packages/tsconfig.base.json /app/packages/tsconfig.base.json
 
 # Build workspace packages and main app using turbo
 RUN --mount=type=cache,target=/pnpm-store \
