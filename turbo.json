@@ -10,6 +10,13 @@
             "dependsOn": [
                 "^build"
             ],
+            "inputs": [
+                "src/**",
+                "tools/**",
+                "build.ts",
+                "package.json",
+                "tsconfig*.json"
+            ],
             "outputs": [
                 "build/**",
                 "dist/**"
@@ -19,17 +26,37 @@
             "dependsOn": [
                 "^build"
             ],
+            "inputs": [
+                "src/**",
+                "package.json",
+                "tsconfig*.json"
+            ],
             "outputs": []
         },
         "test": {
             "dependsOn": [
                 "^build"
             ],
+            "inputs": [
+                "src/**",
+                "tests/**",
+                "test/**",
+                "vitest.config*.ts",
+                "package.json",
+                "tsconfig*.json"
+            ],
             "outputs": []
         },
         "lint": {
             "dependsOn": [
                 "^build"
+            ],
+            "inputs": [
+                "src/**",
+                "tests/**",
+                "eslint.config*.js",
+                ".eslintrc*",
+                "package.json"
             ],
             "outputs": []
         }

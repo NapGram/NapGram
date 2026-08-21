@@ -17,10 +17,11 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "start": "node --enable-source-maps build/index.js",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "test:coverage:ci": "vitest --coverage --maxWorkers=4 --testTimeout=15000 --hookTimeout=30000",
+    "test:coverage": "vitest run --coverage",
+    "test:coverage:ci": "vitest run --coverage --maxWorkers=4 --testTimeout=15000 --hookTimeout=30000",
     "import": "ts-node tools/import"
   },
   "dependencies": {
@@ -49,7 +50,7 @@
     "@napgram/request-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
-    "@naplink/naplink": "1.1.1",
+    "@naplink/naplink": "^1.1.4",
     "drizzle-kit": "^0.31.10",
     "fastify": "^5.8.5",
     "fflate": "^0.8.2",

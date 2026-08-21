@@ -106,8 +106,8 @@ importers:
         specifier: workspace:*
         version: link:../packages/clients/telegram-client
       '@naplink/naplink':
-        specifier: 1.1.1
-        version: 1.1.1
+        specifier: ^1.1.4
+        version: 1.1.4
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
@@ -322,8 +322,8 @@ importers:
   packages/clients/qq-client:
     dependencies:
       '@naplink/naplink':
-        specifier: 1.1.1
-        version: 1.1.1
+        specifier: ^1.1.4
+        version: 1.1.4
     devDependencies:
       '@types/node':
         specifier: 25.9.5
@@ -2156,8 +2156,8 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
-  '@naplink/naplink@1.1.1':
-    resolution: {integrity: sha1-lOrkTQY/ay/LQKDoRLeUT0JBzyQ=, tarball: https://gitlab.com/api/v4/projects/84834294/packages/npm/@naplink/naplink/-/@naplink/naplink-1.1.1.tgz}
+  '@naplink/naplink@1.1.4':
+    resolution: {integrity: sha1-YgVcBp3/cFJ5f+0aMnLuQnOnhfI=, tarball: https://gitlab.com/api/v4/projects/84834294/packages/npm/@naplink/naplink/-/@naplink/naplink-1.1.4.tgz}
     engines: {node: '>=24.0.0'}
 
   '@opentelemetry/api-logs@0.221.0':
@@ -5472,7 +5472,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@naplink/naplink@1.1.1':
+  '@naplink/naplink@1.1.4':
     dependencies:
       isomorphic-ws: 5.0.0(ws@8.21.3)
       ws: 8.21.3

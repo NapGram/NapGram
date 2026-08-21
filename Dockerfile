@@ -59,6 +59,12 @@ RUN npm install --global --registry="${PNPM_CONFIG_REGISTRY}" "pnpm@${PNPM_VERSI
     npm install --global --registry="https://registry.npmjs.org" "pnpm@${PNPM_VERSION}"
 WORKDIR /app
 
+# Turbo pruner stage: create a trimmed-down subset of the monorepo for the app
+FROM base AS pruner
+WORKDIR /app
+COPY . .
+RUN pnpm --package=turbo@2.10.11 dlx turbo prune @napgram/app --docker
+
 # Workspace build image
 FROM base AS workspace
 ARG USE_MIRROR=true
@@ -83,11 +89,11 @@ RUN set -eux; \
     done; \
     rm -rf /var/cache/apk/*
 
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json* tsconfig.base.json /app/
-COPY main/package.json /app/main/
-COPY packages/ /app/packages/
+# First install only dependencies (cached by package.json / lockfile changes only)
+COPY --from=pruner /app/out/json/ /app/
+COPY --from=pruner /app/out/pnpm-lock.yaml /app/pnpm-lock.yaml
+COPY --from=pruner /app/out/pnpm-workspace.yaml /app/pnpm-workspace.yaml
 
-# Install dependencies
 RUN --mount=type=cache,target=/pnpm-store \
     --mount=type=secret,id=npmrc \
     printf '@naplink:registry=https://gitlab.com/api/v4/projects/84834294/packages/npm/\n' > /app/.npmrc && \
@@ -99,13 +105,13 @@ RUN --mount=type=cache,target=/pnpm-store \
       PNPM_CONFIG_REGISTRY=https://registry.npmjs.org pnpm install --frozen-lockfile --shamefully-hoist) && \
     rm -f /app/.npmrc
 
-# Build workspace packages first
-RUN --mount=type=cache,target=/pnpm-store \
-    pnpm -r --filter "./packages/**" run build
+# Copy source code and build
+COPY --from=pruner /app/out/full/ /app/
+COPY tsconfig.base.json tsconfig.json /app/
 
-# Build the main app
-COPY main/ /app/main/
-RUN pnpm --filter ./main run build && \
+# Build workspace packages and main app using turbo
+RUN --mount=type=cache,target=/pnpm-store \
+    pnpm run build && \
     pnpm --filter ./main run check:bundle
 
 # `web/dist` is populated by the external UI checkout in CI; only the built assets are copied here.
