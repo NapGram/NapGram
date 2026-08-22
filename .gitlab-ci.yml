@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "db32dc00ab454095eb2846e1906a03b34283c586"
+  MAGISK_CI_TOOLKIT_REF: "66db0c4b5ac97b7b7a6dab8644fcc045b41d94f2"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
   # ui:build/etc.). Pinned to arm64 to stop depending on the amd64 runner for
