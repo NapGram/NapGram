@@ -5,7 +5,7 @@ SDK for building NapGram native plugins.
 ## Installation
 
 ```bash
-pnpm add @napgram/sdk
+bun add @napgram/sdk
 ```
 
 ## Usage

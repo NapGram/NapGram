@@ -5,7 +5,7 @@ Utility functions for NapGram native plugins.
 ## Installation
 
 ```bash
-pnpm add @napgram/sdk-utils
+bun add @napgram/sdk-utils
 ```
 
 ## Usage

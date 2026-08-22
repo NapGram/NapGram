@@ -30,7 +30,6 @@ agents.override.md
 
 # Node
 node_modules/
-.pnpm-store/
 
 # Build output
 build/

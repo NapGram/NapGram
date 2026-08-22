@@ -42,9 +42,9 @@ class ManageDependencyOverridesTest(unittest.TestCase):
     def test_apply_updates_adds_open_npm_alert_to_managed_overrides(self):
         with tempfile.TemporaryDirectory() as tmp:
             package_file = Path(tmp) / "package.json"
-            workspace_file = Path(tmp) / "pnpm-workspace.yaml"
+            workspace_file = Path(tmp) / "bun-workspace.yaml"
             alerts_file = Path(tmp) / "alerts.json"
-            package_file.write_text(json.dumps({"pnpm": {"overrides": {}}, "x-managedPnpmOverrides": {}}))
+            package_file.write_text(json.dumps({"bun": {"overrides": {}}, "x-managedBunOverrides": {}}))
             workspace_file.write_text("packages:\n  - 'main'\n")
             alerts_file.write_text(json.dumps([alert("vite", "open", patched="8.0.5")]))
 
@@ -62,21 +62,21 @@ class ManageDependencyOverridesTest(unittest.TestCase):
             mdo.command_apply_updates(args)
 
             pkg = json.loads(package_file.read_text())
-            self.assertEqual("8.0.5", pkg["x-managedPnpmOverrides"]["vite"])
-            self.assertNotIn("overrides", pkg["pnpm"])
+            self.assertEqual("8.0.5", pkg["x-managedBunOverrides"]["vite"])
+            self.assertNotIn("overrides", pkg["bun"])
             self.assertEqual({"vite": "8.0.5"}, mdo.read_root_yaml_map(workspace_file, "overrides"))
 
     def test_apply_updates_preserves_manual_overrides(self):
         with tempfile.TemporaryDirectory() as tmp:
             package_file = Path(tmp) / "package.json"
-            workspace_file = Path(tmp) / "pnpm-workspace.yaml"
+            workspace_file = Path(tmp) / "bun-workspace.yaml"
             alerts_file = Path(tmp) / "alerts.json"
             removable_file = Path(tmp) / "removable.json"
             package_file.write_text(
                 json.dumps(
                     {
-                        "pnpm": {},
-                        "x-managedPnpmOverrides": {"vite": ">=8.0.5"},
+                        "bun": {},
+                        "x-managedBunOverrides": {"vite": ">=8.0.5"},
                     }
                 )
             )
@@ -104,7 +104,7 @@ class ManageDependencyOverridesTest(unittest.TestCase):
             mdo.command_apply_updates(args)
 
             pkg = json.loads(package_file.read_text())
-            self.assertNotIn("vite", pkg["x-managedPnpmOverrides"])
+            self.assertNotIn("vite", pkg["x-managedBunOverrides"])
             overrides = mdo.read_root_yaml_map(workspace_file, "overrides")
             self.assertNotIn("vite", overrides)
             self.assertEqual("1.0.0", overrides["manual-only"])
@@ -112,13 +112,13 @@ class ManageDependencyOverridesTest(unittest.TestCase):
     def test_apply_updates_raises_existing_managed_override_to_historical_baseline(self):
         with tempfile.TemporaryDirectory() as tmp:
             package_file = Path(tmp) / "package.json"
-            workspace_file = Path(tmp) / "pnpm-workspace.yaml"
+            workspace_file = Path(tmp) / "bun-workspace.yaml"
             alerts_file = Path(tmp) / "alerts.json"
             package_file.write_text(
                 json.dumps(
                     {
-                        "pnpm": {},
-                        "x-managedPnpmOverrides": {"minimatch": ">=10.2.1"},
+                        "bun": {},
+                        "x-managedBunOverrides": {"minimatch": ">=10.2.1"},
                     }
                 )
             )
@@ -144,19 +144,19 @@ class ManageDependencyOverridesTest(unittest.TestCase):
             mdo.command_apply_updates(args)
 
             pkg = json.loads(package_file.read_text())
-            self.assertEqual("10.2.3", pkg["x-managedPnpmOverrides"]["minimatch"])
+            self.assertEqual("10.2.3", pkg["x-managedBunOverrides"]["minimatch"])
             self.assertEqual("10.2.3", mdo.read_root_yaml_map(workspace_file, "overrides")["minimatch"])
 
     def test_apply_updates_normalizes_existing_range_to_exact_version(self):
         with tempfile.TemporaryDirectory() as tmp:
             package_file = Path(tmp) / "package.json"
-            workspace_file = Path(tmp) / "pnpm-workspace.yaml"
+            workspace_file = Path(tmp) / "bun-workspace.yaml"
             alerts_file = Path(tmp) / "alerts.json"
             package_file.write_text(
                 json.dumps(
                     {
-                        "pnpm": {},
-                        "x-managedPnpmOverrides": {"esbuild": "^0.28.0"},
+                        "bun": {},
+                        "x-managedBunOverrides": {"esbuild": "^0.28.0"},
                     }
                 )
             )
@@ -182,7 +182,7 @@ class ManageDependencyOverridesTest(unittest.TestCase):
             mdo.command_apply_updates(args)
 
             pkg = json.loads(package_file.read_text())
-            self.assertEqual("0.28.0", pkg["x-managedPnpmOverrides"]["esbuild"])
+            self.assertEqual("0.28.0", pkg["x-managedBunOverrides"]["esbuild"])
             self.assertEqual("0.28.0", mdo.read_root_yaml_map(workspace_file, "overrides")["esbuild"])
 
     def test_candidate_removals_keep_open_alert_and_recent_history(self):
@@ -216,7 +216,7 @@ class ManageDependencyOverridesTest(unittest.TestCase):
 
         self.assertEqual(["tar"], removable)
 
-    def test_audit_packages_supports_old_and_new_pnpm_shapes(self):
+    def test_audit_packages_supports_old_and_new_bun_shapes(self):
         old_shape = {"advisories": {"1": {"module_name": "vite"}}}
         new_shape = {"vulnerabilities": {"axios": {}, "tar": {}}}
 

@@ -10,13 +10,6 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 TOOLKIT_DIR="${MAGISK_CI_TOOLKIT_DIR:-$(cd "$REPO_ROOT" && bash scripts/resolve_ci_toolkit.sh)}"
 source "$TOOLKIT_DIR/ci/optional_registry.sh"
 
-# Resolve pnpm version from package.json (single source of truth). The resolver
-# lives in magisk-ci-toolkit and works without node (grep/sed fallback), so it
-# runs fine in the alpine-based docker:*-cli image used by container jobs.
-pnpm_version() {
-  bash "$TOOLKIT_DIR/ci/resolve_pnpm_version.sh" "$REPO_ROOT/package.json"
-}
-
 require_env() {
   local name="$1"
   if [[ -z "${!name:-}" ]]; then
@@ -167,10 +160,10 @@ build_arch() {
   registry="$(registry_image)"
 
   local use_mirror=false
-  local pnpm_registry=https://registry.npmjs.org
+  local bun_registry=https://registry.npmjs.org
   if network_use_mirror; then
     use_mirror=true
-    pnpm_registry="${PNPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
+    bun_registry="${BUN_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
   fi
 
   local build_args=(
@@ -182,8 +175,7 @@ build_arch() {
     --build-arg "USE_MIRROR=${use_mirror}"
     --build-arg "LOTTIE_IMAGE=$(lottie_image)"
     --build-arg "NODE_IMAGE=$(docker_node_image)"
-    --build-arg "PNPM_VERSION=$(pnpm_version)"
-    --build-arg "PNPM_CONFIG_REGISTRY=${pnpm_registry}"
+    --build-arg "BUN_CONFIG_REGISTRY=${bun_registry}"
   )
   append_proxy_build_arg build_args HTTP_PROXY NAPGRAM_BUILD_HTTP_PROXY HTTP_PROXY CI_HTTP_PROXY
   append_proxy_build_arg build_args HTTPS_PROXY NAPGRAM_BUILD_HTTPS_PROXY HTTPS_PROXY CI_HTTPS_PROXY

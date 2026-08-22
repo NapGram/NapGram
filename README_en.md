@@ -103,13 +103,13 @@ docker-compose up -d
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Build
-pnpm --filter=@napgram/app run build
+bun run build
 
 # Start
-pnpm --filter=@napgram/app start
+bun start
 ```
 
 ## 📖 Documentation
@@ -166,16 +166,16 @@ See Wiki: https://github.com/NapLink/NapGram/wiki/Guide-Commands
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Development mode
-pnpm --filter=@napgram/app run dev
+bun run dev
 
 # Type checking
-pnpm --filter=@napgram/app run type-check
+bun run type-check
 
 # Build
-pnpm --filter=@napgram/app run build
+bun run build
 ```
 
 ## 🤝 Contributing
@@ -188,7 +188,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📖 Repository Layout
 
-NapGram is one pnpm monorepo: `main` owns process assembly, `packages/clients` owns protocol and
+NapGram is one Bun monorepo: `main` owns process assembly, `packages/clients` owns protocol and
 storage adapters, `packages/core` owns internal runtime kits, `packages/utilities` owns reusable
 capabilities, and `packages/plugins` owns adapter, feature, and administration plugins. `sdk-core`,
 `sdk-utils`, and `sdk` are the public plugin-facing boundary; plugins should not depend directly on

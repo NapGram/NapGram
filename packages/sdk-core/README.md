@@ -5,7 +5,7 @@ TypeScript type definitions for NapGram native plugins.
 ## Installation
 
 ```bash
-pnpm add @napgram/sdk-core
+bun add @napgram/sdk-core
 ```
 
 ## Usage

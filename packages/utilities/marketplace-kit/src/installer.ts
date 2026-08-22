@@ -44,7 +44,7 @@ export interface MarketplacePluginVersion {
   entry: { type: 'file', path: string }
   dist: { type: DistType, url: string, sha256: string }
   install?: {
-    mode?: 'none' | 'pnpm'
+    mode?: 'none' | 'bun'
     production?: boolean
     ignoreScripts?: boolean
     frozenLockfile?: boolean
@@ -369,7 +369,7 @@ async function linkHostSdk(installDir: string): Promise<void> {
   }
 }
 
-async function findPnpmProjectDir(destDir: string): Promise<string | null> {
+async function findBunProjectDir(destDir: string): Promise<string | null> {
   const direct = path.join(destDir, 'package.json')
   if (await pathExists(direct))
     return destDir
@@ -379,8 +379,8 @@ async function findPnpmProjectDir(destDir: string): Promise<string | null> {
   return null
 }
 
-async function runPnpmInstall(projectDir: string, opts: Required<NonNullable<MarketplacePluginVersion['install']>>) {
-  logger.info({ projectDir }, 'Running pnpm install for plugin')
+async function runBunInstall(projectDir: string, opts: Required<NonNullable<MarketplacePluginVersion['install']>>) {
+  logger.info({ projectDir }, 'Running bun install for plugin')
   const args = ['install']
   if (opts.production)
     args.push('--prod')
@@ -388,22 +388,20 @@ async function runPnpmInstall(projectDir: string, opts: Required<NonNullable<Mar
     args.push('--ignore-scripts')
   if (opts.frozenLockfile)
     args.push('--frozen-lockfile')
-  else args.push('--no-frozen-lockfile')
-  args.push('--prefer-offline')
 
   const envVars: NodeJS.ProcessEnv = { ...process.env }
   if (opts.registry)
     envVars.npm_config_registry = opts.registry
 
-  await execFileAsync('pnpm', args, {
+  await execFileAsync('bun', args, {
     cwd: projectDir,
     env: envVars,
     maxBuffer: 20 * 1024 * 1024,
   }).catch((error) => {
-    logger.error({ error: error?.message || String(error), stderr: error?.stderr, stdout: error?.stdout, projectDir }, 'pnpm install failed')
+    logger.error({ error: error?.message || String(error), stderr: error?.stderr, stdout: error?.stdout, projectDir }, 'bun install failed')
     throw error
   })
-  logger.info({ projectDir }, 'pnpm install completed')
+  logger.info({ projectDir }, 'bun install completed')
 }
 
 async function loadPluginDefaultConfig(installDir: string): Promise<any | null> {
@@ -567,7 +565,7 @@ async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<Plu
   const permissions = resolveRequestedPermissions(target.permissions)
 
   const install = {
-    mode: (target.install?.mode || 'none') as 'none' | 'pnpm',
+    mode: (target.install?.mode || 'none') as 'none' | 'bun',
     production: target.install?.production !== false,
     ignoreScripts: target.install?.ignoreScripts !== false,
     frozenLockfile: target.install?.frozenLockfile === true,
@@ -606,11 +604,11 @@ async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<Plu
 
   await syncPluginSchemaIfNeeded(installDir, pluginId)
 
-  if (install.mode === 'pnpm') {
-    const projectDir = await findPnpmProjectDir(installDir)
+  if (install.mode === 'bun') {
+    const projectDir = await findBunProjectDir(installDir)
     if (!projectDir)
-      throw new Error('install.mode=pnpm but package.json not found after extract')
-    await runPnpmInstall(projectDir, install as any)
+      throw new Error('install.mode=bun but package.json not found after extract')
+    await runBunInstall(projectDir, install as any)
   }
 
   // Link host SDK packages to plugin's node_modules

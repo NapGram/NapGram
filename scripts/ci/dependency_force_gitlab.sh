@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# GitLab maintenance job for managed pnpm override remediation.
+# GitLab maintenance job for managed bun override remediation.
 # Mirrors .github/workflows/dependency-force-manager.yml, but opens a GitLab MR.
 set -euo pipefail
 
@@ -14,7 +14,7 @@ BASE_REF="${DEPENDENCY_FORCE_BASE:-${CI_DEFAULT_BRANCH:-beta}}"
 GITHUB_REPO="${DEPENDENCY_FORCE_GITHUB_REPO:-NapGram/NapGram}"
 
 if grep -Eq '"packageManager"[[:space:]]*:[[:space:]]*"bun@' package.json; then
-  echo "Managed pnpm override remediation is not applicable while packageManager is bun."
+  echo "Managed bun override remediation is not applicable while packageManager is bun."
   exit 0
 fi
 
@@ -103,8 +103,8 @@ PY
 ensure_tools() {
   local toolkit_dir
   toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
-  bash "$toolkit_dir/ci/ensure_pnpm.sh"
-  pnpm config set store-dir "${CI_PROJECT_DIR:-$ROOT_DIR}/.pnpm-store" >/dev/null 2>&1 || true
+  bash "$toolkit_dir/ci/ensure_bun.sh"
+  
   command -v curl >/dev/null
   command -v python3 >/dev/null
   command -v git >/dev/null
@@ -121,7 +121,7 @@ create_or_update_mr() {
   git config user.email "${DEPENDENCY_FORCE_GIT_EMAIL:-35032111-magisk731@users.noreply.gitlab.com}"
 
   git checkout -B "$BRANCH"
-  git add package.json pnpm-workspace.yaml pnpm-lock.yaml
+  git add package.json package.json bun.lock
   if git diff --cached --quiet; then
     echo "No staged dependency-force changes after lockfile refresh."
     return 0
@@ -168,9 +168,9 @@ print(json.dumps({
     "labels": "dependencies,javascript,security",
     "description": (
         "Automated dependency override maintenance on GitLab CI:\n\n"
-        "- Removed managed pnpm overrides after alert cooldown and audit checks.\n"
-        "- Added or updated managed pnpm overrides for open Dependabot npm alerts.\n"
-        "- Refreshed the pnpm lockfile after dependency graph changes.\n"
+        "- Removed managed bun overrides after alert cooldown and audit checks.\n"
+        "- Added or updated managed bun overrides for open Dependabot npm alerts.\n"
+        "- Refreshed the bun lockfile after dependency graph changes.\n"
     ),
 }))
 PY
@@ -190,25 +190,25 @@ fetch_dependabot_alerts
 
 python3 scripts/manage_dependency_overrides.py determine-removable \
   --package-file package.json \
-  --workspace-file pnpm-workspace.yaml \
-  --lockfile pnpm-lock.yaml \
+   \
+  --lockfile bun.lock \
   --alerts-json "$ALERTS_JSON" \
   --historical-alert-cooldown-hours "$COOLDOWN_HOURS" \
-  --verify-pnpm \
+   \
   --output "$REMOVABLE_JSON"
 
 python3 scripts/manage_dependency_overrides.py apply-updates \
   --package-file package.json \
-  --workspace-file pnpm-workspace.yaml \
+   \
   --alerts-json "$ALERTS_JSON" \
   --removable-json "$REMOVABLE_JSON"
 
-if git diff --quiet -- package.json pnpm-workspace.yaml; then
+if git diff --quiet -- package.json package.json; then
   echo "No managed override changes."
   exit 0
 fi
 
 echo "Managed overrides changed; refreshing lockfile."
-pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+bun install --frozen-lockfile
 
 create_or_update_mr

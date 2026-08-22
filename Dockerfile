@@ -90,12 +90,7 @@ COPY --from=pruner /app/out/json/ /app/
 COPY --from=pruner /app/out/bun.lock /app/bun.lock
 
 RUN --mount=type=cache,target=/bun-cache \
-    --mount=type=secret,id=npmrc \
     printf '@naplink:registry=https://gitlab.com/api/v4/projects/84834294/packages/npm/\n' > /app/.npmrc && \
-    if [ -f /run/secrets/npmrc ]; then \
-        echo "@napgram:registry=https://npm.pkg.github.com" >> /app/.npmrc; \
-        cat /run/secrets/npmrc >> /app/.npmrc; \
-    fi && \
     (bun install --frozen-lockfile --cache-dir /bun-cache || \
       BUN_CONFIG_REGISTRY=https://registry.npmjs.org bun install --frozen-lockfile --cache-dir /bun-cache) && \
     rm -f /app/.npmrc

@@ -54,8 +54,8 @@ plugins:
 
 ```bash
 cd packages/plugin-qq-interaction
-pnpm install
-pnpm build
+bun install
+bun build
 ```
 
 ### 3. 重启 NapGram
@@ -71,13 +71,13 @@ POST /api/admin/plugins/reload
 ### 构建
 
 ```bash
-pnpm build
+bun build
 ```
 
 ### 开发模式（监听文件变化）
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 ## 依赖

@@ -1,4 +1,4 @@
-"""Manage pnpm overrides owned by the dependency-force-manager workflow."""
+"""Manage bun overrides owned by the dependency-force-manager workflow."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-MANAGED_FIELD = "x-managedPnpmOverrides"
+MANAGED_FIELD = "x-managedBunOverrides"
 WORKSPACE_OVERRIDES_FIELD = "overrides"
 DEFAULT_HISTORICAL_ALERT_COOLDOWN_HOURS = 24 * 7
 
@@ -224,9 +224,9 @@ def sync_managed_overrides(pkg: dict[str, Any], workspace_file: Path) -> None:
 
 
 def remove_legacy_package_overrides(pkg: dict[str, Any]) -> None:
-    pnpm = pkg.get("pnpm")
-    if isinstance(pnpm, dict):
-        pnpm.pop("overrides", None)
+    bun = pkg.get("bun")
+    if isinstance(bun, dict):
+        bun.pop("overrides", None)
 
 
 def remove_managed_override(pkg: dict[str, Any], workspace_file: Path, name: str) -> None:
@@ -283,17 +283,17 @@ def run_capture(cmd: list[str], cwd: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(cmd, cwd=cwd, text=True, capture_output=True, check=False)
 
 
-def verify_removals_with_pnpm(
+def verify_removals_with_bun(
     package_file: Path,
     workspace_file: Path,
     lockfile: Path,
     candidates: list[str],
-    pnpm: str,
+    bun: str,
 ) -> list[str]:
     if not candidates:
         return []
-    if shutil.which(pnpm) is None:
-        print(f"WARN: {pnpm} is not available; refusing to remove managed overrides")
+    if shutil.which(bun) is None:
+        print(f"WARN: {bun} is not available; refusing to remove managed overrides")
         return []
 
     root = package_file.parent
@@ -309,23 +309,23 @@ def verify_removals_with_pnpm(
             write_json(package_file, pkg)
 
             install = run_capture(
-                [pnpm, "install", "--lockfile-only", "--ignore-scripts", "--no-frozen-lockfile"],
+                [bun, "install", "--lockfile-only", "--ignore-scripts", "--no-frozen-lockfile"],
                 cwd=root,
             )
             if install.returncode != 0:
-                print(f"INFO: keeping {name}: pnpm install failed after removal")
+                print(f"INFO: keeping {name}: bun install failed after removal")
                 continue
 
-            audit = run_capture([pnpm, "audit", "--json"], cwd=root)
+            audit = run_capture([bun, "audit", "--json"], cwd=root)
             audit_text = audit.stdout.strip() or audit.stderr.strip()
             if audit_text:
                 try:
                     packages = audit_packages(json.loads(audit_text))
                 except json.JSONDecodeError:
-                    print(f"INFO: keeping {name}: pnpm audit output was not valid JSON")
+                    print(f"INFO: keeping {name}: bun audit output was not valid JSON")
                     continue
                 if packages is None or name in packages:
-                    print(f"INFO: keeping {name}: pnpm audit still reports the package")
+                    print(f"INFO: keeping {name}: bun audit still reports the package")
                     continue
 
             verified.append(name)
@@ -361,13 +361,13 @@ def command_determine_removable(args: argparse.Namespace) -> None:
         alerts,
         args.historical_alert_cooldown_hours,
     )
-    if args.verify_pnpm:
-        candidates = verify_removals_with_pnpm(
+    if args.verify_bun:
+        candidates = verify_removals_with_bun(
             package_file=package_file,
             workspace_file=Path(args.workspace_file),
             lockfile=Path(args.lockfile),
             candidates=candidates,
-            pnpm=args.pnpm,
+            bun=args.bun,
         )
     Path(args.output).write_text(json.dumps(candidates, indent=2) + "\n")
     print(f"Removable managed overrides: {len(candidates)}")
@@ -417,17 +417,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     sync = subparsers.add_parser("sync")
     sync.add_argument("--package-file", default="package.json")
-    sync.add_argument("--workspace-file", default="pnpm-workspace.yaml")
+    sync.add_argument("--workspace-file", default="bun-workspace.yaml")
     sync.set_defaults(func=command_sync)
 
     determine = subparsers.add_parser("determine-removable")
     determine.add_argument("--package-file", default="package.json")
-    determine.add_argument("--workspace-file", default="pnpm-workspace.yaml")
-    determine.add_argument("--lockfile", default="pnpm-lock.yaml")
+    determine.add_argument("--workspace-file", default="bun-workspace.yaml")
+    determine.add_argument("--lockfile", default="bun-lock.yaml")
     determine.add_argument("--alerts-json", required=True)
     determine.add_argument("--output", required=True)
-    determine.add_argument("--pnpm", default="pnpm")
-    determine.add_argument("--verify-pnpm", action="store_true")
+    determine.add_argument("--bun", default="bun")
+    determine.add_argument("--verify-bun", action="store_true")
     determine.add_argument(
         "--historical-alert-cooldown-hours",
         type=int,
@@ -437,7 +437,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     apply_updates = subparsers.add_parser("apply-updates")
     apply_updates.add_argument("--package-file", default="package.json")
-    apply_updates.add_argument("--workspace-file", default="pnpm-workspace.yaml")
+    apply_updates.add_argument("--workspace-file", default="bun-workspace.yaml")
     apply_updates.add_argument("--alerts-json", required=True)
     apply_updates.add_argument("--removable-json")
     apply_updates.set_defaults(func=command_apply_updates)
