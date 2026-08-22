@@ -14,15 +14,15 @@
     "dev": "bun --watch --ignore=data/** src/index.ts",
     "dev:container": "bun src/index.ts",
     "build": "bun build.ts",
-    "check:bundle": "node tools/check-built-bundle.mjs",
+    "check:bundle": "bun tools/check-built-bundle.mjs",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "start": "bun --enable-source-maps build/index.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "test:coverage:ci": "vitest run --coverage --maxWorkers=4 --testTimeout=15000 --hookTimeout=30000",
+    "test": "bun --bun vitest run",
+    "test:watch": "bun --bun vitest",
+    "test:ui": "bun --bun vitest --ui",
+    "test:coverage": "bun --bun vitest run --coverage.provider=istanbul",
+    "test:coverage:ci": "bun --bun vitest run --coverage.provider=istanbul --maxWorkers=4 --testTimeout=15000 --hookTimeout=30000",
     "import": "ts-node tools/import",
     "dev:bun": "bun --watch --ignore=data/** src/index.ts",
     "start:bun": "bun --enable-source-maps build/index.js"
@@ -33,6 +33,7 @@
     "@fastify/multipart": "^10.0.0",
     "@fastify/static": "10.1.3",
     "@kitajs/html": "^4.2.13",
+    "@mtcute/bun": "^0.31.0",
     "@mtcute/core": "^0.31.0",
     "@mtcute/dispatcher": "^0.31.0",
     "@mtcute/markdown-parser": "^0.31.0",
@@ -62,8 +63,7 @@
     "silk-wasm": "^3.7.1",
     "ws": "^8.20.0",
     "yaml": "^2.9.0",
-    "zod": "^4.4.3",
-    "@mtcute/bun": "^0.31.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
@@ -82,7 +82,6 @@
     "esbuild": "^0.28.0",
     "eslint": "10.8.1",
     "fast-check": "^4.8.0",
-    "tsx": "^4.21.0",
     "typescript": "npm:@typescript/typescript6@6.0.2",
     "vitest": "4.1.11"
   }

@@ -22,17 +22,10 @@ run_drizzle_migrate() {
   local candidate
   for candidate in "${candidates[@]}"; do
     if [ -x "${candidate}" ]; then
-      "${candidate}" migrate --config "${config_path}"
+      bun "${candidate}" migrate --config "${config_path}"
       return 0
     fi
   done
-
-  if [ -f "${ROOT_DIR}/node_modules/.pnpm/node_modules/drizzle-kit/bin.cjs" ]; then
-    node "${ROOT_DIR}/node_modules/.pnpm/node_modules/drizzle-kit/bin.cjs" \
-      migrate \
-      --config "${config_path}"
-    return 0
-  fi
 
   echo "ERROR: drizzle-kit not found under ${ROOT_DIR}"
   return 1

@@ -15,23 +15,26 @@
   "minimumReleaseAgeBehaviour": "timestamp-required",
   "customManagers": [
     {
-      "description": "Keep the Dockerfile pnpm ARG in sync with package.json's packageManager.",
+      "description": "Keep the Dockerfile Bun version in sync with package.json's packageManager.",
       "customType": "regex",
       "managerFilePatterns": [
         "/(^|/)Dockerfile$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s+ARG PNPM_VERSION=(?<currentValue>\\S+)"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s+extractVersion=(?<extractVersion>\\S+)\\s+ARG BUN_VERSION=(?<currentValue>\\S+)"
       ]
     }
   ],
   "packageRules": [
     {
-      "description": "Bump the Dockerfile pnpm ARG together with the pnpm packageManager version.",
-      "matchPackageNames": [
-        "pnpm"
+      "description": "Bump the Dockerfile Bun ARG together with the Bun packageManager version.",
+      "matchDatasources": [
+        "github-tags"
       ],
-      "groupName": "pnpm toolchain"
+      "matchPackageNames": [
+        "oven-sh/bun"
+      ],
+      "groupName": "bun toolchain"
     },
     {
       "matchUpdateTypes": [
@@ -46,7 +49,7 @@
       "commitMessageExtra": ""
     },
     {
-      "description": "Match pnpm's default 24h package cooldown before opening or automerging npm updates.",
+      "description": "Apply a 24h package cooldown before opening or automerging npm updates.",
       "matchDatasources": [
         "npm"
       ],
@@ -76,30 +79,6 @@
         "npm"
       ],
       "rangeStrategy": "bump"
-    },
-    {
-      "description": "Root pnpm overrides are maintained by dependency-force-manager.",
-      "enabled": false,
-      "matchManagers": [
-        "npm"
-      ],
-      "matchFileNames": [
-        "package.json"
-      ],
-      "matchDepTypes": [
-        "pnpm.overrides",
-        "x-managedPnpmOverrides"
-      ]
-    },
-    {
-      "description": "Workspace pnpm overrides are maintained by dependency-force-manager.",
-      "enabled": false,
-      "matchManagers": [
-        "npm"
-      ],
-      "matchFileNames": [
-        "pnpm-workspace.yaml"
-      ]
     }
   ],
   "osvVulnerabilityAlerts": true,

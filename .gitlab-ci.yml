@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "66db0c4b5ac97b7b7a6dab8644fcc045b41d94f2"
+  MAGISK_CI_TOOLKIT_REF: "f49bc73c899161bab55ffe9bc2e412ac3faa18e5"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
   # ui:build/etc.). Pinned to arm64 to stop depending on the amd64 runner for
@@ -51,7 +51,7 @@ variables:
   NAPGRAM_GITLAB_DEFAULT_RUNNER_TAG: "magisk-arm64-linux"
   NAPGRAM_GITLAB_LINUX_AMD64_RUNNER_TAG: "magisk-amd64-linux"
   NAPGRAM_GITLAB_LINUX_ARM64_RUNNER_TAG: "magisk-arm64-linux"
-  NAPGRAM_NODE_IMAGE: "node:26-bookworm"
+  NAPGRAM_BUN_IMAGE: "oven/bun:1.4-alpine"
 
   # Override this when the UI mirror uses another namespace or host.
   NAPGRAM_UI_REPOSITORY: "https://gitlab.com/magisk3171/napgram-ecosystem/napgram-ui-dist.git"
@@ -126,30 +126,32 @@ variables:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
     - when: never
 
-.napgram_node:
-  image: "$NAPGRAM_NODE_IMAGE"
+.napgram_bun:
+  image: "$NAPGRAM_BUN_IMAGE"
   cache:
     key:
       files:
         - package.json
-        - pnpm-lock.yaml
-      prefix: "napgram-node-26"
+        - bun.lock
+      prefix: "napgram-bun-1.4"
     paths:
-      - .pnpm-store/
+      - .bun-cache/
     policy: pull
   before_script:
     - |
-      set -euo pipefail
-      if [[ "${MAGISK_LINUX_USE_MIRROR:-true}" == "true" ]]; then
-        export PNPM_CONFIG_REGISTRY="${PNPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
+      set -eu
+      if [ "${MAGISK_LINUX_USE_MIRROR:-true}" = "true" ]; then
+        sed -i 's#https://dl-cdn.alpinelinux.org/alpine#https://mirrors.tuna.tsinghua.edu.cn/alpine#g' /etc/apk/repositories
       else
-        export PNPM_CONFIG_REGISTRY="https://registry.npmjs.org"
+        sed -i 's#https://mirrors.tuna.tsinghua.edu.cn/alpine#https://dl-cdn.alpinelinux.org/alpine#g' /etc/apk/repositories
       fi
+      apk add --no-cache bash git ca-certificates curl
+      export BUN_REGISTRY="${BUN_CONFIG_REGISTRY:-https://registry.npmmirror.com}"
+      export BUN_CONFIG_REGISTRY="$BUN_REGISTRY"
+      export BUN_INSTALL_CACHE_DIR="$CI_PROJECT_DIR/.bun-cache"
       toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
-      bash "$toolkit_dir/ci/ensure_pnpm.sh"
-      pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
-      pnpm config set registry "$PNPM_CONFIG_REGISTRY"
-      pnpm --version
+      bash "$toolkit_dir/ci/ensure_bun.sh"
+      bun --version
 
 .napgram_docker:
   image: "$NAPGRAM_DOCKER_IMAGE"
@@ -221,7 +223,7 @@ variables:
 
 app:dependencies:
   extends:
-    - .napgram_node
+    - .napgram_bun
     - .napgram_ci_rules
   stage: prepare
   cache:
@@ -233,17 +235,17 @@ app:dependencies:
       - api_failure
       - script_failure
   script:
-    - pnpm install --frozen-lockfile
+    - bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
 
 ui:build:
   extends:
-    - .napgram_node
+    - .napgram_bun
     - .napgram_docker_rules
   stage: build
   cache:
-    key: "napgram-ui-node-26"
+    key: "napgram-ui-bun-1.4"
     paths:
-      - .pnpm-store/
+      - .bun-cache/
     policy: pull-push
   script:
     - |
@@ -280,13 +282,8 @@ ui:build:
       trap - EXIT
 
       cd "$CI_PROJECT_DIR/web"
-      # Follow the UI repo's own packageManager pin when it declares one;
-      # otherwise fall back to whatever pnpm the image already provides.
-      if grep -q '"packageManager"[[:space:]]*:[[:space:]]*"pnpm@' package.json; then
-        bash "$toolkit_dir/ci/ensure_pnpm.sh"
-      fi
-      pnpm install --frozen-lockfile
-      pnpm run build
+      bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
+      bun run build
       test -n "$(find dist -type f -print -quit)"
   artifacts:
     name: "NapGram-ui-$CI_COMMIT_REF_SLUG"
@@ -296,22 +293,23 @@ ui:build:
 
 app:typecheck:
   extends:
-    - .napgram_node
+    - .napgram_bun
     - .napgram_ci_rules
   stage: validate
   needs:
     - job: app:dependencies
       artifacts: false
   script:
-    - pnpm install --frozen-lockfile
-    - pnpm -r --filter "./packages/**" run build
-    - pnpm --filter @napgram/app type-check
-    - pnpm --filter @napgram/app build
-    - pnpm --filter @napgram/app check:bundle
+    - bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
+    - bun run --filter './packages/**' build
+    - cd main
+    - bun run type-check
+    - bun run build
+    - bun run check:bundle
 
 app:test:coverage:
   extends:
-    - .napgram_node
+    - .napgram_bun
     - .napgram_ci_rules
   stage: test
   needs:
@@ -332,11 +330,12 @@ app:test:coverage:
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/napgram_test"
     DATA_DIR: "$CI_PROJECT_DIR/.ci-data"
   script:
-    - pnpm install --frozen-lockfile
-    - pnpm -r --filter "./packages/**" run build
+    - bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
+    - bun run --filter './packages/**' build
     - bash main/tools/run-drizzle-migrations.sh
     - mkdir -p "$DATA_DIR/temp" "$DATA_DIR/cache" "$DATA_DIR/logs"
-    - pnpm --filter @napgram/app test:coverage:ci
+    - cd main
+    - bun run test:coverage:ci
   artifacts:
     name: "NapGram-coverage-$CI_COMMIT_REF_SLUG"
     when: always
@@ -346,7 +345,7 @@ app:test:coverage:
 
 app:lint:
   extends:
-    - .napgram_node
+    - .napgram_bun
     - .napgram_ci_rules
   stage: quality
   needs:
@@ -354,8 +353,9 @@ app:lint:
       artifacts: false
   allow_failure: true
   script:
-    - pnpm install --frozen-lockfile
-    - pnpm --filter @napgram/app lint
+    - bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
+    - cd main
+    - bun run lint
 
 security:gitleaks:
   extends: .napgram_ci_rules
@@ -562,7 +562,7 @@ renovate:gitlab:
 
 dependency-force:gitlab:
   extends:
-    - .napgram_node
+    - .napgram_bun
   interruptible: false
   stage: maintenance
   needs: []
@@ -583,9 +583,9 @@ dependency-force:gitlab:
 
 # Publish @napgram/sdk (+sdk-core, sdk-utils) to the GitLab project npm registry.
 # Triggered by version tags when GitLab owns the release (RELEASE_OWNER=gitlab).
-# pnpm resolves workspace:* protocol to concrete versions at publish time.
+# Bun resolves workspace:* protocol to concrete versions at publish time.
 sdk:publish:
-  extends: .napgram_node
+  extends: .napgram_bun
   interruptible: false
   stage: release-publish
   needs: []
@@ -593,28 +593,18 @@ sdk:publish:
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/ && $RELEASE_OWNER == "gitlab"'
       when: on_success
     - when: never
-  before_script:
-    - |
-      set -euo pipefail
-      toolkit_dir="$(bash scripts/resolve_ci_toolkit.sh)"
-      bash "$toolkit_dir/ci/ensure_pnpm.sh"
-      pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm-store"
-      REGISTRY="https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/npm/"
-      pnpm config set "@napgram:registry" "$REGISTRY"
-      # Publish is gated on SDK_PUBLISH_TOKEN: when set, it is used as the npm
-      # auth token (a project/group access token with write to the registry).
-      # When unset, the job builds the sdk packages but skips publish — this is
-      # the "manual second confirmation" gate (set the variable to opt in).
-      if [ -n "${SDK_PUBLISH_TOKEN:-}" ]; then
-        printf '//gitlab.com/api/v4/projects/%s/packages/npm/:_authToken=%s\n' "$CI_PROJECT_ID" "$SDK_PUBLISH_TOKEN" >> ~/.npmrc
-        printf 'always-auth=true\n' >> ~/.npmrc
-      else
-        printf '//gitlab.com/api/v4/projects/%s/packages/npm/:_authToken=%s\n' "$CI_PROJECT_ID" "$CI_JOB_TOKEN" >> ~/.npmrc
-        printf 'always-auth=true\n' >> ~/.npmrc
-      fi
   script:
-    - pnpm install --frozen-lockfile
-    - pnpm -r --filter "@napgram/sdk-core" --filter "@napgram/sdk-utils" --filter "@napgram/sdk" run build
+    - bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
+    - |
+      REGISTRY="https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/npm/"
+      AUTH_TOKEN="${SDK_PUBLISH_TOKEN:-$CI_JOB_TOKEN}"
+      printf '%s\n%s\n%s\n' \
+        "registry=${REGISTRY}" \
+        "${REGISTRY#https:}:_authToken=${AUTH_TOKEN}" \
+        "always-auth=true" > "$HOME/.npmrc"
+    - bun run --filter '@napgram/sdk-core' build
+    - bun run --filter '@napgram/sdk-utils' build
+    - bun run --filter '@napgram/sdk' build
     # Publish is skipped entirely when SDK_PUBLISH_TOKEN is unset (build-only).
     # The previous GitHub flow used changesets: a "Version Packages" PR had to
     # be manually merged before publish — setting SDK_PUBLISH_TOKEN is the
@@ -625,15 +615,15 @@ sdk:publish:
         exit 0
       fi
     # Publish order: sdk-core (no deps) -> sdk-utils (deps on core) -> sdk.
-    # --no-git-checks allows publishing from a shallow CI checkout; pnpm
-    # rewrites workspace:* to concrete versions. Publish is idempotent: a
-    # version already on the registry is ignored so re-triggering the tag
+    # Bun rewrites workspace:* to concrete versions. Publish is idempotent:
+    # a version already on the registry is ignored so re-triggering the tag
     # pipeline does not fail the job.
     - |
       publish_pkg() {
-        # $1 = package filter (e.g. @napgram/sdk-core); pnpm --filter splits the
-        # flag from the value so they must be separate argv elements.
-        if pnpm --filter "$1" publish --no-git-checks 2>&1 | tee /tmp/publish.log; then
+        package_name="$1"
+        package_dir="${package_name#@napgram/}"
+        cd "$CI_PROJECT_DIR/packages/$package_dir"
+        if bun publish --tolerate-republish --registry "https://gitlab.com/api/v4/projects/${CI_PROJECT_ID}/packages/npm/" 2>&1 | tee /tmp/publish.log; then
           return 0
         fi
         if grep -qiE 'cannot publish over|already exist|EPUBLISHCONFLICT|"code":"E403"' /tmp/publish.log; then

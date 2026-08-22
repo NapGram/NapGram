@@ -3,7 +3,6 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { promisify } from 'node:util'
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -90,7 +89,6 @@ describe('telemetry OTLP integration', () => {
   it('returns one UUID when multiple processes initialize the same data directory', async () => {
     dataDir = mkdtempSync(join(tmpdir(), 'napgram-uuid-race-'))
     const telemetryUrl = new URL('../telemetry.ts', import.meta.url).href
-    const tsxPath = fileURLToPath(new URL('../../node_modules/.bin/tsx', import.meta.url))
     const script = `
       import(${JSON.stringify(telemetryUrl)}).then(({ resolveServiceInstanceId }) => {
         process.stdout.write(resolveServiceInstanceId());
@@ -107,7 +105,7 @@ describe('telemetry OTLP integration', () => {
     }
 
     const results = await Promise.all(Array.from({ length: 6 }, () =>
-      execFileAsync(tsxPath, ['--eval', script], {
+      execFileAsync('bun', ['--eval', script], {
         env: childEnv,
       }),
     ))

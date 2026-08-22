@@ -12,8 +12,11 @@ COOLDOWN_HOURS="${DEPENDENCY_FORCE_HISTORICAL_ALERT_COOLDOWN_HOURS:-168}"
 BRANCH="${DEPENDENCY_FORCE_BRANCH:-chore/dependency-force-update}"
 BASE_REF="${DEPENDENCY_FORCE_BASE:-${CI_DEFAULT_BRANCH:-beta}}"
 GITHUB_REPO="${DEPENDENCY_FORCE_GITHUB_REPO:-NapGram/NapGram}"
-# pnpm version follows package.json's packageManager (single source of truth);
-# magisk-ci-toolkit's ci/ensure_pnpm.sh resolves and installs it (see ensure_tools).
+
+if grep -Eq '"packageManager"[[:space:]]*:[[:space:]]*"bun@' package.json; then
+  echo "Managed pnpm override remediation is not applicable while packageManager is bun."
+  exit 0
+fi
 
 mkdir -p "$(dirname "$ALERTS_JSON")" "$(dirname "$REMOVABLE_JSON")"
 

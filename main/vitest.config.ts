@@ -11,6 +11,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    maxWorkers: 4,
     environment: 'node',
     setupFiles: ['./vitest.setup.ts'],
     // CI-only retry to absorb flaky timing on slower runners; local runs stay fast.

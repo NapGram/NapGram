@@ -1,19 +1,17 @@
 ARG INSTALL_PG_CLIENT=true
 ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649
-ARG NODE_IMAGE=node:26-alpine@sha256:aadf416b2cdce311a8811ba3f0608a61b77dbf997500e2eafe781b51f6a0b019
-# renovate: datasource=npm depName=pnpm
-ARG PNPM_VERSION=11.22.0
-ARG PNPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+# renovate: datasource=github-tags depName=oven-sh/bun extractVersion=^bun-v(?<version>.+)$
+ARG BUN_VERSION=1.4.0
+ARG BUN_IMAGE=oven/bun:${BUN_VERSION}-alpine
+ARG BUN_CONFIG_REGISTRY=https://registry.npmmirror.com
 
 # Extract TGS conversion tools
 FROM ${LOTTIE_IMAGE} AS lottie
 
 # Base runtime image
-FROM ${NODE_IMAGE} AS base
+FROM ${BUN_IMAGE} AS base
 ARG USE_MIRROR=true
 ARG INSTALL_PG_CLIENT=true
-ARG PNPM_VERSION
-ARG PNPM_CONFIG_REGISTRY
 
 # Base Alpine packages. Keep APKINDEX files until triggers finish; postgresql-common
 # reads them during post-install and can turn transient index fetches into failures.
@@ -55,22 +53,20 @@ RUN set -eux; \
     done; \
     rm -rf /var/cache/apk/*
 
-RUN npm install --global --registry="${PNPM_CONFIG_REGISTRY}" "pnpm@${PNPM_VERSION}" || \
-    npm install --global --registry="https://registry.npmjs.org" "pnpm@${PNPM_VERSION}"
 WORKDIR /app
 
 # Turbo pruner stage: create a trimmed-down subset of the monorepo for the app
 FROM base AS pruner
 WORKDIR /app
 COPY . .
-RUN pnpm --package=turbo@2.10.11 dlx turbo prune @napgram/app --docker
+RUN bunx turbo@2.10.11 prune @napgram/app --docker
 
 # Workspace build image
 FROM base AS workspace
 ARG USE_MIRROR=true
-ARG PNPM_CONFIG_REGISTRY
-ENV PNPM_CONFIG_STORE_DIR=/pnpm-store \
-    PNPM_CONFIG_REGISTRY=${PNPM_CONFIG_REGISTRY} \
+ARG BUN_CONFIG_REGISTRY
+ENV BUN_INSTALL_CACHE_DIR=/bun-cache \
+    BUN_CONFIG_REGISTRY=${BUN_CONFIG_REGISTRY} \
     CI=true
 
 # Build dependencies
@@ -91,18 +87,17 @@ RUN set -eux; \
 
 # First install only dependencies (cached by package.json / lockfile changes only)
 COPY --from=pruner /app/out/json/ /app/
-COPY --from=pruner /app/out/pnpm-lock.yaml /app/pnpm-lock.yaml
-COPY --from=pruner /app/out/pnpm-workspace.yaml /app/pnpm-workspace.yaml
+COPY --from=pruner /app/out/bun.lock /app/bun.lock
 
-RUN --mount=type=cache,target=/pnpm-store \
+RUN --mount=type=cache,target=/bun-cache \
     --mount=type=secret,id=npmrc \
     printf '@naplink:registry=https://gitlab.com/api/v4/projects/84834294/packages/npm/\n' > /app/.npmrc && \
     if [ -f /run/secrets/npmrc ]; then \
         echo "@napgram:registry=https://npm.pkg.github.com" >> /app/.npmrc; \
         cat /run/secrets/npmrc >> /app/.npmrc; \
     fi && \
-    (pnpm install --frozen-lockfile --shamefully-hoist || \
-      PNPM_CONFIG_REGISTRY=https://registry.npmjs.org pnpm install --frozen-lockfile --shamefully-hoist) && \
+    (bun install --frozen-lockfile --cache-dir /bun-cache || \
+      BUN_CONFIG_REGISTRY=https://registry.npmjs.org bun install --frozen-lockfile --cache-dir /bun-cache) && \
     rm -f /app/.npmrc
 
 # Copy source code and build
@@ -111,17 +106,19 @@ COPY tsconfig.base.json tsconfig.json /app/
 COPY packages/tsconfig.base.json /app/packages/tsconfig.base.json
 
 # Build workspace packages and main app using turbo
-RUN --mount=type=cache,target=/pnpm-store \
-    pnpm run build && \
-    pnpm --filter ./main run check:bundle
+RUN --mount=type=cache,target=/bun-cache \
+    bun run build && \
+    cd main && \
+    bun run check:bundle
 
 # `web/dist` is populated by the external UI checkout in CI; only the built assets are copied here.
 COPY web/dist/ /app/web/dist/
 
 # Keep production dependencies only
 FROM workspace AS build
-RUN --mount=type=cache,target=/pnpm-store \
-    pnpm prune --prod
+RUN --mount=type=cache,target=/bun-cache \
+    find . -type d -name node_modules -prune -exec rm -rf {} + && \
+    bun install --production --frozen-lockfile --force --cache-dir /bun-cache
 
 # Release image
 FROM base AS release
@@ -129,35 +126,35 @@ ARG REPO=Local Build
 ARG REF=Local Build
 ARG COMMIT=Local Build
 
-COPY --from=build --chown=node:node /app/node_modules /app/node_modules
-# Preserve main's pnpm symlink graph
-COPY --from=workspace --chown=node:node /app/main/node_modules /app/main/node_modules
-COPY --from=workspace --chown=node:node /app/main/build /app/main/build
-COPY --from=workspace --chown=node:node /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
-COPY --from=workspace --chown=node:node /app/main/tools/drizzle /app/main/tools/drizzle
-COPY --from=workspace --chown=node:node /app/main/tools/run-drizzle-migrations.sh /app/main/tools/run-drizzle-migrations.sh
-COPY --from=workspace --chown=node:node /app/packages/clients/database/dist/schema /app/main/tools/runtime-schemas/database
-COPY --from=workspace --chown=node:node /app/packages/plugins/admin/permission-management/dist/database /app/main/tools/runtime-schemas/permission-management
+COPY --from=build --chown=bun:bun /app/node_modules /app/node_modules
+# Preserve Bun's per-workspace dependency links.
+COPY --from=build --chown=bun:bun /app/main/node_modules /app/main/node_modules
+COPY --from=workspace --chown=bun:bun /app/main/build /app/main/build
+COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
+COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle /app/main/tools/drizzle
+COPY --from=workspace --chown=bun:bun /app/main/tools/run-drizzle-migrations.sh /app/main/tools/run-drizzle-migrations.sh
+COPY --from=workspace --chown=bun:bun /app/packages/clients/database/dist/schema /app/main/tools/runtime-schemas/database
+COPY --from=workspace --chown=bun:bun /app/packages/plugins/admin/permission-management/dist/database /app/main/tools/runtime-schemas/permission-management
 # Hand the prebuilt UI bundle into the runtime image.
-COPY --from=workspace --chown=node:node /app/web/dist /app/public
+COPY --from=workspace --chown=bun:bun /app/web/dist /app/public
 
 # Prepare runtime directories
 RUN rm -rf /app/node_modules/@napgram && \
     mkdir -p /app/data /app/.config/QQ && \
-    chown -R node:node /app/data /app/.config/QQ
+    chown -R bun:bun /app/data /app/.config/QQ
 
 # External plugins import the public SDK at runtime. Keep only that API surface
 # and its runtime dependencies; the application bundles the other workspaces.
-COPY --from=workspace --chown=node:node /app/packages/sdk/package.json /app/node_modules/@napgram/sdk/package.json
-COPY --from=workspace --chown=node:node /app/packages/sdk/dist /app/node_modules/@napgram/sdk/dist
-COPY --from=workspace --chown=node:node /app/packages/sdk-core/package.json /app/node_modules/@napgram/sdk-core/package.json
-COPY --from=workspace --chown=node:node /app/packages/sdk-core/dist /app/node_modules/@napgram/sdk-core/dist
-COPY --from=workspace --chown=node:node /app/packages/sdk-utils/package.json /app/node_modules/@napgram/sdk-utils/package.json
-COPY --from=workspace --chown=node:node /app/packages/sdk-utils/dist /app/node_modules/@napgram/sdk-utils/dist
+COPY --from=workspace --chown=bun:bun /app/packages/sdk/package.json /app/node_modules/@napgram/sdk/package.json
+COPY --from=workspace --chown=bun:bun /app/packages/sdk/dist /app/node_modules/@napgram/sdk/dist
+COPY --from=workspace --chown=bun:bun /app/packages/sdk-core/package.json /app/node_modules/@napgram/sdk-core/package.json
+COPY --from=workspace --chown=bun:bun /app/packages/sdk-core/dist /app/node_modules/@napgram/sdk-core/dist
+COPY --from=workspace --chown=bun:bun /app/packages/sdk-utils/package.json /app/node_modules/@napgram/sdk-utils/package.json
+COPY --from=workspace --chown=bun:bun /app/packages/sdk-utils/dist /app/node_modules/@napgram/sdk-utils/dist
 
-COPY --chown=node:node docker-entrypoint.sh /app/entrypoint.sh
+COPY --chown=bun:bun docker-entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh /app/main/tools/run-drizzle-migrations.sh && \
-    node -e "import('@napgram/sdk')"
+    bun -e "await import('@napgram/sdk')"
 
 ENV DATA_DIR=/app/data \
     CACHE_DIR=/app/.config/QQ/NapCat/temp \
@@ -167,5 +164,5 @@ ENV DATA_DIR=/app/data \
     COMMIT=${COMMIT}
 
 EXPOSE 8080
-USER node
+USER bun
 CMD ["/app/entrypoint.sh"]

@@ -41,33 +41,30 @@ jobs:
           fetch-depth: 2
 
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: '26'
+          bun-version: 1.4.0
 
-      - name: Enable corepack
-        run: corepack enable
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
+      - name: Set Bun cache directory
+        id: bun-cache
         shell: bash
         run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+          echo "CACHE_PATH=${RUNNER_TEMP}/bun-cache" >> "$GITHUB_OUTPUT"
 
-      - name: Setup pnpm cache
+      - name: Cache Bun packages
         uses: actions/cache@v6
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ steps.bun-cache.outputs.CACHE_PATH }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: BUN_INSTALL_CACHE_DIR="${RUNNER_TEMP}/bun-cache" bun install --frozen-lockfile
 
       - name: Build @napgram packages
-        run: pnpm -r --filter "./packages/**" run build
+        run: bun run --filter './packages/**' build
 
       - name: Run Drizzle migrations
         run: bash ./main/tools/run-drizzle-migrations.sh
@@ -86,7 +83,7 @@ jobs:
           mkdir -p ${{ runner.temp }}/napgram-data/logs
 
       - name: Run tests with coverage
-        run: pnpm --filter @napgram/app test:coverage
+        run: cd main && bun run test:coverage:ci
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/napgram_test
           PGUSER: postgres
