@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Message } from '@mtcute/core'
 import { Dispatcher } from '@mtcute/dispatcher'
-import { HttpProxyTcpTransport, SocksProxyTcpTransport, TelegramClient } from '@mtcute/node'
+import { HttpProxyTcpTransport, SocksProxyTcpTransport, TelegramClient } from '@mtcute/bun'
 import {
   getTelegramClientDependencies,
   resolveLoggerFactory,

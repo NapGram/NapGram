@@ -4,7 +4,7 @@
  */
 
 import type { InputText } from '@mtcute/core'
-import type { tl } from '@mtcute/node'
+import type { tl } from '@mtcute/bun'
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '@napgram/qq-client'
 import type Telegram from '@napgram/telegram-client'

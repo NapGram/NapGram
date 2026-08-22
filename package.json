@@ -1,27 +1,38 @@
 {
-    "name": "napgram-root",
-    "version": "0.1.5",
-    "private": true,
-    "packageManager": "pnpm@11.22.0",
-    "scripts": {
-        "build": "turbo run build",
-        "type-check": "turbo run type-check",
-        "test": "turbo run test",
-        "lint": "turbo run lint"
-    },
-    "dependencies": {
-        "@napgram/plugin-adapter-qq-napcat": "workspace:*",
-        "@napgram/sdk": "workspace:*"
-    },
-    "x-managedPnpmOverrides": {},
-    "devDependencies": {
-        "@napgram/plugin-adapter-qq-napcat": "workspace:*",
-        "@types/node": "25.9.5",
-        "@typescript/native": "npm:typescript@^7.0.2",
-        "turbo": "^2.9.18",
-        "typescript": "npm:@typescript/typescript6@6.0.2"
-    },
-    "peerDependencies": {
-        "@napgram/plugin-adapter-qq-napcat": "workspace:*"
-    }
+  "name": "napgram-root",
+  "version": "0.1.5",
+  "private": true,
+  "packageManager": "bun@1.4.0",
+  "scripts": {
+    "build": "turbo run build",
+    "type-check": "turbo run type-check",
+    "test": "turbo run test",
+    "lint": "turbo run lint"
+  },
+  "dependencies": {
+    "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+    "@napgram/sdk": "workspace:*"
+  },
+  "x-managedPnpmOverrides": {},
+  "devDependencies": {
+    "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+    "@types/node": "25.9.5",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "turbo": "^2.9.18",
+    "typescript": "npm:@typescript/typescript6@6.0.2"
+  },
+  "peerDependencies": {
+    "@napgram/plugin-adapter-qq-napcat": "workspace:*"
+  },
+  "workspaces": [
+    "main",
+    "packages/sdk",
+    "packages/sdk-core",
+    "packages/sdk-utils",
+    "packages/builtins",
+    "packages/core/*",
+    "packages/clients/*",
+    "packages/utilities/*",
+    "packages/plugins/**"
+  ]
 }

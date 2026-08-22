@@ -173,9 +173,9 @@ vi.mock('../../../../domain/models/TelegramSession', () => ({
 /**
  * Mock @napgram/telegram-client directly.
  *
- * This is the key fix: the real package imports TelegramClient from @mtcute/node
+ * This is the key fix: the real package imports TelegramClient from @mtcute/bun
  * at package level and instantiates it in the constructor, which starts background
- * network loops that cannot be stopped by mocking @mtcute/node alone.
+ * network loops that cannot be stopped by mocking @mtcute/bun alone.
  *
  * By mocking the package itself we return a fake Telegram class whose `client`
  * property is a plain object with vi.fn() stubs, so no real connections are made.

@@ -7,22 +7,25 @@
     "build"
   ],
   "engines": {
-    "node": ">=26.0.0"
+    "node": ">=26.0.0",
+    "bun": ">=1.4.0"
   },
   "scripts": {
-    "dev": "tsx watch --ignore 'data/**' src/index.ts",
-    "dev:container": "tsx src/index.ts",
-    "build": "tsx build.ts",
+    "dev": "bun --watch --ignore=data/** src/index.ts",
+    "dev:container": "bun src/index.ts",
+    "build": "bun build.ts",
     "check:bundle": "node tools/check-built-bundle.mjs",
     "lint": "eslint .",
     "type-check": "tsc --noEmit",
-    "start": "node --enable-source-maps build/index.js",
+    "start": "bun --enable-source-maps build/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "test:coverage:ci": "vitest run --coverage --maxWorkers=4 --testTimeout=15000 --hookTimeout=30000",
-    "import": "ts-node tools/import"
+    "import": "ts-node tools/import",
+    "dev:bun": "bun --watch --ignore=data/** src/index.ts",
+    "start:bun": "bun --enable-source-maps build/index.js"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
@@ -33,7 +36,6 @@
     "@mtcute/core": "^0.31.0",
     "@mtcute/dispatcher": "^0.31.0",
     "@mtcute/markdown-parser": "^0.31.0",
-    "@mtcute/node": "^0.31.0",
     "@napgram/auth-kit": "workspace:*",
     "@napgram/builtins": "workspace:*",
     "@napgram/database": "workspace:*",
@@ -60,7 +62,8 @@
     "silk-wasm": "^3.7.1",
     "ws": "^8.20.0",
     "yaml": "^2.9.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@mtcute/bun": "^0.31.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",

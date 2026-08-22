@@ -1,5 +1,5 @@
 import type { Chat } from '@mtcute/core'
-import type { TelegramClient } from '@mtcute/node'
+import type { TelegramClient } from '@mtcute/bun'
 import type Telegram from '@napgram/telegram-client'
 import { Buffer } from 'node:buffer'
 import { TelegramChat } from '@napgram/telegram-client'

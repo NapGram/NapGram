@@ -21,7 +21,7 @@ export default defineConfig({
           '@napgram/qq-client',
           '@naplink/naplink',
           '@napgram/telegram-client',
-          '@mtcute/node',
+          '@mtcute/bun',
           '@mtcute/dispatcher',
           '@mtcute/core',
           '@mtcute/test',

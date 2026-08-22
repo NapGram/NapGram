@@ -1,5 +1,5 @@
 import type { InputText } from '@mtcute/core'
-import { html } from '@mtcute/node'
+import { html } from '@mtcute/bun'
 import { telegramSend } from '../../../../../shared/utils/index.js'
 import { env } from '../../../capabilities/env.js'
 import { md5Hex } from '../../../capabilities/hashing.js'
