@@ -48,7 +48,7 @@
         "@napgram/request-kit": "workspace:*",
         "@napgram/runtime-kit": "workspace:*",
         "@napgram/telegram-client": "workspace:*",
-        "@naplink/naplink": "^1.1.4",
+        "@naplink/naplink": "^1.1.5",
         "drizzle-kit": "^0.31.10",
         "fastify": "^5.8.5",
         "fflate": "^0.8.2",
@@ -1082,7 +1082,7 @@
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.5", "", { "dependencies": { "@tybys/wasm-util": "0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-AWPoBRJ9tsnVhor4sjO7rkni+7p+2IAEFj6cx06UgP10jkQHqay/36uRV/bFkgrh18D9vb4cr8Q0Pthskgzy+Q=="],
 
-    "@naplink/naplink": ["@naplink/naplink@1.1.4", "https://gitlab.com/api/v4/projects/84834294/packages/npm/@naplink/naplink/-/@naplink/naplink-1.1.4.tgz", { "dependencies": { "isomorphic-ws": "5.0.0", "ws": "8.21.3" } }, "sha1-YgVcBp3/cFJ5f+0aMnLuQnOnhfI="],
+    "@naplink/naplink": ["@naplink/naplink@1.1.5", "", { "dependencies": { "isomorphic-ws": "^5.0.0", "ws": "^8.21.3" } }, "sha512-N3Kg67bM1a21hlUSoFNHE0iS0nV1hWwuC/+2/gjhM5ucwoIIOur0PonOpDZkcTBTf08wB9yXKkdjvIOf+N5HGA=="],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.9.1", "", {}, "sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q=="],
 
