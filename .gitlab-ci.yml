@@ -336,12 +336,6 @@ app:test:coverage:
     - mkdir -p "$DATA_DIR/temp" "$DATA_DIR/cache" "$DATA_DIR/logs"
     - cd main
     - bun run test:coverage:ci
-  artifacts:
-    name: "NapGram-coverage-$CI_COMMIT_REF_SLUG"
-    when: always
-    expire_in: 14 days
-    paths:
-      - main/coverage/
 
 app:lint:
   extends:
