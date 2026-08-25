@@ -20,7 +20,7 @@
         ],
         "paths": {
             "@napgram/app/*": [
-                "main/src/*"
+                "./main/src/*"
             ]
         }
     }
