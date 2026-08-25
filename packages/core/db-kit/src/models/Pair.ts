@@ -10,7 +10,9 @@ const log = getLogger('ForwardPair')
 
 function md5(input: crypto.BinaryLike) {
   const hash = crypto.createHash('md5')
-  return hash.update(input).digest()
+  if (typeof input === 'string') return hash.update(input).digest()
+  const bytes = Buffer.from(input.buffer, input.byteOffset, input.byteLength)
+  return hash.update(bytes).digest()
 }
 
 function getAvatarUrl(room: number | bigint | { uin: number } | { gid: number }): string {
