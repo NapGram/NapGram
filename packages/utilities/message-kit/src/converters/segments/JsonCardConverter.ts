@@ -122,7 +122,7 @@ export class JsonCardConverter {
       return JSON.parse(data)
     }
     catch (error) {
-      logger.warn('Failed to parse NapCat json segment', error)
+      logger.debug('Failed to parse NapCat json segment', error)
       return null
     }
   }

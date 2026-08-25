@@ -163,7 +163,6 @@ variables:
       - script_failure
   services:
     - name: "$NAPGRAM_DOCKER_DIND_IMAGE"
-      alias: docker
       # Enable the containerd image store so the built-in driver can export registry caches.
       command: ["--tls=false", "--mtu=1400", "--feature", "containerd-snapshotter=true"]
   variables:
@@ -317,7 +316,6 @@ app:test:coverage:
       artifacts: false
   services:
     - name: postgres:18-alpine
-      alias: postgres
   variables:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
