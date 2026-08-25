@@ -11,7 +11,9 @@ const log = getLogger('ForwardPair')
 function md5(input: crypto.BinaryLike) {
   const hash = crypto.createHash('md5')
   if (typeof input === 'string') return hash.update(input).digest()
-  const bytes = Buffer.from(input.buffer, input.byteOffset, input.byteLength)
+  const bytes = 'buffer' in input
+    ? Buffer.from(input.buffer, input.byteOffset, input.byteLength)
+    : Buffer.from(input)
   return hash.update(bytes).digest()
 }
 

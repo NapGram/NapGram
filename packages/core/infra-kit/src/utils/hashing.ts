@@ -3,7 +3,9 @@ import crypto from 'node:crypto'
 
 function hashInput(input: crypto.BinaryLike) {
   if (typeof input === 'string') return input
-  return Buffer.from(input.buffer, input.byteOffset, input.byteLength)
+  return 'buffer' in input
+    ? Buffer.from(input.buffer, input.byteOffset, input.byteLength)
+    : Buffer.from(input)
 }
 
 export function md5(input: crypto.BinaryLike) {
