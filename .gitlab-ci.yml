@@ -55,7 +55,7 @@ variables:
 
   # Override this when the UI mirror uses another namespace or host.
   NAPGRAM_UI_REPOSITORY: "https://gitlab.com/magisk3171/napgram-ecosystem/napgram-ui-dist.git"
-  NAPGRAM_UI_REF: "dev"
+  NAPGRAM_UI_REF: "main"
   NAPGRAM_UI_RELEASE_REF: ""
   NAPGRAM_DOCKER_PUBLISH: "true"
   NAPGRAM_DOCKERHUB_PUBLISH: "true"
