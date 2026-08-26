@@ -1,9 +1,9 @@
 include:
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 23a41efea206eef4e98c01fccd23db227e82aae9
+    ref: e4c4a9105025ee4d3ba6d97733850134dc5dac37
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 23a41efea206eef4e98c01fccd23db227e82aae9
+    ref: e4c4a9105025ee4d3ba6d97733850134dc5dac37
     file: /.gitlab/ci/renovate.yml
 
 workflow:
@@ -43,7 +43,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: none
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "23a41efea206eef4e98c01fccd23db227e82aae9"
+  MAGISK_CI_TOOLKIT_REF: "e4c4a9105025ee4d3ba6d97733850134dc5dac37"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
   # ui:build/etc.). Pinned to arm64 to stop depending on the amd64 runner for
