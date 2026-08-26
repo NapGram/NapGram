@@ -281,8 +281,16 @@ ui:build:
       trap - EXIT
 
       cd "$CI_PROJECT_DIR/web"
-      bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
-      bun run build
+      if [ -x "$toolkit_dir/ci/frontend_build.sh" ]; then
+        MAGISK_FRONTEND_DIR="$CI_PROJECT_DIR/web" \
+          MAGISK_FRONTEND_PACKAGE_JSON="$CI_PROJECT_DIR/web/package.json" \
+          MAGISK_FRONTEND_BUILD_COMMAND="bun run build" \
+          MAGISK_FRONTEND_DIST_DIR="$CI_PROJECT_DIR/web/dist" \
+          bash "$toolkit_dir/ci/frontend_build.sh"
+      else
+        bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
+        bun run build
+      fi
       test -n "$(find dist -type f -print -quit)"
   artifacts:
     name: "NapGram-ui-$CI_COMMIT_REF_SLUG"
