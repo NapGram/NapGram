@@ -57,6 +57,10 @@ const plugin = definePlugin({
                     await event.reply('❌ 当前聊天未绑定任何 QQ 群');
                     return;
                 }
+                if (pair.qqChatType && pair.qqChatType !== 'group') {
+                    await event.reply('❌ 当前聊天绑定的是 QQ 好友，不能刷新 QQ 群信息');
+                    return;
+                }
 
                 const qqGroupId = pair.qqRoomId.toString();
 
@@ -126,11 +130,12 @@ const plugin = definePlugin({
 
                     const instance = event.instance as any;
                     const allPairs = instance.forwardPairs.getAll();
+                    const groupPairs = allPairs.filter((pair: any) => pair.qqChatType !== 'private');
 
                     let success = 0;
                     let fail = 0;
 
-                    for (const pair of allPairs) {
+                    for (const pair of groupPairs) {
                         try {
                             const qqGroupId = pair.qqRoomId.toString();
                             const tgChatId = pair.tgChatId.toString();
@@ -148,7 +153,7 @@ const plugin = definePlugin({
                         }
                     }
 
-                    await event.reply(`✅ 刷新完成\n成功: ${success}\n失败: ${fail}\n总计: ${allPairs.length}`);
+                    await event.reply(`✅ 刷新完成\n成功: ${success}\n失败: ${fail}\n总计: ${groupPairs.length}`);
                 } catch (error) {
                     ctx.logger.error('Failed to refresh all:', error);
                     await event.reply('❌ 批量刷新失败');

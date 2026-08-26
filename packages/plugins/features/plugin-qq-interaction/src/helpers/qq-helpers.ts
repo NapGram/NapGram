@@ -92,6 +92,10 @@ export function findBoundQQGroup(event: MessageEvent): { qqGroupId?: string; api
         return { error: `❌ 当前聊天未绑定任何 QQ 群 (ID: ${event.channelId}, Topic: ${event.threadId ?? 'none'})\n已加载 ${allPairs.length} 个绑定: ${pairInfo}` };
     }
 
+    if (pair.qqChatType && pair.qqChatType !== 'group') {
+        return { error: '❌ 当前聊天绑定的是 QQ 好友，QQ 群交互指令不可用' };
+    }
+
     return { qqGroupId: pair.qqRoomId.toString(), apiKey: pair.apiKey };
 }
 
