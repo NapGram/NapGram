@@ -169,8 +169,6 @@
         "@napgram/database": "workspace:*",
         "@napgram/env-kit": "workspace:*",
         "@napgram/logger-kit": "workspace:*",
-        "@napgram/qq-client": "workspace:^",
-        "@napgram/telegram-client": "workspace:^",
         "drizzle-orm": "^0.45.1",
       },
       "devDependencies": {

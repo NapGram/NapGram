@@ -1,55 +1,55 @@
+import '@fastify/cookie'
 import type { FastifyReply, FastifyRequest } from 'fastify'
-import type { } from '@fastify/cookie'
-import { AuthService, TokenManager } from './index.js'
+import '@fastify/cookie'
+import type { AdminPermission, AdminRole } from './authorization.js'
+import { hasAdminPermission } from './authorization.js'
+import { AuthService } from './AuthService.js'
+import { TokenManager } from './TokenManager.js'
+
+function getRequestToken(request: FastifyRequest): string | undefined {
+  const authHeader = request.headers.authorization
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice('Bearer '.length).trim()
+    if (token)
+      return token
+  }
+
+  const cookieToken = request.cookies?.admin_token
+  return cookieToken ? String(cookieToken) : undefined
+}
 
 /**
- * 认证中间件 - 验证请求是否携带有效 token
+ * 认证中间件 - 只接受 Authorization Bearer 或 HttpOnly cookie。
+ * token 不再从 query 参数读取，避免出现在 URL、代理和访问日志中。
  */
-export async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
-  // 从 header 或 cookie 获取 token
-  let token: string | undefined
-
-  // 1. Authorization header
-  const authHeader = request.headers.authorization
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.substring(7)
-  }
-
-  // 2. Cookie
-  if (!token && request.cookies.admin_token) {
-    token = request.cookies.admin_token
-  }
-
-  // 3. Query parameter (仅用于某些特殊场景，如下载链接)
-  if (!token && request.query && typeof request.query === 'object' && 'token' in request.query) {
-    token = request.query.token as string
-  }
+export async function authMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<boolean> {
+  const token = getRequestToken(request)
 
   if (!token) {
-    return reply.code(401).send({
+    await reply.code(401).send({
       error: 'Unauthorized',
       message: 'No authentication token provided',
     })
+    return false
   }
 
-  // 验证 token
   const authResult = await TokenManager.verifyToken(token)
 
   if (!authResult) {
-    return reply.code(401).send({
+    await reply.code(401).send({
       error: 'Unauthorized',
       message: 'Invalid or expired token',
     })
+    return false
   }
 
-  // 将认证信息附加到 request 对象
-  (request as any).auth = {
+  ;(request as any).auth = {
     type: authResult.type,
     userId: authResult.userId,
+    role: authResult.role,
     token,
   }
 
-  // 记录 API 访问日志（可选）
   if (authResult.userId) {
     const action = `api:${request.method}:${request.url}`
     await AuthService.logAudit(
@@ -62,43 +62,56 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
       request.headers['user-agent'],
     )
   }
+
+  return true
 }
 
 /**
- * 可选认证中间件 - token 有效时附加认证信息，无效时继续
+ * 细粒度管理员授权中间件。
  */
-export async function optionalAuthMiddleware(request: FastifyRequest, _reply: FastifyReply) {
-  let token: string | undefined
+export function requirePermission(permission: AdminPermission) {
+  return async (request: FastifyRequest, reply: FastifyReply): Promise<boolean> => {
+    if (!await authMiddleware(request, reply))
+      return false
 
-  const authHeader = request.headers.authorization
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    token = authHeader.substring(7)
+    const auth = (request as any).auth as { role?: AdminRole } | undefined
+    if (!hasAdminPermission(auth?.role, permission)) {
+      await reply.code(403).send({
+        error: 'Forbidden',
+        message: `Missing permission: ${permission}`,
+      })
+      return false
+    }
+
+    return true
   }
+}
 
-  if (!token && request.cookies.admin_token) {
-    token = request.cookies.admin_token
-  }
+/**
+ * 可选认证中间件 - token 有效时附加认证信息，无效时继续。
+ */
+export async function optionalAuthMiddleware(request: FastifyRequest, _reply: FastifyReply): Promise<void> {
+  const token = getRequestToken(request)
+  if (!token)
+    return
 
-  if (token) {
-    const authResult = await TokenManager.verifyToken(token)
-    if (authResult) {
-      (request as any).auth = {
-        type: authResult.type,
-        userId: authResult.userId,
-        token,
-      }
+  const authResult = await TokenManager.verifyToken(token)
+  if (authResult) {
+    ;(request as any).auth = {
+      type: authResult.type,
+      userId: authResult.userId,
+      role: authResult.role,
+      token,
     }
   }
 }
 
-/**
- * TypeScript 类型扩展
- */
 declare module 'fastify' {
   interface FastifyRequest {
     auth?: {
       type: 'access' | 'session' | 'env'
       userId?: number
+      role: AdminRole
       token: string
     }
   }

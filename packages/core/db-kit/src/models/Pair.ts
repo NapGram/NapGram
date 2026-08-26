@@ -1,10 +1,20 @@
-import type { Friend, Group, IQQClient } from '@napgram/qq-client'
-import { TelegramChat } from '@napgram/telegram-client'
 import { Buffer } from 'node:buffer'
 import crypto from 'node:crypto'
 import db, { schema, eq } from '../db.js'
 import { flags } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
+
+export type ForwardPairQqRoom = { uin: number } | { gid: number }
+
+export interface ForwardPairTelegramChat {
+  readonly id: number | bigint | string
+  editTitle(title: string): Promise<unknown>
+  setProfilePhoto(photo: Buffer): Promise<unknown>
+}
+
+export interface ForwardPairQqClient {
+  getGroupInfo(groupId: string): Promise<{ name?: string } | null | undefined>
+}
 
 const log = getLogger('ForwardPair')
 
@@ -17,7 +27,7 @@ function md5(input: crypto.BinaryLike) {
   return hash.update(bytes).digest()
 }
 
-function getAvatarUrl(room: number | bigint | { uin: number } | { gid: number }): string {
+function getAvatarUrl(room: number | bigint | ForwardPairQqRoom): string {
   if (!room) return ''
   if (typeof room === 'object' && 'uin' in room) room = room.uin
   if (typeof room === 'object' && 'gid' in room) room = -room.gid
@@ -26,7 +36,7 @@ function getAvatarUrl(room: number | bigint | { uin: number } | { gid: number })
     : `https://q1.qlogo.cn/g?b=qq&nk=${room}&s=0`
 }
 
-async function getAvatar(room: number | bigint | { uin: number } | { gid: number }) {
+async function getAvatar(room: number | bigint | ForwardPairQqRoom) {
   const res = await fetch(getAvatarUrl(room))
   if (!res.ok) {
     throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
@@ -46,16 +56,16 @@ export class Pair {
     return this.dbIdMap.get(dbId)
   }
 
-  public readonly instanceMapForTg = {} as { [tgUserId: string]: Group }
+  public readonly instanceMapForTg = {} as { [tgUserId: string]: ForwardPairQqRoom }
 
   constructor(
-    public readonly qq: Friend | Group,
-    private _tg: TelegramChat,
-    public readonly tgUser: TelegramChat,
+    public readonly qq: ForwardPairQqRoom,
+    private _tg: ForwardPairTelegramChat,
+    public readonly tgUser: ForwardPairTelegramChat,
     public dbId: number,
     private _flags: number,
     public readonly apiKey: string,
-    public readonly qqClient: IQQClient,
+    public readonly qqClient: ForwardPairQqClient,
   ) {
     if (apiKey) {
       Pair.apiKeyMap.set(apiKey, this)
@@ -111,7 +121,7 @@ export class Pair {
     return this._tg
   }
 
-  set tg(value: TelegramChat) {
+  set tg(value: ForwardPairTelegramChat) {
     this._tg = value
     db.update(schema.forwardPair)
       .set({ tgChatId: BigInt(value.id) })

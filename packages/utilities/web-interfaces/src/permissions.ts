@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { hasAdminPermission } from '@napgram/auth-kit'
 import { z } from 'zod'
 import { ApiResponse, drizzleDb, getLogger, sql } from './web-deps.js'
 
@@ -13,15 +14,22 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
         const header = String(request.headers?.authorization || '')
         const bearer = header.startsWith('Bearer ') ? header.slice('Bearer '.length) : ''
         const cookieToken = request.cookies?.admin_token ? String(request.cookies.admin_token) : ''
-        const queryToken = request.query && typeof request.query === 'object' && 'token' in request.query ? String(request.query.token) : ''
-        const token = bearer || cookieToken || queryToken
+        const token = bearer || cookieToken
 
         const direct = String(process.env.PLUGIN_ADMIN_TOKEN || '').trim()
-        if (direct && token && token === direct)
+        if (direct && token && token === direct) {
+            request.auth = { type: 'env', role: 'super_admin', token }
             return
+        }
 
         const { authMiddleware } = await import('@napgram/auth-kit')
-        await authMiddleware(request, reply)
+        if (!await authMiddleware(request, reply))
+            return
+
+        if (!hasAdminPermission(request.auth?.role, 'permissions:manage')) {
+            await reply.code(403).send({ error: 'Forbidden', message: 'Missing permission: permissions:manage' })
+            return
+        }
     }
 
     // ========== 用户权限管理 ==========
@@ -74,7 +82,7 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
 
             const { userId, permissionLevel, instanceId, expiresInDays, note } = body.data
             const targetInstanceId = instanceId ?? 0
-            const operatorId = (request as any).user?.userId || 'system'
+            const operatorId = (request as any).auth?.userId || 'system'
 
             const db = drizzleDb
             const expiresAt = expiresInDays
@@ -117,7 +125,7 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
             const userId = String((request.params as any).userId || '').trim()
             const { instanceId } = request.query as { instanceId?: string }
             const targetInstanceId = instanceId !== undefined ? parseInt(instanceId) : 0
-            const operatorId = (request as any).user?.userId || 'system'
+            const operatorId = (request as any).auth?.userId || 'system'
 
             if (!userId) {
                 return reply.code(400).send(ApiResponse.error('Missing userId'))

@@ -269,6 +269,7 @@ export const adminUser = pgTable('AdminUser', {
     passwordHash: text('passwordHash').notNull(),
     displayName: text('displayName'),
     email: text('email'),
+    role: text('role').default('admin').notNull(),
     isActive: boolean('isActive').default(true).notNull(),
     createdAt: timestamp('createdAt').defaultNow().notNull(),
     updatedAt: timestamp('updatedAt').defaultNow().notNull(), //$updatedAt equivalent needs trigger or app logic

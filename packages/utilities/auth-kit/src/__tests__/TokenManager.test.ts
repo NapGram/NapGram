@@ -17,6 +17,9 @@ vi.mock('../shared-runtime.js', () => ({
       adminSession: {
         findFirst: vi.fn().mockResolvedValue(null),
       },
+      adminUser: {
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
     },
   },
   schema: {

@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { env } from './web-deps.js'
 
 /**
@@ -14,7 +14,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取最近的系统日志
    */
   fastify.get('/api/admin/logs', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('logs:read'),
   }, async (request) => {
     const { limit = 100, level } = request.query as { limit?: number, level?: string }
 

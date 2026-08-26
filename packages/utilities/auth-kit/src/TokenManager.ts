@@ -1,4 +1,5 @@
 import { randomBytes, scryptSync } from 'node:crypto'
+import { normalizeAdminRole, type AdminRole } from './authorization.js'
 import process from 'node:process'
 import { and, db, eq, gt, isNull, lt, or, schema } from './shared-runtime.js'
 
@@ -19,7 +20,7 @@ export class TokenManager {
   /**
    * 验证 Access Token
    */
-  static async verifyAccessToken(token: string): Promise<boolean> {
+  static async verifyAccessToken(token: string): Promise<{ createdBy?: number } | null> {
     const rows = await db.select().from(schema.accessToken).where(and(
       eq(schema.accessToken.token, token),
       eq(schema.accessToken.isActive, true),
@@ -36,16 +37,16 @@ export class TokenManager {
         .set({ lastUsedAt: new Date() })
         .where(eq(schema.accessToken.id, accessToken.id))
         .catch(() => { })
-      return true
+      return { createdBy: accessToken.createdBy ?? undefined }
     }
 
-    return false
+    return null
   }
 
   /**
    * 验证 Session Token
    */
-  static async verifySessionToken(token: string): Promise<{ userId: number } | null> {
+  static async verifySessionToken(token: string): Promise<{ userId: number, role: AdminRole } | null> {
     const session = await db.query.adminSession.findFirst({
       where: and(
         eq(schema.adminSession.token, token),
@@ -57,7 +58,7 @@ export class TokenManager {
     })
 
     if (session && session.user.isActive) {
-      return { userId: session.user.id }
+      return { userId: session.user.id, role: normalizeAdminRole(session.user.role) }
     }
 
     return null
@@ -148,22 +149,34 @@ export class TokenManager {
   /**
    * 验证 token（统一入口，支持 Access Token、Session Token、Env Token）
    */
-  static async verifyToken(token: string): Promise<{ type: 'access' | 'session' | 'env', userId?: number } | null> {
+  static async verifyToken(token: string): Promise<{ type: 'access' | 'session' | 'env', userId?: number, role: AdminRole } | null> {
     // 1. 检查环境变量 token
     const envToken = this.getEnvAdminToken()
     if (envToken && token === envToken) {
-      return { type: 'env' }
+      return { type: 'env', role: 'super_admin' }
     }
 
     // 2. 检查 Access Token
-    if (await this.verifyAccessToken(token)) {
-      return { type: 'access' }
+    const accessToken = await this.verifyAccessToken(token)
+    if (accessToken) {
+      // 未绑定创建者的历史 access token 保持完整管理员能力；绑定创建者的 token 继承其角色。
+      if (accessToken.createdBy === undefined) {
+        return { type: 'access', role: 'super_admin' }
+      }
+      const user = await db.query.adminUser.findFirst({
+        where: eq(schema.adminUser.id, accessToken.createdBy),
+        columns: { id: true, isActive: true, role: true },
+      })
+      if (user?.isActive) {
+        return { type: 'access', userId: user.id, role: normalizeAdminRole(user.role) }
+      }
+      return null
     }
 
     // 3. 检查 Session Token
     const sessionData = await this.verifySessionToken(token)
     if (sessionData) {
-      return { type: 'session', userId: sessionData.userId }
+      return { type: 'session', userId: sessionData.userId, role: sessionData.role }
     }
 
     return null

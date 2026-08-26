@@ -1,16 +1,16 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import type { FastifyInstance } from 'fastify'
 import { Buffer } from 'node:buffer'
 import { createWriteStream } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import process from 'node:process'
 import multipart from '@fastify/multipart'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { getLogger } from '@napgram/logger-kit'
 
 const logger = getLogger('FileAPI')
 
-const DATA_ROOT = process.env.FILE_MANAGER_ROOT || '/app/data'
+const DATA_ROOT = path.resolve(process.env.FILE_MANAGER_ROOT || '/app/data')
 
 const FILE_SIZE_LIMITS = {
   read: 10 * 1024 * 1024,
@@ -22,8 +22,9 @@ function sanitizePath(userPath: string): { allowed: boolean, fullPath: string, e
   try {
     const normalized = path.normalize(userPath)
     const fullPath = path.resolve(DATA_ROOT, normalized.startsWith('/') ? normalized.slice(1) : normalized)
+    const relativePath = path.relative(DATA_ROOT, fullPath)
 
-    if (!fullPath.startsWith(DATA_ROOT)) {
+    if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
       return { allowed: false, fullPath: '', error: 'Access denied: path outside allowed root' }
     }
 
@@ -31,19 +32,6 @@ function sanitizePath(userPath: string): { allowed: boolean, fullPath: string, e
   }
   catch (error) {
     return { allowed: false, fullPath: '', error: error instanceof Error ? error.message : 'Invalid path' }
-  }
-}
-
-function checkPermission(requiredPermission: string) {
-  return async (request: FastifyRequest, reply: FastifyReply) => {
-    void requiredPermission
-    await authMiddleware(request, reply)
-
-    const auth = (request as any).auth
-
-    if (auth?.type === 'env' || auth?.type === 'token') {
-      // authorized
-    }
   }
 }
 
@@ -55,7 +43,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     },
   })
 
-  app.get('/api/files/list', { preHandler: checkPermission('file:read') }, async (request, reply) => {
+  app.get('/api/files/list', { preHandler: requirePermission('files:read') }, async (request, reply) => {
     const { path: reqPath } = request.query as { path?: string }
 
     if (!reqPath) {
@@ -105,7 +93,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
   })
 
-  app.get('/api/files/read', { preHandler: checkPermission('file:read') }, async (request, reply) => {
+  app.get('/api/files/read', { preHandler: requirePermission('files:read') }, async (request, reply) => {
     const { path: reqPath } = request.query as { path?: string }
 
     if (!reqPath) {
@@ -150,7 +138,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
   })
 
-  app.post('/api/files/write', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+  app.post('/api/files/write', { preHandler: requirePermission('files:write') }, async (request, reply) => {
     const { path: reqPath, content } = request.body as { path?: string, content?: string }
 
     if (!reqPath || content === undefined) {
@@ -186,7 +174,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
   })
 
-  app.post('/api/files/create', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+  app.post('/api/files/create', { preHandler: requirePermission('files:write') }, async (request, reply) => {
     const { path: reqPath, type, content = '' } = request.body as {
       path?: string
       type?: 'file' | 'directory'
@@ -226,7 +214,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
   /* c8 ignore stop */
 
   /* c8 ignore start */
-  app.delete('/api/files/delete', { preHandler: checkPermission('file:delete') }, async (request, reply) => {
+  app.delete('/api/files/delete', { preHandler: requirePermission('files:delete') }, async (request, reply) => {
     const { path: reqPath, recursive = false } = request.body as {
       path?: string
       recursive?: boolean
@@ -263,7 +251,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
   })
 
-  app.post('/api/files/move', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+  app.post('/api/files/move', { preHandler: requirePermission('files:write') }, async (request, reply) => {
     const { from, to } = request.body as { from?: string, to?: string }
 
     if (!from || !to) {
@@ -296,7 +284,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
   })
 
-  app.get('/api/files/download', { preHandler: checkPermission('file:read') }, async (request, reply) => {
+  app.get('/api/files/download', { preHandler: requirePermission('files:read') }, async (request, reply) => {
     const { path: reqPath } = request.query as { path?: string }
 
     if (!reqPath) {
@@ -332,7 +320,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
   })
 
-  app.post('/api/files/upload', { preHandler: checkPermission('file:write') }, async (request, reply) => {
+  app.post('/api/files/upload', { preHandler: requirePermission('files:write') }, async (request, reply) => {
     try {
       const data = await request.file()
 
@@ -352,7 +340,14 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
 
       await fs.mkdir(targetDir, { recursive: true })
 
-      const filename = data.filename
+      const filename = path.basename(data.filename.replaceAll('\\', '/'))
+      if (!filename || filename === '.' || filename === '..') {
+        return reply.status(400).send({
+          success: false,
+          error: 'Invalid file name',
+        })
+      }
+
       const fullPath = path.join(targetDir, filename)
 
       let uploadedSize = 0

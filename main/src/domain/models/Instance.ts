@@ -3,31 +3,19 @@ import type { AppLogger } from '@napgram/logger-kit'
 import type Telegram from '@napgram/telegram-client'
 import type { CommandsFeature, ForwardFeature, MediaFeature } from '../../features/runtime/index.js'
 import type { IQQClient } from '../../infrastructure/clients/qq'
+import type { InstanceLifecycleStatus, PersonalModeDiagnostics, PersonalUserBotStatus, WorkMode } from './instance-types.js'
 import { db, eq, schema } from '@napgram/db-kit'
 import { getLogger } from '@napgram/logger-kit'
 import { getEventPublisher } from '@napgram/plugin-kit'
 import { instanceRegistry } from '../../features/runtime/instance-registry'
 import { ConnectionSupervisor } from '../services/ConnectionSupervisor.js'
 import { PersonalUserBotService } from '../services/PersonalUserBotService.js'
+
 import { withDbRetry } from './services/db-retry'
 
-export type WorkMode = 'personal' | 'group' | 'public'
-export type InstanceLifecycleStatus = 'starting' | 'running' | 'stopping' | 'stopped' | 'error'
-export type PersonalUserBotStatus = 'disabled' | 'not-configured' | 'starting' | 'running' | 'stopped' | 'error'
+export type { InstanceLifecycleStatus, PersonalModeDiagnostics, PersonalUserBotStatus, WorkMode } from './instance-types.js'
 
 const CONFIGURED_WORK_MODES = new Set(['personal', 'group', 'public'])
-
-export interface PersonalModeDiagnostics {
-  workMode: WorkMode
-  userBotRequired: boolean
-  userSessionId: number | null
-  userBotStatus: PersonalUserBotStatus
-  hasTgUserBot: boolean
-  canAutoProvisionPairs: boolean
-  manualPairingAvailable: boolean
-  reason?: string
-  error?: string
-}
 
 export default class Instance {
   private _owner = 0

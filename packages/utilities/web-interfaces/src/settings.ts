@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { z } from 'zod'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { env } from './web-deps.js'
 
 /**
@@ -31,7 +31,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取系统配置
    */
   fastify.get('/api/admin/settings', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('settings:read'),
   }, async () => {
     try {
       const data = await fs.readFile(configFile, 'utf-8')
@@ -69,7 +69,7 @@ export default async function (fastify: FastifyInstance) {
    * 更新系统配置
    */
   fastify.put('/api/admin/settings', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('settings:write'),
   }, async (request, reply) => {
     try {
       const body = configSchema.parse(request.body)

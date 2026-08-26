@@ -6,6 +6,7 @@ import { convert } from '@napgram/media-kit'
 import { ApiResponse } from './api-response.js'
 
 export { ApiResponse }
+export { requirePermission } from '@napgram/auth-kit'
 export { and, count, db, desc, drizzleDb, eq, gte, inArray, like, lt, lte, or, schema, sql }
 export { env }
 export { getSystemOwners }

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify'
+import { hasAdminPermission } from '@napgram/auth-kit'
 import { Buffer } from 'node:buffer'
 import process from 'node:process'
 import { z } from 'zod'
@@ -24,15 +25,22 @@ export default async function (fastify: FastifyInstance) {
     const header = String(request.headers?.authorization || '')
     const bearer = header.startsWith('Bearer ') ? header.slice('Bearer '.length) : ''
     const cookieToken = request.cookies?.admin_token ? String(request.cookies.admin_token) : ''
-    const queryToken = request.query && typeof request.query === 'object' && 'token' in request.query ? String(request.query.token) : ''
-    const token = bearer || cookieToken || queryToken
+    const token = bearer || cookieToken
 
     const direct = String(process.env.PLUGIN_ADMIN_TOKEN || '').trim()
-    if (direct && token && token === direct)
+    if (direct && token && token === direct) {
+      request.auth = { type: 'env', role: 'super_admin', token }
       return
+    }
 
     const { authMiddleware } = await import('@napgram/auth-kit')
-    await authMiddleware(request, reply)
+    if (!await authMiddleware(request, reply))
+      return
+
+    if (!hasAdminPermission(request.auth?.role, 'marketplaces:manage')) {
+      await reply.code(403).send({ error: 'Forbidden', message: 'Missing permission: marketplaces:manage' })
+      return
+    }
   }
 
   const marketplaceUpsertSchema = z.object({

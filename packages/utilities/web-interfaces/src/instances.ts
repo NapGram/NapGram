@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { ApiResponse, count, db, desc, env, eq, getSystemOwners, schema } from './web-deps.js'
 import { createInstanceRuntimeContext } from './runtime-context.js'
 
@@ -130,7 +130,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取所有实例
    */
   fastify.get('/api/admin/instances', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:read'),
   }, async (request) => {
     const { page = 1, pageSize = 20 } = request.query as any
 
@@ -179,7 +179,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取单个实例详情
    */
   fastify.get('/api/admin/instances/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:read'),
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const instanceId = Number.parseInt(id)
@@ -215,7 +215,7 @@ export default async function (fastify: FastifyInstance) {
    * 创建新实例
    */
   fastify.post('/api/admin/instances', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     try {
       const body = createInstanceSchema.parse(request.body)
@@ -280,7 +280,7 @@ export default async function (fastify: FastifyInstance) {
    * 更新实例
    */
   fastify.put('/api/admin/instances/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string }
@@ -379,7 +379,7 @@ export default async function (fastify: FastifyInstance) {
    * 删除实例
    */
   fastify.delete('/api/admin/instances/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const auth = (request as any).auth
@@ -422,7 +422,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取所有 QQ Bot 配置
    */
   fastify.get('/api/admin/qqbots', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:read'),
   }, async () => {
     const bots = await db.query.qqBot.findMany({
       with: {
@@ -450,7 +450,8 @@ export default async function (fastify: FastifyInstance) {
    * 创建 QQ Bot 配置
    */
   fastify.post('/api/admin/qqbots', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
+
   }, async (request, reply) => {
     try {
       const body = createQqBotSchema.parse(request.body)
@@ -499,7 +500,7 @@ export default async function (fastify: FastifyInstance) {
    * 发起 TG UserBot 登录流程，提交手机号
    */
   fastify.post('/api/admin/instances/:id/userbot/login', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
     const body = z.object({
@@ -583,7 +584,7 @@ export default async function (fastify: FastifyInstance) {
    * 提交登录验证码
    */
   fastify.post('/api/admin/instances/:id/userbot/login/code', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
     const body = z.object({
@@ -612,7 +613,7 @@ export default async function (fastify: FastifyInstance) {
    * 提交 2FA 密码
    */
   fastify.post('/api/admin/instances/:id/userbot/login/password', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
     const body = z.object({
@@ -641,7 +642,7 @@ export default async function (fastify: FastifyInstance) {
    * 查询登录状态
    */
   fastify.get('/api/admin/instances/:id/userbot/login/status', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:read'),
   }, async (request) => {
     const instanceId = Number((request.params as any).id)
     const state = pendingLogins.get(instanceId)
@@ -665,7 +666,7 @@ export default async function (fastify: FastifyInstance) {
    * 断开 TG UserBot
    */
   fastify.post('/api/admin/instances/:id/userbot/stop', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
 
@@ -685,7 +686,7 @@ export default async function (fastify: FastifyInstance) {
    * 启动已配置的 TG UserBot
    */
   fastify.post('/api/admin/instances/:id/userbot/start', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('instances:write'),
   }, async (request, reply) => {
     const instanceId = Number((request.params as any).id)
     try {

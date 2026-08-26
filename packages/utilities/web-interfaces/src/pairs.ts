@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { groupInfoCache } from './web-cache.js'
 import { and, ApiResponse, count, db, desc, eq, getLogger, or, schema } from './web-deps.js'
 import { createInstanceRuntimeContext } from './runtime-context.js'
@@ -202,7 +202,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取所有配对
    */
   fastify.get('/api/admin/pairs', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:read'),
   }, async (request) => {
     const { page = 1, pageSize = 20, instanceId, search, withNames = 'false' } = request.query as any
     const pageNum = typeof page === 'string' ? Number.parseInt(page, 10) : page
@@ -294,7 +294,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取单个配对详情
    */
   fastify.get('/api/admin/pairs/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:read'),
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
 
@@ -347,7 +347,7 @@ export default async function (fastify: FastifyInstance) {
    * 创建新配对
    */
   fastify.post('/api/admin/pairs', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:write'),
   }, async (request, reply) => {
     try {
       const body = createPairSchema.parse(request.body)
@@ -436,7 +436,7 @@ export default async function (fastify: FastifyInstance) {
    * 更新配对
    */
   fastify.put('/api/admin/pairs/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:write'),
   }, async (request, reply) => {
     try {
       const { id } = request.params as { id: string }
@@ -533,7 +533,7 @@ export default async function (fastify: FastifyInstance) {
    * 删除配对
    */
   fastify.delete('/api/admin/pairs/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:write'),
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
     const auth = (request as any).auth
@@ -647,7 +647,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取配对的统计信息
    */
   fastify.get('/api/admin/pairs/:id/statistics', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:read'),
   }, async (request, reply) => {
     const { id } = request.params as { id: string }
 
@@ -702,7 +702,7 @@ export default async function (fastify: FastifyInstance) {
    * 手动为指定的 QQ 号进行一键配对建群 (One-click Provisioning)
    */
   fastify.post('/api/admin/pairs/provision', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('pairs:write'),
   }, async (request, reply) => {
     try {
       const body = provisionSchema.parse(request.body)

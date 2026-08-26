@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authMiddleware, TokenManager } from '@napgram/auth-kit'
+import { requirePermission, TokenManager } from '@napgram/auth-kit'
 import { ApiResponse, db, desc, eq, schema } from './web-deps.js'
 
 function maskToken(token: string) {
@@ -35,7 +35,7 @@ export default async function (fastify: FastifyInstance) {
   fastify.get(
     '/api/admin/tokens',
     {
-      preHandler: authMiddleware,
+      preHandler: requirePermission('tokens:manage'),
     },
     async () => {
       const tokens = await db.select({
@@ -63,7 +63,7 @@ export default async function (fastify: FastifyInstance) {
   fastify.post(
     '/api/admin/tokens',
     {
-      preHandler: authMiddleware,
+      preHandler: requirePermission('tokens:manage'),
     },
     async (request, reply) => {
       try {
@@ -109,7 +109,7 @@ export default async function (fastify: FastifyInstance) {
   fastify.delete(
     '/api/admin/tokens/:id',
     {
-      preHandler: authMiddleware,
+      preHandler: requirePermission('tokens:manage'),
     },
     async (request, reply) => {
       try {

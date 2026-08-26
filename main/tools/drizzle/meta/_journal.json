@@ -36,6 +36,13 @@
       "when": 1780213732932,
       "tag": "0004_forward_pair_tg_null_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787731800000,
+      "tag": "0005_admin_user_role",
+      "breakpoints": true
     }
   ]
 }

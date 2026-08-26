@@ -1,4 +1,6 @@
 import process from 'node:process'
+import type { AdminRole } from './authorization.js'
+import { normalizeAdminRole } from './authorization.js'
 import { count, db, eq, getLogger, schema, stringifyBigInts } from './shared-runtime.js'
 import { PasswordUtil, TokenManager } from './TokenManager.js'
 
@@ -54,7 +56,7 @@ export class AuthService {
   /**
    * Token 登录（Access Token 或 Session Token）
    */
-  static async loginWithToken(token: string): Promise<{ type: 'access' | 'session' | 'env', userId?: number } | null> {
+  static async loginWithToken(token: string): Promise<{ type: 'access' | 'session' | 'env', userId?: number, role: AdminRole } | null> {
     return await TokenManager.verifyToken(token)
   }
 
@@ -80,7 +82,8 @@ export class AuthService {
     displayName?: string,
     email?: string,
     createdBy?: number,
-  ): Promise<{ id: number, username: string }> {
+    role: AdminRole = 'admin',
+  ): Promise<{ id: number, username: string, role: AdminRole }> {
     const passwordHash = PasswordUtil.hashPassword(password)
 
     const userArr = await db.insert(schema.adminUser).values({
@@ -88,6 +91,7 @@ export class AuthService {
       passwordHash,
       displayName,
       email,
+      role: normalizeAdminRole(role),
     }).returning()
     const user = userArr[0]
 
@@ -100,6 +104,7 @@ export class AuthService {
     return {
       id: user.id,
       username: user.username,
+      role: normalizeAdminRole(user.role),
     }
   }
 

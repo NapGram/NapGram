@@ -12,8 +12,6 @@ export default defineConfig({
       '@napgram/database': packageSrc('clients', 'database'),
       '@napgram/env-kit': packageSrc('core', 'env-kit'),
       '@napgram/logger-kit': packageSrc('core', 'logger-kit'),
-      '@napgram/qq-client': packageSrc('clients', 'qq-client'),
-      '@napgram/telegram-client': packageSrc('clients', 'telegram-client'),
     },
   },
   test: {

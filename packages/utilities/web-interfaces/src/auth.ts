@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import process from 'node:process'
 import '@fastify/cookie'
 import { z } from 'zod'
-import { AuthService } from '@napgram/auth-kit'
+import { AuthService, requirePermission } from '@napgram/auth-kit'
 import { ApiResponse, db, eq, schema } from './web-deps.js'
 
 /**
@@ -23,6 +23,7 @@ export default async function (fastify: FastifyInstance) {
     password: z.string().min(6),
     displayName: z.string().optional(),
     email: z.string().email().optional(),
+    role: z.enum(['admin', 'moderator', 'viewer']).default('admin'),
   })
 
   const changePasswordSchema = z.object({
@@ -105,6 +106,7 @@ export default async function (fastify: FastifyInstance) {
         success: true,
         type: result.type,
         userId: result.userId,
+        role: result.role,
       }
     }
     catch (error) {
@@ -141,16 +143,14 @@ export default async function (fastify: FastifyInstance) {
    * 获取当前用户信息（需要认证）
    */
   fastify.get('/api/auth/me', {
-    preHandler: async (request, reply) => {
-      const { authMiddleware } = await import('@napgram/auth-kit')
-      await authMiddleware(request, reply)
-    },
+    preHandler: requirePermission('admin:read'),
   }, async (request) => {
     const auth = (request as any).auth
 
     if (auth.type === 'env' || auth.type === 'access') {
       return {
         type: auth.type,
+        role: auth.role,
         user: null,
       }
     }
@@ -163,12 +163,14 @@ export default async function (fastify: FastifyInstance) {
           username: true,
           displayName: true,
           email: true,
+          role: true,
           createdAt: true,
         },
       })
 
       return {
         type: auth.type,
+        role: auth.role,
         user,
       }
     }
@@ -181,10 +183,7 @@ export default async function (fastify: FastifyInstance) {
    * 创建新管理员用户（需要认证）
    */
   fastify.post('/api/auth/users', {
-    preHandler: async (request, reply) => {
-      const { authMiddleware } = await import('@napgram/auth-kit')
-      await authMiddleware(request, reply)
-    },
+    preHandler: requirePermission('users:manage'),
   }, async (request, reply) => {
     try {
       const body = createUserSchema.parse(request.body)
@@ -196,6 +195,7 @@ export default async function (fastify: FastifyInstance) {
         body.displayName,
         body.email,
         auth.userId,
+        body.role,
       )
 
       return {
@@ -227,7 +227,8 @@ export default async function (fastify: FastifyInstance) {
   fastify.post('/api/auth/change-password', {
     preHandler: async (request, reply) => {
       const { authMiddleware } = await import('@napgram/auth-kit')
-      await authMiddleware(request, reply)
+      if (!await authMiddleware(request, reply))
+        return
     },
   }, async (request, reply) => {
     try {

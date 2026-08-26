@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { processNestedForward } from '@napgram/message-kit'
 import { TTLCache } from './web-cache.js'
 import {
@@ -92,7 +92,7 @@ export default async function (fastify: FastifyInstance) {
 
   // 管理端 - 消息列表
   fastify.get('/api/admin/messages', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('messages:read'),
   }, async (request: FastifyRequest) => {
     const { page = 1, limit = 20, search, from, to, sortBy = 'id', sortDir = 'desc' } = request.query as any
     const take = Math.min(1000, Math.max(Number.parseInt(String(limit)) || 20, 1))
@@ -158,7 +158,7 @@ export default async function (fastify: FastifyInstance) {
 
   // 补发/重试转发
   fastify.post('/api/admin/messages/retry', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('messages:write'),
   }, async (request: FastifyRequest, reply) => {
     const { messageId } = request.body as any
     if (!messageId) {
@@ -186,7 +186,7 @@ export default async function (fastify: FastifyInstance) {
 
   // 转发搜索/预览
   fastify.post('/api/admin/messages/forward-preview', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('messages:write'),
   }, async (request: FastifyRequest, reply) => {
     const { content } = request.body as any
 

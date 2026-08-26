@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { ApiResponse, and, count, db, desc, eq, getLogger, schema, sql } from './web-deps.js'
 import { stringifyBigInts } from './web-http.js'
 
@@ -39,7 +39,7 @@ export default async function (fastify: FastifyInstance) {
   fastify.get<{
     Querystring: { schema?: string }
   }>('/api/admin/database/tables', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:read'),
   }, async (request) => {
     try {
       const schemaName = request.query.schema || 'public'
@@ -65,7 +65,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取 schema 列表
    */
   fastify.get('/api/admin/database/schemas', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:read'),
   }, async () => {
     try {
       const result = await db.execute(sql`
@@ -94,7 +94,7 @@ export default async function (fastify: FastifyInstance) {
     Params: { tableName: string }
     Querystring: { schema?: string }
   }>('/api/admin/database/tables/:tableName/schema', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:read'),
   }, async (request, reply) => {
     const { tableName } = request.params
     const schemaName = request.query.schema || 'public'
@@ -152,7 +152,7 @@ column_name,
       schema?: string
     }
   }>('/api/admin/database/tables/:tableName/data', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:read'),
   }, async (request, reply) => {
     const { tableName } = request.params
     const {
@@ -251,7 +251,7 @@ column_name,
       readOnly?: boolean
     }
   }>('/api/admin/database/query', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:write'),
   }, async (request, reply) => {
     try {
       const { sql: rawSql, readOnly } = querySchema.parse(request.body)
@@ -328,7 +328,7 @@ column_name,
     Querystring: { schema?: string }
     Body: Record<string, any>
   }>('/api/admin/database/tables/:tableName/rows/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:write'),
   }, async (request, reply) => {
     const { tableName, id } = request.params
     const schemaName = request.query.schema || 'public'
@@ -397,7 +397,7 @@ column_name,
     Params: { tableName: string, id: string }
     Querystring: { schema?: string }
   }>('/api/admin/database/tables/:tableName/rows/:id', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('database:write'),
   }, async (request, reply) => {
     const { tableName, id } = request.params
     const schemaName = request.query.schema || 'public'

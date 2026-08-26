@@ -1,6 +1,6 @@
 import type { AppLogger } from '@napgram/logger-kit'
 import type Telegram from '@napgram/telegram-client'
-import type { PersonalModeDiagnostics, PersonalUserBotStatus, WorkMode } from '../models/Instance.js'
+import type { PersonalModeDiagnostics, PersonalUserBotStatus, WorkMode } from '../models/instance-types.js'
 import { telemetry } from '@napgram/logger-kit'
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 

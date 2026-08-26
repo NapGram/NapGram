@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import { and, count, db, desc, eq, gte, lte, or, schema, sql } from './web-deps.js'
 import { createAdminQueryContext } from './runtime-context.js'
 
@@ -13,7 +13,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取系统概览统计
    */
   fastify.get('/api/admin/statistics/overview', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('statistics:read'),
   }, async () => {
     const startOfToday = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)
     const safeCount = async (target: any, where?: any) => {
@@ -110,7 +110,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取消息趋势（按天）
    */
   fastify.get('/api/admin/statistics/messages/trend', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('statistics:read'),
   }, async (request) => {
     const { days = 7 } = request.query as { days?: number }
     const daysNum = Math.min(Math.max(Number.parseInt(String(days)), 1), 90)
@@ -162,7 +162,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取配对活跃度统计
    */
   fastify.get('/api/admin/statistics/pairs/activity', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('statistics:read'),
   }, async () => {
     const topPairs = await db.select({
       qqRoomId: schema.message.qqRoomId,
@@ -217,7 +217,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取实例状态统计
    */
   fastify.get('/api/admin/statistics/instances/status', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('statistics:read'),
   }, async () => {
     const instances = await db.query.instance.findMany({
       with: {
@@ -250,7 +250,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取最近消息（用于实时监控）
    */
   fastify.get('/api/admin/statistics/messages/recent', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('statistics:read'),
   }, async (request) => {
     const { limit = 20 } = request.query as { limit?: number }
     const limitNum = Math.min(Math.max(Number.parseInt(String(limit)), 1), 100)
@@ -281,7 +281,7 @@ export default async function (fastify: FastifyInstance) {
    * 获取性能指标
    */
   fastify.get('/api/admin/statistics/performance', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('statistics:read'),
   }, async () => {
     // 计算最近1小时的消息速率
     const oneHourAgo = Math.floor((Date.now() - 60 * 60 * 1000) / 1000)

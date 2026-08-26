@@ -4,7 +4,10 @@ import { registerFileManagerRoutes } from '../fileManager.js'
 
 vi.mock('@napgram/auth-kit', () => ({
   authMiddleware: vi.fn(async (req, _reply) => {
-    (req as any).auth = { type: 'token' }
+    (req as any).auth = { type: 'token', role: 'admin' }
+  }),
+  requirePermission: vi.fn(() => async (req: any) => {
+    req.auth = { type: 'access', role: 'super_admin' }
   }),
 }))
 
@@ -21,6 +24,16 @@ describe('fileManager Routes', () => {
     const response = await app.inject({
       method: 'GET',
       url: '/api/files/list?path=../../etc/passwd',
+    })
+
+    expect(response.statusCode).toBe(403)
+    expect(JSON.parse(response.payload).error).toContain('Access denied')
+  })
+
+  it('rejects a sibling path that only shares the data root prefix', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/files/list?path=../data-evil',
     })
 
     expect(response.statusCode).toBe(403)

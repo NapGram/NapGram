@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { authMiddleware } from '@napgram/auth-kit'
+import { requirePermission } from '@napgram/auth-kit'
 import {
   configCache,
   groupInfoCache,
@@ -18,7 +18,7 @@ export default function setupMonitoring(app: FastifyInstance) {
    * 获取性能统计数据
    */
   app.get('/api/monitor/performance', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('monitoring:read'),
   }, async () => {
     const stats = performanceMonitor.getStats()
     return {
@@ -41,7 +41,7 @@ export default function setupMonitoring(app: FastifyInstance) {
    * 获取缓存统计数据
    */
   app.get('/api/monitor/cache', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('monitoring:read'),
   }, async () => {
     return {
       userCache: userInfoCache.getStats(),
@@ -56,7 +56,7 @@ export default function setupMonitoring(app: FastifyInstance) {
    * 健康检查端点
    */
   app.get('/api/monitor/health', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('monitoring:read'),
   }, async () => {
     const stats = performanceMonitor.getStats()
     const errorRate = stats.errorRate
@@ -89,7 +89,7 @@ export default function setupMonitoring(app: FastifyInstance) {
    * 手动触发统计信息打印到日志
    */
   app.post('/api/monitor/stats/print', {
-    preHandler: authMiddleware,
+    preHandler: requirePermission('monitoring:read'),
   }, async () => {
     performanceMonitor.printStats()
     return { success: true, message: 'Stats printed to logs' }
