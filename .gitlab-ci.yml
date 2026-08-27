@@ -5,6 +5,9 @@ include:
   - project: magisk3171/shared/magisk-ci-toolkit
     ref: e4c4a9105025ee4d3ba6d97733850134dc5dac37
     file: /.gitlab/ci/renovate.yml
+  - project: magisk3171/shared/magisk-ci-toolkit
+    ref: e4c4a9105025ee4d3ba6d97733850134dc5dac37
+    file: /.gitlab/ci/cancel-mr-pipelines.yml
 
 workflow:
   auto_cancel:
@@ -41,6 +44,7 @@ stages:
 variables:
   GIT_DEPTH: "0"
   GIT_SUBMODULE_STRATEGY: none
+  MAGISK_CANCEL_OLDER_MR_PIPELINES: "true"
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
   MAGISK_CI_TOOLKIT_REF: "e4c4a9105025ee4d3ba6d97733850134dc5dac37"
@@ -75,8 +79,6 @@ variables:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH =~ /^renovate\// || $CI_COMMIT_BRANCH == "chore/dependency-force-update")'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && ($CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^renovate\// || $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME == "chore/dependency-force-update")'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_TAG'
@@ -635,3 +637,5 @@ sdk:publish:
     - publish_pkg "@napgram/sdk-core"
     - publish_pkg "@napgram/sdk-utils"
     - publish_pkg "@napgram/sdk"
+cancel:older:mr:pipelines:
+  extends: .magisk_cancel_older_mr_pipelines
