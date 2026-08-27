@@ -235,7 +235,7 @@ export class RecallCommandHandler {
       }
 
       // 删除对应的 TG 消息
-      if (record?.tgMsgId && record?.tgChatId) {
+      if (env.ENABLE_AUTO_RECALL && record?.tgMsgId && record?.tgChatId) {
         try {
           const chat = await this.context.tgBot.getChat(Number(record.tgChatId))
           await chat.deleteMessages([Number(record.tgMsgId)])

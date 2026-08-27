@@ -248,4 +248,26 @@ describe('recallCommandHandler', () => {
     expect(mockContext.qqClient.recallMessage).toHaveBeenCalledWith('55')
     expect(chat.deleteMessages).toHaveBeenCalledWith([88])
   })
+
+  it('does not remove the TG mapping from QQ /rm when auto recall is disabled', async () => {
+    const { env } = await import('@napgram/env-kit')
+    env.ENABLE_AUTO_RECALL = false
+    vi.mocked(db.query.message.findFirst).mockResolvedValueOnce({
+      tgSenderId: '999999',
+      tgMsgId: 88,
+      tgChatId: '777777',
+      seq: 55,
+    } as any)
+
+    const chat = { deleteMessages: vi.fn().mockResolvedValue(undefined) }
+    vi.mocked(mockContext.tgBot.getChat).mockResolvedValue(chat as any)
+
+    const msg = createMessage('qq')
+    msg.content.push({ type: 'reply', data: { messageId: '55' } } as any)
+
+    await handler.execute(msg, [])
+
+    expect(mockContext.qqClient.recallMessage).toHaveBeenCalledWith('55')
+    expect(chat.deleteMessages).not.toHaveBeenCalledWith([88])
+  })
 })
