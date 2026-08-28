@@ -140,6 +140,7 @@ export default async function (fastify: FastifyInstance) {
         qqSenderIdResolved: botIdentity.id,
         qqSenderName: botIdentity.name,
         tgChatId: item.tgChatId.toString(),
+        tgMsgId: item.tgMsgId.toString(),
         rand: item.rand.toString(),
         tgFileId: item.tgFileId?.toString() || null,
         tgSenderId,

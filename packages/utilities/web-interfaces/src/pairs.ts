@@ -251,6 +251,7 @@ export default async function (fastify: FastifyInstance) {
       qqChatType: normalizeQqChatType(item.qqChatType),
       qqRoomId: item.qqRoomId.toString(),
       tgChatId: item.tgChatId.toString(),
+      tgThreadId: item.tgThreadId?.toString() || null,
       qqFromGroupId: item.qqFromGroupId?.toString() || null,
       instance: item.instance
         ? {
