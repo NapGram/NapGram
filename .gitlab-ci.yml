@@ -553,7 +553,7 @@ telegram:release:
 
 renovate:gitlab:
   extends: .magisk_renovate_gitlab
-  interruptible: false
+  interruptible: true
   stage: maintenance
   tags:
     - magisk-arm64-linux
