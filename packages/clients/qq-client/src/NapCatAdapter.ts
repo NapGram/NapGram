@@ -18,6 +18,18 @@ function getMessageConverter() {
   return getQQClientDependencies().messageConverter
 }
 
+const DEFAULT_FORWARD_TIMEOUT_MS = 600_000
+const MAX_FORWARD_TIMEOUT_MS = 1_800_000
+
+function resolveForwardTimeoutMs(): number {
+  const raw = process.env.NAPCAT_FORWARD_TIMEOUT_MS?.trim()
+  if (!raw || !/^\d+$/.test(raw)) return DEFAULT_FORWARD_TIMEOUT_MS
+
+  const value = Number(raw)
+  if (!Number.isSafeInteger(value) || value <= 0) return DEFAULT_FORWARD_TIMEOUT_MS
+  return Math.min(value, MAX_FORWARD_TIMEOUT_MS)
+}
+
 export class NapCatAdapter extends EventEmitter {
   readonly clientType = 'napcat' as const
   private _uin: number = 0
@@ -160,6 +172,10 @@ export class NapCatAdapter extends EventEmitter {
       const result = await this.client.sendGroupForwardMessage(
         groupId,
         messages,
+        {
+          timeout: resolveForwardTimeoutMs(),
+          retries: 0,
+        },
       )
 
       const rawResult = unwrapApiResult(result) || {}

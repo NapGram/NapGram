@@ -580,15 +580,26 @@ describe('napCatAdapter', () => {
       expect(receipt).toEqual({ messageId: '', timestamp: expect.any(Number), success: false, error: 'Send fail' })
     })
 
-    it('should send group forward message', async () => {
-      mockNapLinkInstance.sendGroupForwardMessage.mockResolvedValue({ message_id: 111 })
-      const receipt = await adapter.sendGroupForwardMsg('400', [])
-      expect(mockNapLinkInstance.sendGroupForwardMessage).toHaveBeenCalledWith('400', [])
-      expect(receipt).toEqual(expect.objectContaining({ messageId: '111', timestamp: expect.any(Number), success: true, seq: 111 }))
+    it('should send group forward message with configurable timeout', async () => {
+      const previousTimeout = process.env.NAPCAT_FORWARD_TIMEOUT_MS
+      process.env.NAPCAT_FORWARD_TIMEOUT_MS = '900000'
 
-      mockNapLinkInstance.sendGroupForwardMessage.mockRejectedValue(new Error('Fail'))
-      const receipt2 = await adapter.sendGroupForwardMsg('400', [])
-      expect(receipt2.success).toBe(false)
+      try {
+        mockNapLinkInstance.sendGroupForwardMessage.mockResolvedValue({ message_id: 111 })
+        const receipt = await adapter.sendGroupForwardMsg('400', [])
+        expect(mockNapLinkInstance.sendGroupForwardMessage).toHaveBeenCalledWith('400', [], {
+          timeout: 900000,
+          retries: 0,
+        })
+        expect(receipt).toEqual(expect.objectContaining({ messageId: '111', timestamp: expect.any(Number), success: true, seq: 111 }))
+
+        mockNapLinkInstance.sendGroupForwardMessage.mockRejectedValue(new Error('Fail'))
+        const receipt2 = await adapter.sendGroupForwardMsg('400', [])
+        expect(receipt2.success).toBe(false)
+      } finally {
+        if (previousTimeout === undefined) delete process.env.NAPCAT_FORWARD_TIMEOUT_MS
+        else process.env.NAPCAT_FORWARD_TIMEOUT_MS = previousTimeout
+      }
     })
 
     it('should recall message', async () => {

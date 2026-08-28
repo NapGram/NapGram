@@ -105,6 +105,8 @@ services:
       # NapCat WebSocket 地址（用于连接 QQ）
       NAPCAT_WS_URL: "ws://napcat:3001"
       NAPCAT_WS_TOKEN: ""
+      # 合并转发超时时间（毫秒）；多 APK 文件较大时可在 .env 中覆盖
+      NAPCAT_FORWARD_TIMEOUT_MS: "600000"
       # 签名服务地址（某些平台/协议需要）
       SIGN_API: ""
       # 签名服务版本标识（按服务方要求填写）
