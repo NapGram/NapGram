@@ -596,9 +596,14 @@ describe('napCatAdapter', () => {
         mockNapLinkInstance.sendGroupForwardMessage.mockRejectedValue(new Error('Fail'))
         const receipt2 = await adapter.sendGroupForwardMsg('400', [])
         expect(receipt2.success).toBe(false)
-      } finally {
-        if (previousTimeout === undefined) delete process.env.NAPCAT_FORWARD_TIMEOUT_MS
-        else process.env.NAPCAT_FORWARD_TIMEOUT_MS = previousTimeout
+      }
+      finally {
+        if (previousTimeout === undefined) {
+          delete process.env.NAPCAT_FORWARD_TIMEOUT_MS
+        }
+        else {
+          process.env.NAPCAT_FORWARD_TIMEOUT_MS = previousTimeout
+        }
       }
     })
 
