@@ -244,6 +244,7 @@ describe('napCatAdapter', () => {
       maxAttempts: 3,
       backoff: { initial: 5000, max: 5000, multiplier: 1 },
     })
+    expect(config.api).toEqual({ timeout: 1_800_000 })
   })
 
   it('should let NapLink finish an initial reconnect without calling connect again', async () => {

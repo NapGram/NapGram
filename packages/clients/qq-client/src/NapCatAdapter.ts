@@ -69,6 +69,11 @@ export class NapCatAdapter extends EventEmitter {
         token: params.token,
       },
       reconnect: reconnectCfg,
+      api: {
+        // NapLink 1.1.x stale-request cleanup uses the global API timeout;
+        // keep it above the per-forward timeout override to avoid premature cleanup.
+        timeout: MAX_FORWARD_TIMEOUT_MS,
+      },
       logging: {
         level: 'info',
         logger: {
