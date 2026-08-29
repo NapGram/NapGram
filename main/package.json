@@ -36,7 +36,7 @@
     "@mtcute/bun": "^0.32.0",
     "@mtcute/core": "^0.32.0",
     "@mtcute/dispatcher": "^0.32.0",
-    "@mtcute/markdown-parser": "^0.31.0",
+    "@mtcute/markdown-parser": "^0.32.0",
     "@napgram/auth-kit": "workspace:*",
     "@napgram/builtins": "workspace:*",
     "@napgram/database": "workspace:*",
