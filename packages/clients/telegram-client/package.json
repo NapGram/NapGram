@@ -27,7 +27,7 @@
   "dependencies": {
     "@mtcute/core": "^0.31.0",
     "@mtcute/dispatcher": "^0.31.0",
-    "@mtcute/bun": "^0.31.0"
+    "@mtcute/bun": "^0.32.0"
   },
   "devDependencies": {
     "@types/node": "26.4.0",
