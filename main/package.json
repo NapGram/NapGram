@@ -68,7 +68,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^9.0.0",
     "@kitajs/ts-html-plugin": "^4.1.4",
-    "@mtcute/test": "^0.31.0",
+    "@mtcute/test": "^0.32.0",
     "@mtcute/web": "^0.31.0",
     "@types/ejs": "^3.1.5",
     "@types/markdown-escape": "^1.1.3",
