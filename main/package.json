@@ -33,7 +33,7 @@
     "@fastify/multipart": "^10.0.0",
     "@fastify/static": "10.1.3",
     "@kitajs/html": "^4.2.13",
-    "@mtcute/bun": "^0.31.0",
+    "@mtcute/bun": "^0.32.0",
     "@mtcute/core": "^0.31.0",
     "@mtcute/dispatcher": "^0.31.0",
     "@mtcute/markdown-parser": "^0.31.0",
