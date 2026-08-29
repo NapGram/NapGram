@@ -30,7 +30,7 @@
         "@kitajs/html": "^4.2.13",
         "@mtcute/bun": "^0.32.0",
         "@mtcute/core": "^0.32.0",
-        "@mtcute/dispatcher": "^0.31.0",
+        "@mtcute/dispatcher": "^0.32.0",
         "@mtcute/markdown-parser": "^0.31.0",
         "@napgram/auth-kit": "workspace:*",
         "@napgram/builtins": "workspace:*",
@@ -154,7 +154,7 @@
       "dependencies": {
         "@mtcute/bun": "^0.32.0",
         "@mtcute/core": "^0.32.0",
-        "@mtcute/dispatcher": "^0.31.0",
+        "@mtcute/dispatcher": "^0.32.0",
       },
       "devDependencies": {
         "@types/node": "26.4.0",
@@ -968,7 +968,7 @@
 
     "@mtcute/core": ["@mtcute/core@0.32.0", "", { "dependencies": { "@fuman/io": "0.0.21", "@fuman/net": "0.0.21", "@fuman/utils": "0.0.21", "@mtcute/file-id": "^0.32.0", "@mtcute/tl-runtime": "^0.32.0", "@types/events": "3.0.0", "long": "^5.3.2" } }, "sha512-4x845rMveaVPHNi+mFOSFE5PWyxZfK0B8KsrVTkS7/wMihuMfRmVRum7c8d/pKzX1FsAEwVbeWSHnMlVnDx4gg=="],
 
-    "@mtcute/dispatcher": ["@mtcute/dispatcher@0.31.0", "", { "dependencies": { "@fuman/utils": "0.0.21", "@mtcute/core": "0.31.0" } }, "sha512-E8GXTS/WpU00cWDOB3fQiKxQb3wtYRbbom2b+//KPnR/pRonEILdjRUPFTEggl9VfDFwmjRi/kns1gdW1ass1g=="],
+    "@mtcute/dispatcher": ["@mtcute/dispatcher@0.32.0", "", { "dependencies": { "@fuman/utils": "0.0.21", "@mtcute/core": "^0.32.0" } }, "sha512-ORtZHsgXtwLrKfKgnKmQUq8wO+sv5/bYE4vm3yRF+vjqkFj5DNSn1vs8nXlIFmY3A0OjqgDKVHX8dJzWDEWoYA=="],
 
     "@mtcute/file-id": ["@mtcute/file-id@0.32.0", "", { "dependencies": { "@fuman/utils": "0.0.21", "@mtcute/tl-runtime": "^0.32.0", "long": "^5.3.2" } }, "sha512-afg/w6KKEn85xenuHVF4N8ysWy3vYZ7VF2sseUM3OXzLdZgVifRnNTdVUmU2kilpRYsR/B0Qvyu7Sif2N7H47A=="],
 
@@ -2250,8 +2250,6 @@
 
     "@mtcute/bun/@mtcute/markdown-parser": ["@mtcute/markdown-parser@0.32.0", "", { "dependencies": { "@mtcute/core": "^0.32.0", "long": "^5.3.2" } }, "sha512-wUIeh53AI4kAVgYuwhJf+omdMWJuULqNZRw2v4OcH9O3UVIuXdjtWOaMIr3zGpgJr6kZeki7KbSpTMGORP1uHg=="],
 
-    "@mtcute/dispatcher/@mtcute/core": ["@mtcute/core@0.31.0", "", { "dependencies": { "@fuman/io": "0.0.21", "@fuman/net": "0.0.21", "@fuman/utils": "0.0.21", "@mtcute/file-id": "0.31.0", "@mtcute/tl-runtime": "0.31.0", "@types/events": "3.0.0", "long": "5.3.2" } }, "sha512-54w+3/4iZaQcY2eDxeswSrD9gutkDF+YWVKC97yU7JEJkdwpUvCmoGLcsxjAK6AQu5ipO8/+vPM0AdUZVFUtQg=="],
-
     "@mtcute/markdown-parser/@mtcute/core": ["@mtcute/core@0.31.0", "", { "dependencies": { "@fuman/io": "0.0.21", "@fuman/net": "0.0.21", "@fuman/utils": "0.0.21", "@mtcute/file-id": "0.31.0", "@mtcute/tl-runtime": "0.31.0", "@types/events": "3.0.0", "long": "5.3.2" } }, "sha512-54w+3/4iZaQcY2eDxeswSrD9gutkDF+YWVKC97yU7JEJkdwpUvCmoGLcsxjAK6AQu5ipO8/+vPM0AdUZVFUtQg=="],
 
     "@opentelemetry/sdk-logs/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.41.1", "", {}, "sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA=="],
@@ -2367,10 +2365,6 @@
     "@fastify/ajv-compiler/ajv/fast-uri": ["fast-uri@3.1.5", "", {}, "sha512-gHwA1O9LDIcKunMKhObS/HimwtehO1nPUECKAu5TpKgaO19fcWEl4bliWe1jWxVFvIXztJjjQ4L8XQ1EU9f7Jw=="],
 
     "@fastify/ajv-compiler/ajv/json-schema-traverse": ["json-schema-traverse@1.0.0", "", {}, "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug=="],
-
-    "@mtcute/dispatcher/@mtcute/core/@mtcute/file-id": ["@mtcute/file-id@0.31.0", "", { "dependencies": { "@fuman/utils": "0.0.21", "@mtcute/tl-runtime": "0.31.0", "long": "5.3.2" } }, "sha512-hf0ZdPapa/zdtDlRzoffPEmFYHhC3HpkA5KvxJrRaKTP9boXLJ0qrgYSKPE/58Q247bcAccZxRXJg0c9d6hKzA=="],
-
-    "@mtcute/dispatcher/@mtcute/core/@mtcute/tl-runtime": ["@mtcute/tl-runtime@0.31.0", "", { "dependencies": { "@fuman/utils": "0.0.21", "long": "5.3.2" } }, "sha512-WQmSidKtLc2bqhp6GUuuA+SPt95kCfTNsEJ+WiTXRscN/NddkK7KTuUmvRO4LYz3Qic3JyD2WvDDOg9P00ktFA=="],
 
     "@mtcute/markdown-parser/@mtcute/core/@mtcute/file-id": ["@mtcute/file-id@0.31.0", "", { "dependencies": { "@fuman/utils": "0.0.21", "@mtcute/tl-runtime": "0.31.0", "long": "5.3.2" } }, "sha512-hf0ZdPapa/zdtDlRzoffPEmFYHhC3HpkA5KvxJrRaKTP9boXLJ0qrgYSKPE/58Q247bcAccZxRXJg0c9d6hKzA=="],
 
