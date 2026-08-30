@@ -32,7 +32,7 @@
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
     "fastify": "5.12.1",
-    "zod": "4.4.3"
+    "zod": "4.5.4"
   },
   "keywords": [
     "napgram",
