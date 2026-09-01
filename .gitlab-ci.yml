@@ -1,12 +1,12 @@
 include:
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 559714a8eac87b66db62d541de2e681ea6a6fbc6
+    ref: 2dfb680b1fbdf62f980087bd52d3f417f6dcc471
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 559714a8eac87b66db62d541de2e681ea6a6fbc6
+    ref: 2dfb680b1fbdf62f980087bd52d3f417f6dcc471
     file: /.gitlab/ci/renovate.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 559714a8eac87b66db62d541de2e681ea6a6fbc6
+    ref: 2dfb680b1fbdf62f980087bd52d3f417f6dcc471
     file: /.gitlab/ci/cancel-mr-pipelines.yml
 
 workflow:
@@ -47,7 +47,7 @@ variables:
   MAGISK_CANCEL_OLDER_MR_PIPELINES: "true"
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "559714a8eac87b66db62d541de2e681ea6a6fbc6"
+  MAGISK_CI_TOOLKIT_REF: "2dfb680b1fbdf62f980087bd52d3f417f6dcc471"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
   # ui:build/etc.). Pinned to arm64 to stop depending on the amd64 runner for
@@ -59,7 +59,7 @@ variables:
 
   # Override this when the UI mirror uses another namespace or host.
   NAPGRAM_UI_REPOSITORY: "https://gitlab.com/magisk3171/napgram-ecosystem/napgram-ui-dist.git"
-  NAPGRAM_UI_REF: "main"
+  NAPGRAM_UI_REF: "beta"
   NAPGRAM_UI_RELEASE_REF: ""
   NAPGRAM_DOCKER_PUBLISH: "true"
   NAPGRAM_DOCKERHUB_PUBLISH: "true"
@@ -553,7 +553,7 @@ telegram:release:
 
 renovate:gitlab:
   extends: .magisk_renovate_gitlab
-  interruptible: true
+  interruptible: false
   stage: maintenance
   tags:
     - magisk-arm64-linux
