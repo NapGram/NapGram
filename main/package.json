@@ -78,11 +78,11 @@
     "@types/tmp": "^0.2.6",
     "@types/ws": "^8.18.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "@vitest/coverage-v8": "4.1.11",
+    "@vitest/coverage-v8": "5.0.0",
     "esbuild": "^0.28.0",
     "eslint": "10.9.1",
     "fast-check": "^4.8.0",
     "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "4.1.11"
+    "vitest": "5.0.0"
   }
 }
