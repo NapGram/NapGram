@@ -43,9 +43,16 @@ const bunFileIO = {
     if (result.exitCode !== 0) throw new Error(`Failed to create directory: ${filePath}`)
   },
   readdirSync(filePath: string) {
-    const result = runBun(['find', filePath, '-maxdepth', '1', '-type', 'f', '-printf', '%f\\n'], { stdout: 'pipe' })
+    // busybox find (Alpine images) has no -printf; list full paths and
+    // reduce to basenames here instead.
+    const result = runBun(['find', filePath, '-maxdepth', '1', '-type', 'f'], { stdout: 'pipe' })
     if (result.exitCode !== 0) throw new Error(`Failed to list directory: ${filePath}`)
-    return decoder.decode(result.stdout ?? new Uint8Array()).trim().split('\\n').filter(Boolean)
+    return decoder
+      .decode(result.stdout ?? new Uint8Array())
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((full) => full.slice(full.lastIndexOf('/') + 1))
   },
   statSync(filePath: string) {
     const result = runBun(['stat', '-c', '%Y', filePath], { stdout: 'pipe' })
