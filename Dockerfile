@@ -19,7 +19,7 @@ RUN set -eux; \
     if [ "$USE_MIRROR" = "true" ]; then \
       sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories; \
     fi; \
-    packages="curl wget bash font-wqy-zenhei pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg yt-dlp"; \
+    packages="coreutils curl wget bash font-wqy-zenhei pixman cairo pango giflib libjpeg-turbo libpng librsvg vips ffmpeg yt-dlp"; \
     if [ "$INSTALL_PG_CLIENT" = "true" ]; then \
       packages="$packages postgresql-client"; \
     fi; \
@@ -125,7 +125,7 @@ COPY --from=build --chown=bun:bun /app/node_modules /app/node_modules
 # Preserve Bun's per-workspace dependency links.
 COPY --from=build --chown=bun:bun /app/main/node_modules /app/main/node_modules
 COPY --from=workspace --chown=bun:bun /app/main/build /app/main/build
-COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle.config.cjs /app/main/tools/drizzle.config.cjs
+COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle.config.ts /app/main/tools/drizzle.config.ts
 COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle /app/main/tools/drizzle
 COPY --from=workspace --chown=bun:bun /app/main/tools/run-drizzle-migrations.sh /app/main/tools/run-drizzle-migrations.sh
 COPY --from=workspace --chown=bun:bun /app/packages/clients/database/dist/schema /app/main/tools/runtime-schemas/database
@@ -146,6 +146,8 @@ COPY --from=workspace --chown=bun:bun /app/packages/sdk-core/package.json /app/n
 COPY --from=workspace --chown=bun:bun /app/packages/sdk-core/dist /app/node_modules/@napgram/sdk-core/dist
 COPY --from=workspace --chown=bun:bun /app/packages/sdk-utils/package.json /app/node_modules/@napgram/sdk-utils/package.json
 COPY --from=workspace --chown=bun:bun /app/packages/sdk-utils/dist /app/node_modules/@napgram/sdk-utils/dist
+COPY --from=workspace --chown=bun:bun /app/packages/core/runtime-kit/package.json /app/node_modules/@napgram/runtime-kit/package.json
+COPY --from=workspace --chown=bun:bun /app/packages/core/runtime-kit/dist /app/node_modules/@napgram/runtime-kit/dist
 
 COPY --chown=bun:bun docker-entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh /app/main/tools/run-drizzle-migrations.sh && \

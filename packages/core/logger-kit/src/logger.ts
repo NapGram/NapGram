@@ -10,7 +10,7 @@ interface BunLoggerRuntime {
   file(path: string): { writer(): BunLoggerWriter }
   stdout: { write(data: string): unknown }
   stderr: { write(data: string): unknown }
-  inspect(value: unknown, options?: { depth?: number, colors?: boolean, breakLength?: number }): string
+  inspect(value: unknown, options?: { depth?: number, colors?: boolean, breakLength?: number, compact?: boolean }): string
   spawnSync(command: string[], options?: { stdin?: string | Uint8Array, stdout?: 'pipe', stderr?: 'pipe' }): {
     exitCode: number
     stdout?: Uint8Array
@@ -200,7 +200,7 @@ function formatArgs(args: unknown[]) {
     if (typeof arg === 'string')
       return redactSensitiveLogText(arg)
 
-    return redactSensitiveLogText(bunRuntime.inspect(arg, { depth: 4, colors: false, breakLength: 120 }))
+    return redactSensitiveLogText(bunRuntime.inspect(arg, { depth: 4, colors: false, breakLength: Number.POSITIVE_INFINITY, compact: true }))
   })
 }
 

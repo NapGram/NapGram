@@ -10,6 +10,11 @@ const forbiddenPatterns = [
   { label: 'Node Buffer API', pattern: /\bBuffer\.(?:from|alloc|allocUnsafe|concat|isBuffer)\b|instanceof\s+Buffer/ },
   { label: 'CommonJS module wrapper', pattern: /\b(?:module\.exports|__dirname|__filename|createRequire)\b/ },
 ]
+// Leaf tool scripts with documented Node-compat needs.
+// check-built-bundle imports the production bundle, which keeps runtime
+// handles open; the pinned Bun 1.4.0 has no Bun.exit, so process.exit
+// is required there.
+const allowedPaths = new Set(["main/tools/check-built-bundle.mjs"])
 const directNodeDependencies = new Set(['@types/node', '@types/pg', '@types/ws', 'pg', 'ws', 'ts-node'])
 
 const violations: string[] = []
@@ -22,6 +27,7 @@ for (const root of sourceRoots) {
 
     const path = `${root}/${relativePath}`
     if (path === 'scripts/check-bun-only.ts') continue
+    if (allowedPaths.has(path)) continue
     const content = await Bun.file(path).text()
     for (const { label, pattern } of forbiddenPatterns) {
       if (pattern.test(content)) violations.push(`${path}: ${label}`)

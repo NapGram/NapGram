@@ -7,6 +7,10 @@ async function main() {
   await import('../build/index.js')
 
   console.log('Production bundle imported successfully')
+
+  // The imported bundle keeps runtime handles open (plugin engine, timers),
+  // so exit explicitly once the smoke import has succeeded.
+  process.exit(0)
 }
 
 await main()
