@@ -1,72 +1,72 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPluginStorage } from '../storage.js'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+import { bunRuntime } from '../../internal/path.js'
 
-const fsMocks = vi.hoisted(() => ({
-  mkdir: vi.fn(),
-  readFile: vi.fn(),
-  writeFile: vi.fn(),
-  unlink: vi.fn(),
-  readdir: vi.fn(),
+const fileIOMocks = (() => ({
+  mkdir: mock(),
+  exists: mock(async () => true),
+  readText: mock(),
+  write: mock(),
+  unlink: mock(),
+  readdir: mock(),
+}))()
+
+const loggerMocks = (() => ({
+  error: mock(),
+}))()
+
+const getLoggerMock = (() => mock(() => loggerMocks))()
+
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO: fileIOMocks,
 }))
 
-const loggerMocks = vi.hoisted(() => ({
-  error: vi.fn(),
-}))
-
-const getLoggerMock = vi.hoisted(() => vi.fn(() => loggerMocks))
-
-vi.mock('node:fs/promises', () => ({
-  default: fsMocks,
-  mkdir: fsMocks.mkdir,
-  readFile: fsMocks.readFile,
-  writeFile: fsMocks.writeFile,
-  unlink: fsMocks.unlink,
-  readdir: fsMocks.readdir,
-}))
-
-vi.mock('@napgram/logger-kit', () => ({
+mock.module('@napgram/logger-kit', () => ({
   getLogger: getLoggerMock,
 }))
 
+let createPluginStorage: typeof import('../storage.js').createPluginStorage
+beforeAll(async () => {
+  ({ createPluginStorage } = await import('../storage.js'))
+})
+
 describe('plugin storage', () => {
-  const originalDataDir = process.env.DATA_DIR
+  const originalDataDir = bunRuntime.env.DATA_DIR
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    process.env.DATA_DIR = '/data'
+    mock.clearAllMocks()
+    bunRuntime.env.DATA_DIR = '/data'
   })
 
   afterEach(() => {
     if (originalDataDir === undefined)
-      delete process.env.DATA_DIR
+      delete bunRuntime.env.DATA_DIR
     else
-      process.env.DATA_DIR = originalDataDir
+      bunRuntime.env.DATA_DIR = originalDataDir
   })
 
   it('sets and gets data with sanitized paths', async () => {
     const storage = createPluginStorage('plugin#1')
-    fsMocks.mkdir.mockResolvedValueOnce(undefined)
-    fsMocks.writeFile.mockResolvedValueOnce(undefined)
+    fileIOMocks.mkdir.mockResolvedValueOnce(undefined)
+    fileIOMocks.write.mockResolvedValueOnce(0)
 
     await storage.set('key@1', { ok: true })
 
-    expect(fsMocks.mkdir).toHaveBeenCalledWith('/data/plugins-data/plugin-1', { recursive: true })
-    expect(fsMocks.writeFile).toHaveBeenCalledWith(
+    expect(fileIOMocks.mkdir).toHaveBeenCalledWith('/data/plugins-data/plugin-1', { recursive: true })
+    expect(fileIOMocks.write).toHaveBeenCalledWith(
       '/data/plugins-data/plugin-1/key-1.json',
       JSON.stringify({ ok: true }, null, 2),
-      'utf8',
     )
 
-    fsMocks.readFile.mockResolvedValueOnce('{"ok":true}')
+    fileIOMocks.readText.mockResolvedValueOnce('{"ok":true}')
     const value = await storage.get('key@1')
 
     expect(value).toEqual({ ok: true })
-    expect(fsMocks.readFile).toHaveBeenCalledWith('/data/plugins-data/plugin-1/key-1.json', 'utf8')
+    expect(fileIOMocks.readText).toHaveBeenCalledWith('/data/plugins-data/plugin-1/key-1.json')
   })
 
   it('returns null for missing keys', async () => {
     const storage = createPluginStorage('plugin#1')
-    fsMocks.readFile.mockRejectedValueOnce({ code: 'ENOENT' })
+    fileIOMocks.exists.mockResolvedValueOnce(false)
 
     await expect(storage.get('missing')).resolves.toBeNull()
   })
@@ -74,7 +74,7 @@ describe('plugin storage', () => {
   it('logs and throws when create directory fails', async () => {
     const storage = createPluginStorage('plugin#1')
     const error = new Error('mkdir fail')
-    fsMocks.mkdir.mockRejectedValueOnce(error)
+    fileIOMocks.mkdir.mockRejectedValueOnce(error)
 
     await expect(storage.set('bad', { ok: true })).rejects.toThrow('mkdir fail')
     expect(loggerMocks.error).toHaveBeenCalled()
@@ -83,7 +83,7 @@ describe('plugin storage', () => {
   it('logs and throws on read errors', async () => {
     const storage = createPluginStorage('plugin#1')
     const error = new Error('fail')
-    fsMocks.readFile.mockRejectedValueOnce(error)
+    fileIOMocks.readText.mockRejectedValueOnce(error)
 
     await expect(storage.get('bad')).rejects.toThrow('fail')
     expect(loggerMocks.error).toHaveBeenCalled()
@@ -92,8 +92,8 @@ describe('plugin storage', () => {
   it('logs and throws on write errors', async () => {
     const storage = createPluginStorage('plugin#1')
     const error = new Error('write fail')
-    fsMocks.mkdir.mockResolvedValueOnce(undefined)
-    fsMocks.writeFile.mockRejectedValueOnce(error)
+    fileIOMocks.mkdir.mockResolvedValueOnce(undefined)
+    fileIOMocks.write.mockRejectedValueOnce(error)
 
     await expect(storage.set('bad', { ok: true })).rejects.toThrow('write fail')
     expect(loggerMocks.error).toHaveBeenCalled()
@@ -101,20 +101,21 @@ describe('plugin storage', () => {
 
   it('lists keys and deletes files', async () => {
     const storage = createPluginStorage('plugin#1')
-    fsMocks.mkdir.mockResolvedValueOnce(undefined)
-    fsMocks.readdir.mockResolvedValueOnce(['a.json', 'b.txt', 'c.json'])
+    fileIOMocks.mkdir.mockResolvedValueOnce(undefined)
+    fileIOMocks.readdir.mockResolvedValueOnce(['a.json', 'b.txt', 'c.json'])
 
     await expect(storage.keys()).resolves.toEqual(['a', 'c'])
 
-    fsMocks.unlink.mockResolvedValueOnce(undefined)
+    fileIOMocks.unlink.mockResolvedValueOnce(undefined)
     await storage.delete('a')
-    expect(fsMocks.unlink).toHaveBeenCalledWith('/data/plugins-data/plugin-1/a.json')
+    expect(fileIOMocks.unlink).toHaveBeenCalledWith('/data/plugins-data/plugin-1/a.json')
   })
 
   it('logs and throws on delete errors', async () => {
     const storage = createPluginStorage('plugin#1')
     const error = new Error('unlink fail')
-    fsMocks.unlink.mockRejectedValueOnce(error)
+    fileIOMocks.exists.mockResolvedValueOnce(true)
+    fileIOMocks.unlink.mockRejectedValueOnce(error)
 
     await expect(storage.delete('bad')).rejects.toThrow('unlink fail')
     expect(loggerMocks.error).toHaveBeenCalled()
@@ -122,7 +123,7 @@ describe('plugin storage', () => {
 
   it('ignores delete when file is missing', async () => {
     const storage = createPluginStorage('plugin#1')
-    fsMocks.unlink.mockRejectedValueOnce({ code: 'ENOENT' })
+    fileIOMocks.exists.mockResolvedValueOnce(false)
 
     await expect(storage.delete('missing')).resolves.toBeUndefined()
   })
@@ -130,8 +131,8 @@ describe('plugin storage', () => {
   it('logs and throws on keys errors', async () => {
     const storage = createPluginStorage('plugin#1')
     const error = new Error('readdir fail')
-    fsMocks.mkdir.mockResolvedValueOnce(undefined)
-    fsMocks.readdir.mockRejectedValueOnce(error)
+    fileIOMocks.mkdir.mockResolvedValueOnce(undefined)
+    fileIOMocks.readdir.mockRejectedValueOnce(error)
 
     await expect(storage.keys()).rejects.toThrow('readdir fail')
     expect(loggerMocks.error).toHaveBeenCalled()
@@ -139,21 +140,21 @@ describe('plugin storage', () => {
 
   it('clears all keys', async () => {
     const storage = createPluginStorage('plugin#1')
-    fsMocks.mkdir.mockResolvedValueOnce(undefined)
-    fsMocks.readdir.mockResolvedValueOnce(['a.json', 'c.json'])
-    fsMocks.unlink.mockResolvedValue(undefined)
+    fileIOMocks.mkdir.mockResolvedValueOnce(undefined)
+    fileIOMocks.readdir.mockResolvedValueOnce(['a.json', 'c.json'])
+    fileIOMocks.unlink.mockResolvedValue(undefined)
 
     await storage.clear()
 
-    expect(fsMocks.unlink).toHaveBeenCalledTimes(2)
+    expect(fileIOMocks.unlink).toHaveBeenCalledTimes(2)
   })
 
   it('logs and throws on clear errors', async () => {
     const storage = createPluginStorage('plugin#1')
     const error = new Error('unlink fail')
-    fsMocks.mkdir.mockResolvedValueOnce(undefined)
-    fsMocks.readdir.mockResolvedValueOnce(['a.json'])
-    fsMocks.unlink.mockRejectedValueOnce(error)
+    fileIOMocks.mkdir.mockResolvedValueOnce(undefined)
+    fileIOMocks.readdir.mockResolvedValueOnce(['a.json'])
+    fileIOMocks.unlink.mockRejectedValueOnce(error)
 
     await expect(storage.clear()).rejects.toThrow('unlink fail')
     expect(loggerMocks.error).toHaveBeenCalled()

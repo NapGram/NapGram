@@ -1,24 +1,23 @@
 import type { PluginSpec } from '../interfaces.js'
-import fs from 'node:fs'
-import path from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import { isAbsolute } from '../../internal/path.js'
 import { PluginLoader, PluginType } from '../plugin-loader.js'
 
-// Mock logger
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: () => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  }),
+const statMock = mock()
+
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO: {
+    stat: statMock,
+  },
 }))
 
-// Mock fs
-vi.mock('node:fs', () => ({
-  default: {
-    statSync: vi.fn(),
-  },
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: () => ({
+    info: mock(),
+    debug: mock(),
+    warn: mock(),
+    error: mock(),
+  }),
 }))
 
 describe('pluginLoader', () => {
@@ -28,11 +27,11 @@ describe('pluginLoader', () => {
     id: 'test-plugin',
     name: 'Test Plugin',
     version: '1.0.0',
-    install: vi.fn(),
+    install: mock(),
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     loader = new PluginLoader()
   })
 
@@ -42,7 +41,7 @@ describe('pluginLoader', () => {
         id: 'test-plugin',
         module: './test-plugin',
         enabled: true,
-        load: vi.fn(async () => ({ default: mockPlugin })),
+        load: mock(async () => ({ default: mockPlugin })),
       }
 
       const result = await loader.load(spec)
@@ -73,7 +72,7 @@ describe('pluginLoader', () => {
       }
 
       // Mock importModule to return a valid module
-      vi.spyOn(loader as any, 'importModule').mockResolvedValue({ default: mockPlugin })
+      spyOn(loader as any, 'importModule').mockResolvedValue({ default: mockPlugin })
 
       const result = await loader.load(spec)
 
@@ -81,14 +80,13 @@ describe('pluginLoader', () => {
       expect(result.type).toBe(PluginType.Native)
     })
 
-    it('should try extensions in importModule on failure', async () => {
+    it('should fail without retrying alternate extensions', async () => {
       const spec: PluginSpec = {
         id: 'ext-plugin',
         module: './missing-ext',
         enabled: true,
       }
 
-      // This will trigger the retry logic for .js, .mjs, etc.
       await expect(loader.load(spec)).rejects.toThrow('Failed to load plugin ext-plugin')
     })
 
@@ -129,7 +127,7 @@ describe('pluginLoader', () => {
         id: 'invalid-plugin',
         module: './invalid',
         enabled: true,
-        load: vi.fn(async () => ({ default: invalidPlugin })),
+        load: mock(async () => ({ default: invalidPlugin })),
       }
 
       await expect(loader.load(spec)).rejects.toThrow('Unknown plugin type')
@@ -146,7 +144,7 @@ describe('pluginLoader', () => {
         id: 'incomplete-plugin',
         module: './incomplete',
         enabled: true,
-        load: vi.fn(async () => ({ default: incompletePlugin })),
+        load: mock(async () => ({ default: incompletePlugin })),
       }
 
       await expect(loader.load(spec)).rejects.toThrow('missing required field')
@@ -162,7 +160,7 @@ describe('pluginLoader', () => {
         id: 'expected-id',
         module: './test',
         enabled: true,
-        load: vi.fn(async () => ({ default: mismatchPlugin })),
+        load: mock(async () => ({ default: mismatchPlugin })),
       }
 
       // Should still load but log warning
@@ -180,7 +178,7 @@ describe('pluginLoader', () => {
         id: 'test-plugin',
         module: './test',
         enabled: true,
-        load: vi.fn(async () => ({ default: badVersionPlugin })),
+        load: mock(async () => ({ default: badVersionPlugin })),
       }
 
       // Should still load but log warning
@@ -200,7 +198,7 @@ describe('pluginLoader', () => {
         id: 'bad-install',
         module: './test',
         enabled: true,
-        load: vi.fn(async () => ({ default: badInstallPlugin })),
+        load: mock(async () => ({ default: badInstallPlugin })),
       }
 
       await expect(loader.load(spec)).rejects.toThrow('install must be a function')
@@ -211,7 +209,7 @@ describe('pluginLoader', () => {
         id: 'no-default',
         module: './test',
         enabled: true,
-        load: vi.fn(async () => mockPlugin), // No .default
+        load: mock(async () => mockPlugin), // No .default
       }
 
       const result = await loader.load(spec)
@@ -223,7 +221,7 @@ describe('pluginLoader', () => {
         id: 'path-test',
         module: './test-plugin.js',
         enabled: true,
-        load: vi.fn(async () => ({ default: mockPlugin })),
+        load: mock(async () => ({ default: mockPlugin })),
       }
 
       const result = await loader.load(spec)
@@ -235,7 +233,7 @@ describe('pluginLoader', () => {
         id: 'failing-plugin',
         module: './failing',
         enabled: true,
-        load: vi.fn(async () => {
+        load: mock(async () => {
           throw new Error('Load failed')
         }),
       }
@@ -251,13 +249,13 @@ describe('pluginLoader', () => {
           id: 'plugin1',
           module: './plugin1',
           enabled: true,
-          load: vi.fn(async () => ({ default: { ...mockPlugin, id: 'plugin1' } })),
+          load: mock(async () => ({ default: { ...mockPlugin, id: 'plugin1' } })),
         },
         {
           id: 'plugin2',
           module: './plugin2',
           enabled: true,
-          load: vi.fn(async () => ({ default: { ...mockPlugin, id: 'plugin2' } })),
+          load: mock(async () => ({ default: { ...mockPlugin, id: 'plugin2' } })),
         },
       ]
 
@@ -274,13 +272,13 @@ describe('pluginLoader', () => {
           id: 'enabled-plugin',
           module: './enabled',
           enabled: true,
-          load: vi.fn(async () => ({ default: mockPlugin })),
+          load: mock(async () => ({ default: mockPlugin })),
         },
         {
           id: 'disabled-plugin',
           module: './disabled',
           enabled: false,
-          load: vi.fn(async () => ({ default: mockPlugin })),
+          load: mock(async () => ({ default: mockPlugin })),
         },
       ]
 
@@ -297,7 +295,7 @@ describe('pluginLoader', () => {
           id: 'failing-plugin',
           module: './failing',
           enabled: true,
-          load: vi.fn(async () => {
+          load: mock(async () => {
             throw new Error('Failed')
           }),
         },
@@ -305,7 +303,7 @@ describe('pluginLoader', () => {
           id: 'working-plugin',
           module: './working',
           enabled: true,
-          load: vi.fn(async () => ({ default: mockPlugin })),
+          load: mock(async () => ({ default: mockPlugin })),
         },
       ]
 
@@ -350,7 +348,7 @@ describe('pluginLoader', () => {
     it('should resolve relative paths', () => {
       const loader = new PluginLoader()
       const result = (loader as any).resolveModulePath('./plugin.js')
-      expect(path.isAbsolute(result)).toBe(true)
+      expect(isAbsolute(result)).toBe(true)
     })
 
     it('should preserve absolute paths', () => {
@@ -474,26 +472,22 @@ describe('pluginLoader', () => {
   })
 
   describe('buildFileImportUrl', () => {
-    it('should build URL with cache-busting timestamp', () => {
-      vi.mocked(fs.statSync).mockReturnValue({ mtimeMs: 123456789 } as any)
+    it('should build URL with cache-busting timestamp', async () => {
+      statMock.mockResolvedValueOnce({ mtime: new Date(123456789) })
 
       const loader = new PluginLoader()
-      const result = (loader as any).buildFileImportUrl('/test/plugin.js')
+      const result = await (loader as any).buildFileImportUrl('/test/plugin.js')
 
       expect(result).toContain('file://')
       expect(result).toContain('?v=123456789')
+      expect(statMock).toHaveBeenCalledWith('/test/plugin.js')
     })
 
-    it('should handle stat errors gracefully', () => {
-      vi.mocked(fs.statSync).mockImplementation(() => {
-        throw new Error('File not found')
-      })
+    it('should propagate stat errors', async () => {
+      statMock.mockRejectedValueOnce(new Error('File not found'))
 
       const loader = new PluginLoader()
-      const result = (loader as any).buildFileImportUrl('/test/plugin.js')
-
-      expect(result).toContain('file://')
-      expect(result).not.toContain('?v=')
+      await expect((loader as any).buildFileImportUrl('/test/plugin.js')).rejects.toThrow('File not found')
     })
   })
 

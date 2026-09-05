@@ -14,7 +14,7 @@ if [ -z "${DATABASE_URL:-}" ]; then
 fi
 
 run_drizzle_migrate() {
-  local config_path="${SCRIPT_DIR}/drizzle.config.cjs"
+  local config_path="${SCRIPT_DIR}/drizzle.config.ts"
   local candidates=(
     "${ROOT_DIR}/main/node_modules/.bin/drizzle-kit"
     "${ROOT_DIR}/node_modules/.bin/drizzle-kit"

@@ -49,7 +49,7 @@ export default async function (fastify: FastifyInstance) {
                 WHERE schemaname = ${schemaName}
                 ORDER BY tablename;
 `)
-      const rows = result.rows as any[]
+      const rows = result as any[]
       return {
         success: true,
         data: rows.map((r: any) => r.tablename),
@@ -75,7 +75,7 @@ export default async function (fastify: FastifyInstance) {
                   AND schema_name <> 'information_schema'
                 ORDER BY schema_name;
 `)
-      const rows = result.rows as any[]
+      const rows = result as any[]
       return {
         success: true,
         data: rows.map((r: any) => r.schema_name),
@@ -106,7 +106,7 @@ export default async function (fastify: FastifyInstance) {
                 FROM pg_tables 
                 WHERE schemaname = ${schemaName} AND tablename = ${tableName};
 `)
-      const tables = tablesResult.rows as any[]
+      const tables = tablesResult as any[]
 
       if (tables.length === 0) {
         return reply.code(404).send({
@@ -126,7 +126,7 @@ column_name,
                   AND table_name = ${tableName}
                 ORDER BY ordinal_position;
 `)
-      const columns = columnsResult.rows as any[]
+      const columns = columnsResult as any[]
 
       return { success: true, data: columns }
     }
@@ -170,7 +170,7 @@ column_name,
                 FROM pg_tables 
                 WHERE schemaname = ${schema} AND tablename = ${tableName};
 `)
-      const tables = tablesResult.rows as any[]
+      const tables = tablesResult as any[]
 
       if (tables.length === 0) {
         return reply.code(404).send({
@@ -192,7 +192,7 @@ column_name,
                       AND table_name = ${tableName}
                       AND column_name = ${sortBy};
 `)
-        const columns = columnsResult.rows as any[]
+        const columns = columnsResult as any[]
 
         if (columns.length > 0) {
           const order = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC'
@@ -210,13 +210,13 @@ column_name,
         LIMIT ${pageSizeNum}
         OFFSET ${offset}
       `)
-      const data = dataResult.rows as any[]
+      const data = dataResult as any[]
 
       const countResult = await db.execute(sql`
         SELECT COUNT(*) as count
         FROM ${tableRef}
       `)
-      const countRows = countResult.rows as any[]
+      const countRows = countResult as any[]
 
       return {
         success: true,
@@ -280,7 +280,7 @@ column_name,
 
       // 执行查询
       const resultRaw = await db.execute(sql.raw(rawSql))
-      const result = resultRaw.rows as any[]
+      const result = resultRaw as any[]
       const rowCount = Array.isArray(result) ? result.length : 0
 
       // 记录审计日志
@@ -342,7 +342,7 @@ column_name,
                 FROM pg_tables 
                 WHERE schemaname = ${schemaName} AND tablename = ${tableName};
 `)
-      const tables = tablesResult.rows as any[]
+      const tables = tablesResult as any[]
 
       if (tables.length === 0) {
         return reply.code(404).send({
@@ -410,7 +410,7 @@ column_name,
                 FROM pg_tables 
                 WHERE schemaname = ${schemaName} AND tablename = ${tableName};
             `)
-      const tables = tablesResult.rows as any[]
+      const tables = tablesResult as any[]
 
       if (tables.length === 0) {
         return reply.code(404).send({

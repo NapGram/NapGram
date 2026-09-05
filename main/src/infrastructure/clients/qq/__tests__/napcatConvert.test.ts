@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest'
+import { beforeAll, describe, expect, it, mock } from 'bun:test'
 
 let napCatForwardMultiple: typeof import('@napgram/qq-client').napCatForwardMultiple
 
@@ -10,11 +10,11 @@ beforeAll(async () => {
 
 // Mock logger to avoid console noise and verify warnings
 // Mock logger to avoid console noise and verify warnings
-const { mockWarn } = vi.hoisted(() => {
-  return { mockWarn: vi.fn() }
-})
+const { mockWarn } = (() => {
+  return { mockWarn: mock() }
+})()
 
-vi.mock('@napgram/logger-kit', () => ({
+mock.module('@napgram/logger-kit', () => ({
   getLogger: () => ({
     warn: mockWarn,
   }),

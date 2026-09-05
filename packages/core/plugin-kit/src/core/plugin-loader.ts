@@ -9,11 +9,9 @@
  */
 
 import type { NapGramPlugin, PluginSpec } from './interfaces.js'
-import fs from 'node:fs'
-import path from 'node:path'
-import process from 'node:process'
-import { pathToFileURL } from 'node:url'
 import { getLogger } from '@napgram/logger-kit'
+import { runtimeFileIO } from '@napgram/runtime-kit'
+import { isAbsolute, pathToFileURL, resolvePath } from '../internal/path.js'
 
 const logger = getLogger('PluginLoader')
 
@@ -43,15 +41,10 @@ export interface LoadResult {
  * 插件加载器
  */
 export class PluginLoader {
-  private buildFileImportUrl(modulePath: string): string {
-    const fileUrl = pathToFileURL(modulePath).href
-    try {
-      const stat = fs.statSync(modulePath)
-      return `${fileUrl}?v=${stat.mtimeMs}`
-    }
-    catch {
-      return fileUrl
-    }
+  private async buildFileImportUrl(modulePath: string): Promise<string> {
+    const fileUrl = pathToFileURL(modulePath)
+    const stat = await runtimeFileIO.stat(modulePath)
+    return `${fileUrl}?v=${stat.mtime.getTime()}`
   }
 
   /**
@@ -104,9 +97,9 @@ export class PluginLoader {
     }
 
     // 解析为绝对路径
-    const absolutePath = path.isAbsolute(modulePath)
+    const absolutePath = isAbsolute(modulePath)
       ? modulePath
-      : path.resolve(process.cwd(), modulePath)
+      : resolvePath(modulePath)
 
     return absolutePath
   }
@@ -118,33 +111,11 @@ export class PluginLoader {
    * @returns 模块对象
    */
   private async importModule(modulePath: string): Promise<any> {
-    try {
-      // 如果是本地文件路径，转换为 file:// URL
-      if (modulePath.startsWith('/') || modulePath.startsWith('.')) {
-        const fileUrl = this.buildFileImportUrl(modulePath)
-        return await import(fileUrl)
-      }
-
-      // npm 包，直接导入
-      return await import(modulePath)
+    if (isAbsolute(modulePath)) {
+      const fileUrl = await this.buildFileImportUrl(modulePath)
+      return await import(fileUrl)
     }
-    catch (error) {
-      // 尝试添加常见扩展名
-      const extensions = ['.js', '.mjs', '.cjs', '.ts']
-
-      for (const ext of extensions) {
-        try {
-          const pathWithExt = modulePath + ext
-          const fileUrl = this.buildFileImportUrl(pathWithExt)
-          return await import(fileUrl)
-        }
-        catch {
-          // 继续尝试下一个扩展名
-        }
-      }
-
-      throw error
-    }
+    return await import(modulePath)
   }
 
   /**

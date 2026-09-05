@@ -1,8 +1,8 @@
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
 import type { FastifyInstance } from 'fastify'
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
 import { requirePermission } from '@napgram/auth-kit'
+import { runtimeFileIO } from '@napgram/runtime-kit'
+import { dirname, joinPath } from './path-utils.js'
 import { env } from './web-deps.js'
 
 /**
@@ -19,25 +19,25 @@ export default async function (fastify: FastifyInstance) {
     const { limit = 100, level } = request.query as { limit?: number, level?: string }
 
     try {
-      const logDir = path.dirname(env.LOG_FILE)
+      const logDir = dirname(env.LOG_FILE)
 
       // 当前日期的日志文件
       const dateFormatter = new Intl.DateTimeFormat('sv-SE', {
-        timeZone: process.env.TZ || 'Asia/Shanghai',
+        timeZone: bunEnv.TZ || 'Asia/Shanghai',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
       })
       const currentDate = dateFormatter.format(new Date())
-      const todayLogFile = path.join(logDir, `${currentDate}.1.log`)
-      const todayJsonlFile = path.join(logDir, `${currentDate}.1.jsonl`)
+      const todayLogFile = joinPath(logDir, `${currentDate}.1.log`)
+      const todayJsonlFile = joinPath(logDir, `${currentDate}.1.jsonl`)
 
       // 先读今天和昨天的日志文件
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
       const yesterdayDate = dateFormatter.format(yesterday)
-      const yesterdayLogFile = path.join(logDir, `${yesterdayDate}.1.log`)
-      const yesterdayJsonlFile = path.join(logDir, `${yesterdayDate}.1.jsonl`)
+      const yesterdayLogFile = joinPath(logDir, `${yesterdayDate}.1.log`)
+      const yesterdayJsonlFile = joinPath(logDir, `${yesterdayDate}.1.jsonl`)
 
       const possibleFiles = [
         todayJsonlFile,
@@ -51,7 +51,7 @@ export default async function (fastify: FastifyInstance) {
 
       for (const logFile of possibleFiles) {
         try {
-          const content = await fs.readFile(logFile, 'utf-8')
+          const content = await runtimeFileIO.readText(logFile)
           const lines = content.split('\n').filter(line => line.trim())
 
       // 解析结构化日志
@@ -105,7 +105,7 @@ export default async function (fastify: FastifyInstance) {
           time: new Date().toISOString(),
           level: 'INFO',
           module: 'System',
-          message: `NapGram is running. Log files in: ${path.dirname(env.LOG_FILE)}`,
+          message: `NapGram is running. Log files in: ${dirname(env.LOG_FILE)}`,
         }, {
           time: new Date().toISOString(),
           level: 'WARN',

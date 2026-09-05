@@ -19,7 +19,7 @@ export class CacheManager<T = any> {
   private cache = new Map<string, CacheItem<T>>()
   private maxSize: number
   private defaultTTL: number
-  private cleanupTimer: NodeJS.Timeout
+  private cleanupTimer: ReturnType<typeof setInterval>
 
   constructor(config: CacheConfig = {}) {
     this.maxSize = config.maxSize || 1000

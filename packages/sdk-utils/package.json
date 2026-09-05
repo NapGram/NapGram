@@ -26,7 +26,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "bun run build"
   },
   "keywords": [
     "napgram",
@@ -37,10 +37,10 @@
   "author": "NapLink",
   "license": "MIT",
   "dependencies": {
+    "@napgram/runtime-kit": "workspace:*",
     "@napgram/sdk-core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "26.4.1",
     "@typescript/native": "npm:typescript@^7.0.2",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },

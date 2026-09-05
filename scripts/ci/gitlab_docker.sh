@@ -40,19 +40,6 @@ dependency_proxy_enabled() {
   [[ "${NAPGRAM_DOCKER_USE_DEPENDENCY_PROXY:-false}" == "true" ]]
 }
 
-docker_node_image() {
-  if [[ -n "${NAPGRAM_DOCKER_NODE_IMAGE:-}" ]]; then
-    printf '%s\n' "$NAPGRAM_DOCKER_NODE_IMAGE"
-    return
-  fi
-  local proxy_prefix
-  if dependency_proxy_enabled && proxy_prefix="$(dependency_proxy_prefix)"; then
-    printf '%s/library/node:26-alpine@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66\n' "$proxy_prefix"
-    return
-  fi
-  printf '%s\n' 'node:26-alpine@sha256:e88a35be04478413b7c71c455cd9865de9b9360e1f43456be5951032d7ac1a66'
-}
-
 append_proxy_build_arg() {
   local -n args_ref=$1
   local build_arg_name=$2
@@ -174,7 +161,6 @@ build_arch() {
     --build-arg "COMMIT=${CI_COMMIT_SHA:-unknown}"
     --build-arg "USE_MIRROR=${use_mirror}"
     --build-arg "LOTTIE_IMAGE=$(lottie_image)"
-    --build-arg "NODE_IMAGE=$(docker_node_image)"
     --build-arg "BUN_CONFIG_REGISTRY=${bun_registry}"
   )
   append_proxy_build_arg build_args HTTP_PROXY NAPGRAM_BUILD_HTTP_PROXY HTTP_PROXY CI_HTTP_PROXY

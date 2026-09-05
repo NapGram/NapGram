@@ -1,21 +1,22 @@
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import type { FastifyInstance } from 'fastify'
-import fs from 'node:fs'
-import path from 'node:path'
+import { basename, joinPath, resolvePath } from './path-utils.js'
+const bunRuntime = (globalThis as typeof globalThis & { Bun: { file(path: string): { stream(): ReadableStream<Uint8Array> } } }).Bun
 import { ErrorResponses, getMimeType, TEMP_PATH } from './web-http.js'
 
 export default async function (fastify: FastifyInstance) {
   fastify.get('/temp/:filename', async (request: any, reply: any) => {
     const { filename } = request.params
-    const filePath = path.join(TEMP_PATH, filename)
+    const filePath = joinPath(TEMP_PATH, filename)
 
     // 防止目录穿越
-    if (!path.resolve(filePath).startsWith(path.resolve(TEMP_PATH))) {
+    if (!resolvePath(filePath).startsWith(resolvePath(TEMP_PATH))) {
       return ErrorResponses.forbidden(reply)
     }
 
-    if (fs.existsSync(filePath)) {
+    if (await runtimeFileIO.exists(filePath)) {
       reply.header('Content-Type', getMimeType(filename))
-      return fs.createReadStream(filePath)
+      return bunRuntime.file(filePath).stream()
     }
 
     return ErrorResponses.notFound(reply)

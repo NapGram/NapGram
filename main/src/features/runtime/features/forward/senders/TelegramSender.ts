@@ -3,7 +3,7 @@
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
 import type { Instance } from '../../../runtime-types.js'
 import type { MediaFeature } from '../../MediaFeature.js'
-import path from 'node:path'
+import { basename } from '../../../../../shared/utils/path.js'
 import { telegramSend } from '../../../../../shared/utils/index.js'
 import { db, schema } from '../../../capabilities/db.js'
 import { env, flags } from '../../../capabilities/env.js'
@@ -254,7 +254,7 @@ export class TelegramSender {
 
     if (typeof fileSrc === 'string' && fileSrc.startsWith('/')) {
       this.logger.debug(`Using local file path for mtcute: ${fileSrc}`)
-      const fileName = path.basename(fileSrc);
+      const fileName = basename(fileSrc);
       (content as any).data.fileName = fileName
     }
 
@@ -282,7 +282,7 @@ export class TelegramSender {
       let mediaInput: any
 
       if (content.type === 'image') {
-        const fileName = (content as any).data.fileName || (typeof (content as any).data.file === 'string' ? path.basename((content as any).data.file) : 'image.jpg')
+        const fileName = (content as any).data.fileName || (typeof (content as any).data.file === 'string' ? basename((content as any).data.file) : 'image.jpg')
         let normalized = await this.fileNormalizer.normalizeInputFile(fileSrc, fileName || 'image.jpg')
         if (!normalized)
           throw new Error('Image source not available')
@@ -295,7 +295,7 @@ export class TelegramSender {
         }
       }
       else if (content.type === 'video') {
-        const fileName = (content as any).data.fileName || (typeof (content as any).data.file === 'string' ? path.basename((content as any).data.file) : 'video.mp4')
+        const fileName = (content as any).data.fileName || (typeof (content as any).data.file === 'string' ? basename((content as any).data.file) : 'video.mp4')
         const normalized = await this.fileNormalizer.normalizeInputFile(fileSrc, fileName || 'video.mp4')
         if (!normalized)
           throw new Error('Video source not available')
@@ -307,7 +307,7 @@ export class TelegramSender {
       }
       else if (content.type === 'audio') {
         const fileName = (content as any).data.fileName
-          || (typeof (content as any).data.file === 'string' ? path.basename((content as any).data.file).replace(/\.amr$/, '.ogg') : 'audio.ogg')
+          || (typeof (content as any).data.file === 'string' ? basename((content as any).data.file).replace(/\.amr$/, '.ogg') : 'audio.ogg')
         const normalized = await this.fileNormalizer.normalizeInputFile(fileSrc, fileName || 'audio.ogg')
         if (!normalized)
           throw new Error('Audio source not available')
@@ -346,7 +346,7 @@ export class TelegramSender {
           caption: captionText, // 使用 caption 传递 header
         }
 
-        // mtcute handles string (path) and Buffer automatically
+        // mtcute handles string (path) and Uint8Array automatically
         let sentMsg: any
         try {
           sentMsg = await chat.client.sendMedia(chat.id, mediaInput, params)

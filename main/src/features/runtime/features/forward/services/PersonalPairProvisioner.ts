@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../runtime-types.js'
 import type { QqChatType, TypedForwardPair } from '../../commands/utils/ForwardPairChatType.js'
-import process from 'node:process'
+import { bunEnv } from '../../../../../shared/utils/runtime.js'
 import { getLogger } from '../../../capabilities/logging.js'
 import { addForwardPairWithChatType, findPairByQQWithChatType } from '../../commands/utils/ForwardPairChatType.js'
 
@@ -318,7 +318,7 @@ export class PersonalPairProvisioner {
     if (!tgBot || typeof tgBot.getChat !== 'function')
       return
 
-    const attempts = process.env.NODE_ENV === 'test' ? 1 : 3
+    const attempts = bunEnv.NODE_ENV === 'test' ? 1 : 3
     let lastError: unknown
     for (let attempt = 1; attempt <= attempts; attempt++) {
       try {

@@ -1,31 +1,33 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
 import fc from 'fast-check'
-import { describe, expect, it } from 'vitest'
+
+const toHex = (bytes: Uint8Array) => Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
+import { describe, expect, it } from 'bun:test'
 import { md5, md5B64, md5Hex, sha256B64, sha256Hex } from '../hashing'
 
 describe('hashing utilities', () => {
   describe('md5()', () => {
-    it('returns a Buffer digest for a string input', () => {
+    it('returns a Uint8Array digest for a string input', () => {
       const result = md5('hello')
-      expect(result).toBeInstanceOf(Buffer)
-      expect(result.toString('hex')).toBe('5d41402abc4b2a76b9719d911017c592')
+      expect(result).toBeInstanceOf(Uint8Array)
+      expect(toHex(result)).toBe('5d41402abc4b2a76b9719d911017c592')
     })
 
     it('returns correct digest for empty string', () => {
       const result = md5('')
-      expect(result.toString('hex')).toBe('d41d8cd98f00b204e9800998ecf8427e')
+      expect(toHex(result)).toBe('d41d8cd98f00b204e9800998ecf8427e')
     })
 
     it('returns correct digest for unicode input', () => {
       const result = md5('你好世界')
-      expect(result.toString('hex')).toBe('65396ee4aad0b4f17aacd1c6112ee364')
+      expect(toHex(result)).toBe('65396ee4aad0b4f17aacd1c6112ee364')
     })
 
-    it('returns correct digest for binary-like Buffer input', () => {
-      const buf = Buffer.from([0x00, 0x01, 0x02, 0xFF])
+    it('returns correct digest for binary-like Uint8Array input', () => {
+      const buf = new Uint8Array([0x00, 0x01, 0x02, 0xFF])
       const result = md5(buf)
-      expect(result.toString('hex')).toBe('0416dab819887333af831f8c765ac2ae')
+      expect(toHex(result)).toBe('0416dab819887333af831f8c765ac2ae')
     })
 
     it('produces deterministic output (same input → same output)', () => {
@@ -48,8 +50,8 @@ describe('hashing utilities', () => {
       expect(md5Hex('你好世界')).toBe('65396ee4aad0b4f17aacd1c6112ee364')
     })
 
-    it('returns correct hex for binary-like Buffer input', () => {
-      const buf = Buffer.from([0x00, 0x01, 0x02, 0xFF])
+    it('returns correct hex for binary-like Uint8Array input', () => {
+      const buf = new Uint8Array([0x00, 0x01, 0x02, 0xFF])
       expect(md5Hex(buf)).toBe('0416dab819887333af831f8c765ac2ae')
     })
 
@@ -89,8 +91,8 @@ describe('hashing utilities', () => {
       expect(sha256Hex('你好世界')).toBe('beca6335b20ff57ccc47403ef4d9e0b8fccb4442b3151c2e7d50050673d43172')
     })
 
-    it('returns correct hex for binary-like Buffer input', () => {
-      const buf = Buffer.from([0x00, 0x01, 0x02, 0xFF])
+    it('returns correct hex for binary-like Uint8Array input', () => {
+      const buf = new Uint8Array([0x00, 0x01, 0x02, 0xFF])
       expect(sha256Hex(buf)).toBe('3d1f57c984978ef98a18378c8166c1cb8ede02c03eeb6aee7e2f121dfeee3e56')
     })
 

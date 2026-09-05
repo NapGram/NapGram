@@ -1,24 +1,24 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach, mock } from 'bun:test'
 
 // Mock dependencies
-const mockThenable = { then: vi.fn().mockResolvedValue(undefined) }
-vi.mock('../db.js', () => ({
+const mockThenable = { then: mock().mockResolvedValue(undefined) }
+mock.module('../db.js', () => ({
   default: {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockReturnValue(mockThenable) }) }),
-    set: vi.fn().mockReturnThis(),
-    insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([]),
+    select: mock().mockReturnThis(),
+    from: mock().mockReturnThis(),
+    where: mock().mockReturnThis(),
+    update: mock().mockReturnValue({ set: mock().mockReturnValue({ where: mock().mockReturnValue(mockThenable) }) }),
+    set: mock().mockReturnThis(),
+    insert: mock().mockReturnThis(),
+    values: mock().mockReturnThis(),
+    returning: mock().mockResolvedValue([]),
   },
   db: {},
   schema: { avatarCache: {}, forwardPair: {} },
-  eq: vi.fn(),
+  eq: mock(),
 }))
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   flags: {
     NAME_LOCKED: 131072,
   },
@@ -27,13 +27,13 @@ vi.mock('@napgram/env-kit', () => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn().mockReturnValue({
-    trace: vi.fn(),
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock().mockReturnValue({
+    trace: mock(),
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
   }),
 }))
 

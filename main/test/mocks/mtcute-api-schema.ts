@@ -1,9 +1,6 @@
-import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
-import path from 'node:path'
+import { dirname, joinPath } from '../../src/shared/utils/path.js'
 
-const require = createRequire(import.meta.url)
-const coreEntry = require.resolve('@mtcute/core')
-const schemaPath = path.join(path.dirname(coreEntry), 'tl', 'api-schema.json')
+const coreEntry = Bun.resolveSync('@mtcute/core', import.meta.dir)
+const schemaPath = joinPath(dirname(coreEntry), 'tl', 'api-schema.json')
 
-export default JSON.parse(readFileSync(schemaPath, 'utf8'))
+export default await Bun.file(schemaPath).json()

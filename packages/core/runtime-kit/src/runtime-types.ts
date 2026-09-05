@@ -29,7 +29,7 @@ export interface PluginTgBotLike {
   username?: string
   isRunning?: boolean
   getChat?: (chatId: number) => Promise<PluginTgChatLike>
-  downloadMedia?: (media: unknown) => Promise<Buffer | Uint8Array | null>
+  downloadMedia?: (media: unknown) => Promise<Uint8Array | null>
 }
 
 export interface PluginQqMessageContent {

@@ -97,7 +97,7 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./main/coverage/coverage-final.json
+          files: ./main/coverage/lcov.info
           flags: unittests
           name: codecov-napgram
           fail_ci_if_error: false

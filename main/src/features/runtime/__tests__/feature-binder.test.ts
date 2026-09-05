@@ -1,12 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { createInstanceFeatureBinder } from '../feature-binder.js'
 
 describe('createInstanceFeatureBinder', () => {
   it('creates binder with correct lifecycle methods', async () => {
-    const getFeature = vi.fn()
-    const setFeature = vi.fn()
-    const createFeature = vi.fn().mockResolvedValue('feature')
-    const destroyFeature = vi.fn().mockResolvedValue(undefined)
+    const getFeature = mock()
+    const setFeature = mock()
+    const createFeature = mock().mockResolvedValue('feature')
+    const destroyFeature = mock().mockResolvedValue(undefined)
 
     const binder = createInstanceFeatureBinder<any, any>({
       shouldAttach: instance => instance.ready,

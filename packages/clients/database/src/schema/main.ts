@@ -25,11 +25,9 @@ function stringifyBigInts(obj: any): any {
     return obj;
 }
 
-// Custom types mapping
-// Prisma BigInt -> JS BigInt (handled by drizzle bigint mode: 'bigint')
-// Prisma Bytes -> Buffer (handled by customType or simple bytes if available, Drizzle has customType)
+// Prisma Bytes -> Uint8Array (handled by the Bun SQL driver).
 
-const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+const bytea = customType<{ data: Uint8Array; driverData: Uint8Array }>({
     dataType() {
         return 'bytea';
     },

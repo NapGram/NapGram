@@ -1,5 +1,4 @@
 import type { AppLogger } from '@napgram/logger-kit'
-import { Buffer } from 'node:buffer'
 import { db, eq, schema } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
@@ -41,7 +40,7 @@ export default class TelegramSession {
 
     if (dbEntry && dbEntry.authKey) {
       // Try to interpret authKey as session string
-      const str = Buffer.from(dbEntry.authKey).toString('utf-8')
+      const str = new TextDecoder().decode(dbEntry.authKey)
       // Basic validation for mtcute session string (starts with digit or '1'/'2' usually, or base64)
       // mtcute session strings usually start with a DC ID and some alphanumeric chars.
       // GramJS authKey is raw bytes.
@@ -65,11 +64,11 @@ export default class TelegramSession {
           id: this._dbId,
           dcId: env.TG_INITIAL_DCID || 2,
           serverAddress: env.TG_INITIAL_SERVER || '149.154.167.50',
-          authKey: Buffer.from(session, 'utf-8'),
+          authKey: new TextEncoder().encode(session),
         })
         .onConflictDoUpdate({
           target: schema.session.id,
-          set: { authKey: Buffer.from(session, 'utf-8') },
+          set: { authKey: new TextEncoder().encode(session) },
         })
     }
   }

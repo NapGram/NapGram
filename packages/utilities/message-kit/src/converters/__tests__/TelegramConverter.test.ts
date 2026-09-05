@@ -1,19 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { TelegramConverter } from '../TelegramConverter.js'
 
-vi.mock('@napgram/infra-kit', () => ({
+mock.module('@napgram/infra-kit', () => ({
   env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
-  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn() })),
-  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
-  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  getLogger: mock(() => ({ debug: mock(), info: mock() })),
+  temp: { TEMP_PATH: '/tmp/napgram', file: mock(), createTempFile: mock() },
+  hashing: { md5Hex: mock((s) => 'hashed-' + s) },
 }))
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn() })),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({ debug: mock(), info: mock() })),
 }))
 
 function createEntity(type: 'mention' | 'text_mention', offset: number, length: number, params?: any) {

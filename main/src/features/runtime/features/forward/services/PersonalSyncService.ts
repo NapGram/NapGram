@@ -1,7 +1,6 @@
 import type { ForwardMap, Instance, IQQClient } from '../../../runtime-types.js'
 import type { TypedForwardPair } from '../../commands/utils/ForwardPairChatType.js'
-import { Buffer } from 'node:buffer'
-import crypto from 'node:crypto'
+import { hashWithRuntime } from '@napgram/runtime-kit'
 import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('PersonalSyncService')
@@ -16,17 +15,17 @@ function buildQqFriendAvatarUrl(userId: string) {
   return `https://q.qlogo.cn/g?b=qq&nk=${uid}&s=640`
 }
 
-async function fetchBuffer(url: string): Promise<Buffer> {
+async function fetchBuffer(url: string): Promise<Uint8Array> {
   const res = await fetch(url)
   if (!res.ok)
     throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
   const ab = await res.arrayBuffer()
-  return Buffer.from(ab)
+  return new Uint8Array(ab)
 }
 
 export class PersonalSyncService {
-  private timer?: NodeJS.Timeout
-  private initialTimer?: NodeJS.Timeout
+  private timer?: ReturnType<typeof setInterval>
+  private initialTimer?: ReturnType<typeof setInterval>
   private readonly avatarHashCache = new Map<string, string>()
 
   constructor(
@@ -150,7 +149,7 @@ export class PersonalSyncService {
     try {
       const avatarBuffer = await fetchBuffer(avatarUrl)
       if (avatarBuffer.length) {
-        const hash = crypto.createHash('md5').update(avatarBuffer).digest('hex')
+        const hash = hashWithRuntime('md5', avatarBuffer, 'hex') as string
         const cacheKey = String(pair.id)
         if (this.avatarHashCache.get(cacheKey) !== hash) {
           await tgChat.setProfilePhoto(avatarBuffer)

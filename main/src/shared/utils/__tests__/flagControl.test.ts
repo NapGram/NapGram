@@ -1,6 +1,6 @@
 import type { Flagged } from '../flagControl'
+import { describe, expect, it } from 'bun:test'
 import fc from 'fast-check'
-import { describe, expect, it } from 'vitest'
 import { editFlags } from '../flagControl'
 
 describe('flagControl', () => {

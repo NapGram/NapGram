@@ -6,7 +6,7 @@ mkdir -p /app/.config/QQ /app/data /app/data/logs
 
 # 如果未提供 ADMIN_TOKEN，自动生成一个随机 Token 并打印（使用内置 crypto 保证可用）
 if [ -z "${ADMIN_TOKEN:-}" ]; then
-  export ADMIN_TOKEN="$(bun -e 'console.log(require("crypto").randomBytes(32).toString("hex"))')"
+  export ADMIN_TOKEN="$(bun -e 'const bytes = crypto.getRandomValues(new Uint8Array(32)); console.log([...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join(""))')"
   echo "已生成随机 ADMIN_TOKEN（请妥善保存）：${ADMIN_TOKEN}"
 fi
 

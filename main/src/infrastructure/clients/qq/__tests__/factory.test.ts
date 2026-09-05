@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'bun:test'
 
 let QQClientFactory: typeof import('@napgram/qq-client').QQClientFactory
 let qqClientFactory: typeof import('@napgram/qq-client').qqClientFactory

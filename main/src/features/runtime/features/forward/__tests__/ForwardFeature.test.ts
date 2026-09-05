@@ -1,54 +1,64 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { db, eq, schema } from '@napgram/db-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
-import { hasConfiguredWorkMode } from '../../../work-mode-gate.js'
-import { findPairByQQWithChatType, findPairByTGWithChatType } from '../../commands/utils/ForwardPairChatType.js'
-import { ForwardFeature } from '../ForwardFeature.js'
-import { MessageUtils } from '../utils/MessageUtils.js'
+
+
+const waitFor = async (assertion: () => void, timeout = 1000) => {
+  const deadline = Date.now() + timeout
+  let lastError: unknown
+  while (Date.now() < deadline) {
+    try {
+      assertion()
+      return
+    } catch (error) {
+      lastError = error
+      await new Promise((resolve) => setTimeout(resolve, 10))
+    }
+  }
+  throw lastError
+}
 
 /* ---------- hoisted mocks ---------- */
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
 
-const eventPublisherMocks = vi.hoisted(() => ({
-  publishMessage: vi.fn(),
-  publishMessageCreated: vi.fn(),
-}))
+const eventPublisherMocks = (() => ({
+  publishMessage: mock(),
+  publishMessageCreated: mock(),
+}))()
 
-const performanceMonitorMocks = vi.hoisted(() => ({
-  recordMessage: vi.fn(),
-  recordError: vi.fn(),
-}))
+const performanceMonitorMocks = (() => ({
+  recordMessage: mock(),
+  recordError: mock(),
+}))()
 
-const personalPairProvisionerMocks = vi.hoisted(() => ({
+const personalPairProvisionerMocks = (() => ({
   instances: [] as any[],
-}))
+}))()
 
-const mapperMocks = vi.hoisted(() => ({
+const mapperMocks = (() => ({
   instances: [] as any[],
-}))
+}))()
 
-const telegramMessageHandlerMocks = vi.hoisted(() => ({
+const telegramMessageHandlerMocks = (() => ({
   instances: [] as any[],
-}))
+}))()
 
-vi.mock('@napgram/db-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  db: {
-    execute: vi.fn().mockResolvedValue({ rows: [], rowCount: 1 }),
-    update: vi.fn().mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }) }),
-    delete: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+mock.module('@napgram/db-kit', async () => ({
+    db: {
+    execute: mock().mockResolvedValue({ rows: [], rowCount: 1 }),
+    update: mock().mockReturnValue({ set: mock().mockReturnValue({ where: mock().mockResolvedValue(undefined) }) }),
+    delete: mock().mockReturnValue({ where: mock().mockResolvedValue(undefined) }),
   },
-  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
-  eq: vi.fn((a: any, b: any) => ({ a, b })),
-  and: vi.fn((...conditions: any[]) => ({ and: conditions })),
+  sql: mock((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
+  eq: mock((a: any, b: any) => ({ a, b })),
+  and: mock((...conditions: any[]) => ({ and: conditions })),
   schema: {
     forwardPair: { id: 'forwardPair.id' },
     message: {
@@ -60,34 +70,30 @@ vi.mock('@napgram/db-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', async () => ({
+    getLogger: mock(() => loggerMocks),
 }))
 
-vi.mock('@napgram/plugin-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getEventPublisher: vi.fn(() => eventPublisherMocks),
+mock.module('@napgram/plugin-kit', async () => ({
+    getEventPublisher: mock(() => eventPublisherMocks),
 }))
 
-vi.mock('@napgram/infra-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  performanceMonitor: performanceMonitorMocks,
+mock.module('@napgram/infra-kit', async () => ({
+    performanceMonitor: performanceMonitorMocks,
 }))
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  env: { FORWARD_MODE: '11', SHOW_NICKNAME_MODE: '11' },
+mock.module('@napgram/env-kit', async () => ({
+    env: { FORWARD_MODE: '11', SHOW_NICKNAME_MODE: '11' },
 }))
 
-vi.mock('../../../work-mode-gate.js', () => ({
-  hasConfiguredWorkMode: vi.fn().mockReturnValue(true),
+mock.module('../../../work-mode-gate.js', () => ({
+  hasConfiguredWorkMode: mock().mockReturnValue(true),
   CONFIGURED_WORK_MODES: new Set(['group', 'personal', 'public']),
 }))
 
-vi.mock('@napgram/message-kit', () => ({
+mock.module('@napgram/message-kit', () => ({
   messageConverter: {
-    fromTelegram: vi.fn().mockReturnValue({
+    fromTelegram: mock().mockReturnValue({
       id: 'converted-1',
       platform: 'telegram',
       content: [{ type: 'text', data: { text: 'converted' } }],
@@ -97,31 +103,31 @@ vi.mock('@napgram/message-kit', () => ({
   },
 }))
 
-vi.mock('../../../../../shared/utils/index.js', () => ({
+mock.module('../../../../../shared/utils/index.js', () => ({
   telegramSend: {
-    normalizeTelegramChatId: vi.fn((id: any) => Number(id)),
-    normalizeTelegramMessageId: vi.fn((id: any) => id ? Number(id) : undefined),
+    normalizeTelegramChatId: mock((id: any) => Number(id)),
+    normalizeTelegramMessageId: mock((id: any) => id ? Number(id) : undefined),
   },
 }))
 
-vi.mock('../../commands/services/ThreadIdExtractor.js', () => ({
+mock.module('../../commands/services/ThreadIdExtractor.js', () => ({
   ThreadIdExtractor: class { extractFromRaw() { return undefined } },
 }))
 
-vi.mock('../../commands/utils/ForwardPairChatType.js', () => ({
-  findPairByTGWithChatType: vi.fn().mockResolvedValue(undefined),
-  findPairByQQWithChatType: vi.fn().mockResolvedValue(undefined),
+mock.module('../../commands/utils/ForwardPairChatType.js', () => ({
+  findPairByTGWithChatType: mock().mockResolvedValue(undefined),
+  findPairByQQWithChatType: mock().mockResolvedValue(undefined),
 }))
 
-vi.mock('../handlers/MediaGroupHandler.js', () => ({
+mock.module('../handlers/MediaGroupHandler.js', () => ({
   MediaGroupHandler: class {
-    destroy = vi.fn()
+    destroy = mock()
   },
 }))
 
-vi.mock('../handlers/TelegramMessageHandler.js', () => ({
+mock.module('../handlers/TelegramMessageHandler.js', () => ({
   TelegramMessageHandler: class {
-    handleTGMessage = vi.fn().mockResolvedValue(undefined)
+    handleTGMessage = mock().mockResolvedValue(undefined)
 
     constructor() {
       telegramMessageHandlerMocks.instances.push(this)
@@ -129,22 +135,22 @@ vi.mock('../handlers/TelegramMessageHandler.js', () => ({
   },
 }))
 
-vi.mock('../senders/MediaPreparer.js', () => ({
+mock.module('../senders/MediaPreparer.js', () => ({
   ForwardMediaPreparer: class {
-    prepareMediaForQQ = vi.fn()
+    prepareMediaForQQ = mock()
   },
 }))
 
-vi.mock('../senders/TelegramSender.js', () => ({
+mock.module('../senders/TelegramSender.js', () => ({
   TelegramSender: class {
-    sendToTelegram = vi.fn().mockResolvedValue({ id: 999 })
+    sendToTelegram = mock().mockResolvedValue({ id: 999 })
   },
 }))
 
-vi.mock('../services/MessageMapper.js', () => ({
+mock.module('../services/MessageMapper.js', () => ({
   ForwardMapper: class {
-    saveMessage = vi.fn().mockResolvedValue(undefined)
-    findQqSource = vi.fn().mockResolvedValue(undefined)
+    saveMessage = mock().mockResolvedValue(undefined)
+    findQqSource = mock().mockResolvedValue(undefined)
 
     constructor() {
       mapperMocks.instances.push(this)
@@ -152,9 +158,9 @@ vi.mock('../services/MessageMapper.js', () => ({
   },
 }))
 
-vi.mock('../services/PersonalPairProvisioner.js', () => ({
+mock.module('../services/PersonalPairProvisioner.js', () => ({
   PersonalPairProvisioner: class {
-    ensurePairForQQMessage = vi.fn().mockResolvedValue(undefined)
+    ensurePairForQQMessage = mock().mockResolvedValue(undefined)
 
     constructor() {
       personalPairProvisionerMocks.instances.push(this)
@@ -162,24 +168,24 @@ vi.mock('../services/PersonalPairProvisioner.js', () => ({
   },
 }))
 
-vi.mock('../services/PersonalSyncService.js', () => ({
+mock.module('../services/PersonalSyncService.js', () => ({
   PersonalSyncService: class {
-    start = vi.fn()
-    stop = vi.fn()
+    start = mock()
+    stop = mock()
   },
 }))
 
-vi.mock('../services/ReplyResolver.js', () => ({
+mock.module('../services/ReplyResolver.js', () => ({
   ReplyResolver: class {
-    resolveQQReply = vi.fn().mockResolvedValue(undefined)
+    resolveQQReply = mock().mockResolvedValue(undefined)
   },
 }))
 
-vi.mock('../utils/MessageUtils.js', () => ({
+mock.module('../utils/MessageUtils.js', () => ({
   MessageUtils: {
-    populateAtDisplayNames: vi.fn().mockResolvedValue(undefined),
-    replyTG: vi.fn().mockResolvedValue(undefined),
-    isAdmin: vi.fn().mockReturnValue(true),
+    populateAtDisplayNames: mock().mockResolvedValue(undefined),
+    replyTG: mock().mockResolvedValue(undefined),
+    isAdmin: mock().mockReturnValue(true),
   },
 }))
 
@@ -190,12 +196,12 @@ function createInstance(overrides: Record<string, unknown> = {}) {
     owner: 'owner-tg-123',
     flags: 0,
     forwardPairs: {
-      findByQQ: vi.fn(),
-      findByTG: vi.fn(),
-      getAll: vi.fn().mockReturnValue([]),
-      reload: vi.fn().mockResolvedValue(undefined),
-      add: vi.fn(),
-      remove: vi.fn().mockResolvedValue(true),
+      findByQQ: mock(),
+      findByTG: mock(),
+      getAll: mock().mockReturnValue([]),
+      reload: mock().mockResolvedValue(undefined),
+      add: mock(),
+      remove: mock().mockResolvedValue(true),
     },
     tgBot: createTgBot(),
     ...overrides,
@@ -204,14 +210,14 @@ function createInstance(overrides: Record<string, unknown> = {}) {
 
 function createTgBot() {
   return {
-    addNewMessageEventHandler: vi.fn(),
-    removeNewMessageEventHandler: vi.fn(),
-    addEditedMessageEventHandler: vi.fn(),
-    removeEditedMessageEventHandler: vi.fn(),
-    getChat: vi.fn().mockResolvedValue({
-      sendMessage: vi.fn().mockResolvedValue({ id: 500 }),
-      deleteMessages: vi.fn().mockResolvedValue(undefined),
-      setTyping: vi.fn().mockResolvedValue(undefined),
+    addNewMessageEventHandler: mock(),
+    removeNewMessageEventHandler: mock(),
+    addEditedMessageEventHandler: mock(),
+    removeEditedMessageEventHandler: mock(),
+    getChat: mock().mockResolvedValue({
+      sendMessage: mock().mockResolvedValue({ id: 500 }),
+      deleteMessages: mock().mockResolvedValue(undefined),
+      setTyping: mock().mockResolvedValue(undefined),
     }),
   } as any
 }
@@ -221,24 +227,24 @@ function createQqClient(overrides: Record<string, unknown> = {}) {
   return {
     uin: '88888',
     nickname: 'BotNick',
-    on: vi.fn((event: string, handler: Function) => {
+    on: mock((event: string, handler: Function) => {
       if (!handlers[event])
         handlers[event] = []
       handlers[event].push(handler)
     }),
-    removeListener: vi.fn((event: string, handler: Function) => {
+    off: mock((event: string, handler: Function) => {
       if (handlers[event])
         handlers[event] = handlers[event].filter(h => h !== handler)
     }),
     emit: (event: string, ...args: any[]) => {
       (handlers[event] || []).forEach(h => h(...args))
     },
-    sendMessage: vi.fn().mockResolvedValue({ messageId: 'qq-sent-1' }),
-    recallMessage: vi.fn().mockResolvedValue(undefined),
-    getGroupMemberInfo: vi.fn().mockResolvedValue({ card: 'Card', nickname: 'Nick' }),
-    getGroupInfo: vi.fn().mockResolvedValue({ name: 'TestGroup' }),
-    getFriendInfo: vi.fn().mockResolvedValue({ name: 'FriendName' }),
-    setInputStatus: vi.fn().mockResolvedValue(undefined),
+    sendMessage: mock().mockResolvedValue({ messageId: 'qq-sent-1' }),
+    recallMessage: mock().mockResolvedValue(undefined),
+    getGroupMemberInfo: mock().mockResolvedValue({ card: 'Card', nickname: 'Nick' }),
+    getGroupInfo: mock().mockResolvedValue({ name: 'TestGroup' }),
+    getFriendInfo: mock().mockResolvedValue({ name: 'FriendName' }),
+    setInputStatus: mock().mockResolvedValue(undefined),
     _handlers: handlers,
     ...overrides,
   } as any
@@ -295,23 +301,39 @@ function buildFeature(instance?: any, tgBot?: any, qqClient?: any) {
 }
 
 /* ---------- tests ---------- */
+
+
+let db: any
+let eq: any
+let schema: any
+let hasConfiguredWorkMode: any
+let findPairByQQWithChatType: any
+let findPairByTGWithChatType: any
+let ForwardFeature: any
+let MessageUtils: any
+
+beforeAll(async () => {
+  ({ db, eq, schema } = await import('@napgram/db-kit'));
+  ({ hasConfiguredWorkMode } = await import('../../../work-mode-gate.js'));
+  ({ findPairByQQWithChatType, findPairByTGWithChatType } = await import('../../commands/utils/ForwardPairChatType.js'));
+  ({ ForwardFeature } = await import('../ForwardFeature.js'));
+  ({ MessageUtils } = await import('../utils/MessageUtils.js'));
+})
+
 describe('forwardFeature', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(hasConfiguredWorkMode).mockReturnValue(true)
-    vi.mocked(findPairByTGWithChatType).mockResolvedValue(undefined)
-    vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
-    vi.mocked(MessageUtils.isAdmin).mockReturnValue(true)
-    vi.mocked(MessageUtils.replyTG).mockResolvedValue(undefined)
-    vi.mocked(MessageUtils.populateAtDisplayNames).mockResolvedValue(undefined)
+    mock.clearAllMocks()
+    hasConfiguredWorkMode.mockReturnValue(true)
+    findPairByTGWithChatType.mockResolvedValue(undefined)
+    findPairByQQWithChatType.mockResolvedValue(undefined)
+    MessageUtils.isAdmin.mockReturnValue(true)
+    MessageUtils.replyTG.mockResolvedValue(undefined)
+    MessageUtils.populateAtDisplayNames.mockResolvedValue(undefined)
     personalPairProvisionerMocks.instances.length = 0
     mapperMocks.instances.length = 0
     telegramMessageHandlerMocks.instances.length = 0
   })
 
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
 
   /* ---- constructor ---- */
   describe('constructor', () => {
@@ -334,7 +356,7 @@ describe('forwardFeature', () => {
     })
 
     it('registers mode command when commands feature is provided', () => {
-      const commands = { registerCommand: vi.fn() }
+      const commands = { registerCommand: mock() }
       buildFeature(createInstance(), createTgBot(), createQqClient())
       // Without commands, no registration — just a smoke test
     })
@@ -343,10 +365,10 @@ describe('forwardFeature', () => {
   /* ---- QQ → TG forwarding ---- */
   describe('handleQQMessage (QQ→TG)', () => {
     it('skips when work mode is not configured', async () => {
-      vi.mocked(hasConfiguredWorkMode).mockReturnValue(false)
+      hasConfiguredWorkMode.mockReturnValue(false)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage())
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(performanceMonitorMocks.recordMessage).not.toHaveBeenCalled()
       })
     })
@@ -354,7 +376,7 @@ describe('forwardFeature', () => {
     it('skips self QQ messages', async () => {
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage({ sender: { id: '88888', name: 'Self' } }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(findPairByQQWithChatType).not.toHaveBeenCalled()
       })
     })
@@ -372,33 +394,33 @@ describe('forwardFeature', () => {
         },
       }))
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(findPairByQQWithChatType).not.toHaveBeenCalled()
       })
     })
 
     it('deduplicates QQ messages with same id', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient, tgBot } = buildFeature()
-      tgBot.getChat.mockResolvedValue({ sendMessage: vi.fn().mockResolvedValue({ id: 501 }) })
+      tgBot.getChat.mockResolvedValue({ sendMessage: mock().mockResolvedValue({ id: 501 }) })
 
       const msg = createQqMessage({ id: 'dup-1' })
       qqClient.emit('message', msg)
       qqClient.emit('message', { ...msg })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         // findPairByQQWithChatType should be called only once (second is dedup)
         expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('Duplicate'))
       })
     })
 
     it('does not deduplicate same QQ message id from different chats', async () => {
-      vi.mocked(findPairByQQWithChatType)
+      findPairByQQWithChatType
         .mockResolvedValueOnce(createPair({ qqRoomId: '20002', tgChatId: '-100400' }))
         .mockResolvedValueOnce(createPair({ qqRoomId: '30003', tgChatId: '-100500' }))
 
       const { qqClient, tgBot } = buildFeature()
-      tgBot.getChat.mockResolvedValue({ sendMessage: vi.fn().mockResolvedValue({ id: 501 }) })
+      tgBot.getChat.mockResolvedValue({ sendMessage: mock().mockResolvedValue({ id: 501 }) })
 
       qqClient.emit('message', createQqMessage({
         id: 'shared-qq-id',
@@ -409,7 +431,7 @@ describe('forwardFeature', () => {
         chat: { id: '30003', type: 'group', name: 'GroupB' },
       }))
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(findPairByQQWithChatType).toHaveBeenCalledTimes(2)
       })
       expect(findPairByQQWithChatType).toHaveBeenNthCalledWith(
@@ -423,12 +445,12 @@ describe('forwardFeature', () => {
 
     it('skips command messages starting with /', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage({
         content: [{ type: 'text', data: { text: '/help' } }],
       }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.debug).toHaveBeenCalledWith(
           expect.objectContaining({ text: '/help' }),
           expect.stringContaining('Skipping command'),
@@ -437,24 +459,24 @@ describe('forwardFeature', () => {
     })
 
     it('skips when no pair mapping found', async () => {
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      findPairByQQWithChatType.mockResolvedValue(undefined)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage())
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.debug).toHaveBeenCalledWith(expect.stringContaining('No TG mapping'))
       })
     })
 
     it('auto provisions unbound QQ group messages in personal mode', async () => {
       const pair = createPair({ qqChatType: 'group' })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      findPairByQQWithChatType.mockResolvedValue(undefined)
       const { qqClient } = buildFeature(createInstance({ workMode: 'personal' }))
       const provisioner = personalPairProvisionerMocks.instances[0]
       provisioner.ensurePairForQQMessage.mockResolvedValueOnce(pair)
 
       qqClient.emit('message', createQqMessage({ id: 'personal-group-1' }))
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(provisioner.ensurePairForQQMessage).toHaveBeenCalledWith(
           expect.objectContaining({
             chat: expect.objectContaining({ id: '20002', type: 'group' }),
@@ -467,42 +489,42 @@ describe('forwardFeature', () => {
 
     it('skips when forward mode QQ→TG is disabled', async () => {
       const pair = createPair({ forwardMode: '01' }) // QQ→TG disabled, TG→QQ enabled
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage())
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.debug).toHaveBeenCalledWith(expect.stringContaining('disabled'))
       })
     })
 
     it('filters messages by ignoreSenders blocklist', async () => {
       const pair = createPair({ ignoreSenders: '10001,10002' })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage({ sender: { id: '10001', name: 'Blocked' } }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('blocklist'))
       })
     })
 
     it('filters messages by ignoreRegex', async () => {
       const pair = createPair({ ignoreRegex: '^hello' })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage({
         content: [{ type: 'text', data: { text: 'hello world' } }],
       }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('matched regex'))
       })
     })
 
     it('handles invalid ignoreRegex gracefully', async () => {
       const pair = createPair({ ignoreRegex: '[invalid' })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('message', createQqMessage())
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.warn).toHaveBeenCalledWith(
           expect.stringContaining('Invalid ignoreRegex'),
           expect.anything(),
@@ -512,37 +534,37 @@ describe('forwardFeature', () => {
 
     it('forwards QQ message to TG and records performance', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient, tgBot } = buildFeature()
-      const chatMock = { sendMessage: vi.fn().mockResolvedValue({ id: 501 }) }
+      const chatMock = { sendMessage: mock().mockResolvedValue({ id: 501 }) }
       tgBot.getChat.mockResolvedValue(chatMock)
 
       qqClient.emit('message', createQqMessage({ id: 'fwd-1' }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(performanceMonitorMocks.recordMessage).toHaveBeenCalled()
       })
     })
 
     it('records error on forwarding failure', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient, tgBot } = buildFeature()
       tgBot.getChat.mockRejectedValue(new Error('TG unavailable'))
 
       qqClient.emit('message', createQqMessage({ id: 'err-1' }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(performanceMonitorMocks.recordError).toHaveBeenCalled()
       })
     })
 
     it('publishes plugin events for QQ messages', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient, tgBot } = buildFeature()
-      tgBot.getChat.mockResolvedValue({ sendMessage: vi.fn().mockResolvedValue({ id: 502 }) })
+      tgBot.getChat.mockResolvedValue({ sendMessage: mock().mockResolvedValue({ id: 502 }) })
 
       qqClient.emit('message', createQqMessage({ id: 'plugin-1' }))
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(eventPublisherMocks.publishMessage).toHaveBeenCalled()
         const call = eventPublisherMocks.publishMessage.mock.calls[0][0]
         expect(call.platform).toBe('qq')
@@ -562,7 +584,7 @@ describe('forwardFeature', () => {
     }
 
     it('skips when work mode is not configured', async () => {
-      vi.mocked(hasConfiguredWorkMode).mockReturnValue(false)
+      hasConfiguredWorkMode.mockReturnValue(false)
       const { tgBot } = buildFeature()
       const handler = getTgHandler(tgBot)
       await handler(createTgMessage())
@@ -570,7 +592,7 @@ describe('forwardFeature', () => {
     })
 
     it('skips when no pair mapping found for TG chat', async () => {
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(undefined)
+      findPairByTGWithChatType.mockResolvedValue(undefined)
       const { tgBot } = buildFeature()
       const handler = getTgHandler(tgBot)
       await handler(createTgMessage())
@@ -579,7 +601,7 @@ describe('forwardFeature', () => {
 
     it('skips command messages starting with /', async () => {
       const pair = createPair()
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       const { tgBot } = buildFeature()
       const handler = getTgHandler(tgBot)
       await handler(createTgMessage({ text: '/help args' }))
@@ -591,7 +613,7 @@ describe('forwardFeature', () => {
 
     it('skips when forward mode TG→QQ is disabled', async () => {
       const pair = createPair({ forwardMode: '10' }) // QQ→TG enabled, TG→QQ disabled
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       const { tgBot } = buildFeature()
       const handler = getTgHandler(tgBot)
       await handler(createTgMessage())
@@ -600,7 +622,7 @@ describe('forwardFeature', () => {
 
     it('publishes plugin and gateway events for TG messages', async () => {
       const pair = createPair()
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       const { tgBot } = buildFeature()
       const handler = getTgHandler(tgBot)
       await handler(createTgMessage())
@@ -610,7 +632,7 @@ describe('forwardFeature', () => {
 
     it('recalls mapped QQ message before reposting edited TG messages', async () => {
       const pair = createPair()
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       const { tgBot, qqClient } = buildFeature()
       const mapper = mapperMocks.instances[0]
       mapper.findQqSource.mockResolvedValueOnce({ seq: 4321 })
@@ -624,11 +646,11 @@ describe('forwardFeature', () => {
 
     it('treats edited /rm as recall command without reposting to QQ', async () => {
       const pair = createPair()
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       const { tgBot, qqClient } = buildFeature()
       const mapper = mapperMocks.instances[0]
       mapper.findQqSource.mockResolvedValueOnce({ seq: 4321 })
-      const deleteMessages = vi.fn().mockResolvedValue(undefined)
+      const deleteMessages = mock().mockResolvedValue(undefined)
       tgBot.getChat.mockResolvedValueOnce({ deleteMessages })
 
       const handler = getEditedTgHandler(tgBot)
@@ -643,39 +665,39 @@ describe('forwardFeature', () => {
   /* ---- poke event ---- */
   describe('handlePokeEvent', () => {
     it('skips when work mode not configured', async () => {
-      vi.mocked(hasConfiguredWorkMode).mockReturnValue(false)
+      hasConfiguredWorkMode.mockReturnValue(false)
       const { qqClient } = buildFeature()
       qqClient.emit('poke', '20002', '10001', '10002')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
 
     it('skips when no pair for the group', async () => {
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      findPairByQQWithChatType.mockResolvedValue(undefined)
       const { qqClient } = buildFeature()
       qqClient.emit('poke', '20002', '10001', '10002')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
 
     it('skips when forward mode QQ→TG is disabled', async () => {
       const pair = createPair({ forwardMode: '01' })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('poke', '20002', '10001', '10002')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
 
     it('forwards poke event with member names', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('poke', '20002', '10001', '10002')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
           BigInt('-100400'),
@@ -687,10 +709,10 @@ describe('forwardFeature', () => {
 
     it('shows self-poke text when operator equals target', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient } = buildFeature()
       qqClient.emit('poke', '20002', '10001', '10001')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
           BigInt('-100400'),
@@ -707,7 +729,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('friend.increase', { id: '55555', name: 'NewFriend' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
           'owner-tg-123',
@@ -720,7 +742,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'group' })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('friend.increase', { id: '55555' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
@@ -729,7 +751,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'personal', owner: undefined })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('friend.increase', { id: '55555' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
@@ -741,7 +763,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('group.increase', '30003', { id: '88888' }) // self uin
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
           'owner-tg-123',
@@ -754,7 +776,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('group.increase', '30003', { id: '99999' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
@@ -763,7 +785,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'group' })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('group.increase', '30003', { id: '88888' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
@@ -772,13 +794,13 @@ describe('forwardFeature', () => {
   describe('personal lifecycle cleanup', () => {
     it('removes personal friend binding when the QQ friend is deleted', async () => {
       const pair = createPair({ qqChatType: 'private', qqRoomId: BigInt(55555), tgChatId: BigInt(-100555) })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient, instance } = buildFeature(inst)
 
       qqClient.emit('friend.decrease', '55555')
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(instance.forwardPairs.remove).toHaveBeenCalledWith({ type: 'private', id: '55555' })
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
@@ -797,10 +819,10 @@ describe('forwardFeature', () => {
       await new Promise(resolve => setTimeout(resolve, 0))
       expect(instance.forwardPairs.remove).not.toHaveBeenCalled()
 
-      vi.mocked(findPairByQQWithChatType).mockResolvedValueOnce(pair)
+      findPairByQQWithChatType.mockResolvedValueOnce(pair)
       qqClient.emit('group.decrease', '30003', '88888')
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(instance.forwardPairs.remove).toHaveBeenCalledWith({ type: 'group', id: '30003' })
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
@@ -811,8 +833,8 @@ describe('forwardFeature', () => {
     })
 
     it('skips friend decrease when pair is not found', async () => {
-      vi.mocked(findPairByQQWithChatType).mockReset()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      findPairByQQWithChatType.mockReset()
+      findPairByQQWithChatType.mockResolvedValue(undefined)
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient, instance } = buildFeature(inst)
 
@@ -822,23 +844,23 @@ describe('forwardFeature', () => {
     })
 
     it('handles friend decrease error gracefully', async () => {
-      vi.mocked(findPairByQQWithChatType).mockReset()
+      findPairByQQWithChatType.mockReset()
       const pair = createPair({ qqChatType: 'private', qqRoomId: BigInt(55555), tgChatId: BigInt(-100555) })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient, instance } = buildFeature(inst)
 
-      instance.forwardPairs.remove = vi.fn().mockRejectedValue(new Error('DB error'))
+      instance.forwardPairs.remove = mock().mockRejectedValue(new Error('DB error'))
 
       qqClient.emit('friend.decrease', '55555')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.error).toHaveBeenCalledWith('Failed to handle friend decrease:', expect.any(Error))
       })
     })
 
     it('skips group decrease when pair is not found', async () => {
-      vi.mocked(findPairByQQWithChatType).mockReset()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      findPairByQQWithChatType.mockReset()
+      findPairByQQWithChatType.mockResolvedValue(undefined)
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient, instance } = buildFeature(inst)
 
@@ -848,16 +870,16 @@ describe('forwardFeature', () => {
     })
 
     it('handles group decrease error gracefully', async () => {
-      vi.mocked(findPairByQQWithChatType).mockReset()
+      findPairByQQWithChatType.mockReset()
       const pair = createPair({ qqChatType: 'group', qqRoomId: BigInt(30003), tgChatId: BigInt(-10030003) })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient, instance } = buildFeature(inst)
 
-      instance.forwardPairs.remove = vi.fn().mockRejectedValue(new Error('DB error'))
+      instance.forwardPairs.remove = mock().mockRejectedValue(new Error('DB error'))
 
       qqClient.emit('group.decrease', '30003', '88888')
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.error).toHaveBeenCalledWith('Failed to handle group decrease:', expect.any(Error))
       })
     })
@@ -866,26 +888,26 @@ describe('forwardFeature', () => {
   describe('handleInputStatus', () => {
     it('forwards QQ typing status to the mapped Telegram chat', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
-      const tgChat = { setTyping: vi.fn().mockResolvedValue(undefined) }
+      findPairByQQWithChatType.mockResolvedValue(pair)
+      const tgChat = { setTyping: mock().mockResolvedValue(undefined) }
       const { qqClient, tgBot } = buildFeature()
       tgBot.getChat.mockResolvedValue(tgChat)
 
       qqClient.emit('input.status', { chatId: '20002', chatType: 'group', typing: true })
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(tgChat.setTyping).toHaveBeenCalledWith('typing')
       })
 
       qqClient.emit('input.status', { chatId: '20002', chatType: 'group', typing: false })
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(tgChat.setTyping).toHaveBeenCalledWith('cancel')
       })
     })
 
     it('skips when work mode is not configured', async () => {
-      vi.mocked(hasConfiguredWorkMode).mockReturnValue(false)
+      hasConfiguredWorkMode.mockReturnValue(false)
       const { qqClient } = buildFeature()
       qqClient.emit('input.status', { chatId: '20002', chatType: 'private', typing: true })
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -893,7 +915,7 @@ describe('forwardFeature', () => {
     })
 
     it('skips when pair is not found', async () => {
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(undefined)
+      findPairByQQWithChatType.mockResolvedValue(undefined)
       const { qqClient, tgBot } = buildFeature()
       qqClient.emit('input.status', { chatId: '20002', chatType: 'private', typing: true })
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -902,7 +924,7 @@ describe('forwardFeature', () => {
 
     it('skips when QQ to TG forward is disabled', async () => {
       const pair = createPair({ forwardMode: '01' })
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient, tgBot } = buildFeature()
       qqClient.emit('input.status', { chatId: '20002', chatType: 'private', typing: true })
       await new Promise(resolve => setTimeout(resolve, 50))
@@ -911,13 +933,13 @@ describe('forwardFeature', () => {
 
     it('handles error gracefully when getChat fails', async () => {
       const pair = createPair()
-      vi.mocked(findPairByQQWithChatType).mockResolvedValue(pair)
+      findPairByQQWithChatType.mockResolvedValue(pair)
       const { qqClient, tgBot } = buildFeature()
       tgBot.getChat.mockRejectedValue(new Error('Network error'))
 
       qqClient.emit('input.status', { chatId: '20002', chatType: 'group', typing: true })
 
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.debug).toHaveBeenCalledWith(
           expect.any(Error),
           expect.stringContaining('Failed to forward QQ input status to TG')
@@ -1058,13 +1080,13 @@ describe('forwardFeature', () => {
     it('removes all listeners and stops services', () => {
       const { feature, qqClient, tgBot } = buildFeature()
       feature.destroy()
-      expect(qqClient.removeListener).toHaveBeenCalledWith('message', expect.any(Function))
-      expect(qqClient.removeListener).toHaveBeenCalledWith('poke', expect.any(Function))
-      expect(qqClient.removeListener).toHaveBeenCalledWith('friend.increase', expect.any(Function))
-      expect(qqClient.removeListener).toHaveBeenCalledWith('friend.decrease', expect.any(Function))
-      expect(qqClient.removeListener).toHaveBeenCalledWith('group.increase', expect.any(Function))
-      expect(qqClient.removeListener).toHaveBeenCalledWith('group.decrease', expect.any(Function))
-      expect(qqClient.removeListener).toHaveBeenCalledWith('input.status', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('message', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('poke', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('friend.increase', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('friend.decrease', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('group.increase', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('group.decrease', expect.any(Function))
+      expect(qqClient.off).toHaveBeenCalledWith('input.status', expect.any(Function))
       expect(tgBot.removeNewMessageEventHandler).toHaveBeenCalled()
       expect(tgBot.removeEditedMessageEventHandler).toHaveBeenCalled()
     })
@@ -1102,7 +1124,7 @@ describe('forwardFeature', () => {
     }
 
     it('rejects non-admin users', async () => {
-      vi.mocked(MessageUtils.isAdmin).mockReturnValue(false)
+      MessageUtils.isAdmin.mockReturnValue(false)
       const { feature } = buildFeature()
       const handleMode = (feature as any).handleModeCommand.bind(feature)
       await handleMode(buildModeCommandMsg(), ['nickname', '10'])
@@ -1140,7 +1162,7 @@ describe('forwardFeature', () => {
 
     it('reports error when pair not found', async () => {
       const inst = createInstance()
-      inst.forwardPairs.findByTG = vi.fn().mockReturnValue(undefined)
+      inst.forwardPairs.findByTG = mock().mockReturnValue(undefined)
       const { feature } = buildFeature(inst)
       const handleMode = (feature as any).handleModeCommand.bind(feature)
       await handleMode(buildModeCommandMsg(), ['nickname', '10'])
@@ -1155,7 +1177,7 @@ describe('forwardFeature', () => {
     it('updates nickname mode successfully', async () => {
       const pair = createPair({ forwardMode: '11', nicknameMode: '11' })
       const inst = createInstance()
-      inst.forwardPairs.findByTG = vi.fn().mockReturnValue(pair)
+      inst.forwardPairs.findByTG = mock().mockReturnValue(pair)
       const { feature } = buildFeature(inst)
       const handleMode = (feature as any).handleModeCommand.bind(feature)
       await handleMode(buildModeCommandMsg(), ['nickname', '10'])
@@ -1171,7 +1193,7 @@ describe('forwardFeature', () => {
     it('updates forward mode successfully', async () => {
       const pair = createPair({ forwardMode: '11', nicknameMode: '11' })
       const inst = createInstance()
-      inst.forwardPairs.findByTG = vi.fn().mockReturnValue(pair)
+      inst.forwardPairs.findByTG = mock().mockReturnValue(pair)
       const { feature } = buildFeature(inst)
       const handleMode = (feature as any).handleModeCommand.bind(feature)
       await handleMode(buildModeCommandMsg(), ['forward', '01'])
@@ -1187,7 +1209,7 @@ describe('forwardFeature', () => {
     it('rejects unknown mode type', async () => {
       const pair = createPair()
       const inst = createInstance()
-      inst.forwardPairs.findByTG = vi.fn().mockReturnValue(pair)
+      inst.forwardPairs.findByTG = mock().mockReturnValue(pair)
       const { feature } = buildFeature(inst)
       const handleMode = (feature as any).handleModeCommand.bind(feature)
       await handleMode(buildModeCommandMsg(), ['unknown', '10'])
@@ -1202,13 +1224,13 @@ describe('forwardFeature', () => {
     it('handles db update error', async () => {
       const pair = createPair({ forwardMode: '11' })
       const inst = createInstance()
-      inst.forwardPairs.findByTG = vi.fn().mockReturnValue(pair)
+      inst.forwardPairs.findByTG = mock().mockReturnValue(pair)
       const { feature } = buildFeature(inst)
       // Make db.update().set().where() throw
       const { db: dbMock } = await import('@napgram/db-kit')
       ;(dbMock.update as any).mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockRejectedValue(new Error('DB error')),
+        set: mock().mockReturnValue({
+          where: mock().mockRejectedValue(new Error('DB error')),
         }),
       })
       const handleMode = (feature as any).handleModeCommand.bind(feature)
@@ -1227,10 +1249,10 @@ describe('forwardFeature', () => {
     it('retries on FLOOD_WAIT errors', async () => {
       const { feature } = buildFeature()
       // Mock sleep to avoid real delays
-      const sleepSpy = vi.spyOn(feature as any, 'sleep').mockResolvedValue(undefined)
+      const sleepSpy = spyOn(feature as any, 'sleep').mockResolvedValue(undefined)
       const exec = (feature as any).executeTelegramSendWithRetry.bind(feature)
       let callCount = 0
-      const task = vi.fn().mockImplementation(async () => {
+      const task = mock().mockImplementation(async () => {
         callCount++
         if (callCount < 3)
           throw new Error('FLOOD_WAIT_5')
@@ -1245,9 +1267,9 @@ describe('forwardFeature', () => {
 
     it('throws after max attempts on FLOOD_WAIT', async () => {
       const { feature } = buildFeature()
-      vi.spyOn(feature as any, 'sleep').mockResolvedValue(undefined)
+      spyOn(feature as any, 'sleep').mockResolvedValue(undefined)
       const exec = (feature as any).executeTelegramSendWithRetry.bind(feature)
-      const task = vi.fn().mockRejectedValue(new Error('FLOOD_WAIT_30'))
+      const task = mock().mockRejectedValue(new Error('FLOOD_WAIT_30'))
       await expect(exec(task)).rejects.toThrow('FLOOD_WAIT_30')
       expect(task).toHaveBeenCalledTimes(3)
     })
@@ -1255,7 +1277,7 @@ describe('forwardFeature', () => {
     it('throws immediately on non-FLOOD errors', async () => {
       const { feature } = buildFeature()
       const exec = (feature as any).executeTelegramSendWithRetry.bind(feature)
-      const task = vi.fn().mockRejectedValue(new Error('Network error'))
+      const task = mock().mockRejectedValue(new Error('Network error'))
       await expect(exec(task)).rejects.toThrow('Network error')
       expect(task).toHaveBeenCalledTimes(1)
     })
@@ -1266,9 +1288,9 @@ describe('forwardFeature', () => {
     it('handles error when notifying owner fails', async () => {
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient } = buildFeature(inst)
-      vi.mocked(MessageUtils.replyTG).mockRejectedValueOnce(new Error('TG down'))
+      MessageUtils.replyTG.mockRejectedValueOnce(new Error('TG down'))
       qqClient.emit('friend.increase', { id: '55555', name: 'NewFriend' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.error).toHaveBeenCalledWith(
           expect.stringContaining('Failed to notify friend increase'),
           expect.anything(),
@@ -1280,11 +1302,11 @@ describe('forwardFeature', () => {
   /* ---- handleGroupIncrease error paths ---- */
   describe('handleGroupIncrease edge cases', () => {
     it('skips when work mode is not configured', async () => {
-      vi.mocked(hasConfiguredWorkMode).mockReturnValue(false)
+      hasConfiguredWorkMode.mockReturnValue(false)
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('group.increase', '30003', { id: '88888' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
@@ -1293,7 +1315,7 @@ describe('forwardFeature', () => {
       const inst = createInstance({ workMode: 'personal', owner: undefined })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('group.increase', '30003', { id: '88888' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).not.toHaveBeenCalled()
       })
     })
@@ -1301,9 +1323,9 @@ describe('forwardFeature', () => {
     it('handles error when notifying owner fails', async () => {
       const inst = createInstance({ workMode: 'personal' })
       const { qqClient } = buildFeature(inst)
-      vi.mocked(MessageUtils.replyTG).mockRejectedValueOnce(new Error('TG down'))
+      MessageUtils.replyTG.mockRejectedValueOnce(new Error('TG down'))
       qqClient.emit('group.increase', '30003', { id: '88888' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(loggerMocks.error).toHaveBeenCalledWith(
           expect.stringContaining('Failed to notify group increase'),
           expect.anything(),
@@ -1314,11 +1336,11 @@ describe('forwardFeature', () => {
     it('uses getPersonalModeDiagnostics when workMode is not direct property', async () => {
       const inst = createInstance({
         workMode: undefined,
-        getPersonalModeDiagnostics: vi.fn().mockReturnValue({ workMode: 'personal' }),
+        getPersonalModeDiagnostics: mock().mockReturnValue({ workMode: 'personal' }),
       })
       const { qqClient } = buildFeature(inst)
       qqClient.emit('group.increase', '30003', { id: '88888' })
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(MessageUtils.replyTG).toHaveBeenCalledWith(
           expect.anything(),
           'owner-tg-123',
@@ -1336,7 +1358,7 @@ describe('forwardFeature', () => {
 
     it('handles messageConverter.fromTelegram throwing', async () => {
       const pair = createPair()
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       const messageConverter = (await import('@napgram/message-kit')).messageConverter as any
       messageConverter.fromTelegram.mockImplementationOnce(() => { throw new Error('convert error') })
       const { tgBot } = buildFeature()
@@ -1351,7 +1373,7 @@ describe('forwardFeature', () => {
 
     it('handles publishMessageCreated throwing', async () => {
       const pair = createPair()
-      vi.mocked(findPairByTGWithChatType).mockResolvedValue(pair)
+      findPairByTGWithChatType.mockResolvedValue(pair)
       eventPublisherMocks.publishMessageCreated.mockRejectedValueOnce(new Error('publish error'))
       const { tgBot } = buildFeature()
       const handler = getTgHandler(tgBot)

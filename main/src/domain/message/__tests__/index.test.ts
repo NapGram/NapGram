@@ -1,7 +1,7 @@
 import * as message from '@napgram/message-kit'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 
-vi.mock('@napgram/message-kit', () => ({
+mock.module('@napgram/message-kit', () => ({
   MessageConverter: class MessageConverter {},
   messageConverter: { mocked: true },
 }))

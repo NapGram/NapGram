@@ -1,46 +1,44 @@
-import fs from 'node:fs'
-import { writeFile } from 'node:fs/promises'
-import path from 'node:path'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'bun:test'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import { createTempFile, TEMP_PATH } from '../temp.js'
 
+const createdPaths: string[] = []
+const dirname = (filePath: string) => filePath.slice(0, filePath.lastIndexOf('/'))
+
+afterEach(async () => {
+  await Promise.all(createdPaths.splice(0).map(async (filePath) => {
+    await runtimeFileIO.remove(filePath, { force: true })
+  }))
+})
+
 describe('temp utils', () => {
-    it('creates a temp path under TEMP_PATH', async () => {
-        const temp = await createTempFile({ postfix: '.log' })
+  it('creates a temp path under TEMP_PATH', async () => {
+    const temp = await createTempFile({ postfix: '.log' })
+    createdPaths.push(temp.path)
 
-        expect(path.dirname(temp.path)).toBe(TEMP_PATH)
-        expect(temp.path.endsWith('.log')).toBe(true)
-    })
+    expect(dirname(temp.path)).toBe(TEMP_PATH)
+    expect(temp.path.endsWith('.log')).toBe(true)
+  })
 
-    it('cleanup removes created file', async () => {
-        const temp = await createTempFile()
+  it('cleanup removes created file', async () => {
+    const temp = await createTempFile()
+    createdPaths.push(temp.path)
 
-        await writeFile(temp.path, 'test')
-        expect(fs.existsSync(temp.path)).toBe(true)
+    await runtimeFileIO.write(temp.path, 'test')
+    expect(await runtimeFileIO.exists(temp.path)).toBe(true)
 
-        await temp.cleanup()
+    await temp.cleanup()
 
-        expect(fs.existsSync(temp.path)).toBe(false)
-    })
+    expect(await runtimeFileIO.exists(temp.path)).toBe(false)
+  })
 
-    it('creates temp dir when missing on createTempFile', async () => {
-        vi.resetModules()
-        const existsSync = vi.fn().mockReturnValue(false)
-        const mkdirSync = vi.fn()
+  it('recreates the temp directory if an external cleanup removed it', async () => {
+    await runtimeFileIO.remove(TEMP_PATH, { recursive: true, force: true })
 
-        vi.doMock('node:fs', () => ({
-            default: { existsSync, mkdirSync },
-            existsSync,
-            mkdirSync,
-        }))
-        vi.doMock('../env', () => ({
-            default: { DATA_DIR: '/tmp/napgram' },
-        }))
+    const temp = await createTempFile()
+    createdPaths.push(temp.path)
 
-        const module = await import('../temp.js')
-        await module.createTempFile()
-
-        expect(existsSync).toHaveBeenCalledWith(module.TEMP_PATH)
-        expect(mkdirSync).toHaveBeenCalledWith(module.TEMP_PATH, { recursive: true })
-    })
+    expect(await runtimeFileIO.exists(TEMP_PATH)).toBe(true)
+    await temp.cleanup()
+  })
 })

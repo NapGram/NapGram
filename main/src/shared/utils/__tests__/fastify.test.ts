@@ -1,13 +1,13 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { ErrorResponses, registerDualRoute } from '../fastify'
 
 describe('fastify utility', () => {
   describe('registerDualRoute', () => {
     it('should register handler for both paths', () => {
       const fastify = {
-        get: vi.fn(),
+        get: mock(),
       } as any
-      const handler = vi.fn()
+      const handler = mock()
       const opts = { schema: { foo: 'bar' } }
 
       registerDualRoute(fastify, '/p1', '/p2', handler, opts)
@@ -18,8 +18,8 @@ describe('fastify utility', () => {
     })
 
     it('should handle missing opts', () => {
-      const fastify = { get: vi.fn() } as any
-      const handler = vi.fn()
+      const fastify = { get: mock() } as any
+      const handler = mock()
       registerDualRoute(fastify, '/p1', '/p2', handler)
       expect(fastify.get).toHaveBeenCalledWith('/p1', {}, handler)
     })
@@ -28,8 +28,8 @@ describe('fastify utility', () => {
   describe('errorResponses', () => {
     const createMockReply = () => {
       const reply = {
-        code: vi.fn().mockReturnThis(),
-        send: vi.fn().mockReturnThis(),
+        code: mock().mockReturnThis(),
+        send: mock().mockReturnThis(),
       } as any
       return reply
     }

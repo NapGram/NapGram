@@ -1,9 +1,9 @@
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
 /**
  * Gateway 认证管理器
  * 使用 Bearer Token 认证
  */
 
-import process from 'node:process'
 import { getLogger } from '../logger.js'
 
 const logger = getLogger('AuthManager')
@@ -25,7 +25,7 @@ export class AuthManager {
   async authenticate(token: string): Promise<AuthResult> {
     try {
       // MVP: 使用 ADMIN_TOKEN 作为 Gateway Token
-      const adminToken = process.env.ADMIN_TOKEN
+      const adminToken = bunEnv.ADMIN_TOKEN
 
       if (!adminToken) {
         logger.warn('ADMIN_TOKEN not configured, Gateway authentication disabled')

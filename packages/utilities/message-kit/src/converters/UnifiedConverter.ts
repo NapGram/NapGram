@@ -1,10 +1,9 @@
 import type { MessageContent, UnifiedMessage } from '../types.js'
-import { Buffer } from 'node:buffer'
-import fsSync from 'node:fs'
-import fs from 'node:fs/promises'
-import path from 'node:path'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import { env } from '../shared-runtime.js'
 import { BaseConverter } from './BaseConverter.js'
+
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
 
 export class UnifiedConverter extends BaseConverter {
   /**
@@ -25,8 +24,8 @@ export class UnifiedConverter extends BaseConverter {
         case 'image':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'image', '.jpg')
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'image', '.jpg')
             }
             segments.push({
               type: 'image',
@@ -41,8 +40,8 @@ export class UnifiedConverter extends BaseConverter {
         case 'video':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'video', '.mp4')
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'video', '.mp4')
             }
             segments.push({
               type: 'video',
@@ -56,8 +55,8 @@ export class UnifiedConverter extends BaseConverter {
         case 'audio':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'audio', '.ogg')
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'audio', '.ogg')
             }
             segments.push({
               type: 'record',
@@ -71,8 +70,8 @@ export class UnifiedConverter extends BaseConverter {
         case 'file':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'file', '', content.data.filename)
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'file', '', content.data.filename)
             }
             segments.push({
               type: 'file',
@@ -144,12 +143,12 @@ export class UnifiedConverter extends BaseConverter {
     return result
   }
 
-  private async saveBufferToTemp(buffer: Buffer, type: 'image' | 'video' | 'audio' | 'file', ext: string, filename?: string): Promise<string> {
+  private async saveUint8ArrayToTemp(buffer: Uint8Array, type: 'image' | 'video' | 'audio' | 'file', ext: string, filename?: string): Promise<string> {
     // 尝试使用 NapCat 共享目录 (假设 NapCat 容器内路径也是 /app/.config/QQ)
     const sharedRoot = '/app/.config/QQ'
-    const napcatTempDir = path.join(sharedRoot, 'NapCat', 'temp')
-    const sharedDir = path.join(sharedRoot, 'temp_napgram_share')
-    const sharedRootExists = fsSync.existsSync(sharedRoot)
+    const napcatTempDir = joinPath(sharedRoot, 'NapCat', 'temp')
+    const sharedDir = joinPath(sharedRoot, 'temp_napgram_share')
+    const sharedRootExists = await runtimeFileIO.exists(sharedRoot)
     const name = filename || `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`
     this.logger.debug('Forward media buffer', {
       type,
@@ -164,9 +163,9 @@ export class UnifiedConverter extends BaseConverter {
       const sharedDirs = [napcatTempDir, sharedDir]
       for (const dir of sharedDirs) {
         try {
-          await fs.mkdir(dir, { recursive: true })
-          const filePath = path.join(dir, name)
-          await fs.writeFile(filePath, buffer)
+          await runtimeFileIO.mkdir(dir, { recursive: true })
+          const filePath = joinPath(dir, name)
+          await runtimeFileIO.write(filePath, buffer)
           this.logger.debug('Saved forward media to shared path', { filePath })
           return filePath
         }
@@ -177,11 +176,11 @@ export class UnifiedConverter extends BaseConverter {
     }
 
     // 回退到本地临时目录 (QQ 端可能无法访问)
-    const tempDir = path.join(env.DATA_DIR, 'temp')
+    const tempDir = joinPath(env.DATA_DIR, 'temp')
     this.logger.warn('Forward media fallback to local temp dir', { tempDir })
-    await fs.mkdir(tempDir, { recursive: true })
-    const filePath = path.join(tempDir, name)
-    await fs.writeFile(filePath, buffer)
+    await runtimeFileIO.mkdir(tempDir, { recursive: true })
+    const filePath = joinPath(tempDir, name)
+    await runtimeFileIO.write(filePath, buffer)
     this.logger.warn('Saved forward media to local temp path', { filePath })
     return filePath
   }

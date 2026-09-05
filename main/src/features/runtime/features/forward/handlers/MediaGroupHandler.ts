@@ -16,7 +16,7 @@ const logger = getLogger('MediaGroupHandler')
 export class MediaGroupHandler {
   private mediaGroupBuffer = new Map<string, {
     messages: Message[]
-    timer: NodeJS.Timeout
+    timer: ReturnType<typeof setTimeout>
     pair: any
   }>()
 

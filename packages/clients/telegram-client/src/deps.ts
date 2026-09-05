@@ -1,3 +1,7 @@
+const bunRuntime = (globalThis as typeof globalThis & {
+    Bun: { env: Record<string, string | undefined> }
+}).Bun
+
 export interface LoggerLike {
     debug(message: string, ...args: any[]): void;
     info(message: string, ...args: any[]): void;
@@ -55,19 +59,19 @@ export function getTelegramClientDependencies(): TelegramClientDependencies {
 
 export function resolveTelegramEnv(env?: TelegramEnv): TelegramEnv {
     return {
-        DATA_DIR: env?.DATA_DIR ?? process.env.DATA_DIR,
-        PROXY: env?.PROXY ?? process.env.PROXY,
-        PROXY_URL: env?.PROXY_URL ?? process.env.PROXY_URL,
-        PROXY_TYPE: env?.PROXY_TYPE ?? process.env.PROXY_TYPE,
-        PROXY_IP: env?.PROXY_IP ?? process.env.PROXY_IP,
-        PROXY_PORT: env?.PROXY_PORT ?? process.env.PROXY_PORT,
-        PROXY_USERNAME: env?.PROXY_USERNAME ?? process.env.PROXY_USERNAME,
-        PROXY_PASSWORD: env?.PROXY_PASSWORD ?? process.env.PROXY_PASSWORD,
-        TG_API_ID: env?.TG_API_ID ?? process.env.TG_API_ID,
-        TG_API_HASH: env?.TG_API_HASH ?? process.env.TG_API_HASH,
-        TG_BOT_TOKEN: env?.TG_BOT_TOKEN ?? process.env.TG_BOT_TOKEN,
-        INTERNAL_WEB_ENDPOINT: env?.INTERNAL_WEB_ENDPOINT ?? process.env.INTERNAL_WEB_ENDPOINT,
-        WEB_ENDPOINT: env?.WEB_ENDPOINT ?? process.env.WEB_ENDPOINT,
+        DATA_DIR: env?.DATA_DIR ?? bunRuntime.env.DATA_DIR,
+        PROXY: env?.PROXY ?? bunRuntime.env.PROXY,
+        PROXY_URL: env?.PROXY_URL ?? bunRuntime.env.PROXY_URL,
+        PROXY_TYPE: env?.PROXY_TYPE ?? bunRuntime.env.PROXY_TYPE,
+        PROXY_IP: env?.PROXY_IP ?? bunRuntime.env.PROXY_IP,
+        PROXY_PORT: env?.PROXY_PORT ?? bunRuntime.env.PROXY_PORT,
+        PROXY_USERNAME: env?.PROXY_USERNAME ?? bunRuntime.env.PROXY_USERNAME,
+        PROXY_PASSWORD: env?.PROXY_PASSWORD ?? bunRuntime.env.PROXY_PASSWORD,
+        TG_API_ID: env?.TG_API_ID ?? bunRuntime.env.TG_API_ID,
+        TG_API_HASH: env?.TG_API_HASH ?? bunRuntime.env.TG_API_HASH,
+        TG_BOT_TOKEN: env?.TG_BOT_TOKEN ?? bunRuntime.env.TG_BOT_TOKEN,
+        INTERNAL_WEB_ENDPOINT: env?.INTERNAL_WEB_ENDPOINT ?? bunRuntime.env.INTERNAL_WEB_ENDPOINT,
+        WEB_ENDPOINT: env?.WEB_ENDPOINT ?? bunRuntime.env.WEB_ENDPOINT,
     };
 }
 

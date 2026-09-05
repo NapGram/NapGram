@@ -1,16 +1,15 @@
 import type { FastifyInstance } from 'fastify'
-import { Buffer } from 'node:buffer'
-import { createWriteStream } from 'node:fs'
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
+import { concatBytes } from '../../shared/utils/binary.js'
+import { basename, dirname, isAbsolute, joinPath, normalizePath, relativePath, resolvePath } from '../../shared/utils/path.js'
+import { bunEnv } from '../../shared/utils/runtime.js'
 import multipart from '@fastify/multipart'
 import { requirePermission } from '@napgram/auth-kit'
 import { getLogger } from '@napgram/logger-kit'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 
 const logger = getLogger('FileAPI')
 
-const DATA_ROOT = path.resolve(process.env.FILE_MANAGER_ROOT || '/app/data')
+const DATA_ROOT = resolvePath('/', bunEnv.FILE_MANAGER_ROOT || '/app/data')
 
 const FILE_SIZE_LIMITS = {
   read: 10 * 1024 * 1024,
@@ -20,11 +19,11 @@ const FILE_SIZE_LIMITS = {
 
 function sanitizePath(userPath: string): { allowed: boolean, fullPath: string, error?: string } {
   try {
-    const normalized = path.normalize(userPath)
-    const fullPath = path.resolve(DATA_ROOT, normalized.startsWith('/') ? normalized.slice(1) : normalized)
-    const relativePath = path.relative(DATA_ROOT, fullPath)
+    const normalized = normalizePath(userPath)
+    const fullPath = resolvePath(DATA_ROOT, normalized.startsWith('/') ? normalized.slice(1) : normalized)
+    const relative = relativePath(DATA_ROOT, fullPath)
 
-    if (relativePath === '..' || relativePath.startsWith(`..${path.sep}`) || path.isAbsolute(relativePath)) {
+    if (relative === '..' || relative.startsWith('../') || isAbsolute(relative)) {
       return { allowed: false, fullPath: '', error: 'Access denied: path outside allowed root' }
     }
 
@@ -56,23 +55,23 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
 
     try {
-      const entries = await fs.readdir(fullPath, { withFileTypes: true })
+      const entries = await runtimeFileIO.readdir(fullPath)
       const files = await Promise.all(
-        entries.map(async (entry) => {
+        entries.map(async (entryName) => {
           try {
-            const entryPath = path.join(fullPath, entry.name)
-            const stats = await fs.stat(entryPath)
+            const entryPath = joinPath(fullPath, entryName)
+            const stats = await runtimeFileIO.stat(entryPath)
             return {
-              name: entry.name,
-              path: path.join(reqPath, entry.name),
-              type: entry.isDirectory() ? 'directory' : 'file',
+              name: entryName,
+              path: joinPath(reqPath, entryName),
+              type: stats.isDirectory() ? 'directory' : 'file',
               size: stats.size,
               modified: stats.mtime.toISOString(),
               permissions: `0${(stats.mode & Number.parseInt('777', 8)).toString(8)}`,
             }
           }
           catch (err) {
-            logger.warn(`Failed to stat ${entry.name}:`, err)
+            logger.warn(`Failed to stat ${entryName}:`, err)
             return null
           }
         }),
@@ -106,7 +105,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
 
     try {
-      const stats = await fs.stat(fullPath)
+      const stats = await runtimeFileIO.stat(fullPath)
 
       if (stats.isDirectory()) {
         return reply.status(400).send({ success: false, error: 'Cannot read directory' })
@@ -119,7 +118,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
         })
       }
 
-      const content = await fs.readFile(fullPath, 'utf-8')
+      const content = await runtimeFileIO.readText(fullPath)
 
       return reply.send({
         success: true,
@@ -151,16 +150,16 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
 
     try {
-      const contentBuffer = Buffer.from(content, 'utf-8')
+      const contentBytes = new TextEncoder().encode(content)
 
-      if (contentBuffer.length > FILE_SIZE_LIMITS.edit) {
+      if (contentBytes.length > FILE_SIZE_LIMITS.edit) {
         return reply.status(413).send({
           success: false,
           error: `Content too large (max ${FILE_SIZE_LIMITS.edit / 1024 / 1024}MB)`,
         })
       }
 
-      await fs.writeFile(fullPath, content, 'utf-8')
+      await runtimeFileIO.write(fullPath, content)
       logger.info(`File written: ${reqPath}`)
 
       return reply.send({ success: true })
@@ -192,12 +191,12 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
 
     try {
       if (type === 'directory') {
-        await fs.mkdir(fullPath, { recursive: true })
+        await runtimeFileIO.mkdir(fullPath, { recursive: true })
         logger.info(`Directory created: ${reqPath}`)
       }
       else {
-        await fs.mkdir(path.dirname(fullPath), { recursive: true })
-        await fs.writeFile(fullPath, content, 'utf-8')
+        await runtimeFileIO.mkdir(dirname(fullPath), { recursive: true })
+        await runtimeFileIO.write(fullPath, content)
         logger.info(`File created: ${reqPath}`)
       }
 
@@ -230,13 +229,13 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
 
     try {
-      const stats = await fs.stat(fullPath)
+      const stats = await runtimeFileIO.stat(fullPath)
 
       if (stats.isDirectory()) {
-        await fs.rm(fullPath, { recursive, force: true })
+        await runtimeFileIO.remove(fullPath, { recursive, force: true })
       }
       else {
-        await fs.unlink(fullPath)
+        await runtimeFileIO.unlink(fullPath)
       }
 
       logger.info(`Deleted: ${reqPath}`)
@@ -270,7 +269,7 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
 
     try {
-      await fs.rename(fromCheck.fullPath, toCheck.fullPath)
+      await runtimeFileIO.rename(fromCheck.fullPath, toCheck.fullPath)
       logger.info(`Moved: ${from} -> ${to}`)
 
       return reply.send({ success: true })
@@ -297,19 +296,19 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
     }
 
     try {
-      const stats = await fs.stat(fullPath)
+      const stats = await runtimeFileIO.stat(fullPath)
 
       if (stats.isDirectory()) {
         return reply.status(400).send({ success: false, error: 'Cannot download directory (ZIP not implemented)' })
       }
 
-      const filename = path.basename(fullPath)
+      const filename = basename(fullPath)
 
       reply.header('Content-Disposition', `attachment; filename="${filename}"`)
       reply.header('Content-Type', 'application/octet-stream')
 
-      const stream = await fs.readFile(fullPath)
-      return reply.send(stream)
+      const content = new Uint8Array(await runtimeFileIO.readBytes(fullPath))
+      return reply.send(content)
     }
     catch (error) {
       logger.error('Failed to download:', error)
@@ -338,9 +337,9 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
         return reply.status(403).send({ success: false, error })
       }
 
-      await fs.mkdir(targetDir, { recursive: true })
+      await runtimeFileIO.mkdir(targetDir, { recursive: true })
 
-      const filename = path.basename(data.filename.replaceAll('\\', '/'))
+      const filename = basename(data.filename.replaceAll('\\', '/'))
       if (!filename || filename === '.' || filename === '..') {
         return reply.status(400).send({
           success: false,
@@ -348,37 +347,32 @@ export function registerFileManagerRoutes(app: FastifyInstance) {
         })
       }
 
-      const fullPath = path.join(targetDir, filename)
+      const fullPath = joinPath(targetDir, filename)
 
       let uploadedSize = 0
-      const writeStream = createWriteStream(fullPath)
+      const chunks: Uint8Array[] = []
 
-      try {
-        for await (const chunk of data.file) {
-          uploadedSize += chunk.length
+      for await (const chunk of data.file) {
+        const chunkBytes = typeof chunk === 'string' ? new TextEncoder().encode(chunk) : new Uint8Array(chunk)
+        uploadedSize += chunkBytes.byteLength
 
-          if (uploadedSize > FILE_SIZE_LIMITS.upload) {
-            writeStream.destroy()
-            await fs.unlink(fullPath).catch(() => {})
-
-            return reply.status(413).send({
-              success: false,
-              error: `File too large (max ${FILE_SIZE_LIMITS.upload / 1024 / 1024}MB)`,
-            })
-          }
-
-          writeStream.write(chunk)
+        if (uploadedSize > FILE_SIZE_LIMITS.upload) {
+          return reply.status(413).send({
+            success: false,
+            error: `File too large (max ${FILE_SIZE_LIMITS.upload / 1024 / 1024}MB)`,
+          })
         }
-      }
-      finally {
-        writeStream.end()
+
+        chunks.push(chunkBytes)
       }
 
-      logger.info(`File uploaded: ${path.join(targetPath, filename)} (${uploadedSize} bytes)`)
+      await runtimeFileIO.write(fullPath, concatBytes(...chunks))
+
+      logger.info(`File uploaded: ${joinPath(targetPath, filename)} (${uploadedSize} bytes)`)
 
       return reply.send({
         success: true,
-        path: path.join(targetPath, filename),
+        path: joinPath(targetPath, filename),
         size: uploadedSize,
       })
     }

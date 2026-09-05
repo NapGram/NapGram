@@ -31,7 +31,7 @@ function getUnavailableGateway(): RequestActionGateway {
  * Phase 4: 自动清理、自动审批规则
  */
 export class RequestAutomationService {
-  private cleanupInterval: NodeJS.Timeout | null = null
+  private cleanupInterval: ReturnType<typeof setInterval> | null = null
   private readonly CLEANUP_INTERVAL = 24 * 60 * 60 * 1000 // 24小时
   private readonly EXPIRY_DAYS = 7 // 7天过期
 

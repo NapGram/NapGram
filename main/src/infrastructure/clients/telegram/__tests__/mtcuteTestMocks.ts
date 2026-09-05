@@ -8,10 +8,8 @@ export class MockMessage {
   }
 }
 
-export async function createMtcuteCoreMock(importOriginal: any) {
-  const actual = await importOriginal()
+export function createMtcuteCoreMock() {
   return {
-    ...actual,
     Message: MockMessage,
   }
 }

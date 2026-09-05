@@ -1,5 +1,3 @@
-import { Buffer } from 'node:buffer'
-
 export function getAvatarUrl(room: number | bigint | { uin: number } | { gid: number }): string {
   if (!room) {
     return ''
@@ -23,7 +21,7 @@ export function getBigFaceUrl(file: string) {
   return `https://gxh.vip.qq.com/club/item/parcel/item/${file.substring(0, 2)}/${file.substring(0, 32)}/300x300.png`
 }
 
-export async function fetchFile(url: string): Promise<Buffer> {
+export async function fetchFile(url: string): Promise<Uint8Array> {
   const res = await fetch(url)
 
   if (!res.ok) {
@@ -31,7 +29,7 @@ export async function fetchFile(url: string): Promise<Buffer> {
   }
 
   const arrayBuffer = await res.arrayBuffer()
-  return Buffer.from(arrayBuffer)
+  return new Uint8Array(arrayBuffer)
 }
 
 export function getAvatar(room: number | bigint | { uin: number } | { gid: number }) {

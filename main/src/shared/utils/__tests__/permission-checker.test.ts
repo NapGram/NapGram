@@ -1,5 +1,5 @@
 import type { IQQClient } from '../../../infrastructure/clients/qq'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { PermissionChecker } from '../permission-checker'
 
 // Mock QQ Client
@@ -8,25 +8,25 @@ function createMockQQClient(): IQQClient {
     uin: 123456,
     nickname: 'TestBot',
     clientType: 'napcat',
-    isOnline: vi.fn().mockResolvedValue(true),
-    sendMessage: vi.fn(),
-    recallMessage: vi.fn(),
-    getMessage: vi.fn(),
-    getFriendList: vi.fn(),
-    getGroupList: vi.fn(),
-    getGroupMemberList: vi.fn(),
-    getGroupMemberInfo: vi.fn(),
-    getFriendInfo: vi.fn(),
-    getGroupInfo: vi.fn(),
-    on: vi.fn(),
-    once: vi.fn(),
-    off: vi.fn(),
-    removeListener: vi.fn(),
-    removeAllListeners: vi.fn(),
-    emit: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    destroy: vi.fn(),
+    isOnline: mock().mockResolvedValue(true),
+    sendMessage: mock(),
+    recallMessage: mock(),
+    getMessage: mock(),
+    getFriendList: mock(),
+    getGroupList: mock(),
+    getGroupMemberList: mock(),
+    getGroupMemberInfo: mock(),
+    getFriendInfo: mock(),
+    getGroupInfo: mock(),
+    on: mock(),
+    once: mock(),
+    off: mock(),
+    removeListener: mock(),
+    removeAllListeners: mock(),
+    emit: mock(),
+    login: mock(),
+    logout: mock(),
+    destroy: mock(),
   } as any
 }
 
@@ -39,7 +39,7 @@ describe('permissionChecker', () => {
 
   describe('isGroupAdmin()', () => {
     it('should return true for group owner', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue({
+      mockQQClient.getGroupMemberInfo.mockResolvedValue({
         uin: '123456',
         nickname: 'Owner',
         role: 'owner',
@@ -56,7 +56,7 @@ describe('permissionChecker', () => {
     })
 
     it('should return true for group admin', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue({
+      mockQQClient.getGroupMemberInfo.mockResolvedValue({
         uin: '123456',
         nickname: 'Admin',
         role: 'admin',
@@ -72,7 +72,7 @@ describe('permissionChecker', () => {
     })
 
     it('should return false for regular member', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue({
+      mockQQClient.getGroupMemberInfo.mockResolvedValue({
         uin: '123456',
         nickname: 'Member',
         role: 'member',
@@ -88,7 +88,7 @@ describe('permissionChecker', () => {
     })
 
     it('should return false when member info is null', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue(null as any)
+      mockQQClient.getGroupMemberInfo.mockResolvedValue(null as any)
 
       const result = await PermissionChecker.isGroupAdmin(
         mockQQClient,
@@ -100,7 +100,7 @@ describe('permissionChecker', () => {
     })
 
     it('should handle API errors gracefully for owner', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockRejectedValue(
+      mockQQClient.getGroupMemberInfo.mockRejectedValue(
         new Error('API Error'),
       )
 
@@ -114,7 +114,7 @@ describe('permissionChecker', () => {
     })
 
     it('should handle API errors gracefully', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockRejectedValue(
+      mockQQClient.getGroupMemberInfo.mockRejectedValue(
         new Error('API Error'),
       )
 
@@ -130,7 +130,7 @@ describe('permissionChecker', () => {
 
   describe('isGroupOwner()', () => {
     it('should return true for group owner', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue({
+      mockQQClient.getGroupMemberInfo.mockResolvedValue({
         uin: '123456',
         nickname: 'Owner',
         role: 'owner',
@@ -146,7 +146,7 @@ describe('permissionChecker', () => {
     })
 
     it('should return false for group admin', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue({
+      mockQQClient.getGroupMemberInfo.mockResolvedValue({
         uin: '123456',
         nickname: 'Admin',
         role: 'admin',
@@ -162,7 +162,7 @@ describe('permissionChecker', () => {
     })
 
     it('should return false for regular member', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue({
+      mockQQClient.getGroupMemberInfo.mockResolvedValue({
         uin: '123456',
         nickname: 'Member',
         role: 'member',
@@ -178,7 +178,7 @@ describe('permissionChecker', () => {
     })
 
     it('should return false when member info is null', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockResolvedValue(null as any)
+      mockQQClient.getGroupMemberInfo.mockResolvedValue(null as any)
 
       const result = await PermissionChecker.isGroupOwner(
         mockQQClient,
@@ -193,7 +193,7 @@ describe('permissionChecker', () => {
   describe('canManageUser()', () => {
     it('should allow owner to manage anyone', async () => {
       // Operator is owner
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce({
           uin: '123',
           nickname: 'Owner',
@@ -219,7 +219,7 @@ describe('permissionChecker', () => {
 
     it('should allow admin to manage regular members', async () => {
       // Operator is admin
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce({
           uin: '123',
           nickname: 'Admin',
@@ -245,7 +245,7 @@ describe('permissionChecker', () => {
 
     it('should prevent admin from managing owner', async () => {
       // Operator is admin
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce({
           uin: '123',
           nickname: 'Admin',
@@ -271,7 +271,7 @@ describe('permissionChecker', () => {
 
     it('should prevent admin from managing other admins', async () => {
       // Operator is admin
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce({
           uin: '123',
           nickname: 'Admin1',
@@ -297,7 +297,7 @@ describe('permissionChecker', () => {
 
     it('should prevent regular members from managing anyone', async () => {
       // Operator is member
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce({
           uin: '123',
           nickname: 'Member1',
@@ -322,7 +322,7 @@ describe('permissionChecker', () => {
     })
 
     it('should handle missing operator info', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce(null as any)
         .mockResolvedValueOnce({
           uin: '456',
@@ -342,7 +342,7 @@ describe('permissionChecker', () => {
     })
 
     it('should handle missing target info', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo)
+      mockQQClient.getGroupMemberInfo
         .mockResolvedValueOnce({
           uin: '123',
           nickname: 'Admin',
@@ -362,7 +362,7 @@ describe('permissionChecker', () => {
     })
 
     it('should handle API errors', async () => {
-      vi.mocked(mockQQClient.getGroupMemberInfo).mockRejectedValue(
+      mockQQClient.getGroupMemberInfo.mockRejectedValue(
         new Error('Network error'),
       )
 

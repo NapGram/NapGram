@@ -1,35 +1,24 @@
-import { randomBytes } from 'node:crypto'
-import fs from 'node:fs'
-import { rm } from 'node:fs/promises'
-import { join } from 'node:path'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
+import { runtimeFileIO } from './bun-file-io.js'
 
-const TEMP_PATH = join(env.DATA_DIR, 'temp')
-let tempDirInitialized = false
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
 
-function ensureTempDir() {
-  if (!tempDirInitialized) {
-    if (!fs.existsSync(TEMP_PATH)) {
-      fs.mkdirSync(TEMP_PATH, { recursive: true })
-    }
-    tempDirInitialized = true
-  }
-}
+const TEMP_PATH = joinPath(env.DATA_DIR, 'temp')
 
 const temp = {
   TEMP_PATH,
   async createTempFile(options?: { postfix?: string, prefix?: string }) {
-    ensureTempDir()
+    await runtimeFileIO.mkdir(TEMP_PATH, { recursive: true })
     const prefix = options?.prefix || 'temp-'
-    const filename = `${prefix}${randomBytes(6).toString('hex')}${options?.postfix || '.tmp'}`
-    const filePath = join(TEMP_PATH, filename)
+    const filename = `${prefix}${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}${options?.postfix || '.tmp'}`
+    const filePath = joinPath(TEMP_PATH, filename)
 
     return {
       path: filePath,
       cleanup: async () => {
         try {
-          await rm(filePath, { force: true })
+          await runtimeFileIO.remove(filePath, { force: true })
         }
         catch {}
       },

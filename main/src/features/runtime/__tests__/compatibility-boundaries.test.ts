@@ -1,25 +1,24 @@
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { joinPath, resolvePath } from '../../../shared/utils/path.js'
+import { describe, expect, it } from 'bun:test'
 
-const runtimeRoot = resolve(__dirname, '..')
-const webRoot = resolve(__dirname, '../../../../../packages/utilities/web-interfaces/src')
+const runtimeRoot = resolvePath(import.meta.dir, '..')
+const webRoot = resolvePath(import.meta.dir, '../../../../../packages/utilities/web-interfaces/src')
 
-function expectNoImportMatches(filePath: string, patterns: RegExp[]) {
-  const source = readFileSync(filePath, 'utf8')
+async function expectNoImportMatches(filePath: string, patterns: RegExp[]) {
+  const source = await Bun.file(filePath).text()
   for (const pattern of patterns) {
     expect(source).not.toMatch(pattern)
   }
 }
 
-describe('compatibility boundaries', () => {
-  it('keeps runtime feature entrypoints on direct capability/type modules', () => {
+describe('compatibility boundaries', async () => {
+  it('keeps runtime feature entrypoints on direct capability/type modules', async () => {
     for (const file of [
       'features/MediaFeature.ts',
       'features/commands/CommandsFeature.ts',
       'features/forward/ForwardFeature.ts',
     ]) {
-      expectNoImportMatches(resolve(runtimeRoot, file), [
+      await expectNoImportMatches(joinPath(runtimeRoot, file), [
         /from ['"].*shared-types(\.js)?['"]/,
         /from ['"].*host-kit(\.js)?['"]/,
         /from ['"].*runtime-capabilities(\.js)?['"]/,
@@ -27,13 +26,13 @@ describe('compatibility boundaries', () => {
     }
   })
 
-  it('keeps runtime feature entrypoints off direct low-level package imports', () => {
+  it('keeps runtime feature entrypoints off direct low-level package imports', async () => {
     for (const file of [
       'features/MediaFeature.ts',
       'features/commands/CommandsFeature.ts',
       'features/forward/ForwardFeature.ts',
     ]) {
-      expectNoImportMatches(resolve(runtimeRoot, file), [
+      await expectNoImportMatches(joinPath(runtimeRoot, file), [
         /from ['"]@napgram\/db-kit['"]/,
         /from ['"]@napgram\/env-kit['"]/,
         /from ['"]@napgram\/logger-kit['"]/,
@@ -43,7 +42,7 @@ describe('compatibility boundaries', () => {
     }
   })
 
-  it('keeps web route entrypoints on concrete web helper modules', () => {
+  it('keeps web route entrypoints on concrete web helper modules', async () => {
     for (const file of [
       'instances.ts',
       'statistics.ts',
@@ -52,13 +51,13 @@ describe('compatibility boundaries', () => {
       'telegramAvatar.ts',
       'richHeader.tsx',
     ]) {
-      expectNoImportMatches(resolve(webRoot, file), [
+      await expectNoImportMatches(joinPath(webRoot, file), [
         /from ['"].*shared-host(\.js)?['"]/,
       ])
     }
   })
 
-  it('keeps web route entrypoints off direct runtime-kit imports', () => {
+  it('keeps web route entrypoints off direct runtime-kit imports', async () => {
     for (const file of [
       'instances.ts',
       'statistics.ts',
@@ -67,7 +66,7 @@ describe('compatibility boundaries', () => {
       'telegramAvatar.ts',
       'richHeader.tsx',
     ]) {
-      expectNoImportMatches(resolve(webRoot, file), [
+      await expectNoImportMatches(joinPath(webRoot, file), [
         /from ['"]@napgram\/runtime-kit['"]/,
       ])
     }

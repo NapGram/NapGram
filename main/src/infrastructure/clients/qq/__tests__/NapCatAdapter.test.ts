@@ -1,145 +1,146 @@
 import type { NapCatAdapter as NapCatAdapterType } from '@napgram/qq-client'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { bunEnv } from '../../../../shared/utils/runtime.js'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 
 // Mock dependencies
-const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstructor } = vi.hoisted(() => {
+const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstructor } = (() => {
   const mockNapLink = {
-    on: vi.fn(),
-    once: vi.fn(),
-    off: vi.fn(),
-    connect: vi.fn(),
-    disconnect: vi.fn(),
-    sendMessage: vi.fn(),
-    sendGroupForwardMessage: vi.fn(),
-    deleteMessage: vi.fn(),
-    getMessage: vi.fn(),
-    getForwardMessage: vi.fn(),
-    getFile: vi.fn(),
-    getFriendList: vi.fn(),
-    getGroupList: vi.fn(),
-    getGroupMemberList: vi.fn(),
-    getStrangerInfo: vi.fn(),
-    getGroupInfo: vi.fn(),
-    getGroupMemberInfo: vi.fn(),
-    callApi: vi.fn(),
-    getLoginInfo: vi.fn(),
-    getStatus: vi.fn(),
-    setGroupBan: vi.fn(),
-    unsetGroupBan: vi.fn(),
-    setGroupKick: vi.fn(),
-    setGroupCard: vi.fn(),
-    setGroupWholeBan: vi.fn(),
-    setGroupAdmin: vi.fn(),
-    setGroupName: vi.fn(),
-    setGroupSpecialTitle: vi.fn(),
-    handleFriendRequest: vi.fn(),
-    handleGroupRequest: vi.fn(),
-    sendLike: vi.fn(),
-    getGroupHonorInfo: vi.fn(),
-    hydrateMessage: vi.fn(),
+    on: mock(),
+    once: mock(),
+    off: mock(),
+    connect: mock(),
+    disconnect: mock(),
+    sendMessage: mock(),
+    sendGroupForwardMessage: mock(),
+    deleteMessage: mock(),
+    getMessage: mock(),
+    getForwardMessage: mock(),
+    getFile: mock(),
+    getFriendList: mock(),
+    getGroupList: mock(),
+    getGroupMemberList: mock(),
+    getStrangerInfo: mock(),
+    getGroupInfo: mock(),
+    getGroupMemberInfo: mock(),
+    callApi: mock(),
+    getLoginInfo: mock(),
+    getStatus: mock(),
+    setGroupBan: mock(),
+    unsetGroupBan: mock(),
+    setGroupKick: mock(),
+    setGroupCard: mock(),
+    setGroupWholeBan: mock(),
+    setGroupAdmin: mock(),
+    setGroupName: mock(),
+    setGroupSpecialTitle: mock(),
+    handleFriendRequest: mock(),
+    handleGroupRequest: mock(),
+    sendLike: mock(),
+    getGroupHonorInfo: mock(),
+    hydrateMessage: mock(),
     api: {
-      getStrangerInfo: vi.fn(),
-      getVersionInfo: vi.fn(),
-      hydrateMedia: vi.fn(),
-      getImage: vi.fn(),
-      getRecord: vi.fn(),
-      sendPrivateMessage: vi.fn(),
-      sendGroupMessage: vi.fn(),
-      setEssenceMessage: vi.fn(),
-      deleteEssenceMessage: vi.fn(),
-      getEssenceMessageList: vi.fn(),
-      markMessageAsRead: vi.fn(),
-      getGroupAtAllRemain: vi.fn(),
-      getGroupSystemMsg: vi.fn(),
-      setGroupLeave: vi.fn(),
-      setGroupAnonymousBan: vi.fn(),
-      uploadGroupFile: vi.fn(),
-      uploadPrivateFile: vi.fn(),
-      setGroupPortrait: vi.fn(),
-      getGroupFileSystemInfo: vi.fn(),
-      getGroupRootFiles: vi.fn(),
-      getGroupFilesByFolder: vi.fn(),
-      getGroupFileUrl: vi.fn(),
-      deleteGroupFile: vi.fn(),
-      createGroupFileFolder: vi.fn(),
-      deleteGroupFolder: vi.fn(),
-      downloadFile: vi.fn(),
-      uploadFileStream: vi.fn(),
-      getUploadStreamStatus: vi.fn(),
-      sendGroupPoke: vi.fn(),
-      sendFriendPoke: vi.fn(),
-      sendPoke: vi.fn(),
-      markGroupMsgAsRead: vi.fn(),
-      markPrivateMsgAsRead: vi.fn(),
-      markAllMsgAsRead: vi.fn(),
-      getGroupMsgHistory: vi.fn(),
-      getFriendMsgHistory: vi.fn(),
-      getRecentContact: vi.fn(),
-      downloadFileStreamToFile: vi.fn(),
-      downloadFileImageStreamToFile: vi.fn(),
-      downloadFileRecordStreamToFile: vi.fn(),
-      cleanStreamTempFile: vi.fn(),
-      getOnlineClients: vi.fn(),
-      getRobotUinRange: vi.fn(),
-      canSendImage: vi.fn(),
-      canSendRecord: vi.fn(),
-      getCookies: vi.fn(),
-      getCsrfToken: vi.fn(),
-      getCredentials: vi.fn(),
-      setInputStatus: vi.fn(),
-      ocrImage: vi.fn(),
-      translateEn2zh: vi.fn(),
-      checkUrlSafely: vi.fn(),
-      handleQuickOperation: vi.fn(),
-      getModelShow: vi.fn(),
-      setModelShow: vi.fn(),
-      getPacketStatus: vi.fn(),
-      getRkeyEx: vi.fn(),
-      getRkeyServer: vi.fn(),
-      getRkey: vi.fn(),
-      setFriendRemark: vi.fn(),
-      deleteFriend: vi.fn(),
-      getUnidirectionalFriendList: vi.fn(),
-      setGroupRemark: vi.fn(),
-      getGroupInfoEx: vi.fn(),
-      getGroupDetailInfo: vi.fn(),
-      getGroupIgnoredNotifies: vi.fn(),
-      getGroupShutList: vi.fn(),
-      sendPrivateForwardMessage: vi.fn(),
-      forwardFriendSingleMsg: vi.fn(),
-      forwardGroupSingleMsg: vi.fn(),
-      sendForwardMsg: vi.fn(),
-      sendGroupNotice: vi.fn(),
-      getGroupNotice: vi.fn(),
-      delGroupNotice: vi.fn(),
-      setOnlineStatus: vi.fn(),
-      setDiyOnlineStatus: vi.fn(),
-      sendArkShare: vi.fn(),
-      sendGroupArkShare: vi.fn(),
-      getMiniAppArk: vi.fn(),
-      getAiCharacters: vi.fn(),
-      getAiRecord: vi.fn(),
-      sendGroupAiRecord: vi.fn(),
-      setGroupSign: vi.fn(),
-      sendGroupSign: vi.fn(),
-      getClientkey: vi.fn(),
-      clickInlineKeyboardButton: vi.fn(),
+      getStrangerInfo: mock(),
+      getVersionInfo: mock(),
+      hydrateMedia: mock(),
+      getImage: mock(),
+      getRecord: mock(),
+      sendPrivateMessage: mock(),
+      sendGroupMessage: mock(),
+      setEssenceMessage: mock(),
+      deleteEssenceMessage: mock(),
+      getEssenceMessageList: mock(),
+      markMessageAsRead: mock(),
+      getGroupAtAllRemain: mock(),
+      getGroupSystemMsg: mock(),
+      setGroupLeave: mock(),
+      setGroupAnonymousBan: mock(),
+      uploadGroupFile: mock(),
+      uploadPrivateFile: mock(),
+      setGroupPortrait: mock(),
+      getGroupFileSystemInfo: mock(),
+      getGroupRootFiles: mock(),
+      getGroupFilesByFolder: mock(),
+      getGroupFileUrl: mock(),
+      deleteGroupFile: mock(),
+      createGroupFileFolder: mock(),
+      deleteGroupFolder: mock(),
+      downloadFile: mock(),
+      uploadFileStream: mock(),
+      getUploadStreamStatus: mock(),
+      sendGroupPoke: mock(),
+      sendFriendPoke: mock(),
+      sendPoke: mock(),
+      markGroupMsgAsRead: mock(),
+      markPrivateMsgAsRead: mock(),
+      markAllMsgAsRead: mock(),
+      getGroupMsgHistory: mock(),
+      getFriendMsgHistory: mock(),
+      getRecentContact: mock(),
+      downloadFileStreamToFile: mock(),
+      downloadFileImageStreamToFile: mock(),
+      downloadFileRecordStreamToFile: mock(),
+      cleanStreamTempFile: mock(),
+      getOnlineClients: mock(),
+      getRobotUinRange: mock(),
+      canSendImage: mock(),
+      canSendRecord: mock(),
+      getCookies: mock(),
+      getCsrfToken: mock(),
+      getCredentials: mock(),
+      setInputStatus: mock(),
+      ocrImage: mock(),
+      translateEn2zh: mock(),
+      checkUrlSafely: mock(),
+      handleQuickOperation: mock(),
+      getModelShow: mock(),
+      setModelShow: mock(),
+      getPacketStatus: mock(),
+      getRkeyEx: mock(),
+      getRkeyServer: mock(),
+      getRkey: mock(),
+      setFriendRemark: mock(),
+      deleteFriend: mock(),
+      getUnidirectionalFriendList: mock(),
+      setGroupRemark: mock(),
+      getGroupInfoEx: mock(),
+      getGroupDetailInfo: mock(),
+      getGroupIgnoredNotifies: mock(),
+      getGroupShutList: mock(),
+      sendPrivateForwardMessage: mock(),
+      forwardFriendSingleMsg: mock(),
+      forwardGroupSingleMsg: mock(),
+      sendForwardMsg: mock(),
+      sendGroupNotice: mock(),
+      getGroupNotice: mock(),
+      delGroupNotice: mock(),
+      setOnlineStatus: mock(),
+      setDiyOnlineStatus: mock(),
+      sendArkShare: mock(),
+      sendGroupArkShare: mock(),
+      getMiniAppArk: mock(),
+      getAiCharacters: mock(),
+      getAiRecord: mock(),
+      sendGroupAiRecord: mock(),
+      setGroupSign: mock(),
+      sendGroupSign: mock(),
+      getClientkey: mock(),
+      clickInlineKeyboardButton: mock(),
     },
   }
 
   const mockLog = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
   }
 
   const mockMsgConv = {
-    fromNapCat: vi.fn(),
-    toNapCat: vi.fn(),
+    fromNapCat: mock(),
+    toNapCat: mock(),
   }
 
-  const mockNapLinkConstructor = vi.fn()
+  const mockNapLinkConstructor = mock()
 
   return {
     mockNapLinkInstance: mockNapLink,
@@ -147,14 +148,21 @@ const { mockNapLinkInstance, mockLogger, mockMessageConverter, mockNapLinkConstr
     mockMessageConverter: mockMsgConv,
     mockNapLinkConstructor,
   }
-})
+})()
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => mockLogger),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => mockLogger),
 }))
 
-vi.mock('@napgram/message-kit', () => ({
+mock.module('@napgram/message-kit', () => ({
   messageConverter: mockMessageConverter,
+}))
+
+mock.module('@naplink/naplink', () => ({
+  NapLink: mock((config: any) => {
+    mockNapLinkConstructor(config)
+    return mockNapLinkInstance
+  }),
 }))
 
 describe('napCatAdapter', () => {
@@ -178,7 +186,7 @@ describe('napCatAdapter', () => {
   }
 
   beforeEach(async () => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     ;(globalThis as any).__naplinkMockInstance = mockNapLinkInstance
     ;(globalThis as any).__naplinkMockConstructor = mockNapLinkConstructor
     // Reset resolved values to avoid pollution
@@ -213,7 +221,6 @@ describe('napCatAdapter', () => {
     mockNapLinkInstance.hydrateMessage.mockResolvedValue(undefined)
     mockNapLinkInstance.getLoginInfo.mockResolvedValue({ user_id: 123456, nickname: 'Me' })
 
-    vi.resetModules()
     await import('../index')
     const module = await import('@napgram/qq-client')
     NapCatAdapter = module.NapCatAdapter
@@ -281,7 +288,7 @@ describe('napCatAdapter', () => {
   })
 
   it('should handle connect event', () => {
-    const onOnline = vi.fn()
+    const onOnline = mock()
     adapter.on('online', onOnline)
 
     mockNapLinkInstance.getLoginInfo.mockResolvedValue({ user_id: 123456, nickname: 'TestUser' })
@@ -314,21 +321,21 @@ describe('napCatAdapter', () => {
   })
 
   it('should handle disconnect event', () => {
-    const onOffline = vi.fn()
+    const onOffline = mock()
     adapter.on('offline', onOffline)
     triggerClientEvent('disconnect')
     expect(onOffline).toHaveBeenCalled()
   })
 
   it('should handle connection lost', () => {
-    const onLost = vi.fn()
+    const onLost = mock()
     adapter.on('connection:lost', onLost)
     triggerClientEvent('connection:lost', { timestamp: 1000, attempts: 5 })
     expect(onLost).toHaveBeenCalledWith({ timestamp: 1000, reason: expect.stringContaining('exceeded (5)') })
   })
 
   it('should handle connection restored', () => {
-    const onRestored = vi.fn()
+    const onRestored = mock()
     adapter.on('connection:restored', onRestored)
     triggerClientEvent('connection:restored', { timestamp: 2000 })
     expect(onRestored).toHaveBeenCalledWith({ timestamp: 2000 })
@@ -347,7 +354,7 @@ describe('napCatAdapter', () => {
 
   describe('message Events', () => {
     it('should handle incoming message', async () => {
-      const onMessage = vi.fn()
+      const onMessage = mock()
       adapter.on('message', onMessage)
 
       const rawMsg = {
@@ -394,7 +401,7 @@ describe('napCatAdapter', () => {
 
   describe('notice Events', () => {
     it('should handle group recall', () => {
-      const onRecall = vi.fn()
+      const onRecall = mock()
       adapter.on('recall', onRecall)
       triggerClientEvent('notice.group_recall', {
         message_id: 100,
@@ -412,7 +419,7 @@ describe('napCatAdapter', () => {
     })
 
     it('should handle friend recall', () => {
-      const onRecall = vi.fn()
+      const onRecall = mock()
       adapter.on('recall', onRecall)
       triggerClientEvent('notice.friend_recall', {
         message_id: 101,
@@ -429,8 +436,8 @@ describe('napCatAdapter', () => {
     })
 
     it('should handle group increase/decrease', () => {
-      const onGroupIncrease = vi.fn()
-      const onGroupDecrease = vi.fn()
+      const onGroupIncrease = mock()
+      const onGroupDecrease = mock()
       adapter.on('group.increase', onGroupIncrease)
       adapter.on('group.decrease', onGroupDecrease)
 
@@ -442,14 +449,14 @@ describe('napCatAdapter', () => {
     })
 
     it('should handle friend add', () => {
-      const onFriendIncrease = vi.fn()
+      const onFriendIncrease = mock()
       adapter.on('friend.increase', onFriendIncrease)
       triggerClientEvent('notice.friend_add', { user_id: 20 })
       expect(onFriendIncrease).toHaveBeenCalledWith({ id: '20', name: '' })
     })
 
     it('should handle friend decrease variants', () => {
-      const onFriendDecrease = vi.fn()
+      const onFriendDecrease = mock()
       adapter.on('friend.decrease', onFriendDecrease)
       triggerClientEvent('notice.friend_decrease', { user_id: 20 })
       triggerClientEvent('notice.friend_delete', { user_id: 21 })
@@ -460,7 +467,7 @@ describe('napCatAdapter', () => {
     })
 
     it('should handle poke', () => {
-      const onPoke = vi.fn()
+      const onPoke = mock()
       adapter.on('poke', onPoke)
       // Group poke
       triggerClientEvent('notice.notify.poke', { group_id: 50, user_id: 60, target_id: 70 })
@@ -472,7 +479,7 @@ describe('napCatAdapter', () => {
     })
 
     it('should handle input status notices', () => {
-      const onInputStatus = vi.fn()
+      const onInputStatus = mock()
       adapter.on('input.status', onInputStatus)
 
       triggerClientEvent('notice.notify.input_status', { user_id: 60, group_id: 50, status_text: 'typing' })
@@ -495,7 +502,7 @@ describe('napCatAdapter', () => {
 
   describe('request Events', () => {
     it('should handle friend request', () => {
-      const onRequest = vi.fn()
+      const onRequest = mock()
       adapter.on('request.friend', onRequest)
       triggerClientEvent('request.friend', { flag: 'f1', user_id: 33, comment: 'hi', time: 123 })
       expect(onRequest).toHaveBeenCalledWith({
@@ -507,7 +514,7 @@ describe('napCatAdapter', () => {
     })
 
     it('should handle group request', () => {
-      const onRequest = vi.fn()
+      const onRequest = mock()
       adapter.on('request.group', onRequest)
       triggerClientEvent('request.group', { flag: 'g1', group_id: 44, user_id: 55, sub_type: 'add', comment: 'join', time: 456 })
       expect(onRequest).toHaveBeenCalledWith({
@@ -582,8 +589,8 @@ describe('napCatAdapter', () => {
     })
 
     it('should send group forward message with configurable timeout', async () => {
-      const previousTimeout = process.env.NAPCAT_FORWARD_TIMEOUT_MS
-      process.env.NAPCAT_FORWARD_TIMEOUT_MS = '900000'
+      const previousTimeout = bunEnv.NAPCAT_FORWARD_TIMEOUT_MS
+      bunEnv.NAPCAT_FORWARD_TIMEOUT_MS = '900000'
 
       try {
         mockNapLinkInstance.sendGroupForwardMessage.mockResolvedValue({ message_id: 111 })
@@ -600,10 +607,10 @@ describe('napCatAdapter', () => {
       }
       finally {
         if (previousTimeout === undefined) {
-          delete process.env.NAPCAT_FORWARD_TIMEOUT_MS
+          delete bunEnv.NAPCAT_FORWARD_TIMEOUT_MS
         }
         else {
-          process.env.NAPCAT_FORWARD_TIMEOUT_MS = previousTimeout
+          bunEnv.NAPCAT_FORWARD_TIMEOUT_MS = previousTimeout
         }
       }
     })
@@ -1044,241 +1051,241 @@ describe('napCatAdapter', () => {
       (mockNapLinkInstance.api as any).delGroupNotice = undefined
       await adapter.delGroupNotice('g', '123')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_del_group_notice', { group_id: 'g', notice_id: 123 });
-      (mockNapLinkInstance.api as any).delGroupNotice = vi.fn()
+      (mockNapLinkInstance.api as any).delGroupNotice = mock()
     })
 
     it('should fallback for setOnlineStatus', async () => {
       (mockNapLinkInstance.api as any).setOnlineStatus = undefined
       await adapter.setOnlineStatus(1, 2, 3)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_online_status', { status: 1, ext_status: 2, battery_status: 3 });
-      (mockNapLinkInstance.api as any).setOnlineStatus = vi.fn()
+      (mockNapLinkInstance.api as any).setOnlineStatus = mock()
     })
 
     it('should fallback for setDiyOnlineStatus', async () => {
       (mockNapLinkInstance.api as any).setDiyOnlineStatus = undefined
       await adapter.setDiyOnlineStatus(1, 'w', 2)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_diy_online_status', { face_id: 1, wording: 'w', face_type: 2 });
-      (mockNapLinkInstance.api as any).setDiyOnlineStatus = vi.fn()
+      (mockNapLinkInstance.api as any).setDiyOnlineStatus = mock()
     })
 
     it('should fallback for setGroupRemark', async () => {
       (mockNapLinkInstance.api as any).setGroupRemark = undefined
       await adapter.setGroupRemark('g', 'remark')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_group_remark', { group_id: 'g', remark: 'remark' });
-      (mockNapLinkInstance.api as any).setGroupRemark = vi.fn()
+      (mockNapLinkInstance.api as any).setGroupRemark = mock()
     })
 
     it('should fallback for getGroupInfoEx', async () => {
       (mockNapLinkInstance.api as any).getGroupInfoEx = undefined
       await adapter.getGroupInfoEx('g')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_group_info_ex', { group_id: 'g' });
-      (mockNapLinkInstance.api as any).getGroupInfoEx = vi.fn()
+      (mockNapLinkInstance.api as any).getGroupInfoEx = mock()
     })
 
     it('should fallback for getGroupDetailInfo', async () => {
       (mockNapLinkInstance.api as any).getGroupDetailInfo = undefined
       await adapter.getGroupDetailInfo('g')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_group_detail_info', { group_id: 'g' });
-      (mockNapLinkInstance.api as any).getGroupDetailInfo = vi.fn()
+      (mockNapLinkInstance.api as any).getGroupDetailInfo = mock()
     })
 
     it('should fallback for getGroupIgnoredNotifies', async () => {
       (mockNapLinkInstance.api as any).getGroupIgnoredNotifies = undefined
       await adapter.getGroupIgnoredNotifies()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_group_ignored_notifies');
-      (mockNapLinkInstance.api as any).getGroupIgnoredNotifies = vi.fn()
+      (mockNapLinkInstance.api as any).getGroupIgnoredNotifies = mock()
     })
 
     it('should fallback for getRkeyEx', async () => {
       (mockNapLinkInstance.api as any).getRkeyEx = undefined
       await adapter.getRkeyEx()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_rkey');
-      (mockNapLinkInstance.api as any).getRkeyEx = vi.fn()
+      (mockNapLinkInstance.api as any).getRkeyEx = mock()
     })
 
     it('should fallback for getRkeyServer', async () => {
       (mockNapLinkInstance.api as any).getRkeyServer = undefined
       await adapter.getRkeyServer()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_rkey_server');
-      (mockNapLinkInstance.api as any).getRkeyServer = vi.fn()
+      (mockNapLinkInstance.api as any).getRkeyServer = mock()
     })
 
     it('should fallback for getRkey', async () => {
       (mockNapLinkInstance.api as any).getRkey = undefined
       await adapter.getRkey()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('nc_get_rkey');
-      (mockNapLinkInstance.api as any).getRkey = vi.fn()
+      (mockNapLinkInstance.api as any).getRkey = mock()
     })
 
     it('should fallback for setFriendRemark', async () => {
       (mockNapLinkInstance.api as any).setFriendRemark = undefined
       await adapter.setFriendRemark('u', 'remark')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_friend_remark', { user_id: 'u', remark: 'remark' });
-      (mockNapLinkInstance.api as any).setFriendRemark = vi.fn()
+      (mockNapLinkInstance.api as any).setFriendRemark = mock()
     })
 
     it('should fallback for deleteFriend', async () => {
       (mockNapLinkInstance.api as any).deleteFriend = undefined
       await adapter.deleteFriend('u')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('delete_friend', { user_id: 'u' });
-      (mockNapLinkInstance.api as any).deleteFriend = vi.fn()
+      (mockNapLinkInstance.api as any).deleteFriend = mock()
     })
 
     it('should fallback for getUnidirectionalFriendList', async () => {
       (mockNapLinkInstance.api as any).getUnidirectionalFriendList = undefined
       await adapter.getUnidirectionalFriendList()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_unidirectional_friend_list');
-      (mockNapLinkInstance.api as any).getUnidirectionalFriendList = vi.fn()
+      (mockNapLinkInstance.api as any).getUnidirectionalFriendList = mock()
     })
 
     it('should fallback for handleQuickOperation', async () => {
       (mockNapLinkInstance.api as any).handleQuickOperation = undefined
       await adapter.handleQuickOperation({ ctx: 'test' }, { op: 'approve' })
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('.handle_quick_operation', { context: { ctx: 'test' }, operation: { op: 'approve' } });
-      (mockNapLinkInstance.api as any).handleQuickOperation = vi.fn()
+      (mockNapLinkInstance.api as any).handleQuickOperation = mock()
     })
 
     it('should fallback for getModelShow', async () => {
       (mockNapLinkInstance.api as any).getModelShow = undefined
       await adapter.getModelShow('model1')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_get_model_show', { model: 'model1' });
-      (mockNapLinkInstance.api as any).getModelShow = vi.fn()
+      (mockNapLinkInstance.api as any).getModelShow = mock()
     })
 
     it('should fallback for setModelShow', async () => {
       (mockNapLinkInstance.api as any).setModelShow = undefined
       await adapter.setModelShow('model1', 'show1')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_set_model_show', { model: 'model1', model_show: 'show1' });
-      (mockNapLinkInstance.api as any).setModelShow = vi.fn()
+      (mockNapLinkInstance.api as any).setModelShow = mock()
     })
 
     it('should fallback for getPacketStatus', async () => {
       (mockNapLinkInstance.api as any).getPacketStatus = undefined
       await adapter.getPacketStatus()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('nc_get_packet_status');
-      (mockNapLinkInstance.api as any).getPacketStatus = vi.fn()
+      (mockNapLinkInstance.api as any).getPacketStatus = mock()
     })
 
     it('should fallback for setInputStatus', async () => {
       (mockNapLinkInstance.api as any).setInputStatus = undefined
       await adapter.setInputStatus('u', 1)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('set_input_status', { user_id: 'u', event_type: 1, eventType: 1 });
-      (mockNapLinkInstance.api as any).setInputStatus = vi.fn()
+      (mockNapLinkInstance.api as any).setInputStatus = mock()
     })
 
     it('should fallback for ocrImage', async () => {
       (mockNapLinkInstance.api as any).ocrImage = undefined
       await adapter.ocrImage('img.jpg', false)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('ocr_image', { image: 'img.jpg' });
-      (mockNapLinkInstance.api as any).ocrImage = vi.fn()
+      (mockNapLinkInstance.api as any).ocrImage = mock()
     })
 
     it('should fallback for translateEn2zh', async () => {
       (mockNapLinkInstance.api as any).translateEn2zh = undefined
       await adapter.translateEn2zh(['hello', 'world'])
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('translate_en2zh', { words: ['hello', 'world'] });
-      (mockNapLinkInstance.api as any).translateEn2zh = vi.fn()
+      (mockNapLinkInstance.api as any).translateEn2zh = mock()
     })
 
     it('should fallback for checkUrlSafely', async () => {
       (mockNapLinkInstance.api as any).checkUrlSafely = undefined
       await adapter.checkUrlSafely('https://example.com')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('check_url_safely', { url: 'https://example.com' });
-      (mockNapLinkInstance.api as any).checkUrlSafely = vi.fn()
+      (mockNapLinkInstance.api as any).checkUrlSafely = mock()
     })
 
     it('should fallback for canSendRecord', async () => {
       (mockNapLinkInstance.api as any).canSendRecord = undefined
       await adapter.canSendRecord()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('can_send_record');
-      (mockNapLinkInstance.api as any).canSendRecord = vi.fn()
+      (mockNapLinkInstance.api as any).canSendRecord = mock()
     })
 
     it('should fallback for getCookies', async () => {
       (mockNapLinkInstance.api as any).getCookies = undefined
       await adapter.getCookies('example.com')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_cookies', { domain: 'example.com' });
-      (mockNapLinkInstance.api as any).getCookies = vi.fn()
+      (mockNapLinkInstance.api as any).getCookies = mock()
     })
 
     it('should fallback for getCsrfToken', async () => {
       (mockNapLinkInstance.api as any).getCsrfToken = undefined
       await adapter.getCsrfToken()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_csrf_token');
-      (mockNapLinkInstance.api as any).getCsrfToken = vi.fn()
+      (mockNapLinkInstance.api as any).getCsrfToken = mock()
     })
 
     it('should fallback for getCredentials', async () => {
       (mockNapLinkInstance.api as any).getCredentials = undefined
       await adapter.getCredentials('example.com')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_credentials', { domain: 'example.com' });
-      (mockNapLinkInstance.api as any).getCredentials = vi.fn()
+      (mockNapLinkInstance.api as any).getCredentials = mock()
     })
 
     it('should fallback for getOnlineClients', async () => {
       (mockNapLinkInstance.api as any).getOnlineClients = undefined
       await adapter.getOnlineClients(true)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_online_clients', { no_cache: true });
-      (mockNapLinkInstance.api as any).getOnlineClients = vi.fn()
+      (mockNapLinkInstance.api as any).getOnlineClients = mock()
     })
 
     it('should fallback for getRobotUinRange', async () => {
       (mockNapLinkInstance.api as any).getRobotUinRange = undefined
       await adapter.getRobotUinRange()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_robot_uin_range');
-      (mockNapLinkInstance.api as any).getRobotUinRange = vi.fn()
+      (mockNapLinkInstance.api as any).getRobotUinRange = mock()
     })
 
     it('should fallback for canSendImage', async () => {
       (mockNapLinkInstance.api as any).canSendImage = undefined
       await adapter.canSendImage()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('can_send_image');
-      (mockNapLinkInstance.api as any).canSendImage = vi.fn()
+      (mockNapLinkInstance.api as any).canSendImage = mock()
     })
 
     it('should throw error for cleanStreamTempFile when not available', async () => {
       (mockNapLinkInstance.api as any).cleanStreamTempFile = undefined
       await expect(adapter.cleanStreamTempFile()).rejects.toThrow('cleanStreamTempFile is not available');
-      (mockNapLinkInstance.api as any).cleanStreamTempFile = vi.fn()
+      (mockNapLinkInstance.api as any).cleanStreamTempFile = mock()
     })
 
     it('should fallback for getRecentContact', async () => {
       (mockNapLinkInstance.api as any).getRecentContact = undefined
       await adapter.getRecentContact(10)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_recent_contact', { count: 10 });
-      (mockNapLinkInstance.api as any).getRecentContact = vi.fn()
+      (mockNapLinkInstance.api as any).getRecentContact = mock()
     })
 
     it('should throw error for downloadFileStreamToFile when not available', async () => {
       (mockNapLinkInstance.api as any).downloadFileStreamToFile = undefined
       await expect(adapter.downloadFileStreamToFile('file123')).rejects.toThrow('downloadFileStreamToFile is not available');
-      (mockNapLinkInstance.api as any).downloadFileStreamToFile = vi.fn()
+      (mockNapLinkInstance.api as any).downloadFileStreamToFile = mock()
     })
 
     it('should throw error for downloadFileImageStreamToFile when not available', async () => {
       (mockNapLinkInstance.api as any).downloadFileImageStreamToFile = undefined
       await expect(adapter.downloadFileImageStreamToFile('img123')).rejects.toThrow('downloadFileImageStreamToFile is not available');
-      (mockNapLinkInstance.api as any).downloadFileImageStreamToFile = vi.fn()
+      (mockNapLinkInstance.api as any).downloadFileImageStreamToFile = mock()
     })
 
     it('should throw error for downloadFileRecordStreamToFile when not available', async () => {
       (mockNapLinkInstance.api as any).downloadFileRecordStreamToFile = undefined
       await expect(adapter.downloadFileRecordStreamToFile('rec123')).rejects.toThrow('downloadFileRecordStreamToFile is not available');
-      (mockNapLinkInstance.api as any).downloadFileRecordStreamToFile = vi.fn()
+      (mockNapLinkInstance.api as any).downloadFileRecordStreamToFile = mock()
     })
 
     it('should fallback for markPrivateMsgAsRead', async () => {
       (mockNapLinkInstance.api as any).markPrivateMsgAsRead = undefined
       await adapter.markPrivateMsgAsRead('u123')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('mark_private_msg_as_read', { user_id: 'u123' });
-      (mockNapLinkInstance.api as any).markPrivateMsgAsRead = vi.fn()
+      (mockNapLinkInstance.api as any).markPrivateMsgAsRead = mock()
     })
 
     it('should fallback for markAllMsgAsRead', async () => {
       (mockNapLinkInstance.api as any).markAllMsgAsRead = undefined
       await adapter.markAllMsgAsRead()
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('_mark_all_as_read');
-      (mockNapLinkInstance.api as any).markAllMsgAsRead = vi.fn()
+      (mockNapLinkInstance.api as any).markAllMsgAsRead = mock()
     })
 
     it('should fallback for getGroupMsgHistory', async () => {
@@ -1286,7 +1293,7 @@ describe('napCatAdapter', () => {
       const params = { group_id: 'g123', message_seq: 100, count: 20 }
       await adapter.getGroupMsgHistory(params)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_group_msg_history', params);
-      (mockNapLinkInstance.api as any).getGroupMsgHistory = vi.fn()
+      (mockNapLinkInstance.api as any).getGroupMsgHistory = mock()
     })
 
     it('should fallback for getFriendMsgHistory', async () => {
@@ -1294,35 +1301,35 @@ describe('napCatAdapter', () => {
       const params = { user_id: 'u123', message_seq: 100, count: 20 }
       await adapter.getFriendMsgHistory(params)
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('get_friend_msg_history', params);
-      (mockNapLinkInstance.api as any).getFriendMsgHistory = vi.fn()
+      (mockNapLinkInstance.api as any).getFriendMsgHistory = mock()
     })
 
     it('should fallback for sendGroupPoke', async () => {
       (mockNapLinkInstance.api as any).sendGroupPoke = undefined
       await adapter.sendGroupPoke('g123', 'u456')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('group_poke', { group_id: 'g123', user_id: 'u456' });
-      (mockNapLinkInstance.api as any).sendGroupPoke = vi.fn()
+      (mockNapLinkInstance.api as any).sendGroupPoke = mock()
     })
 
     it('should fallback for sendFriendPoke', async () => {
       (mockNapLinkInstance.api as any).sendFriendPoke = undefined
       await adapter.sendFriendPoke('u123')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('friend_poke', { user_id: 'u123' });
-      (mockNapLinkInstance.api as any).sendFriendPoke = vi.fn()
+      (mockNapLinkInstance.api as any).sendFriendPoke = mock()
     })
 
     it('should fallback for sendPoke with groupId', async () => {
       (mockNapLinkInstance.api as any).sendPoke = undefined
       await adapter.sendPoke('u123', 'g456')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('send_poke', { group_id: 'g456', target_id: 'u123' });
-      (mockNapLinkInstance.api as any).sendPoke = vi.fn()
+      (mockNapLinkInstance.api as any).sendPoke = mock()
     })
 
     it('should fallback for markGroupMsgAsRead', async () => {
       (mockNapLinkInstance.api as any).markGroupMsgAsRead = undefined
       await adapter.markGroupMsgAsRead('g123')
       expect(mockNapLinkInstance.callApi).toHaveBeenCalledWith('mark_group_msg_as_read', { group_id: 'g123' });
-      (mockNapLinkInstance.api as any).markGroupMsgAsRead = vi.fn()
+      (mockNapLinkInstance.api as any).markGroupMsgAsRead = mock()
     })
   })
 

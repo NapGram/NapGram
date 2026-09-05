@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify'
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
 import { hasAdminPermission } from '@napgram/auth-kit'
-import { Buffer } from 'node:buffer'
-import process from 'node:process'
 import { z } from 'zod'
 import { ApiResponse } from './web-deps.js'
 
@@ -27,7 +26,7 @@ export default async function (fastify: FastifyInstance) {
     const cookieToken = request.cookies?.admin_token ? String(request.cookies.admin_token) : ''
     const token = bearer || cookieToken
 
-    const direct = String(process.env.PLUGIN_ADMIN_TOKEN || '').trim()
+    const direct = String(bunEnv.PLUGIN_ADMIN_TOKEN || '').trim()
     if (direct && token && token === direct) {
       request.auth = { type: 'env', role: 'super_admin', token }
       return
@@ -167,11 +166,11 @@ export default async function (fastify: FastifyInstance) {
       if (!res.ok) {
         return reply.code(502).send(ApiResponse.error(`README fetch failed: ${res.status} ${res.statusText}`))
       }
-      const buf = Buffer.from(await res.arrayBuffer())
+      const buf = new Uint8Array(await res.arrayBuffer())
       if (buf.length > MAX_README_BYTES) {
         return reply.code(413).send(ApiResponse.error('README too large'))
       }
-      const content = buf.toString('utf8')
+      const content = new TextDecoder().decode(buf)
       return ApiResponse.success({ url: readmeUrl, content })
     }
     catch (error: any) {

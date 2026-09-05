@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, spyOn } from 'bun:test'
 import { EventPublisher } from '../event-publisher.js'
 import { globalEventBus } from '../event-bus.js'
 
 describe('eventPublisher', () => {
   it('publishes message events', async () => {
-    const spy = vi.spyOn(globalEventBus, 'publish').mockResolvedValue(undefined)
+    const spy = spyOn(globalEventBus, 'publish').mockResolvedValue(undefined)
     const event: any = { eventId: '1', instanceId: 1 }
 
     await EventPublisher.publishMessage(event)
@@ -13,7 +13,7 @@ describe('eventPublisher', () => {
   })
 
   it('publishes instance status events', async () => {
-    const spy = vi.spyOn(globalEventBus, 'publish').mockResolvedValue(undefined)
+    const spy = spyOn(globalEventBus, 'publish').mockResolvedValue(undefined)
     const event: any = { instanceId: 1, status: 'running' }
 
     await EventPublisher.publishInstanceStatus(event)
@@ -22,7 +22,7 @@ describe('eventPublisher', () => {
   })
 
   it('publishes compatibility message-created events', async () => {
-    const spy = vi.spyOn(globalEventBus, 'publish').mockResolvedValue(undefined)
+    const spy = spyOn(globalEventBus, 'publish').mockResolvedValue(undefined)
 
     await EventPublisher.publishMessageCreated(1, { text: 'hi' })
 

@@ -1,22 +1,22 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { createPluginLogger } from '../logger.js'
 
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
 
-const getLoggerMock = vi.hoisted(() => vi.fn(() => loggerMocks))
+const getLoggerMock = (() => mock(() => loggerMocks))()
 
-vi.mock('@napgram/logger-kit', () => ({
+mock.module('@napgram/logger-kit', () => ({
   getLogger: getLoggerMock,
 }))
 
 describe('createPluginLogger', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('forwards log calls to the shared logger', () => {

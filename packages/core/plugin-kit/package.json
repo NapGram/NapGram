@@ -28,7 +28,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "vitest run"
+    "test": "bun test --isolate src"
   },
   "keywords": [],
   "author": "",
@@ -47,11 +47,9 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
-    "@types/node": "26.4.1",
     "@types/semver": "^7.7.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "files": [
     "dist",

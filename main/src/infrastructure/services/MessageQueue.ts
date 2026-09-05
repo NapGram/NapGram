@@ -26,7 +26,7 @@ export class MessageQueue<T = unknown> {
   private processInterval: number
   private maxQueueSize: number
   private enablePriority: boolean
-  private processTimer?: NodeJS.Timeout
+  private processTimer?: ReturnType<typeof setInterval>
 
   constructor(handler: MessageHandler<T>, config: QueueConfig = {}) {
     this.handler = handler

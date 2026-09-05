@@ -1,3 +1,4 @@
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
 import type { FastifyInstance } from 'fastify'
 import { hasAdminPermission } from '@napgram/auth-kit'
 import { z } from 'zod'
@@ -16,7 +17,7 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
         const cookieToken = request.cookies?.admin_token ? String(request.cookies.admin_token) : ''
         const token = bearer || cookieToken
 
-        const direct = String(process.env.PLUGIN_ADMIN_TOKEN || '').trim()
+        const direct = String(bunEnv.PLUGIN_ADMIN_TOKEN || '').trim()
         if (direct && token && token === direct) {
             request.auth = { type: 'env', role: 'super_admin', token }
             return
@@ -46,7 +47,7 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
                 ORDER BY "grantedAt" DESC
             `)
 
-            const permissions = results.rows.map((r: any) => ({
+            const permissions = results.map((r: any) => ({
                 id: r.id,
                 userId: r.userId,
                 instanceId: r.instanceId,
@@ -166,7 +167,7 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
                 ORDER BY "commandName"
             `)
 
-            const commands = results.rows.map((r: any) => ({
+            const commands = results.map((r: any) => ({
                 id: r.id,
                 commandName: r.commandName,
                 instanceId: r.instanceId,
@@ -256,7 +257,7 @@ export default async function permissionsRoutes(fastify: FastifyInstance) {
                 LIMIT ${maxLimit}
             `)
 
-            const logs = results.rows.map((r: any) => ({
+            const logs = results.map((r: any) => ({
                 id: r.id,
                 eventType: r.eventType,
                 operatorId: r.operatorId,

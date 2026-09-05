@@ -77,7 +77,7 @@ jobs:
       - name: Self-hosted Renovate
         uses: renovatebot/github-action@v46.1.16
         with:
-          configurationFile: .github/renovate-config.js
+          configurationFile: .github/renovate-config.json
           token: ${{ secrets.GH_PAT }}
 
       - name: Cleanup orphan renovate branches

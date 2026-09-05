@@ -27,7 +27,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch"
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "bun test --isolate --pass-with-no-tests src"
   },
   "keywords": [
     "napgram",
@@ -40,16 +41,14 @@
     "@napgram/env-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/qq-client": "workspace:^",
+    "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:^",
     "fastify": "5.12.1"
   },
   "devDependencies": {
-    "@types/node": "26.4.1",
-    "@types/pg": "^8.16.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "drizzle-kit": "^0.31.8",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "files": [
     "dist",

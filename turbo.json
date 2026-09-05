@@ -3,7 +3,8 @@
     "globalDependencies": [
         "bun.lock",
         "tsconfig.base.json",
-        "tsconfig.json"
+        "tsconfig.json",
+        "oxlint.json"
     ],
     "tasks": {
         "build": {
@@ -41,7 +42,6 @@
                 "src/**",
                 "tests/**",
                 "test/**",
-                "vitest.config*.ts",
                 "package.json",
                 "tsconfig*.json"
             ],
@@ -53,10 +53,9 @@
             ],
             "inputs": [
                 "src/**",
-                "tests/**",
-                "eslint.config*.js",
-                ".eslintrc*",
-                "package.json"
+                "tools/**",
+                "package.json",
+                "tsconfig*.json"
             ],
             "outputs": []
         }

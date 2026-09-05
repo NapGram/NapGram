@@ -1,14 +1,10 @@
-import fsP from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
 import qface from '../src/domain/constants/qface'
 
-const BOT_TOKEN = process.argv[2]
-const DIR = process.argv[3]
+const [BOT_TOKEN, DIR] = Bun.argv.slice(2)
 const CHANNEL = -1002431668959;
 
 (async () => {
-  for (const file of await fsP.readdir(DIR)) {
+  for await (const file of new Bun.Glob('*.webm').scan({ cwd: DIR })) {
     if (!file.endsWith('.webm'))
       continue
 
@@ -33,7 +29,7 @@ const CHANNEL = -1002431668959;
     frm.append('reply_parameters', JSON.stringify({
       message_id: titleId,
     }))
-    frm.append('sticker', new Blob([await fsP.readFile(path.join(DIR, file))]), 'sticker.webm')
+    frm.append('sticker', new Blob([await Bun.file(path.join(DIR, file)).bytes()]), 'sticker.webm')
     await wrap429(`https://api.telegram.org/bot${BOT_TOKEN}/sendSticker`, {
       method: 'POST',
       body: frm,

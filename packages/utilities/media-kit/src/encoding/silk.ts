@@ -1,13 +1,10 @@
-import { Buffer } from 'node:buffer'
-import { execFile } from 'node:child_process'
-import fsP from 'node:fs/promises'
-import { promisify } from 'node:util'
 import { decode, encode } from 'silk-wasm'
+import { runtimeFileIO } from '../bun-file-io.js'
+import { spawnFileWithBun } from './bun-spawn.js'
 import { temp } from '../shared-runtime.js'
 
-const execFileAsync = promisify(execFile)
 async function runFfmpeg(args: string[]) {
-  await execFileAsync('ffmpeg', args)
+  await spawnFileWithBun('ffmpeg', args)
 }
 
 function conventPcmToOgg(pcmPath: string, savePath: string): Promise<void> {
@@ -33,14 +30,14 @@ export default {
   /**
    * 解码 SILK 为 OGG (Opus)
    */
-  async decode(bufSilk: Buffer, outputPath: string): Promise<void> {
+  async decode(bufSilk: Uint8Array, outputPath: string): Promise<void> {
     // silk-wasm 解码得到 PCM 数据
     const result = await decode(bufSilk, 24000)
-    const bufPcm = Buffer.from(result.data)
+    const bufPcm = Uint8Array.from(result.data)
 
     // 写入临时 PCM 文件
     const { path, cleanup } = await temp.file()
-    await fsP.writeFile(path, bufPcm)
+    await runtimeFileIO.write(path, bufPcm)
 
     // 使用 ffmpeg 将 PCM 转为 OGG
     try {
@@ -52,9 +49,9 @@ export default {
   },
 
   /**
-   * 编码音频文件为 SILK Buffer
+   * 编码音频文件为 SILK Uint8Array
    */
-  async encode(filePath: string): Promise<Buffer> {
+  async encode(filePath: string): Promise<Uint8Array> {
     const { path: pcmPath, cleanup } = await temp.file()
 
     try {
@@ -73,11 +70,11 @@ export default {
       ])
 
       // 2. 读取 PCM
-      const pcmBuffer = await fsP.readFile(pcmPath)
+      const pcmUint8Array = Uint8Array.from(await runtimeFileIO.readBytes(pcmPath))
 
       // 3. 编码为 SILK (24000Hz)
-      const result = await encode(pcmBuffer, 24000)
-      return Buffer.from(result.data)
+      const result = await encode(pcmUint8Array, 24000)
+      return Uint8Array.from(result.data)
     }
     finally {
       cleanup()

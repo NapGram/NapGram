@@ -1,7 +1,7 @@
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import type { FastifyInstance } from 'fastify'
-import { Buffer } from 'node:buffer'
-import fs from 'node:fs'
-import path from 'node:path'
+import { basename, joinPath, resolvePath } from './path-utils.js'
+const bunRuntime = (globalThis as typeof globalThis & { Bun: { file(path: string): { stream(): ReadableStream<Uint8Array> } } }).Bun
 
 import { env } from './web-deps.js'
 import { ErrorResponses, getMimeType } from './web-http.js'
@@ -37,7 +37,7 @@ export default async function (fastify: FastifyInstance) {
         })
 
         // 直接返回响应体
-        return Buffer.from(await response.arrayBuffer())
+        return new Uint8Array(await response.arrayBuffer())
       }
       catch (err) {
         request.log.error('Proxy error', err)
@@ -47,41 +47,41 @@ export default async function (fastify: FastifyInstance) {
   }
   else if (env.UI_PATH) {
     // 提供静态资源
-    const assetsPath = path.join(env.UI_PATH, 'assets')
+    const assetsPath = joinPath(env.UI_PATH, 'assets')
     fastify.get('/assets/*', async (req: any, reply: any) => {
       const name = String((req.params as any)['*'] || '')
-      const safeName = path.basename(name)
+      const safeName = basename(name)
 
       if (!safeName || safeName !== name) {
         return ErrorResponses.forbidden(reply)
       }
 
-      const filePath = path.join(assetsPath, safeName)
-      if (!path.resolve(filePath).startsWith(path.resolve(assetsPath))) {
+      const filePath = joinPath(assetsPath, safeName)
+      if (!resolvePath(filePath).startsWith(resolvePath(assetsPath))) {
         return ErrorResponses.forbidden(reply)
       }
 
-      if (!fs.existsSync(filePath)) {
+      if (!await runtimeFileIO.exists(filePath)) {
         return ErrorResponses.notFound(reply)
       }
 
       reply.header('cache-control', 'public, max-age=31536000, immutable')
       reply.header('content-type', getMimeType(safeName))
-      return fs.createReadStream(filePath)
+      return bunRuntime.file(filePath).stream()
     })
 
     // 提供站点图标
     fastify.get('/vite.svg', async (req: any, reply: any) => {
       const possiblePaths = [
-        path.join(env.UI_PATH!, 'vite.svg'),
-        path.join(env.UI_PATH!, 'public', 'vite.svg'),
-        path.join(env.UI_PATH!, 'assets', 'vite.svg'),
+        joinPath(env.UI_PATH!, 'vite.svg'),
+        joinPath(env.UI_PATH!, 'public', 'vite.svg'),
+        joinPath(env.UI_PATH!, 'assets', 'vite.svg'),
       ]
       for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
+        if (await runtimeFileIO.exists(p)) {
           reply.header('cache-control', 'no-store')
           reply.header('content-type', 'image/svg+xml')
-          return fs.createReadStream(p)
+          return bunRuntime.file(p).stream()
         }
       }
       return ErrorResponses.notFound(reply)
@@ -91,7 +91,7 @@ export default async function (fastify: FastifyInstance) {
     fastify.get('/*', async (req: any, reply: any) => {
       reply.header('cache-control', 'no-store')
       reply.header('content-type', 'text/html')
-      return fs.createReadStream(path.join(env.UI_PATH!, 'index.html'))
+      return bunRuntime.file(joinPath(env.UI_PATH!, 'index.html')).stream()
     })
   }
 }

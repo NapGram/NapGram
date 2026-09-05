@@ -1,5 +1,3 @@
-import type { Buffer } from 'node:buffer'
-
 export type Gender = 'male' | 'female' | 'unknown'
 export type GroupRole = 'owner' | 'admin' | 'member'
 
@@ -37,7 +35,7 @@ export interface QQEntity {
 
   getForwardMsg: (resid: string, fileName?: string) => Promise<ForwardMessage[]>
 
-  getVideoUrl: (fid: string, md5: string | Buffer) => Promise<string>
+  getVideoUrl: (fid: string, md5: string | Uint8Array) => Promise<string>
 
   recallMsg: (seqOrMessageId: number, rand?: number, timeOrPktNum?: number) => Promise<boolean>
 
@@ -74,7 +72,7 @@ export interface Group extends QQEntity {
 }
 
 export interface GroupFs {
-  upload: (file: string | Buffer | Uint8Array, pid?: string, name?: string, callback?: (percentage: string) => void) => Promise<any>
+  upload: (file: string | Uint8Array | Uint8Array, pid?: string, name?: string, callback?: (percentage: string) => void) => Promise<any>
 }
 
 export interface GroupMember extends QQUser {

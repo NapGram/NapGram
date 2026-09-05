@@ -1,5 +1,5 @@
 import type { MessageContent, UnifiedMessage } from '@napgram/message-kit'
-import process from 'node:process'
+import { bunEnv } from '../../../../../shared/utils/runtime.js'
 import { db, sql } from '../../../capabilities/db.js'
 import { getLogger } from '../../../capabilities/logging.js'
 import { renderContent } from '../utils/render.js'
@@ -30,8 +30,8 @@ export class ForwardMapper {
   ) { }
 
   private shouldSkipPersistence() {
-    // Avoid touching the real database when running under Vitest/Node test runs
-    return process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST)
+    // Avoid touching the real database during test runs.
+    return bunEnv.NODE_ENV === 'test'
   }
 
   private getQqChatTypeFromPair(pair: any): QqChatType {

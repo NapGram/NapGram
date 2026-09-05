@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach } from 'bun:test'
 
 describe('runtime-holder', () => {
   describe('RuntimeRegistry', () => {

@@ -1,11 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach, mock } from 'bun:test'
 
 describe('PermissionChecker', () => {
   describe('isGroupAdmin', () => {
     it('should return true for admin', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue({ role: 'admin' }),
+        getGroupMemberInfo: mock().mockResolvedValue({ role: 'admin' }),
       } as any
 
       const result = await PermissionChecker.isGroupAdmin(mockQqClient, '123', '456')
@@ -15,7 +15,7 @@ describe('PermissionChecker', () => {
     it('should return true for owner', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue({ role: 'owner' }),
+        getGroupMemberInfo: mock().mockResolvedValue({ role: 'owner' }),
       } as any
 
       const result = await PermissionChecker.isGroupAdmin(mockQqClient, '123', '456')
@@ -25,7 +25,7 @@ describe('PermissionChecker', () => {
     it('should return false for member', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue({ role: 'member' }),
+        getGroupMemberInfo: mock().mockResolvedValue({ role: 'member' }),
       } as any
 
       const result = await PermissionChecker.isGroupAdmin(mockQqClient, '123', '456')
@@ -35,7 +35,7 @@ describe('PermissionChecker', () => {
     it('should return false for null member info', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue(null),
+        getGroupMemberInfo: mock().mockResolvedValue(null),
       } as any
 
       const result = await PermissionChecker.isGroupAdmin(mockQqClient, '123', '456')
@@ -45,7 +45,7 @@ describe('PermissionChecker', () => {
     it('should return false on error', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockRejectedValue(new Error('Network error')),
+        getGroupMemberInfo: mock().mockRejectedValue(new Error('Network error')),
       } as any
 
       const result = await PermissionChecker.isGroupAdmin(mockQqClient, '123', '456')
@@ -57,7 +57,7 @@ describe('PermissionChecker', () => {
     it('should return true for owner', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue({ role: 'owner' }),
+        getGroupMemberInfo: mock().mockResolvedValue({ role: 'owner' }),
       } as any
 
       const result = await PermissionChecker.isGroupOwner(mockQqClient, '123', '456')
@@ -67,7 +67,7 @@ describe('PermissionChecker', () => {
     it('should return false for admin', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue({ role: 'admin' }),
+        getGroupMemberInfo: mock().mockResolvedValue({ role: 'admin' }),
       } as any
 
       const result = await PermissionChecker.isGroupOwner(mockQqClient, '123', '456')
@@ -77,7 +77,7 @@ describe('PermissionChecker', () => {
     it('should return false for member', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue({ role: 'member' }),
+        getGroupMemberInfo: mock().mockResolvedValue({ role: 'member' }),
       } as any
 
       const result = await PermissionChecker.isGroupOwner(mockQqClient, '123', '456')
@@ -89,7 +89,7 @@ describe('PermissionChecker', () => {
     it('owner can manage anyone', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockImplementation(async (groupId: string, userId: string) => {
+        getGroupMemberInfo: mock().mockImplementation(async (groupId: string, userId: string) => {
           if (userId === 'operator') return { role: 'owner' }
           if (userId === 'target') return { role: 'admin' }
           return null
@@ -103,7 +103,7 @@ describe('PermissionChecker', () => {
     it('admin can manage member', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockImplementation(async (groupId: string, userId: string) => {
+        getGroupMemberInfo: mock().mockImplementation(async (groupId: string, userId: string) => {
           if (userId === 'operator') return { role: 'admin' }
           if (userId === 'target') return { role: 'member' }
           return null
@@ -117,7 +117,7 @@ describe('PermissionChecker', () => {
     it('admin cannot manage other admin', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockImplementation(async (groupId: string, userId: string) => {
+        getGroupMemberInfo: mock().mockImplementation(async (groupId: string, userId: string) => {
           if (userId === 'operator') return { role: 'admin' }
           if (userId === 'target') return { role: 'admin' }
           return null
@@ -132,7 +132,7 @@ describe('PermissionChecker', () => {
     it('member cannot manage anyone', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockImplementation(async (groupId: string, userId: string) => {
+        getGroupMemberInfo: mock().mockImplementation(async (groupId: string, userId: string) => {
           if (userId === 'operator') return { role: 'member' }
           if (userId === 'target') return { role: 'member' }
           return null
@@ -147,7 +147,7 @@ describe('PermissionChecker', () => {
     it('should return error when operator not found', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockResolvedValue(null),
+        getGroupMemberInfo: mock().mockResolvedValue(null),
       } as any
 
       const result = await PermissionChecker.canManageUser(mockQqClient, '123', 'operator', 'target')
@@ -158,7 +158,7 @@ describe('PermissionChecker', () => {
     it('should return error when target not found', async () => {
       const { PermissionChecker } = await import('../PermissionChecker.js')
       const mockQqClient = {
-        getGroupMemberInfo: vi.fn().mockImplementation(async (groupId: string, userId: string) => {
+        getGroupMemberInfo: mock().mockImplementation(async (groupId: string, userId: string) => {
           if (userId === 'operator') return { role: 'admin' }
           return null
         }),

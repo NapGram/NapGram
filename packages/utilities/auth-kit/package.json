@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "bun test --isolate src",
     "dev": "tsc -p tsconfig.json --watch"
   },
   "keywords": [
@@ -32,10 +32,8 @@
   },
   "devDependencies": {
     "@fastify/cookie": "^11.0.2",
-    "@types/node": "26.4.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
     "main": "./dist/index.js",

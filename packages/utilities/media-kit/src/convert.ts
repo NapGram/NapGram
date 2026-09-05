@@ -1,27 +1,26 @@
-import { Buffer } from 'node:buffer'
-import fs from 'node:fs'
-import fsP from 'node:fs/promises'
-import path from 'node:path'
+import { Transformer, ResizeFit } from '@napi-rs/image'
 import { fileTypeFromBuffer } from 'file-type'
-import { decode, write } from 'image-js'
+import { runtimeFileIO } from './bun-file-io.js'
 import convertWithFfmpeg from './encoding/convertWithFfmpeg.js'
 import { env, getLogger, temp } from './shared-runtime.js'
 import tgsToGif from './encoding/tgsToGif.js'
 
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
+
 const CACHE_PATH = env.CACHE_DIR
 let cacheDirInitialized = false
-function ensureCacheDir() {
+async function ensureCacheDir() {
     if (!cacheDirInitialized) {
-        fs.mkdirSync(CACHE_PATH, { recursive: true })
+        await runtimeFileIO.mkdir(CACHE_PATH, { recursive: true })
         cacheDirInitialized = true
     }
 }
 
 // 首先查找缓存，要是缓存中没有的话执行第二个参数的方法转换到缓存的文件
 async function cachedConvert(key: string, convert: (outputPath: string) => Promise<any>) {
-    ensureCacheDir()
-    const convertedPath = path.join(CACHE_PATH, key)
-    if (!fs.existsSync(convertedPath)) {
+    await ensureCacheDir()
+    const convertedPath = joinPath(CACHE_PATH, key)
+    if (!await runtimeFileIO.exists(convertedPath)) {
         await convert(convertedPath)
     }
     return convertedPath
@@ -29,42 +28,43 @@ async function cachedConvert(key: string, convert: (outputPath: string) => Promi
 
 const convert = {
     cached: cachedConvert,
-    cachedBuffer: (key: string, buf: () => Promise<Buffer | Uint8Array | string>) =>
+    cachedBuffer: (key: string, buf: () => Promise<Uint8Array | string>) =>
         cachedConvert(key, async (convertedPath) => {
-            await fsP.writeFile(convertedPath, await buf())
+            await runtimeFileIO.write(convertedPath, await buf())
         }),
     // webp2png，这里 webpData 是方法因为不需要的话就不获取了
-    png: (key: string, webpData: () => Promise<Buffer | Uint8Array | string>) =>
+    png: (key: string, webpData: () => Promise<Uint8Array | string>) =>
         cachedConvert(`${key}.png`, async (convertedPath) => {
-            const buffer = Buffer.from(await webpData())
-            const image = decode(buffer)
-            await write(convertedPath, image)
+            const source = await webpData()
+            const buffer = typeof source === 'string' ? await runtimeFileIO.readBytes(source) : new Uint8Array(source)
+            const image = new Transformer(buffer)
+            await runtimeFileIO.write(convertedPath, await image.png())
         }),
-    video2gif: (key: string, webmData: () => Promise<Buffer | Uint8Array | string>, webm = false) =>
+    video2gif: (key: string, webmData: () => Promise<Uint8Array | string>, webm = false) =>
         cachedConvert(`${key}.gif`, async (convertedPath) => {
             const t = await temp.createTempFile()
-            await fsP.writeFile(t.path, await webmData())
+            await runtimeFileIO.write(t.path, await webmData())
             await convertWithFfmpeg(t.path, convertedPath, 'gif', webm ? 'libvpx-vp9' : undefined)
             await t.cleanup()
         }),
-    tgs2gif: (key: string, tgsData: () => Promise<Buffer | Uint8Array | string>) =>
+    tgs2gif: (key: string, tgsData: () => Promise<Uint8Array | string>) =>
         cachedConvert(`${key}.gif`, async (convertedPath) => {
             const logger = getLogger('TGSConverter')
             const src = await tgsData()
 
             logger.debug(`[tgs2gif] Start conversion for key: ${key}, dest: ${convertedPath}`)
-            logger.debug(`[tgs2gif] src type: ${typeof src}, isBuffer: ${Buffer.isBuffer(src)}`)
+            logger.debug(`[tgs2gif] src type: ${typeof src}, isBuffer: ${src instanceof Uint8Array}`)
 
-            if (Buffer.isBuffer(src)) {
+            if (src instanceof Uint8Array) {
                 logger.debug(`[tgs2gif] Processing buffer, size: ${src.length}`)
-                const tempDir = path.join(env.DATA_DIR, 'temp')
-                await fsP.mkdir(tempDir, { recursive: true })
+                const tempDir = joinPath(env.DATA_DIR, 'temp')
+                await runtimeFileIO.mkdir(tempDir, { recursive: true })
 
-                const tempTgsPath = path.join(tempDir, `sticker-${Date.now()}-${Math.random().toString(16).slice(2)}.tgs`)
+                const tempTgsPath = joinPath(tempDir, `sticker-${Date.now()}-${Math.random().toString(16).slice(2)}.tgs`)
 
                 try {
                     logger.debug(`[tgs2gif] Writing TGS buffer to: ${tempTgsPath}`)
-                    await fsP.writeFile(tempTgsPath, src)
+                    await runtimeFileIO.write(tempTgsPath, src)
                     logger.info(`[tgs2gif] TGS file written successfully, calling tgsToGif...`)
 
                     await tgsToGif(tempTgsPath, convertedPath)
@@ -72,7 +72,7 @@ const convert = {
 
                     // Verify output file exists
                     try {
-                        const stats = await fsP.stat(convertedPath)
+                        const stats = await runtimeFileIO.stat(convertedPath)
                         logger.info(`[tgs2gif] GIF created successfully, size: ${stats.size}`)
                     }
                     catch {
@@ -82,7 +82,7 @@ const convert = {
 
                     // Cleanup temp files
                     try {
-                        await fsP.unlink(tempTgsPath)
+                        await runtimeFileIO.unlink(tempTgsPath)
                         logger.debug(`[tgs2gif] Cleaned up temp TGS file: ${tempTgsPath}`)
                     }
                     catch (cleanupErr) {
@@ -112,20 +112,21 @@ const convert = {
                 throw new Error(errMsg)
             }
         }),
-    // 图片转webp (注：Image-JS不支持WebP写入，改为PNG)
-    webp: (key: string, imageData: () => Promise<Buffer | Uint8Array | string>) =>
+    // Telegram photo compatibility: normalize static images to PNG.
+    webp: (key: string, imageData: () => Promise<Uint8Array | string>) =>
         cachedConvert(`${key}.png`, async (convertedPath) => {
-            const buffer = Buffer.from(await imageData())
-            const image = decode(buffer)
-            await write(convertedPath, image)
+            const source = await imageData()
+            const buffer = typeof source === 'string' ? await runtimeFileIO.readBytes(source) : new Uint8Array(source)
+            const image = new Transformer(buffer)
+            await runtimeFileIO.write(convertedPath, await image.png())
         }),
     webm: (key: string, filePath: string) =>
         cachedConvert(`${key}.webm`, async (convertedPath) => {
             await convertWithFfmpeg(filePath, convertedPath, 'webm')
         }),
-    webpOrWebm: async (key: string, imageData: () => Promise<Buffer | Uint8Array>) => {
+    webpOrWebm: async (key: string, imageData: () => Promise<Uint8Array>) => {
         const filePath = await convert.cachedBuffer(key, imageData)
-        const buf = await fsP.readFile(filePath)
+        const buf = new Uint8Array(await runtimeFileIO.readBytes(filePath))
         const fileType = await fileTypeFromBuffer(buf)
         if (fileType && fileType.mime === 'image/gif') {
             return await convert.webm(key, filePath)
@@ -134,25 +135,25 @@ const convert = {
             return await convert.webp(key, async () => filePath)
         }
     },
-    customEmoji: async (key: string, imageData: () => Promise<Buffer | Uint8Array | string>, useSmallSize: boolean) => {
+    customEmoji: async (key: string, imageData: () => Promise<Uint8Array | string>, useSmallSize: boolean) => {
         if (useSmallSize) {
-            const pathPng = path.join(CACHE_PATH, `${key}@50.png`)
-            const pathGif = path.join(CACHE_PATH, `${key}@50.gif`)
-            if (fs.existsSync(pathPng))
+            const pathPng = joinPath(CACHE_PATH, `${key}@50.png`)
+            const pathGif = joinPath(CACHE_PATH, `${key}@50.gif`)
+            if (await runtimeFileIO.exists(pathPng))
                 return pathPng
-            if (fs.existsSync(pathGif))
+            if (await runtimeFileIO.exists(pathGif))
                 return pathGif
         }
         else {
-            const pathPng = path.join(CACHE_PATH, `${key}.png`)
-            const pathGif = path.join(CACHE_PATH, `${key}.gif`)
-            if (fs.existsSync(pathPng))
+            const pathPng = joinPath(CACHE_PATH, `${key}.png`)
+            const pathGif = joinPath(CACHE_PATH, `${key}.gif`)
+            if (await runtimeFileIO.exists(pathPng))
                 return pathPng
-            if (fs.existsSync(pathGif))
+            if (await runtimeFileIO.exists(pathGif))
                 return pathGif
         }
         // file not found
-        const data = await imageData() as Buffer
+        const data = await imageData() as Uint8Array
         const fileType = (await fileTypeFromBuffer(data))?.mime || 'image/'
         let pathPngOrig = ''
         let pathGifOrig = ''
@@ -166,20 +167,17 @@ const convert = {
             return pathPngOrig || pathGifOrig
         if (pathPngOrig) {
             return await cachedConvert(`${key}@50.png`, async (convertedPath) => { // 缩小到50x50px
-                const buffer = await fsP.readFile(pathPngOrig)
-                const image = decode(buffer)
-                image.resize({ width: 50 })
-                await write(convertedPath, image)
+                const buffer = new Uint8Array(await runtimeFileIO.readBytes(pathPngOrig))
+                const image = new Transformer(buffer)
+                const metadata = image.metadataSync()
+                const height = Math.max(1, Math.round(metadata.height * 50 / metadata.width))
+                image.resize(50, height, undefined, ResizeFit.Fill)
+                await runtimeFileIO.write(convertedPath, await image.png())
             })
         }
         else {
-            return await cachedConvert(`${key}@50.gif`, async (convertedPath) => { // 如果已经存在PNG版本，直接缩小PNG
-                const buffer = await fsP.readFile(pathGifOrig)
-                const image = decode(buffer)
-                // Image-JS handles frames if it's a GIF (limited support), but simple resize might just stick to first frame or fail.
-                // Assuming single frame resize for standard emoji usage or accept limitation.
-                image.resize({ width: 50 })
-                await write(convertedPath, image)
+            return await cachedConvert(`${key}@50.gif`, async (convertedPath) => {
+                await convertWithFfmpeg(pathGifOrig, convertedPath, 'gif', undefined, 'scale=50:-1')
             })
         }
     },

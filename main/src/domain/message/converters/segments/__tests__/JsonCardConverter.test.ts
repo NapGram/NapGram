@@ -1,7 +1,7 @@
 import { env } from '@napgram/env-kit'
 import { setConsoleLogLevel } from '@napgram/logger-kit'
 import { JsonCardConverter } from '@napgram/message-kit'
-import { afterAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, describe, expect, it, spyOn } from 'bun:test'
 
 const originalLogLevel = env.LOG_LEVEL
 setConsoleLogLevel('off')
@@ -17,7 +17,7 @@ describe('jsonCardConverter', () => {
   })
 
   it('does not warn for malformed json payloads', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const warnSpy = spyOn(console, 'warn').mockImplementation(() => {})
 
     expect(converter.convertJsonCard({ data: '{' })).toBeNull()
     expect(warnSpy).not.toHaveBeenCalled()

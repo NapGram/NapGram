@@ -1,12 +1,13 @@
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import * as pathUtils from '../../../shared/utils/path.js'
 import Fastify from 'fastify'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerFileManagerRoutes } from '../fileManager.js'
 
-vi.mock('@napgram/auth-kit', () => ({
-  authMiddleware: vi.fn(async (req, _reply) => {
+mock.module('@napgram/auth-kit', () => ({
+  authMiddleware: mock(async (req, _reply) => {
     (req as any).auth = { type: 'token', role: 'admin' }
   }),
-  requirePermission: vi.fn(() => async (req: any) => {
+  requirePermission: mock(() => async (req: any) => {
     req.auth = { type: 'access', role: 'super_admin' }
   }),
 }))
@@ -41,8 +42,7 @@ describe('fileManager Routes', () => {
   })
 
   it('handles sanitizePath throwing error', async () => {
-    const path = await import('node:path')
-    const spy = vi.spyOn(path.default, 'normalize').mockImplementation(() => {
+    const spy = spyOn(pathUtils, 'normalizePath').mockImplementation(() => {
       throw new Error('Invalid path')
     })
 

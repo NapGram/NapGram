@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { StatusCommandHandler } from '../StatusCommandHandler.js'
 
 // Mock QQ Client
@@ -10,34 +10,34 @@ function createMockQQClient(): IQQClient {
     uin: 123456789,
     nickname: 'TestBot',
     clientType: 'napcat',
-    isOnline: vi.fn().mockResolvedValue(true),
-    sendMessage: vi.fn().mockResolvedValue({ success: true }),
-    recallMessage: vi.fn(),
-    getMessage: vi.fn(),
-    getFriendList: vi.fn(),
-    getGroupList: vi.fn(),
-    getGroupMemberList: vi.fn(),
-    getGroupMemberInfo: vi.fn(),
-    getFriendInfo: vi.fn(),
-    getGroupInfo: vi.fn(),
-    on: vi.fn(),
-    once: vi.fn(),
-    off: vi.fn(),
-    removeListener: vi.fn(),
-    removeAllListeners: vi.fn(),
-    emit: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    destroy: vi.fn(),
+    isOnline: mock().mockResolvedValue(true),
+    sendMessage: mock().mockResolvedValue({ success: true }),
+    recallMessage: mock(),
+    getMessage: mock(),
+    getFriendList: mock(),
+    getGroupList: mock(),
+    getGroupMemberList: mock(),
+    getGroupMemberInfo: mock(),
+    getFriendInfo: mock(),
+    getGroupInfo: mock(),
+    on: mock(),
+    once: mock(),
+    off: mock(),
+    removeListener: mock(),
+    removeAllListeners: mock(),
+    emit: mock(),
+    login: mock(),
+    logout: mock(),
+    destroy: mock(),
   } as any
 }
 
 // Mock Telegram Bot
 function createMockTgBot() {
   return {
-    sendMessage: vi.fn().mockResolvedValue({}),
-    getChat: vi.fn().mockResolvedValue({
-      sendMessage: vi.fn().mockResolvedValue({}),
+    sendMessage: mock().mockResolvedValue({}),
+    getChat: mock().mockResolvedValue({
+      sendMessage: mock().mockResolvedValue({}),
     }),
   } as any
 }
@@ -54,10 +54,10 @@ function createMockContext(qqClient: IQQClient, tgBot: any): CommandContext {
       id: 1,
       owner: '123456',
       forwardPairs: {} as any,
-      reload: vi.fn().mockResolvedValue(undefined),
+      reload: mock().mockResolvedValue(undefined),
     } as any,
-    replyTG: vi.fn().mockResolvedValue(undefined),
-    extractThreadId: vi.fn().mockReturnValue(undefined),
+    replyTG: mock().mockResolvedValue(undefined),
+    extractThreadId: mock().mockReturnValue(undefined),
   } as any
 }
 
@@ -100,7 +100,7 @@ describe('statusCommandHandler', () => {
 
   describe('status Display', () => {
     it('should display online status when QQ client is online', async () => {
-      vi.mocked(mockQQClient.isOnline).mockResolvedValue(true)
+      mockQQClient.isOnline.mockResolvedValue(true)
 
       const msg = createMessage('/status', '999999', '777777')
       await handler.execute(msg, [])
@@ -113,7 +113,7 @@ describe('statusCommandHandler', () => {
     })
 
     it('should display offline status when QQ client is offline', async () => {
-      vi.mocked(mockQQClient.isOnline).mockResolvedValue(false)
+      mockQQClient.isOnline.mockResolvedValue(false)
 
       const msg = createMessage('/status', '999999', '777777')
       await handler.execute(msg, [])
@@ -156,12 +156,12 @@ describe('statusCommandHandler', () => {
     })
 
     it('should display all information together', async () => {
-      vi.mocked(mockQQClient.isOnline).mockResolvedValue(true)
+      mockQQClient.isOnline.mockResolvedValue(true)
 
       const msg = createMessage('/status', '999999', '777777')
       await handler.execute(msg, [])
 
-      const callArg = vi.mocked(mockContext.replyTG).mock.calls[0][1]
+      const callArg = mockContext.replyTG.mock.calls[0][1]
       expect(callArg).toContain('机器人状态')
       expect(callArg).toContain('在线')
       expect(callArg).toContain('123456789')
@@ -170,7 +170,7 @@ describe('statusCommandHandler', () => {
     })
 
     it('should include personal mode diagnostics when available', async () => {
-      ; (mockContext.instance as any).getPersonalModeDiagnostics = vi.fn(() => ({
+      ; (mockContext.instance as any).getPersonalModeDiagnostics = mock(() => ({
         workMode: 'personal',
         userBotRequired: true,
         userSessionId: null,
@@ -184,7 +184,7 @@ describe('statusCommandHandler', () => {
       const msg = createMessage('/status', '999999', '777777')
       await handler.execute(msg, [])
 
-      const callArg = vi.mocked(mockContext.replyTG).mock.calls[0][1]
+      const callArg = mockContext.replyTG.mock.calls[0][1]
       expect(callArg).toContain('工作模式: personal')
       expect(callArg).toContain('TG UserBot: not-configured')
       expect(callArg).toContain('自动建群: 不可用')
@@ -251,7 +251,7 @@ describe('statusCommandHandler', () => {
 
   describe('error Handling', () => {
     it('should handle isOnline check failure gracefully', async () => {
-      vi.mocked(mockQQClient.isOnline).mockRejectedValue(new Error('Network error'))
+      mockQQClient.isOnline.mockRejectedValue(new Error('Network error'))
 
       const msg = createMessage('/status', '999999', '777777')
 

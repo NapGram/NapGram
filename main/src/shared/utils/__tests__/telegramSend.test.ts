@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import {
   applyTelegramReplyTo,
   buildTelegramTextSendParams,
@@ -37,6 +37,6 @@ describe('telegramSend utils', () => {
       foo: 'bar',
       replyTo: 12,
     })
-    expect(applyTelegramReplyTo({ replyTo: 5 }, 0)).toEqual({})
+    expect(applyTelegramReplyTo({ replyTo: 5 } as any, 0)).toEqual({})
   })
 })

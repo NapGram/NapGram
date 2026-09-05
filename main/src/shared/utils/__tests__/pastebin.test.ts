@@ -1,13 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, jest, mock } from 'bun:test'
 import pastebin from '../pastebin'
 
 // Mock global fetch
-const fetchMock = vi.fn()
+const fetchMock = mock()
 globalThis.fetch = fetchMock
 
 describe('pastebin utility', () => {
   afterEach(() => {
-    vi.resetAllMocks()
+    jest.resetAllMocks()
   })
 
   it('should upload data', async () => {

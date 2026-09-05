@@ -16,6 +16,9 @@
     "references": [
         {
             "path": "../sdk-core"
+        },
+        {
+            "path": "../core/runtime-kit"
         }
     ]
 }

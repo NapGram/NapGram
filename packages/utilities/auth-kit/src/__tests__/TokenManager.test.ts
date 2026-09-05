@@ -1,24 +1,24 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, beforeEach, mock } from 'bun:test'
 
 // Mock shared-runtime
-vi.mock('../shared-runtime.js', () => ({
+mock.module('../shared-runtime.js', () => ({
   db: {
-    select: vi.fn().mockReturnThis(),
-    from: vi.fn().mockReturnThis(),
-    where: vi.fn().mockReturnThis(),
-    limit: vi.fn().mockResolvedValue([]),
-    insert: vi.fn().mockReturnThis(),
-    values: vi.fn().mockResolvedValue(undefined),
-    update: vi.fn().mockReturnThis(),
-    set: vi.fn().mockReturnThis(),
-    delete: vi.fn().mockReturnThis(),
-    returning: vi.fn().mockResolvedValue([]),
+    select: mock().mockReturnThis(),
+    from: mock().mockReturnThis(),
+    where: mock().mockReturnThis(),
+    limit: mock().mockResolvedValue([]),
+    insert: mock().mockReturnThis(),
+    values: mock().mockResolvedValue(undefined),
+    update: mock().mockReturnThis(),
+    set: mock().mockReturnThis(),
+    delete: mock().mockReturnThis(),
+    returning: mock().mockResolvedValue([]),
     query: {
       adminSession: {
-        findFirst: vi.fn().mockResolvedValue(null),
+        findFirst: mock().mockResolvedValue(null),
       },
       adminUser: {
-        findFirst: vi.fn().mockResolvedValue(null),
+        findFirst: mock().mockResolvedValue(null),
       },
     },
   },
@@ -36,12 +36,12 @@ vi.mock('../shared-runtime.js', () => ({
       userId: 'userId',
     },
   },
-  eq: vi.fn((a: any, b: any) => ({ a, b, type: 'eq' })),
-  and: vi.fn(),
-  or: vi.fn(),
-  gt: vi.fn(),
-  lt: vi.fn(),
-  isNull: vi.fn(),
+  eq: mock((a: any, b: any) => ({ a, b, type: 'eq' })),
+  and: mock(),
+  or: mock(),
+  gt: mock(),
+  lt: mock(),
+  isNull: mock(),
 }))
 
 describe('TokenManager', () => {
@@ -67,38 +67,36 @@ describe('TokenManager', () => {
   describe('getEnvAdminToken', () => {
     it('should return undefined when ADMIN_TOKEN is not set', async () => {
       const { TokenManager } = await import('../TokenManager.js')
-      delete process.env.ADMIN_TOKEN
+      delete Bun.env.ADMIN_TOKEN
 
       expect(TokenManager.getEnvAdminToken()).toBeUndefined()
     })
 
     it('should return ADMIN_TOKEN when set', async () => {
       const { TokenManager } = await import('../TokenManager.js')
-      process.env.ADMIN_TOKEN = 'test-token-123'
+      Bun.env.ADMIN_TOKEN = 'test-token-123'
 
       expect(TokenManager.getEnvAdminToken()).toBe('test-token-123')
 
-      delete process.env.ADMIN_TOKEN
+      delete Bun.env.ADMIN_TOKEN
     })
   })
 })
 
 describe('PasswordUtil', () => {
   describe('hashPassword', () => {
-    it('should return salt:hash format', async () => {
+    it('should return a Bun Argon2id hash', async () => {
       const { PasswordUtil } = await import('../TokenManager.js')
-      const hash = PasswordUtil.hashPassword('mypassword')
+      const hash = await PasswordUtil.hashPassword('mypassword')
 
-      expect(hash).toContain(':')
-      const [salt, hashValue] = hash.split(':')
-      expect(salt).toHaveLength(32)
-      expect(hashValue).toHaveLength(128)
+      expect(hash).toMatch(/^\$argon2id\$/)
+      expect(await Bun.password.verify('mypassword', hash)).toBe(true)
     })
 
     it('should generate different hashes for same password', async () => {
       const { PasswordUtil } = await import('../TokenManager.js')
-      const hash1 = PasswordUtil.hashPassword('mypassword')
-      const hash2 = PasswordUtil.hashPassword('mypassword')
+      const hash1 = await PasswordUtil.hashPassword('mypassword')
+      const hash2 = await PasswordUtil.hashPassword('mypassword')
 
       expect(hash1).not.toBe(hash2)
     })
@@ -107,24 +105,24 @@ describe('PasswordUtil', () => {
   describe('verifyPassword', () => {
     it('should return true for correct password', async () => {
       const { PasswordUtil } = await import('../TokenManager.js')
-      const hash = PasswordUtil.hashPassword('mypassword')
+      const hash = await PasswordUtil.hashPassword('mypassword')
 
-      expect(PasswordUtil.verifyPassword('mypassword', hash)).toBe(true)
+      expect(await PasswordUtil.verifyPassword('mypassword', hash)).toBe(true)
     })
 
     it('should return false for incorrect password', async () => {
       const { PasswordUtil } = await import('../TokenManager.js')
-      const hash = PasswordUtil.hashPassword('mypassword')
+      const hash = await PasswordUtil.hashPassword('mypassword')
 
-      expect(PasswordUtil.verifyPassword('wrongpassword', hash)).toBe(false)
+      expect(await PasswordUtil.verifyPassword('wrongpassword', hash)).toBe(false)
     })
 
-    it('should handle empty password', async () => {
+    it('should reject empty passwords', async () => {
       const { PasswordUtil } = await import('../TokenManager.js')
-      const hash = PasswordUtil.hashPassword('')
+      const hash = await PasswordUtil.hashPassword('notempty')
 
-      expect(PasswordUtil.verifyPassword('', hash)).toBe(true)
-      expect(PasswordUtil.verifyPassword('notempty', hash)).toBe(false)
+      await expect(PasswordUtil.hashPassword('')).rejects.toThrow('Password must not be empty')
+      expect(await PasswordUtil.verifyPassword('', hash)).toBe(false)
     })
   })
 })

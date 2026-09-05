@@ -1,29 +1,29 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import { messageConverter } from '@napgram/message-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, jest, mock } from 'bun:test'
 import { MediaGroupHandler } from '../MediaGroupHandler.js'
 
-vi.mock('@napgram/message-kit', () => ({
+mock.module('@napgram/message-kit', () => ({
   messageConverter: {
-    fromTelegram: vi.fn(),
-    toNapCat: vi.fn(),
+    fromTelegram: mock(),
+    toNapCat: mock(),
   },
 }))
 
 describe('mediaGroupHandler', () => {
-  const prepareMediaForQQ = vi.fn().mockResolvedValue(undefined)
-  const getNicknameMode = vi.fn().mockReturnValue('01')
+  const prepareMediaForQQ = mock().mockResolvedValue(undefined)
+  const getNicknameMode = mock().mockReturnValue('01')
   const qqClient = {
-    sendMessage: vi.fn().mockResolvedValue({ success: true, messageId: '123' }),
+    sendMessage: mock().mockResolvedValue({ success: true, messageId: '123' }),
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.useFakeTimers()
+    mock.clearAllMocks()
+    jest.useFakeTimers()
   })
 
   afterEach(() => {
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   it('returns false when message has no media group', async () => {
@@ -37,7 +37,7 @@ describe('mediaGroupHandler', () => {
   })
 
   it('buffers and flushes a media group', async () => {
-    vi.mocked(messageConverter.fromTelegram).mockImplementation((msg: any) => ({
+    messageConverter.fromTelegram.mockImplementation((msg: any) => ({
       id: String(msg.id),
       platform: 'telegram',
       sender: { id: '1', name: msg.sender?.displayName || 'Alice' },
@@ -45,7 +45,7 @@ describe('mediaGroupHandler', () => {
       content: [{ type: 'image', data: { url: `img-${msg.id}` } }],
       timestamp: 1,
     }) as UnifiedMessage)
-    vi.mocked(messageConverter.toNapCat).mockImplementation(async (msg: any) => {
+    messageConverter.toNapCat.mockImplementation(async (msg: any) => {
       return msg.content.map((c: any) => ({ type: c.type, data: c.data }))
     })
 
@@ -72,12 +72,12 @@ describe('mediaGroupHandler', () => {
     await handler.handleMediaGroup(msg1, pair)
     await handler.handleMediaGroup(msg2, pair)
 
-    await vi.runAllTimersAsync()
+    await jest.runAllTimers()
 
     expect(prepareMediaForQQ).toHaveBeenCalledTimes(2)
     expect(qqClient.sendMessage).toHaveBeenCalledTimes(1)
 
-    const sentMsg = vi.mocked(qqClient.sendMessage).mock.calls[0][1] as any
+    const sentMsg = qqClient.sendMessage.mock.calls[0][1] as any
     const texts = (sentMsg.content as any[])
       .filter(seg => seg.type === 'text')
       .map(seg => seg.data.text)
@@ -87,8 +87,8 @@ describe('mediaGroupHandler', () => {
   })
 
   it('flushes without nickname header when disabled', async () => {
-    const nicknameModeOff = vi.fn().mockReturnValue('00')
-    vi.mocked(messageConverter.fromTelegram).mockImplementation((msg: any) => ({
+    const nicknameModeOff = mock().mockReturnValue('00')
+    messageConverter.fromTelegram.mockImplementation((msg: any) => ({
       id: String(msg.id),
       platform: 'telegram',
       sender: { id: '1', name: msg.sender?.displayName || 'Alice' },
@@ -96,7 +96,7 @@ describe('mediaGroupHandler', () => {
       content: [{ type: 'image', data: { url: `img-${msg.id}` } }],
       timestamp: 1,
     }) as UnifiedMessage)
-    vi.mocked(messageConverter.toNapCat).mockImplementation(async (msg: any) => {
+    messageConverter.toNapCat.mockImplementation(async (msg: any) => {
       return msg.content.map((c: any) => ({ type: c.type, data: c.data }))
     })
 
@@ -123,9 +123,9 @@ describe('mediaGroupHandler', () => {
     await handler.handleMediaGroup(msg1, pair)
     await handler.handleMediaGroup(msg2, pair)
 
-    await vi.runAllTimersAsync()
+    await jest.runAllTimers()
 
-    const sentMsg = vi.mocked(qqClient.sendMessage).mock.calls[0][1] as any
+    const sentMsg = qqClient.sendMessage.mock.calls[0][1] as any
     const texts = (sentMsg.content as any[])
       .filter(seg => seg.type === 'text')
       .map(seg => seg.data.text)
@@ -134,7 +134,7 @@ describe('mediaGroupHandler', () => {
   })
 
   it('handles flush error gracefully', async () => {
-    vi.mocked(messageConverter.fromTelegram).mockReturnValue({
+    messageConverter.fromTelegram.mockReturnValue({
       id: '1',
       platform: 'telegram',
       sender: { id: '1', name: 'Alice' },
@@ -142,7 +142,7 @@ describe('mediaGroupHandler', () => {
       content: [{ type: 'image', data: { url: 'img' } }],
       timestamp: 1,
     } as UnifiedMessage)
-    vi.mocked(messageConverter.toNapCat).mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
+    messageConverter.toNapCat.mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
 
     const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
     const msg: any = {
@@ -157,16 +157,16 @@ describe('mediaGroupHandler', () => {
     await handler.handleMediaGroup(msg, { qqRoomId: '888' })
 
     // Mock sendMessage to fail
-    vi.mocked(qqClient.sendMessage).mockRejectedValueOnce(new Error('Send failed'))
+    qqClient.sendMessage.mockRejectedValueOnce(new Error('Send failed'))
 
-    await vi.runAllTimersAsync()
+    await jest.runAllTimers()
 
     // Should not throw, error is logged
     expect(qqClient.sendMessage).toHaveBeenCalled()
   })
 
   it('uses raw.groupedId when mediaGroupId is missing', async () => {
-    vi.mocked(messageConverter.fromTelegram).mockReturnValue({
+    messageConverter.fromTelegram.mockReturnValue({
       id: '1',
       platform: 'telegram',
       sender: { id: '1', name: 'Alice' },
@@ -174,7 +174,7 @@ describe('mediaGroupHandler', () => {
       content: [{ type: 'image', data: { url: 'img' } }],
       timestamp: 1,
     } as UnifiedMessage)
-    vi.mocked(messageConverter.toNapCat).mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
+    messageConverter.toNapCat.mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
 
     const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
     const msg: any = {
@@ -215,12 +215,12 @@ describe('mediaGroupHandler', () => {
     handler.destroy()
 
     // Advance timers - nothing should flush
-    await vi.runAllTimersAsync()
+    await jest.runAllTimers()
     expect(qqClient.sendMessage).not.toHaveBeenCalled()
   })
 
   it('catches errors in setTimeout flush callback', async () => {
-    vi.mocked(messageConverter.fromTelegram).mockImplementation(() => {
+    messageConverter.fromTelegram.mockImplementation(() => {
       throw new Error('Converter error')
     })
 
@@ -236,14 +236,14 @@ describe('mediaGroupHandler', () => {
     await handler.handleMediaGroup(msg, { qqRoomId: '888' })
 
     // Flush will fail due to converter error, should be caught in setTimeout callback
-    await vi.runAllTimersAsync()
+    await jest.runAllTimers()
 
     // Should not throw, error is logged in catch block
     expect(qqClient.sendMessage).not.toHaveBeenCalled()
   })
 
   it('catches errors in setTimeout flush callback for subsequent messages', async () => {
-    vi.mocked(messageConverter.fromTelegram).mockReturnValue({
+    messageConverter.fromTelegram.mockReturnValue({
       id: '1',
       platform: 'telegram',
       sender: { id: '1', name: 'Alice' },
@@ -251,7 +251,7 @@ describe('mediaGroupHandler', () => {
       content: [{ type: 'image', data: { url: 'img' } }],
       timestamp: 1,
     } as UnifiedMessage)
-    vi.mocked(messageConverter.toNapCat).mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
+    messageConverter.toNapCat.mockResolvedValue([{ type: 'image', data: { url: 'img' } }])
 
     const handler = new MediaGroupHandler(qqClient as any, prepareMediaForQQ, getNicknameMode)
 
@@ -273,12 +273,12 @@ describe('mediaGroupHandler', () => {
     await handler.handleMediaGroup(msg1, { qqRoomId: '888' })
 
     // Mock toNapCat to fail for subsequent flush
-    vi.mocked(messageConverter.toNapCat).mockRejectedValue(new Error('ToNapCat error'))
+    messageConverter.toNapCat.mockRejectedValue(new Error('ToNapCat error'))
 
     await handler.handleMediaGroup(msg2, { qqRoomId: '888' })
 
     // Flush will fail, should be caught in setTimeout callback (line 62)
-    await vi.runAllTimersAsync()
+    await jest.runAllTimers()
 
     // Should not throw
   })

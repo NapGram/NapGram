@@ -1,9 +1,9 @@
 import { env } from '@napgram/env-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 
 import { CommandAccessChecker } from '../CommandAccessChecker.js'
 
-const envKitMocks = vi.hoisted(() => {
+const envKitMocks = (() => {
   const env = {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -21,10 +21,9 @@ const envKitMocks = vi.hoisted(() => {
       tg: env.ADMIN_TG,
     }),
   }
-})
+})()
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', async () => ({
   env: envKitMocks.env,
   getSystemOwners: envKitMocks.getSystemOwners,
   normalizeUserIdentity: (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, ''),

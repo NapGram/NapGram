@@ -1,8 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import path from 'node:path'
 import { env } from './web-deps.js'
+import { extname, joinPath } from './path-utils.js'
 
-export const TEMP_PATH = path.join(env.DATA_DIR, 'temp')
+export const TEMP_PATH = joinPath(env.DATA_DIR, 'temp')
 
 export function registerDualRoute(
   fastify: FastifyInstance,
@@ -35,7 +35,7 @@ export const ErrorResponses = {
 }
 
 export function getMimeType(filename: string) {
-  const ext = path.extname(filename).toLowerCase()
+  const ext = extname(filename).toLowerCase()
   const map: Record<string, string> = {
     '.html': 'text/html',
     '.css': 'text/css',

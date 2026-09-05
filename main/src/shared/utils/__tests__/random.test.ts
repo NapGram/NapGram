@@ -1,5 +1,5 @@
+import { describe, expect, it } from 'bun:test'
 import fc from 'fast-check'
-import { describe, expect, it } from 'vitest'
 import random from '../random'
 
 describe('random utility', () => {
@@ -66,6 +66,13 @@ describe('random utility', () => {
     it('produces different values on successive calls', () => {
       const results = new Set(Array.from({ length: 10 }, () => random.fakeUuid()))
       expect(results.size).toBeGreaterThan(1)
+    })
+
+    it('uses Bun native UUIDv7 when available', () => {
+      if (typeof Bun.randomUUIDv7 !== 'function')
+        return
+
+      expect(random.fakeUuid()[14]).toBe('7')
     })
   })
 

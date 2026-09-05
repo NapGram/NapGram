@@ -1,19 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, jest, mock } from 'bun:test'
 import { PersonalSyncService } from '../PersonalSyncService.js'
 
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
+
+mock.module('@napgram/logger-kit', async () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => loggerMocks),
-}))
-
-const fetchMock = vi.fn().mockImplementation(() => {
+const fetchMock = mock().mockImplementation(() => {
   return Promise.resolve({
     ok: true,
     arrayBuffer: () => Promise.resolve(new ArrayBuffer(10)),
@@ -23,7 +22,7 @@ globalThis.fetch = fetchMock as any
 
 describe('personalSyncService', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     fetchMock.mockClear()
   })
 
@@ -33,7 +32,7 @@ describe('personalSyncService', () => {
       workMode: 'normal',
     } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([]),
+      getAll: mock().mockReturnValue([]),
     } as any
     const qqClient = {} as any
 
@@ -52,7 +51,7 @@ describe('personalSyncService', () => {
       },
     } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([]),
+      getAll: mock().mockReturnValue([]),
     } as any
     const qqClient = {} as any
 
@@ -63,8 +62,8 @@ describe('personalSyncService', () => {
   })
 
   it('runs sync for private and autoCreated pairs, updating title and avatar', async () => {
-    const editTitleMock = vi.fn()
-    const setProfilePhotoMock = vi.fn()
+    const editTitleMock = mock()
+    const setProfilePhotoMock = mock()
     const tgChat = {
       chat: {
         title: 'QQ 好友 OldName',
@@ -74,7 +73,7 @@ describe('personalSyncService', () => {
     }
 
     const tgBot = {
-      getChat: vi.fn().mockResolvedValue(tgChat),
+      getChat: mock().mockResolvedValue(tgChat),
     }
 
     const instance = {
@@ -87,7 +86,7 @@ describe('personalSyncService', () => {
     } as any
 
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         {
           id: 101,
           instanceId: 7,
@@ -101,7 +100,7 @@ describe('personalSyncService', () => {
     } as any
 
     const qqClient = {
-      getFriendInfo: vi.fn().mockResolvedValue({ name: 'NewName' }),
+      getFriendInfo: mock().mockResolvedValue({ name: 'NewName' }),
     } as any
 
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
@@ -115,14 +114,14 @@ describe('personalSyncService', () => {
   })
 
   it('runs sync for group pairs, updating title and avatar', async () => {
-    const editTitleMock = vi.fn()
-    const setProfilePhotoMock = vi.fn()
+    const editTitleMock = mock()
+    const setProfilePhotoMock = mock()
     const tgChat = {
       chat: { title: 'old' },
       editTitle: editTitleMock,
       setProfilePhoto: setProfilePhotoMock,
     }
-    const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
+    const tgBot = { getChat: mock().mockResolvedValue(tgChat) }
     const instance = {
       id: 7,
       workMode: 'personal',
@@ -131,7 +130,7 @@ describe('personalSyncService', () => {
     } as any
 
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         {
           id: 102,
           instanceId: 7,
@@ -145,7 +144,7 @@ describe('personalSyncService', () => {
     } as any
 
     const qqClient = {
-      getGroupInfo: vi.fn().mockResolvedValue({ name: ' GroupName ' }),
+      getGroupInfo: mock().mockResolvedValue({ name: ' GroupName ' }),
     } as any
 
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
@@ -161,17 +160,17 @@ describe('personalSyncService', () => {
     fetchMock.mockResolvedValueOnce({ ok: false, status: 404, statusText: 'Not Found' })
     const tgChat = {
       chat: { title: 'QQ 好友 Name' }, // title matches, so editTitle not called
-      editTitle: vi.fn(),
-      setProfilePhoto: vi.fn(),
+      editTitle: mock(),
+      setProfilePhoto: mock(),
     }
-    const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
+    const tgBot = { getChat: mock().mockResolvedValue(tgChat) }
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 103, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(444), tgChatId: BigInt(555), autoCreated: true },
       ]),
     } as any
-    const qqClient = { getFriendInfo: vi.fn().mockResolvedValue({ name: 'Name' }) } as any
+    const qqClient = { getFriendInfo: mock().mockResolvedValue({ name: 'Name' }) } as any
 
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
     await service.syncAll()
@@ -180,15 +179,15 @@ describe('personalSyncService', () => {
   })
 
   it('uses cache to skip photo update if hash is same', async () => {
-    const tgChat = { chat: { title: 'QQ 好友 Name' }, editTitle: vi.fn(), setProfilePhoto: vi.fn() }
-    const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
+    const tgChat = { chat: { title: 'QQ 好友 Name' }, editTitle: mock(), setProfilePhoto: mock() }
+    const tgBot = { getChat: mock().mockResolvedValue(tgChat) }
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 104, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(444), tgChatId: BigInt(555), autoCreated: true },
       ]),
     } as any
-    const qqClient = { getFriendInfo: vi.fn().mockResolvedValue({ name: 'Name' }) } as any
+    const qqClient = { getFriendInfo: mock().mockResolvedValue({ name: 'Name' }) } as any
 
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
     await service.syncAll()
@@ -201,7 +200,7 @@ describe('personalSyncService', () => {
   })
 
   it('can start and stop timer', () => {
-    vi.useFakeTimers()
+    jest.useFakeTimers()
     const service = new PersonalSyncService({} as any, {} as any, {} as any)
 
     service.start(1000)
@@ -221,12 +220,12 @@ describe('personalSyncService', () => {
 
     // stop again should be safe
     service.stop()
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   it('skips when getAll returns non-array', async () => {
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true } } as any
-    const forwardMap = { getAll: vi.fn().mockReturnValue(null) } as any
+    const forwardMap = { getAll: mock().mockReturnValue(null) } as any
     const service = new PersonalSyncService(instance, forwardMap, {} as any)
     await service.syncAll()
     // Should return early without crash
@@ -235,7 +234,7 @@ describe('personalSyncService', () => {
   it('skips pairs from different instance', async () => {
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot: {} } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 99, qqChatType: 'private', qqRoomId: BigInt(111), tgChatId: BigInt(222) },
       ]),
     } as any
@@ -247,7 +246,7 @@ describe('personalSyncService', () => {
   it('skips non-private non-autoCreated pairs', async () => {
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot: {} } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 7, qqChatType: 'group', autoCreated: false, qqRoomId: BigInt(111), tgChatId: BigInt(222) },
       ]),
     } as any
@@ -259,7 +258,7 @@ describe('personalSyncService', () => {
   it('skips syncPair when tgBot is null', async () => {
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot: null } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(111), tgChatId: BigInt(222), autoCreated: true },
       ]),
     } as any
@@ -269,10 +268,10 @@ describe('personalSyncService', () => {
   })
 
   it('skips syncPair when tgChat is null', async () => {
-    const tgBot = { getChat: vi.fn().mockResolvedValue(null) }
+    const tgBot = { getChat: mock().mockResolvedValue(null) }
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(111), tgChatId: BigInt(222), autoCreated: true },
       ]),
     } as any
@@ -282,16 +281,16 @@ describe('personalSyncService', () => {
   })
 
   it('handles group info error gracefully', async () => {
-    const editTitleMock = vi.fn()
-    const tgChat = { chat: { title: 'old' }, editTitle: editTitleMock, setProfilePhoto: vi.fn() }
-    const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
+    const editTitleMock = mock()
+    const tgChat = { chat: { title: 'old' }, editTitle: editTitleMock, setProfilePhoto: mock() }
+    const tgBot = { getChat: mock().mockResolvedValue(tgChat) }
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 7, qqChatType: 'group', autoCreated: true, qqRoomId: BigInt(111), tgChatId: BigInt(222) },
       ]),
     } as any
-    const qqClient = { getGroupInfo: vi.fn().mockRejectedValue(new Error('offline')) } as any
+    const qqClient = { getGroupInfo: mock().mockRejectedValue(new Error('offline')) } as any
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
     await service.syncAll()
     // Should still update title with fallback name
@@ -299,34 +298,34 @@ describe('personalSyncService', () => {
   })
 
   it('handles title sync error gracefully', async () => {
-    const editTitleMock = vi.fn().mockRejectedValue(new Error('no permission'))
-    const setProfilePhotoMock = vi.fn()
+    const editTitleMock = mock().mockRejectedValue(new Error('no permission'))
+    const setProfilePhotoMock = mock()
     const tgChat = { chat: { title: 'old' }, editTitle: editTitleMock, setProfilePhoto: setProfilePhotoMock }
-    const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
+    const tgBot = { getChat: mock().mockResolvedValue(tgChat) }
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(111), tgChatId: BigInt(222), qqDisplayName: 'Name', autoCreated: true },
       ]),
     } as any
-    const qqClient = { getFriendInfo: vi.fn().mockResolvedValue({ name: 'Name' }) } as any
+    const qqClient = { getFriendInfo: mock().mockResolvedValue({ name: 'Name' }) } as any
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
     // Should not throw
     await service.syncAll()
   })
 
   it('handles setProfilePhoto error gracefully', async () => {
-    const editTitleMock = vi.fn()
-    const setProfilePhotoMock = vi.fn().mockRejectedValue(new Error('photo error'))
+    const editTitleMock = mock()
+    const setProfilePhotoMock = mock().mockRejectedValue(new Error('photo error'))
     const tgChat = { chat: { title: 'old' }, editTitle: editTitleMock, setProfilePhoto: setProfilePhotoMock }
-    const tgBot = { getChat: vi.fn().mockResolvedValue(tgChat) }
+    const tgBot = { getChat: mock().mockResolvedValue(tgChat) }
     const instance = { id: 7, workMode: 'personal', tgUserBot: { isOnline: true }, tgBot } as any
     const forwardMap = {
-      getAll: vi.fn().mockReturnValue([
+      getAll: mock().mockReturnValue([
         { id: 1, instanceId: 7, qqChatType: 'private', qqRoomId: BigInt(111), tgChatId: BigInt(222), qqDisplayName: 'Name', autoCreated: true },
       ]),
     } as any
-    const qqClient = { getFriendInfo: vi.fn().mockResolvedValue({ name: 'Name' }) } as any
+    const qqClient = { getFriendInfo: mock().mockResolvedValue({ name: 'Name' }) } as any
     const service = new PersonalSyncService(instance, forwardMap, qqClient)
     // Should not throw
     await service.syncAll()

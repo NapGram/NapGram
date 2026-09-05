@@ -1,5 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { ModeCommandHandler } from '../ModeCommandHandler.js'
 
 function createMessage(raw?: any): UnifiedMessage {
@@ -15,14 +15,14 @@ function createMessage(raw?: any): UnifiedMessage {
 }
 
 describe('modeCommandHandler', () => {
-  const replyTG = vi.fn().mockResolvedValue(undefined)
+  const replyTG = mock().mockResolvedValue(undefined)
   const modeService = {
-    setNicknameMode: vi.fn(),
-    setForwardMode: vi.fn(),
+    setNicknameMode: mock(),
+    setForwardMode: mock(),
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('replies with usage when args are invalid', async () => {

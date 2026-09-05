@@ -1,6 +1,5 @@
 import type { Chat, InputPeerLike, InputText, tl } from '@mtcute/core'
 import type { TelegramClient } from '@mtcute/bun'
-import type { Buffer } from 'node:buffer'
 import type Telegram from './client.js'
 
 type ChatAdminRights = Omit<tl.RawChatAdminRights, '_'>
@@ -23,7 +22,7 @@ export default class TelegramChat {
   /**
    * 设置聊天头像
    */
-  public async setProfilePhoto(photo: Buffer | string) {
+  public async setProfilePhoto(photo: Uint8Array | string) {
     return await this.client.setChatPhoto({
       chatId: this.id as any,
       media: photo,

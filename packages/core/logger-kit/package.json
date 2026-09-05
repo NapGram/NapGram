@@ -21,7 +21,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "vitest run --passWithNoTests"
+    "test": "bun test --isolate --pass-with-no-tests src"
   },
   "keywords": [
     "napgram",
@@ -35,14 +35,12 @@
     "@opentelemetry/api": "1.9.1",
     "@opentelemetry/exporter-trace-otlp-http": "0.222.0",
     "@opentelemetry/resources": "2.11.0",
-    "@opentelemetry/sdk-trace-node": "2.11.0",
+    "@opentelemetry/sdk-trace-base": "2.11.0",
     "@opentelemetry/semantic-conventions": "1.43.0"
   },
   "devDependencies": {
-    "@types/node": "26.4.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
     "main": "./dist/index.js",

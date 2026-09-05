@@ -1,8 +1,7 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
 import YAML from 'yaml'
 import { env, getLogger } from './shared-runtime.js'
+import { runtimeFileIO } from '@napgram/runtime-kit'
+import { basename, bunRuntime, dirname, extname, joinPath, resolvePath } from './path-utils.js'
 
 const logger = getLogger('MarketplacesConfig')
 const legacyConfigExtensions = ['.yaml', '.yml', '.json'] as const
@@ -19,13 +18,13 @@ export interface MarketplacesConfigFile {
 }
 
 function resolveDataDir(): string {
-  const dataDir = String(env.DATA_DIR || process.env.DATA_DIR || '/app/data')
-  return path.resolve(dataDir)
+  const dataDir = String(env.DATA_DIR || bunRuntime.env.DATA_DIR || '/app/data')
+  return resolvePath(dataDir)
 }
 
 async function exists(p: string): Promise<boolean> {
   try {
-    await fs.access(p)
+    await runtimeFileIO.access(p)
     return true
   }
   catch {
@@ -34,13 +33,13 @@ async function exists(p: string): Promise<boolean> {
 }
 
 async function writeMarketplacesFile(filePath: string, next: MarketplacesConfigFile): Promise<MarketplacesConfigFile> {
-  await fs.mkdir(path.dirname(filePath), { recursive: true })
+  await runtimeFileIO.mkdir(dirname(filePath), { recursive: true })
   const normalized: MarketplacesConfigFile = {
     version: 1,
     indexes: (next.indexes || []).map((i: MarketplaceIndexSpec) => ({ ...i, id: sanitizeId(i.id), enabled: i.enabled !== false })),
   }
   normalized.indexes.sort((a, b) => a.id.localeCompare(b.id))
-  await fs.writeFile(filePath, YAML.stringify(normalized), 'utf8')
+  await runtimeFileIO.write(filePath, YAML.stringify(normalized))
   return normalized
 }
 
@@ -67,8 +66,8 @@ function parseMarketplaces(raw: string, ext: string): MarketplacesConfigFile {
 }
 
 function getLegacyMarketplaceCandidates(filePath: string): string[] {
-  const ext = path.extname(filePath).toLowerCase()
-  const base = path.join(path.dirname(filePath), path.basename(filePath, ext))
+  const ext = extname(filePath).toLowerCase()
+  const base = joinPath(dirname(filePath), basename(filePath, ext))
   return legacyConfigExtensions
     .filter(candidate => candidate !== ext)
     .map(candidate => `${base}${candidate}`)
@@ -80,8 +79,8 @@ async function migrateLegacyMarketplaces(filePath: string): Promise<Marketplaces
     if (!await exists(candidate))
       continue
     try {
-      const raw = await fs.readFile(candidate, 'utf8')
-      const ext = path.extname(candidate).toLowerCase()
+      const raw = await runtimeFileIO.readText(candidate)
+      const ext = extname(candidate).toLowerCase()
       const config = parseMarketplaces(raw, ext)
       await writeMarketplacesFile(filePath, config)
       logger.info({ from: candidate, to: filePath }, 'Migrated legacy marketplaces config')
@@ -95,19 +94,19 @@ async function migrateLegacyMarketplaces(filePath: string): Promise<Marketplaces
 }
 
 export async function getManagedMarketplacesPath(): Promise<string> {
-  const override = String(process.env.PLUGINS_MARKETPLACES_PATH || '').trim()
+  const override = String(bunRuntime.env.PLUGINS_MARKETPLACES_PATH || '').trim()
   if (override)
-    return path.resolve(override)
+    return resolvePath(override)
 
-  const baseDir = path.join(resolveDataDir(), 'plugins')
-  return path.join(baseDir, 'marketplaces.yaml')
+  const baseDir = joinPath(resolveDataDir(), 'plugins')
+  return joinPath(baseDir, 'marketplaces.yaml')
 }
 
 export async function getMarketCacheDir(): Promise<string> {
-  const override = String(process.env.PLUGINS_CACHE_DIR || '').trim()
+  const override = String(bunRuntime.env.PLUGINS_CACHE_DIR || '').trim()
   if (override)
-    return path.resolve(override)
-  return path.join(resolveDataDir(), 'plugins', 'cache')
+    return resolvePath(override)
+  return joinPath(resolveDataDir(), 'plugins', 'cache')
 }
 
 export async function readMarketplaces(): Promise<{ path: string, config: MarketplacesConfigFile, exists: boolean }> {
@@ -121,8 +120,8 @@ export async function readMarketplaces(): Promise<{ path: string, config: Market
   }
   if (!ok)
     return { path: filePath, config: { version: 1, indexes: [] }, exists: false }
-  const raw = await fs.readFile(filePath, 'utf8')
-  const ext = path.extname(filePath).toLowerCase()
+  const raw = await runtimeFileIO.readText(filePath)
+  const ext = extname(filePath).toLowerCase()
   return { path: filePath, config: parseMarketplaces(raw, ext), exists: true }
 }
 
@@ -165,18 +164,18 @@ export async function refreshMarketplaceIndex(id: string, url: string) {
     throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
   const json = await res.json()
   const cacheDir = await getMarketCacheDir()
-  await fs.mkdir(cacheDir, { recursive: true })
-  const cachePath = path.join(cacheDir, `marketplace-${sanitizeId(id)}.json`)
-  await fs.writeFile(cachePath, JSON.stringify({ fetchedAt: Date.now(), url, data: json }, null, 2), 'utf8')
+  await runtimeFileIO.mkdir(cacheDir, { recursive: true })
+  const cachePath = joinPath(cacheDir, `marketplace-${sanitizeId(id)}.json`)
+  await runtimeFileIO.write(cachePath, JSON.stringify({ fetchedAt: Date.now(), url, data: json }, null, 2))
   return { id: sanitizeId(id), cachePath, fetchedAt: Date.now() }
 }
 
 export async function readMarketplaceCache(id: string) {
   const cacheDir = await getMarketCacheDir()
-  const cachePath = path.join(cacheDir, `marketplace-${sanitizeId(id)}.json`)
+  const cachePath = joinPath(cacheDir, `marketplace-${sanitizeId(id)}.json`)
   const ok = await exists(cachePath)
   if (ok) {
-    const raw = await fs.readFile(cachePath, 'utf8')
+    const raw = await runtimeFileIO.readText(cachePath)
     return { exists: true, cachePath, data: JSON.parse(raw) }
   }
 

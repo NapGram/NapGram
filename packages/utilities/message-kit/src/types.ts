@@ -1,4 +1,3 @@
-import type { Buffer } from 'node:buffer'
 /**
  * 统一的消息类型定义
  * Phase 1: Message Abstraction Layer
@@ -37,7 +36,7 @@ export interface ImageContent extends MessageContent {
   type: 'image'
   data: {
     url?: string
-    file?: Buffer | string
+    file?: Uint8Array | string
     mimeType?: string
     width?: number
     height?: number
@@ -51,11 +50,11 @@ export interface VideoContent extends MessageContent {
   type: 'video'
   data: {
     url?: string
-    file?: Buffer | string
+    file?: Uint8Array | string
     duration?: number
     width?: number
     height?: number
-    thumbnail?: Buffer
+    thumbnail?: Uint8Array
   }
 }
 
@@ -63,7 +62,7 @@ export interface AudioContent extends MessageContent {
   type: 'audio'
   data: {
     url?: string
-    file?: Buffer | string
+    file?: Uint8Array | string
     duration?: number
   }
 }
@@ -72,7 +71,7 @@ export interface FileContent extends MessageContent {
   type: 'file'
   data: {
     url?: string
-    file?: Buffer | string
+    file?: Uint8Array | string
     filename: string
     fileId?: string
     size?: number
@@ -84,7 +83,7 @@ export interface StickerContent extends MessageContent {
   data: {
     id?: string
     url?: string
-    file?: Buffer | string
+    file?: Uint8Array | string
     isAnimated?: boolean
   }
 }

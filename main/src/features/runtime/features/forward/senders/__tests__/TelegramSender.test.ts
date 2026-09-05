@@ -1,15 +1,14 @@
-import { Buffer } from 'node:buffer'
+import { bytesFromUtf8 } from '../../../../../../shared/utils/binary.js'
 import { db } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { TelegramSender } from '../TelegramSender.js'
 
-vi.mock('@napgram/db-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/db-kit', () => ({
   db: {
-    insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+    insert: mock(() => ({
+      values: mock(() => ({
+        returning: mock().mockResolvedValue([{ id: 1 }]),
       })),
     })),
   },
@@ -18,8 +17,7 @@ vi.mock('@napgram/db-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', () => ({
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -32,14 +30,13 @@ vi.mock('@napgram/env-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    trace: mock(),
   })),
 }))
 
@@ -48,19 +45,30 @@ describe('telegramSender', () => {
     id: 1,
     flags: 0,
     tgBot: {
-      downloadMedia: vi.fn(),
+      downloadMedia: mock(),
     },
   } as any
   const mockChat = {
     id: 100,
-    sendMessage: vi.fn().mockResolvedValue({ id: 123 }),
+    sendMessage: mock().mockResolvedValue({ id: 123 }),
     client: {
-      sendMedia: vi.fn().mockResolvedValue({ id: 456 }),
+      sendMedia: mock().mockResolvedValue({ id: 456 }),
     },
   } as any
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mockChat.sendMessage.mockReset()
+    mockChat.sendMessage.mockResolvedValue({ id: 123 })
+    mockChat.client.sendMedia.mockReset()
+    mockChat.client.sendMedia.mockResolvedValue({ id: 456 })
+    mockInstance.tgBot.downloadMedia.mockReset()
+    // Reset db.insert to default chain: insert -> values -> returning -> [{ id: 1 }]
+    ;(db.insert as any).mockReset()
+    ;(db.insert as any).mockImplementation(() => ({
+      values: mock(() => ({
+        returning: mock().mockResolvedValue([{ id: 1 }]),
+      })),
+    }))
   })
 
   it('sendToTelegram sends simple text message', async () => {
@@ -91,12 +99,12 @@ describe('telegramSender', () => {
     const msg: any = {
       sender: { id: 'q1', name: 'QQUser' },
       content: [
-        { type: 'image', data: { file: Buffer.from('img') } },
-        { type: 'video', data: { file: Buffer.from('vid') } },
+        { type: 'image', data: { file: bytesFromUtf8('img') } },
+        { type: 'video', data: { file: bytesFromUtf8('vid') } },
       ],
     }
     // Mock mediaSender.sendMediaGroup
-    const sendMediaGroupSpy = vi.spyOn((sender as any).mediaSender, 'sendMediaGroup').mockResolvedValue({ id: 789 })
+    const sendMediaGroupSpy = spyOn((sender as any).mediaSender, 'sendMediaGroup').mockResolvedValue({ id: 789 })
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
     expect(sendMediaGroupSpy).toHaveBeenCalled()
@@ -106,11 +114,11 @@ describe('telegramSender', () => {
     const sender = new TelegramSender(mockInstance)
     const msg: any = {
       sender: { id: 'q1', name: 'QQUser' },
-      content: [{ type: 'audio', data: { file: Buffer.from('aud') } }],
+      content: [{ type: 'audio', data: { file: bytesFromUtf8('aud') } }],
     }
     // Mock sendMediaToTG indirectly
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('norm'), fileName: 'aud.ogg' })
-    vi.spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: Buffer.from('voice') })
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('norm'), fileName: 'aud.ogg' })
+    spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: bytesFromUtf8('voice') })
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
     expect(mockChat.client.sendMedia).toHaveBeenCalled()
@@ -173,8 +181,8 @@ describe('telegramSender', () => {
   it('sendMediaToTG sends placeholder when file missing', async () => {
     const sender = new TelegramSender(mockInstance)
     const content: any = { type: 'file', data: { file: 'missing', filename: 'report.txt' } }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('missing')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('missing')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
 
     const result = await (sender as any).sendMediaToTG(mockChat, '', content)
 
@@ -186,9 +194,9 @@ describe('telegramSender', () => {
   it('sendMediaToTG retries without ttlSeconds when sendMedia fails', async () => {
     const sender = new TelegramSender(mockInstance)
     const content: any = { type: 'image', data: { file: '/tmp/test.jpg' } }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/test.jpg')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('img'), fileName: 'test.jpg' })
-    vi.spyOn((sender as any).fileNormalizer, 'isGifMedia').mockReturnValue(false)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/test.jpg')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('img'), fileName: 'test.jpg' })
+    spyOn((sender as any).fileNormalizer, 'isGifMedia').mockReturnValue(false)
 
     const ttlValues: Array<number | undefined> = []
     mockChat.client.sendMedia.mockImplementation((_chatId: any, mediaInput: any) => {
@@ -230,9 +238,9 @@ describe('telegramSender', () => {
 
   it('sendToTelegram falls back when forward create fails', async () => {
     const sender = new TelegramSender(mockInstance)
-    vi.mocked(db.insert).mockReturnValue({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockRejectedValue(new Error('fail')),
+    ;(db.insert as any).mockReturnValue({
+      values: mock(() => ({
+        returning: mock().mockRejectedValue(new Error('fail')),
       })),
     } as any)
     const msg: any = {
@@ -250,15 +258,15 @@ describe('telegramSender', () => {
       content: [{ type: 'audio', data: { file: 'aud.amr' } }],
     }
     // Mock normalize
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('aud'), fileName: 'aud.ogg' })
-    vi.spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: Buffer.from('voice') })
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('aud'), fileName: 'aud.ogg' })
+    spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: bytesFromUtf8('voice') })
 
     // Setup Rich Header environment
     const pair = { apiKey: 'key', flags: 0 }
 
     // Create spy for richHeaderBuilder
-    const buildUrlSpy = vi.spyOn((sender as any).richHeaderBuilder, 'generateRichHeaderUrl').mockReturnValue('http://header.url')
-    const applyHeaderSpy = vi.spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: 'Rich', params: {} })
+    const buildUrlSpy = spyOn((sender as any).richHeaderBuilder, 'generateRichHeaderUrl').mockReturnValue('http://header.url')
+    const applyHeaderSpy = spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: 'Rich', params: {} })
 
     await sender.sendToTelegram(mockChat, msg, pair, undefined, '10') // nickname '10' enables rich header if env present
 
@@ -276,12 +284,12 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'audio', data: { file: 'aud.amr' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('aud'), fileName: 'aud.ogg' })
-    vi.spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: Buffer.from('voice') })
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('aud'), fileName: 'aud.ogg' })
+    spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: bytesFromUtf8('voice') })
 
     const pair = { apiKey: 'key', flags: 0 }
-    vi.spyOn((sender as any).richHeaderBuilder, 'generateRichHeaderUrl').mockReturnValue('http://header.url')
-    vi.spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: 'Rich', params: {} })
+    spyOn((sender as any).richHeaderBuilder, 'generateRichHeaderUrl').mockReturnValue('http://header.url')
+    spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: 'Rich', params: {} })
 
     // Mock header send failure
     mockChat.sendMessage.mockRejectedValueOnce(new Error('Header fail'))
@@ -298,9 +306,9 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'image', data: { file: '/local/path/img.png' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/local/path/img.png')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('img'), fileName: 'img.png' })
-    vi.spyOn((sender as any).fileNormalizer, 'isGifMedia').mockReturnValue(false)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/local/path/img.png')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('img'), fileName: 'img.png' })
+    spyOn((sender as any).fileNormalizer, 'isGifMedia').mockReturnValue(false)
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -315,9 +323,9 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'image', data: { file: 'anim.gif' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('anim.gif')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('gif'), fileName: 'anim.gif' })
-    vi.spyOn((sender as any).fileNormalizer, 'isGifMedia').mockReturnValue(true)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('anim.gif')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('gif'), fileName: 'anim.gif' })
+    spyOn((sender as any).fileNormalizer, 'isGifMedia').mockReturnValue(true)
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -332,8 +340,8 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'video', data: { file: 'bad.mp4' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.mp4')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.mp4')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -347,8 +355,8 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'image', data: { file: 'bad.jpg' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.jpg')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.jpg')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -359,9 +367,9 @@ describe('telegramSender', () => {
     const sender = new TelegramSender(mockInstance)
     const content: any = { type: 'audio', data: { file: 'aud.amr' } }
 
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('aud'), fileName: 'aud.ogg' })
-    vi.spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: Buffer.from('voice') })
-    vi.spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: '   ', params: {} }) // empty text
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('aud'), fileName: 'aud.ogg' })
+    spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: bytesFromUtf8('voice') })
+    spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: '   ', params: {} }) // empty text
 
     await (sender as any).sendMediaToTG(mockChat, 'header_present_but_returns_empty', content)
 
@@ -377,8 +385,8 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'audio', data: { file: 'bad.amr' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.amr')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('bad.amr')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -436,8 +444,8 @@ describe('telegramSender', () => {
   it('handles sendMedia non-ttl failure', async () => {
     const sender = new TelegramSender(mockInstance)
     const content: any = { type: 'image', data: { file: '/tmp/test.jpg' } }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/test.jpg')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('img'), fileName: 'test.jpg' })
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/test.jpg')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('img'), fileName: 'test.jpg' })
 
     mockChat.client.sendMedia.mockRejectedValueOnce(new Error('Fatal error'))
 
@@ -463,7 +471,7 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'file', data: { file: 'doc.pdf', filename: 'doc.pdf' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('doc'), fileName: 'doc.pdf' })
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('doc'), fileName: 'doc.pdf' })
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -479,8 +487,8 @@ describe('telegramSender', () => {
         { type: 'image', data: { file: '/tmp/photo.jpg' } },
       ],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/photo.jpg')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('img'), fileName: 'photo.jpg' })
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/photo.jpg')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('img'), fileName: 'photo.jpg' })
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -496,14 +504,14 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [{ type: 'audio', data: { file: '/tmp/audio.mp3' } }],
     }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/audio.mp3')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: Buffer.from('audio'), fileName: 'audio.mp3' })
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/audio.mp3')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('audio'), fileName: 'audio.mp3' })
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
     // Audio goes through mediaSender which determines the actual type
     expect(mockChat.client.sendMedia).toHaveBeenCalled()
-  })
+  }, 15_000)
 
   it('handles location content', async () => {
     const sender = new TelegramSender(mockInstance)
@@ -552,12 +560,12 @@ describe('telegramSender', () => {
       sender: { id: 'q1', name: 'QQUser' },
       content: [
         { type: 'text', data: { text: 'initial' } },
-        { type: 'image', data: { file: Buffer.from('img') } },
-        { type: 'video', data: { file: Buffer.from('vid') } },
+        { type: 'image', data: { file: bytesFromUtf8('img') } },
+        { type: 'video', data: { file: bytesFromUtf8('vid') } },
       ],
     }
     mockChat.sendMessage.mockResolvedValueOnce({ id: 'text-msg' })
-    const sendMediaGroupSpy = vi.spyOn((sender as any).mediaSender, 'sendMediaGroup').mockResolvedValue(null)
+    const sendMediaGroupSpy = spyOn((sender as any).mediaSender, 'sendMediaGroup').mockResolvedValue(null)
 
     await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
 
@@ -568,8 +576,8 @@ describe('telegramSender', () => {
   it('handles error when sending file placeholder fails', async () => {
     const sender = new TelegramSender(mockInstance)
     const content: any = { type: 'file', data: { file: 'missing', filename: 'report.txt' } }
-    vi.spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('missing')
-    vi.spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('missing')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue(undefined)
 
     // Mock chat.sendMessage to fail
     mockChat.sendMessage.mockRejectedValueOnce(new Error('Placeholder failed'))

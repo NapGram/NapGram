@@ -1,5 +1,4 @@
-import type { Buffer } from 'node:buffer'
-import type { EventEmitter } from 'node:events'
+import type { EventEmitter } from './events.js'
 import type {
   Chat,
   InputStatusEvent,
@@ -80,9 +79,9 @@ export interface IQQClient extends EventEmitter {
   setGroupLeave?: (groupId: string, isDismiss?: boolean) => Promise<any>
   setGroupAnonymousBan?: (groupId: string, anonymousFlag: string, duration?: number) => Promise<any>
 
-  uploadGroupFile?: (groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string) => Promise<any>
-  uploadPrivateFile?: (userId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string) => Promise<any>
-  setGroupPortrait?: (groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream) => Promise<any>
+  uploadGroupFile?: (groupId: string, file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>, name: string) => Promise<any>
+  uploadPrivateFile?: (userId: string, file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>, name: string) => Promise<any>
+  setGroupPortrait?: (groupId: string, file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>) => Promise<any>
   getGroupFileSystemInfo?: (groupId: string) => Promise<any>
   getGroupRootFiles?: (groupId: string) => Promise<any>
   getGroupFilesByFolder?: (groupId: string, folderId: string) => Promise<any>
@@ -93,7 +92,7 @@ export interface IQQClient extends EventEmitter {
   downloadFile?: (url: string, threadCount?: number, headers?: Record<string, string>) => Promise<any>
 
   uploadFileStream?: (
-    file: string | Buffer | Uint8Array | NodeJS.ReadableStream,
+    file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>,
     options?: {
       chunkSize?: number
       streamId?: string

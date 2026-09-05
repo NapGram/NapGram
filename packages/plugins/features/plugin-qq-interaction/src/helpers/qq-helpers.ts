@@ -4,6 +4,7 @@
  * 提供高级封装，避免插件重复实现逻辑
  */
 
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
 import type { MessageEvent } from '@napgram/sdk';
 
 export interface QQInteractionResult {
@@ -326,7 +327,7 @@ export async function getGroupHonor(
             return { success: true, message: `🏆 群荣誉榜单\n\n暂无数据` };
         }
 
-        const baseUrl = process.env.WEB_ENDPOINT || 'https://posts.link';
+        const baseUrl = bunEnv.WEB_ENDPOINT || 'https://posts.link';
         // 调试 key
         if (!apiKey) {
             event.logger?.warn(`[Honor] No apiKey found for pair. Links will fallback to /richHeader/qq/...`);

@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import Instance from '../Instance'
 
 // Mocks
-const { mockInstance, mockUpdate, mockInsert } = vi.hoisted(() => ({
+const { mockInstance, mockUpdate, mockInsert } = (() => ({
   mockInstance: {
     id: 1,
     owner: 0,
@@ -12,19 +12,19 @@ const { mockInstance, mockUpdate, mockInsert } = vi.hoisted(() => ({
     botSessionId: 0,
     qqBot: { wsUrl: 'ws://fake' },
   },
-  mockUpdate: vi.fn(() => ({
-    set: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue(undefined),
+  mockUpdate: mock(() => ({
+    set: mock(() => ({
+      where: mock().mockResolvedValue(undefined),
     })),
   })),
-  mockInsert: vi.fn(() => ({
-    values: vi.fn(() => ({
-      returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+  mockInsert: mock(() => ({
+    values: mock(() => ({
+      returning: mock().mockResolvedValue([{ id: 1 }]),
     })),
   })),
-}))
+}))()
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: {
     TG_BOT_TOKEN: 'fake-token',
     NAPCAT_WS_URL: 'ws://fake',
@@ -34,73 +34,75 @@ vi.mock('@napgram/env-kit', () => ({
   },
 }))
 
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: {
     query: {
       instance: {
-        findFirst: vi.fn().mockResolvedValue(mockInstance),
+        findFirst: mock().mockResolvedValue(mockInstance),
       },
     },
     insert: mockInsert,
     update: mockUpdate,
   },
   schema: { instance: { id: 'id' } },
-  eq: vi.fn(),
+  eq: mock(),
   ForwardMap: {
-    load: vi.fn().mockResolvedValue({ map: true }),
+    load: mock().mockResolvedValue({ map: true }),
   },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    info: mock(),
+    debug: mock(),
+    error: mock(),
+    warn: mock(),
+    trace: mock(),
   })),
   telemetry: {
-    captureException: vi.fn(),
+    captureException: mock(),
   },
 }))
 
-vi.mock('../../../infrastructure/clients/qq', () => ({
+mock.module('../../../infrastructure/clients/qq', () => ({
   qqClientFactory: {
-    create: vi.fn().mockResolvedValue({
-      login: vi.fn(),
-      on: vi.fn(),
+    create: mock().mockResolvedValue({
+      login: mock(),
+      on: mock(),
     }),
   },
 }))
-vi.mock('../../../infrastructure/clients/telegram', () => ({
+mock.module('../../../infrastructure/clients/telegram', () => ({
   telegramClientFactory: {
-    connect: vi.fn(),
-    create: vi.fn().mockResolvedValue({
+    connect: mock(),
+    create: mock().mockResolvedValue({
       sessionId: 123,
       me: { id: 123, username: 'test_bot' },
     }),
   },
 }))
 
-vi.mock('../../../features/runtime/instance-registry', () => ({
+mock.module('../../../features/runtime/instance-registry', () => ({
   instanceRegistry: {
-    add: vi.fn(),
-    remove: vi.fn(),
+    add: mock(),
+    remove: mock(),
   },
 }))
 
-vi.mock('@napgram/plugin-kit', () => ({
-  getEventPublisher: vi.fn(() => ({
-    publishInstanceStatus: vi.fn(),
-    publishFriendRequest: vi.fn(),
-    publishGroupRequest: vi.fn(),
-    publishNotice: vi.fn(),
+mock.module('@napgram/plugin-kit', () => ({
+  getEventPublisher: mock(() => ({
+    publishInstanceStatus: mock(),
+    publishFriendRequest: mock(),
+    publishGroupRequest: mock(),
+    publishNotice: mock(),
   })),
 }))
 
 describe('instance Branches', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+  beforeEach(async () => {
+    const { telegramClientFactory } = await import('../../../infrastructure/clients/telegram')
+    ;(telegramClientFactory.create as any).mockClear()
+    mockUpdate.mockClear()
   })
 
   // Hack to access private constructor or we use static method
@@ -112,28 +114,28 @@ describe('instance Branches', () => {
 
     // Setters trigger db update
     instance.owner = 123
-    const ownerSetCalls = vi.mocked(mockUpdate).mock.results[0]?.value?.set?.mock?.calls ?? []
+    const ownerSetCalls = (mockUpdate as any).mock.results[0]?.value?.set?.mock?.calls ?? []
     expect(ownerSetCalls[0]?.[0]).toEqual({ owner: BigInt(123) })
 
     instance.isSetup = true
-    const setupSetCalls = vi.mocked(mockUpdate).mock.results[1]?.value?.set?.mock?.calls ?? []
+    const setupSetCalls = (mockUpdate as any).mock.results[1]?.value?.set?.mock?.calls ?? []
     expect(setupSetCalls[0]?.[0]).toEqual({ isSetup: true })
 
     instance.workMode = 'group'
-    const workModeSetCalls = vi.mocked(mockUpdate).mock.results[2]?.value?.set?.mock?.calls ?? []
+    const workModeSetCalls = (mockUpdate as any).mock.results[2]?.value?.set?.mock?.calls ?? []
     expect(workModeSetCalls[0]?.[0]).toEqual({ workMode: 'group' })
 
     instance.botSessionId = 999
-    const botSessionSetCalls = vi.mocked(mockUpdate).mock.results[3]?.value?.set?.mock?.calls ?? []
+    const botSessionSetCalls = (mockUpdate as any).mock.results[3]?.value?.set?.mock?.calls ?? []
     expect(botSessionSetCalls[0]?.[0]).toEqual({ botSessionId: 999 })
 
     instance.flags = 1
-    const flagsSetCalls = vi.mocked(mockUpdate).mock.results[4]?.value?.set?.mock?.calls ?? []
+    const flagsSetCalls = (mockUpdate as any).mock.results[4]?.value?.set?.mock?.calls ?? []
     expect(flagsSetCalls[0]?.[0]).toEqual({ flags: 1 })
 
     // qqBotId setter
     instance.qqBotId = 111
-    const qqBotSetCalls = vi.mocked(mockUpdate).mock.results[5]?.value?.set?.mock?.calls ?? []
+    const qqBotSetCalls = (mockUpdate as any).mock.results[5]?.value?.set?.mock?.calls ?? []
     expect(qqBotSetCalls[0]?.[0]).toEqual({ qqBotId: 111 })
   })
 
@@ -148,8 +150,8 @@ describe('instance Branches', () => {
 
   it('should throw when createNew returns no db entry', async () => {
     mockInsert.mockReturnValueOnce({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([]),
+      values: mock(() => ({
+        returning: mock().mockResolvedValue([]),
       })),
     })
 

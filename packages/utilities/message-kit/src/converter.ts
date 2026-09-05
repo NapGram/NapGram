@@ -2,16 +2,15 @@ import type { Message } from '@mtcute/core'
 import type { MessageContent, UnifiedMessage } from './types.js'
 export type { UnifiedMessage }
 
-import { Buffer } from 'node:buffer'
-import fsSync from 'node:fs'
-import fs from 'node:fs/promises'
-import path from 'node:path'
+import { Transformer } from '@napi-rs/image'
 import { fileTypeFromBuffer } from 'file-type'
-import { decode, encode } from 'image-js'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import { convert, env, getLogger } from './shared-runtime.js'
 import type { Instance } from './shared-runtime.js'
 
 import { NapCatConverter } from './converters/index.js'
+
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
 
 const logger = getLogger('MessageConverter')
 
@@ -233,12 +232,12 @@ export class MessageConverter {
 
   // ============ NapCat 转换辅助方法 ============
 
-  private async saveBufferToTemp(buffer: Buffer, type: 'image' | 'video' | 'audio' | 'file', ext: string, filename?: string): Promise<string> {
+  private async saveUint8ArrayToTemp(buffer: Uint8Array, type: 'image' | 'video' | 'audio' | 'file', ext: string, filename?: string): Promise<string> {
     // 尝试使用 NapCat 共享目录 (假设 NapCat 容器内路径也是 /app/.config/QQ)
     const sharedRoot = '/app/.config/QQ'
-    const napcatTempDir = path.join(sharedRoot, 'NapCat', 'temp')
-    const sharedDir = path.join(sharedRoot, 'temp_napgram_share')
-    const sharedRootExists = fsSync.existsSync(sharedRoot)
+    const napcatTempDir = joinPath(sharedRoot, 'NapCat', 'temp')
+    const sharedDir = joinPath(sharedRoot, 'temp_napgram_share')
+    const sharedRootExists = await runtimeFileIO.exists(sharedRoot)
     const name = filename || `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`
     logger.debug('Forward media buffer', {
       type,
@@ -253,9 +252,9 @@ export class MessageConverter {
       const sharedDirs = [napcatTempDir, sharedDir]
       for (const dir of sharedDirs) {
         try {
-          await fs.mkdir(dir, { recursive: true })
-          const filePath = path.join(dir, name)
-          await fs.writeFile(filePath, buffer)
+          await runtimeFileIO.mkdir(dir, { recursive: true })
+          const filePath = joinPath(dir, name)
+          await runtimeFileIO.write(filePath, buffer)
           logger.debug('Saved forward media to shared path', { filePath })
           return filePath
         }
@@ -266,11 +265,11 @@ export class MessageConverter {
     }
 
     // 回退到本地临时目录 (QQ 端可能无法访问)
-    const tempDir = path.join(env.DATA_DIR, 'temp')
+    const tempDir = joinPath(env.DATA_DIR, 'temp')
     logger.warn('Forward media fallback to local temp dir', { tempDir })
-    await fs.mkdir(tempDir, { recursive: true })
-    const filePath = path.join(tempDir, name)
-    await fs.writeFile(filePath, buffer)
+    await runtimeFileIO.mkdir(tempDir, { recursive: true })
+    const filePath = joinPath(tempDir, name)
+    await runtimeFileIO.write(filePath, buffer)
     logger.warn('Saved forward media to local temp path', { filePath })
     return filePath
   }
@@ -292,7 +291,7 @@ export class MessageConverter {
             let file = content.data.url || content.data.file
 
             // Handle sticker: if file is mtcute Media object, download it first
-            if (content.data.isSticker && file && typeof file === 'object' && !Buffer.isBuffer(file) && 'type' in file) {
+            if (content.data.isSticker && file && typeof file === 'object' && !(file instanceof Uint8Array) && 'type' in file) {
               try {
                 if (!this.instance) {
                   logger.error('Instance not set, cannot download sticker')
@@ -333,8 +332,8 @@ export class MessageConverter {
               }
             }
 
-            if (Buffer.isBuffer(file)) {
-              let targetBuffer = file
+            if (file instanceof Uint8Array) {
+              let targetUint8Array = file
               let targetExt = '.jpg'
               let detected
               try {
@@ -357,14 +356,14 @@ export class MessageConverter {
 
                   if (isTGS) {
                     logger.info('Detected TGS sticker, converting to GIF...')
-                    const tempDir = path.join(env.DATA_DIR, 'temp')
-                    await fs.mkdir(tempDir, { recursive: true })
+                    const tempDir = joinPath(env.DATA_DIR, 'temp')
+                    await runtimeFileIO.mkdir(tempDir, { recursive: true })
                     const tgsKey = `tgs-sticker-${Date.now()}-${Math.random().toString(16).slice(2)}`
 
                     try {
                       const gifPath = await convert.tgs2gif(tgsKey, () => Promise.resolve(file))
                       logger.info(`TGS converted to GIF: ${gifPath}`)
-                      targetBuffer = await fs.readFile(gifPath)
+                      targetUint8Array = Uint8Array.from(await runtimeFileIO.readBytes(gifPath))
                       targetExt = '.gif'
                     }
                     catch (tgsErr) {
@@ -378,8 +377,8 @@ export class MessageConverter {
                   }
                   else {
                     // 静态贴纸：转成 png，避免 WEBP 直接当 jpg 触发 QQ 富媒体失败
-                    const image = decode(file)
-                    targetBuffer = Buffer.from(encode(image, { format: 'png' }))
+                    const image = new Transformer(file)
+                    targetUint8Array = await image.png()
                     targetExt = '.png'
                   }
                 }
@@ -408,7 +407,7 @@ export class MessageConverter {
                 detectedExt: detected?.ext,
                 targetExt,
               })
-              file = await this.saveBufferToTemp(targetBuffer, 'image', targetExt)
+              file = await this.saveUint8ArrayToTemp(targetUint8Array, 'image', targetExt)
             }
               segments.push({
                 type: 'image',
@@ -423,8 +422,8 @@ export class MessageConverter {
         case 'video':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'video', '.mp4')
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'video', '.mp4')
             }
             segments.push({
               type: 'video',
@@ -438,8 +437,8 @@ export class MessageConverter {
         case 'audio':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'audio', '.ogg')
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'audio', '.ogg')
             }
             segments.push({
               type: 'record',
@@ -453,8 +452,8 @@ export class MessageConverter {
         case 'file':
           {
             let file = content.data.url || content.data.file
-            if (Buffer.isBuffer(file)) {
-              file = await this.saveBufferToTemp(file, 'file', '', content.data.filename)
+            if (file instanceof Uint8Array) {
+              file = await this.saveUint8ArrayToTemp(file, 'file', '', content.data.filename)
             }
             segments.push({
               type: 'file',

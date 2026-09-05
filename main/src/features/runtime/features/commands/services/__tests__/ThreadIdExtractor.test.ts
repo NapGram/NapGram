@@ -1,5 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { ThreadIdExtractor } from '../ThreadIdExtractor.js'
 
 function createMessage(raw?: any): UnifiedMessage {

@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-26-green.svg" alt="Node.js" /></a>
+  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4+-f9f1e1.svg?logo=bun&logoColor=black" alt="Bun" /></a></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
   <a href="https://gitlab.com/magisk3171/NapGram"><img src="https://img.shields.io/badge/GitLab-magisk3171%2FNapGram-FC6D26?logo=gitlab&logoColor=white" alt="GitLab" /></a>
   <a href="https://gitlab.com/magisk3171/NapGram/-/pipelines?ref=beta"><img src="https://img.shields.io/gitlab/pipeline-status/magisk3171%2FNapGram?branch=beta&logo=gitlab&label=GitLab%20CI" alt="GitLab CI" /></a>
@@ -43,15 +43,15 @@
 | **TG adapter** | [mtcute](https://github.com/mtcute/mtcute) | Native MTProto (no Bot API proxy) |
 | **Language** | TypeScript 5.0+ | Strict mode, end-to-end type safety |
 | **Frontend** | React 19 + Vite | Tailwind CSS 4, Shadcn UI, Recharts |
-| **Runtime** | Node.js 26 (ESM) | Modern module system |
+| **Runtime** | Bun 1.4+ | Bun-native runtime |
 | **Persistence** | PostgreSQL + Prisma 7 | Typed ORM, schema & migrations |
-| **Testing** | Vitest | Unit tests |
+| **Testing** | Bun Test | Unit tests and lcov coverage gate |
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 26+
+- Bun 1.4+
 - PostgreSQL 14+
 - **NapCat (required)**: deploy [NapCatQQ](https://napneko.github.io/) and enable WebSocket
 - Network access from NapGram to NapCat

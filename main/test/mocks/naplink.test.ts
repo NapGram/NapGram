@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, mock } from 'bun:test'
 
 function clearGlobals() {
   delete (globalThis as any).__naplinkMockConstructor
@@ -21,7 +21,7 @@ describe('naplink mock', () => {
   })
 
   it('uses injected constructor and instance when provided', async () => {
-    const ctor = vi.fn()
+    const ctor = mock()
     const customInstance = { tag: 'custom' }
     ;(globalThis as any).__naplinkMockConstructor = ctor
     ;(globalThis as any).__naplinkMockInstance = customInstance

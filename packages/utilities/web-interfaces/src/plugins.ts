@@ -1,11 +1,10 @@
 import type { FastifyInstance } from 'fastify'
 import { hasAdminPermission } from '@napgram/auth-kit'
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
-import { pathToFileURL } from 'node:url'
 import { z } from 'zod'
 import { ApiResponse, env, getLogger } from './web-deps.js'
+import { dirname, basename, joinPath, pathToFileURL, resolvePath } from './path-utils.js'
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import {
   normalizeModuleSpecifierForPluginsConfig,
   patchPluginConfig,
@@ -39,7 +38,7 @@ function sanitizeRuntimeReport(report: any) {
 
 async function pathExists(p: string): Promise<boolean> {
   try {
-    await fs.access(p)
+    await runtimeFileIO.access(p)
     return true
   }
   catch {
@@ -48,8 +47,8 @@ async function pathExists(p: string): Promise<boolean> {
 }
 
 function resolvePluginRootFromModule(modulePath: string): string {
-  const dir = path.dirname(modulePath)
-  return path.basename(dir) === 'dist' ? path.dirname(dir) : dir
+  const dir = dirname(modulePath)
+  return basename(dir) === 'dist' ? dirname(dir) : dir
 }
 
 async function readPackageMeta(rootDir: string): Promise<{
@@ -59,11 +58,11 @@ async function readPackageMeta(rootDir: string): Promise<{
   keywords?: string[]
   dependencies?: Record<string, string>
 } | null> {
-  const pkgPath = path.join(rootDir, 'package.json')
+  const pkgPath = joinPath(rootDir, 'package.json')
   if (!await pathExists(pkgPath))
     return null
   try {
-    const raw = await fs.readFile(pkgPath, 'utf8')
+    const raw = await runtimeFileIO.readText(pkgPath)
     const pkg = JSON.parse(raw)
     return {
       name: typeof pkg?.name === 'string' ? pkg.name : undefined,
@@ -80,11 +79,11 @@ async function readPackageMeta(rootDir: string): Promise<{
 
 async function loadPluginDefaultConfig(rootDir: string): Promise<any | null> {
   const candidates = [
-    path.join(rootDir, 'dist', 'config.js'),
-    path.join(rootDir, 'dist', 'config.mjs'),
-    path.join(rootDir, 'config.js'),
-    path.join(rootDir, 'config.mjs'),
-    path.join(rootDir, 'config.json'),
+    joinPath(rootDir, 'dist', 'config.js'),
+    joinPath(rootDir, 'dist', 'config.mjs'),
+    joinPath(rootDir, 'config.js'),
+    joinPath(rootDir, 'config.mjs'),
+    joinPath(rootDir, 'config.json'),
   ]
 
   for (const candidate of candidates) {
@@ -92,7 +91,7 @@ async function loadPluginDefaultConfig(rootDir: string): Promise<any | null> {
       continue
     try {
       if (candidate.endsWith('.json')) {
-        const raw = await fs.readFile(candidate, 'utf8')
+        const raw = await runtimeFileIO.readText(candidate)
         return JSON.parse(raw)
       }
       const mod = await import(pathToFileURL(candidate).href)
@@ -181,16 +180,16 @@ function inferPluginMetadata(pluginId: string, keywords?: string[]): { tags: str
  */
 async function extractPluginCommands(rootDir: string): Promise<Array<{ name: string, description?: string, usage?: string }>> {
   const candidates = [
-    path.join(rootDir, 'metadata.json'),
-    path.join(rootDir, 'plugin.json'),
-    path.join(rootDir, 'napgram-plugin.json'),
+    joinPath(rootDir, 'metadata.json'),
+    joinPath(rootDir, 'plugin.json'),
+    joinPath(rootDir, 'napgram-plugin.json'),
   ]
 
   for (const candidate of candidates) {
     if (!await pathExists(candidate))
       continue
     try {
-      const raw = await fs.readFile(candidate, 'utf8')
+      const raw = await runtimeFileIO.readText(candidate)
       const meta = JSON.parse(raw)
       if (Array.isArray(meta?.commands))
         return meta.commands
@@ -223,15 +222,15 @@ function extractPluginDependencies(dependencies?: Record<string, string>): Array
  */
 async function loadPluginConfigSchema(rootDir: string): Promise<any | null> {
   const candidates = [
-    path.join(rootDir, 'config.schema.json'),
-    path.join(rootDir, 'schema.json'),
+    joinPath(rootDir, 'config.schema.json'),
+    joinPath(rootDir, 'schema.json'),
   ]
 
   for (const candidate of candidates) {
     if (!await pathExists(candidate))
       continue
     try {
-      const raw = await fs.readFile(candidate, 'utf8')
+      const raw = await runtimeFileIO.readText(candidate)
       return JSON.parse(raw)
     }
     catch {
@@ -261,7 +260,7 @@ export default async function (fastify: FastifyInstance) {
     const cookieToken = request.cookies?.admin_token ? String(request.cookies.admin_token) : ''
     const token = bearer || cookieToken
 
-    const direct = String(process.env.PLUGIN_ADMIN_TOKEN || '').trim()
+    const direct = String(bunEnv.PLUGIN_ADMIN_TOKEN || '').trim()
     if (direct && token && token === direct) {
       request.auth = { type: 'env', role: 'super_admin', token }
       return
@@ -352,8 +351,8 @@ export default async function (fastify: FastifyInstance) {
     if (!raw.startsWith('/') && !raw.startsWith('.'))
       return true
     try {
-      const abs = raw.startsWith('.') ? path.resolve(path.dirname((await readPluginsConfig()).path), raw) : raw
-      await fs.access(abs)
+      const abs = raw.startsWith('.') ? resolvePath(dirname((await readPluginsConfig()).path), raw) : raw
+      await runtimeFileIO.access(abs)
       return true
     }
     catch {
@@ -616,22 +615,22 @@ export default async function (fastify: FastifyInstance) {
         pluginId,
         recordModule,
         absolute,
-        absolute ? path.basename(absolute) : null,
+        absolute ? basename(absolute) : null,
       ].filter(Boolean).map(String)
 
-      const logDir = path.dirname(env.LOG_FILE)
+      const logDir = dirname(env.LOG_FILE)
       const dateFormatter = new Intl.DateTimeFormat('sv-SE', {
-        timeZone: process.env.TZ || 'Asia/Shanghai',
+        timeZone: bunEnv.TZ || 'Asia/Shanghai',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
       })
       const currentDate = dateFormatter.format(new Date())
-      const todayLogFile = path.join(logDir, `${currentDate}.1.log`)
+      const todayLogFile = joinPath(logDir, `${currentDate}.1.log`)
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
       const yesterdayDate = dateFormatter.format(yesterday)
-      const yesterdayLogFile = path.join(logDir, `${yesterdayDate}.1.log`)
+      const yesterdayLogFile = joinPath(logDir, `${yesterdayDate}.1.log`)
 
       const possibleFiles = [todayLogFile, yesterdayLogFile, env.LOG_FILE].filter(Boolean)
 
@@ -639,7 +638,7 @@ export default async function (fastify: FastifyInstance) {
       const out: Array<{ time: string, level: string, module: string, message: string }> = []
       for (const logFile of possibleFiles) {
         try {
-          const content = await fs.readFile(logFile, 'utf-8')
+          const content = await runtimeFileIO.readText(logFile)
           const lines = content.split('\n').filter(line => line.trim())
           for (const line of lines) {
             try {

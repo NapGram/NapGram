@@ -1,97 +1,99 @@
 import type { UnifiedMessage } from '../converter.js'
-import { Buffer } from 'node:buffer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { MessageConverter } from '../converter.js'
 
-const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn(),
-  mkdir: vi.fn().mockResolvedValue(undefined),
-  writeFile: vi.fn().mockResolvedValue(undefined),
-  readFile: vi.fn(),
-}))
+const bytes = (value: string | number[]) => typeof value === 'string' ? new TextEncoder().encode(value) : new Uint8Array(value)
+const fsMocks = (() => ({
+  existsSync: mock(),
+  mkdir: mock().mockResolvedValue(undefined),
+  writeFile: mock().mockResolvedValue(undefined),
+  readFile: mock(),
+}))()
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   DATA_DIR: '/data',
   INTERNAL_WEB_ENDPOINT: 'http://internal',
-}))
+}))()
 
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
 
-const fileTypeMock = vi.hoisted(() => ({
-  fileTypeFromBuffer: vi.fn(),
-}))
+const fileTypeMock = (() => ({
+  fileTypeFromBuffer: mock(),
+}))()
 
-const imageJsMocks = vi.hoisted(() => ({
-  decode: vi.fn(),
-  encode: vi.fn(),
-}))
+const nativeImageMocks = {
+  constructor: mock(),
+  png: mock().mockResolvedValue(bytes('png')),
+}
 
-const convertMocks = vi.hoisted(() => ({
-  tgs2gif: vi.fn(),
-}))
+class TransformerMock {
+  constructor(input: Uint8Array) {
+    nativeImageMocks.constructor(input)
+  }
 
-vi.mock('node:fs', () => ({
-  default: { existsSync: fsMocks.existsSync },
-  existsSync: fsMocks.existsSync,
-}))
+  png() {
+    return nativeImageMocks.png()
+  }
+}
 
-vi.mock('node:fs/promises', () => ({
-  default: {
+const convertMocks = (() => ({
+  tgs2gif: mock(),
+}))()
+
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO: {
+    exists: fsMocks.existsSync,
     mkdir: fsMocks.mkdir,
-    writeFile: fsMocks.writeFile,
-    readFile: fsMocks.readFile,
+    write: fsMocks.writeFile,
+    readBytes: mock(async (filePath: string) => await fsMocks.readFile(filePath)),
   },
-  mkdir: fsMocks.mkdir,
-  writeFile: fsMocks.writeFile,
-  readFile: fsMocks.readFile,
 }))
 
-vi.mock('file-type', () => ({
+mock.module('file-type', () => ({
   fileTypeFromBuffer: fileTypeMock.fileTypeFromBuffer,
 }))
 
-vi.mock('image-js', () => ({
-  decode: imageJsMocks.decode,
-  encode: imageJsMocks.encode,
+mock.module('@napi-rs/image', () => ({
+  Transformer: TransformerMock,
 }))
 
-vi.mock('@napgram/infra-kit', () => ({
+mock.module('@napgram/infra-kit', () => ({
   env: envMock,
-  getLogger: vi.fn(() => loggerMocks),
+  getLogger: mock(() => loggerMocks),
   temp: {
     TEMP_PATH: '/tmp/napgram',
-    file: vi.fn(),
-    createTempFile: vi.fn(),
+    file: mock(),
+    createTempFile: mock(),
   },
   hashing: {
-    md5Hex: vi.fn((s) => 'hashed-' + s),
+    md5Hex: mock((s) => 'hashed-' + s),
   },
   qface: {
     14: '/smile',
   },
 }))
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: envMock,
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
-vi.mock('@napgram/media-kit', () => ({
+mock.module('@napgram/media-kit', () => ({
   convert: convertMocks,
 }))
 
 describe('messageConverter', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.restoreAllMocks()
+    mock.clearAllMocks()
+    mock.restore()
     fsMocks.existsSync.mockReturnValue(true)
   })
 
@@ -358,13 +360,11 @@ describe('messageConverter', () => {
 
   it('converts sticker buffer to png and saves to napcat temp dir', async () => {
     const converter = new MessageConverter()
-    const pngBuffer = Buffer.from('png')
+    const pngBuffer = bytes('png')
     fileTypeMock.fileTypeFromBuffer.mockResolvedValue({ ext: 'webp' })
-    const dummyImage = { width: 100 }
-    imageJsMocks.decode.mockReturnValue(dummyImage)
-    imageJsMocks.encode.mockReturnValue(new Uint8Array(pngBuffer)) // encode returns Uint8Array
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.123456)
+    nativeImageMocks.png.mockResolvedValue(pngBuffer)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.123456)
 
     const result = await converter.toNapCat({
       id: '1',
@@ -375,7 +375,7 @@ describe('messageConverter', () => {
         {
           type: 'image',
           data: {
-            file: Buffer.from([0x89, 0x50]),
+            file: bytes([0x89, 0x50]),
             isSticker: true,
             mimeType: 'image/webp',
           },
@@ -398,8 +398,8 @@ describe('messageConverter', () => {
   it('falls back to local temp path when shared dir missing', async () => {
     const converter = new MessageConverter()
     fsMocks.existsSync.mockReturnValue(false)
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.5)
 
     const result = await converter.toNapCat({
       id: '1',
@@ -410,7 +410,7 @@ describe('messageConverter', () => {
         {
           type: 'audio',
           data: {
-            file: Buffer.from('audio'),
+            file: bytes('audio'),
           },
         },
       ],
@@ -419,7 +419,7 @@ describe('messageConverter', () => {
 
     const expectedName = `audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`
     expect(fsMocks.mkdir).toHaveBeenCalledWith('/data/temp', { recursive: true })
-    expect(fsMocks.writeFile).toHaveBeenCalledWith(`/data/temp/${expectedName}`, expect.any(Buffer))
+    expect(fsMocks.writeFile).toHaveBeenCalledWith(`/data/temp/${expectedName}`, expect.any(Uint8Array))
     expect(result).toEqual([
       {
         type: 'record',
@@ -434,18 +434,18 @@ describe('messageConverter', () => {
       .mockRejectedValueOnce(new Error('mkdir fail'))
       .mockRejectedValueOnce(new Error('mkdir fail'))
       .mockResolvedValueOnce(undefined)
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.4)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.4)
 
     const result = await converter.toNapCat(buildUnified([
       {
         type: 'audio',
-        data: { file: Buffer.from('audio') },
+        data: { file: bytes('audio') },
       },
     ]))
 
     const expectedName = `audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`
-    expect(fsMocks.writeFile).toHaveBeenCalledWith(`/data/temp/${expectedName}`, expect.any(Buffer))
+    expect(fsMocks.writeFile).toHaveBeenCalledWith(`/data/temp/${expectedName}`, expect.any(Uint8Array))
     expect(result).toEqual([
       {
         type: 'record',
@@ -456,11 +456,10 @@ describe('messageConverter', () => {
 
   it('downloads sticker media when instance is available', async () => {
     const converter = new MessageConverter()
-    const downloadMedia = vi.fn().mockResolvedValue(Buffer.from([0x11, 0x22]))
+    const downloadMedia = mock().mockResolvedValue(bytes([0x11, 0x22]))
     converter.setInstance({ tgBot: { downloadMedia } } as any)
     fileTypeMock.fileTypeFromBuffer.mockResolvedValue({ ext: 'webp' })
-    imageJsMocks.decode.mockReturnValue({})
-    imageJsMocks.encode.mockReturnValue(new Uint8Array(Buffer.from('png')))
+    nativeImageMocks.png.mockResolvedValue(bytes('png'))
 
     const result = await converter.toNapCat(buildUnified([
       {
@@ -478,7 +477,7 @@ describe('messageConverter', () => {
 
   it('handles empty sticker download buffer', async () => {
     const converter = new MessageConverter()
-    converter.setInstance({ tgBot: { downloadMedia: vi.fn().mockResolvedValue(Buffer.alloc(0)) } } as any)
+    converter.setInstance({ tgBot: { downloadMedia: mock().mockResolvedValue(new Uint8Array(0)) } } as any)
 
     const result = await converter.toNapCat(buildUnified([
       {
@@ -495,7 +494,7 @@ describe('messageConverter', () => {
 
   it('handles sticker download failure', async () => {
     const converter = new MessageConverter()
-    converter.setInstance({ tgBot: { downloadMedia: vi.fn().mockRejectedValue(new Error('fail')) } } as any)
+    converter.setInstance({ tgBot: { downloadMedia: mock().mockRejectedValue(new Error('fail')) } } as any)
 
     const result = await converter.toNapCat(buildUnified([
       {
@@ -513,14 +512,14 @@ describe('messageConverter', () => {
   it('handles fileTypeFromBuffer errors for non-sticker images', async () => {
     const converter = new MessageConverter()
     fileTypeMock.fileTypeFromBuffer.mockRejectedValueOnce(new Error('bad'))
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.2)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.2)
 
     const result = await converter.toNapCat(buildUnified([
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x01, 0x02]),
+          file: bytes([0x01, 0x02]),
         },
       },
     ]))
@@ -539,7 +538,7 @@ describe('messageConverter', () => {
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x01, 0x02]),
+          file: bytes([0x01, 0x02]),
           mimeType,
         },
       },
@@ -556,7 +555,7 @@ describe('messageConverter', () => {
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x01, 0x02]),
+          file: bytes([0x01, 0x02]),
         },
       },
     ]))
@@ -567,15 +566,15 @@ describe('messageConverter', () => {
   it('converts TGS sticker buffers to GIF', async () => {
     const converter = new MessageConverter()
     convertMocks.tgs2gif.mockResolvedValue('/tmp/sticker.gif')
-    fsMocks.readFile.mockResolvedValue(Buffer.from('gif'))
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.3)
+    fsMocks.readFile.mockResolvedValue(bytes('gif'))
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.3)
 
     const result = await converter.toNapCat(buildUnified([
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x1F, 0x8B, 0x08]),
+          file: bytes([0x1F, 0x8B, 0x08]),
           isSticker: true,
         },
       },
@@ -594,7 +593,7 @@ describe('messageConverter', () => {
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x1F, 0x8B, 0x08]),
+          file: bytes([0x1F, 0x8B, 0x08]),
           isSticker: true,
         },
       },
@@ -605,7 +604,7 @@ describe('messageConverter', () => {
 
   it('falls back to text when sticker conversion fails', async () => {
     const converter = new MessageConverter()
-    imageJsMocks.decode.mockImplementation(() => {
+    nativeImageMocks.constructor.mockImplementationOnce(() => {
       throw new Error('bad')
     })
 
@@ -613,7 +612,7 @@ describe('messageConverter', () => {
       {
         type: 'image',
         data: {
-          file: Buffer.from([0x01, 0x02]),
+          file: bytes([0x01, 0x02]),
           isSticker: true,
         },
       },
@@ -629,7 +628,7 @@ describe('messageConverter', () => {
       {
         type: 'video',
         data: {
-          file: Buffer.from('video'),
+          file: bytes('video'),
         },
       },
     ]))
@@ -640,7 +639,7 @@ describe('messageConverter', () => {
 
   it('converts file buffer into napcat file segment', async () => {
     const converter = new MessageConverter()
-    const buffer = Buffer.from('payload')
+    const buffer = bytes('payload')
 
     const result = await converter.toNapCat({
       id: '1',
@@ -701,8 +700,8 @@ describe('messageConverter', () => {
 
   it('builds location json and dice/at/reply segments', async () => {
     const converter = new MessageConverter()
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0)
 
     const result = await converter.toNapCat({
       id: '1',
@@ -787,7 +786,7 @@ describe('messageConverter', () => {
 
   it('falls back to location segment when json serialization fails', async () => {
     const converter = new MessageConverter()
-    const stringifySpy = vi.spyOn(JSON, 'stringify').mockImplementationOnce(() => {
+    const stringifySpy = spyOn(JSON, 'stringify').mockImplementationOnce(() => {
       throw new Error('boom')
     })
 

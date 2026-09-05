@@ -1,92 +1,70 @@
-import { Buffer } from 'node:buffer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { UnifiedConverter } from '../UnifiedConverter.js'
 
-const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn(),
-  mkdirSync: vi.fn(),
-  createWriteStream: vi.fn(() => ({
-    write: vi.fn(),
-    end: vi.fn(),
+const bytes = (value: string) => new TextEncoder().encode(value)
+const fsMocks = (() => ({
+  existsSync: mock(),
+  mkdirSync: mock(),
+  createWriteStream: mock(() => ({
+    write: mock(),
+    end: mock(),
   })),
-  mkdir: vi.fn().mockResolvedValue(undefined),
-  writeFile: vi.fn().mockResolvedValue(undefined),
-}))
+  mkdir: mock().mockResolvedValue(undefined),
+  writeFile: mock().mockResolvedValue(undefined),
+}))()
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   DATA_DIR: '/data',
   INTERNAL_WEB_ENDPOINT: 'http://internal',
   LOG_LEVEL: 'info',
   LOG_FILE_LEVEL: 'off',
   LOG_FILE: '/tmp/napgram/test.log',
+}))()
+
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO: {
+    exists: fsMocks.existsSync,
+    mkdir: fsMocks.mkdir,
+    write: fsMocks.writeFile,
+  },
 }))
 
-vi.mock('node:fs', async () => {
-  const actual = await vi.importActual<typeof import('node:fs')>('node:fs')
-  return {
-    ...actual,
-    existsSync: fsMocks.existsSync,
-    mkdirSync: fsMocks.mkdirSync,
-    createWriteStream: fsMocks.createWriteStream,
-    default: {
-      ...actual,
-      existsSync: fsMocks.existsSync,
-      mkdirSync: fsMocks.mkdirSync,
-      createWriteStream: fsMocks.createWriteStream,
-    },
-  }
-})
-
-vi.mock('node:fs/promises', async () => {
-  const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
-  return {
-    ...actual,
-    mkdir: fsMocks.mkdir,
-    writeFile: fsMocks.writeFile,
-    default: {
-      ...actual,
-      mkdir: fsMocks.mkdir,
-      writeFile: fsMocks.writeFile,
-    },
-  }
-})
-
-vi.mock('@napgram/infra-kit', () => ({
+mock.module('@napgram/infra-kit', () => ({
   env: envMock,
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+  getLogger: mock(() => ({
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    debug: mock(),
   })),
   temp: {
     TEMP_PATH: '/tmp/napgram',
-    file: vi.fn(),
-    createTempFile: vi.fn(),
+    file: mock(),
+    createTempFile: mock(),
   },
   hashing: {
-    md5Hex: vi.fn((s) => 'hashed-' + s),
+    md5Hex: mock((s) => 'hashed-' + s),
   },
 }))
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: envMock,
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    debug: mock(),
   })),
 }))
 
 describe('unifiedConverter', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.123456)
+    mock.clearAllMocks()
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.123456)
   })
 
   it('converts text, numeric at, and reply segments', async () => {
@@ -140,13 +118,13 @@ describe('unifiedConverter', () => {
       sender: { id: 'u', name: 'User' },
       chat: { id: 'c', type: 'group' },
       content: [
-        { type: 'image', data: { file: Buffer.from('img') } },
+        { type: 'image', data: { file: bytes('img') } },
       ],
       timestamp: 1,
     })
 
     expect(fsMocks.mkdir).toHaveBeenCalledWith('/app/.config/QQ/NapCat/temp', { recursive: true })
-    expect(fsMocks.writeFile).toHaveBeenCalledWith(`/app/.config/QQ/NapCat/temp/${expectedName}`, expect.any(Buffer))
+    expect(fsMocks.writeFile).toHaveBeenCalledWith(`/app/.config/QQ/NapCat/temp/${expectedName}`, expect.any(Uint8Array))
     expect(result).toEqual([
       {
         type: 'image',
@@ -165,13 +143,13 @@ describe('unifiedConverter', () => {
       sender: { id: 'u', name: 'User' },
       chat: { id: 'c', type: 'group' },
       content: [
-        { type: 'file', data: { file: Buffer.from('file'), filename: 'doc.txt' } },
+        { type: 'file', data: { file: bytes('file'), filename: 'doc.txt' } },
       ],
       timestamp: 1,
     })
 
     expect(fsMocks.mkdir).toHaveBeenCalledWith('/data/temp', { recursive: true })
-    expect(fsMocks.writeFile).toHaveBeenCalledWith('/data/temp/doc.txt', expect.any(Buffer))
+    expect(fsMocks.writeFile).toHaveBeenCalledWith('/data/temp/doc.txt', expect.any(Uint8Array))
     expect(result).toEqual([
       { type: 'file', data: { file: '/data/temp/doc.txt', name: 'doc.txt' } },
     ])
@@ -207,7 +185,7 @@ describe('unifiedConverter', () => {
       platform: 'telegram',
       sender: { id: 'u', name: 'User' },
       chat: { id: 'c', type: 'group' },
-      content: [{ type: 'video', data: { file: Buffer.from('vid'), isSpoiler: true } }], // isSpoiler ignored for video?
+      content: [{ type: 'video', data: { file: bytes('vid'), isSpoiler: true } }], // isSpoiler ignored for video?
       timestamp: 1,
     })
     expect(videoRes[0].type).toBe('video')
@@ -221,7 +199,7 @@ describe('unifiedConverter', () => {
       platform: 'telegram',
       sender: { id: 'u', name: 'User' },
       chat: { id: 'c', type: 'group' },
-      content: [{ type: 'audio', data: { file: Buffer.from('aud') } }],
+      content: [{ type: 'audio', data: { file: bytes('aud') } }],
       timestamp: 1,
     })
     expect(audioRes[0].type).toBe('record')
@@ -264,7 +242,7 @@ describe('unifiedConverter', () => {
       platform: 'telegram',
       sender: { id: 'u', name: 'User' },
       chat: { id: 'c', type: 'group' },
-      content: [{ type: 'image', data: { file: Buffer.from('fail') } }],
+      content: [{ type: 'image', data: { file: bytes('fail') } }],
       timestamp: 1,
     })
 

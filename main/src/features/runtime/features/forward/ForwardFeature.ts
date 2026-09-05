@@ -3,7 +3,7 @@ import type { MessageContent, MessageSegment, UnifiedMessage } from '@napgram/me
 import type { ForwardMap, ForwardPairRecord, Instance, IQQClient, Telegram } from '../../runtime-types.js'
 import type { CommandsFeature } from '../commands/CommandsFeature.js'
 import type { MediaFeature } from '../MediaFeature.js'
-import process from 'node:process'
+import { bunEnv } from '../../../../shared/utils/runtime.js'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
 import { and, db, eq, schema } from '../../capabilities/db.js'
@@ -193,7 +193,7 @@ export class ForwardFeature {
   }
 
   private getMinSendIntervalMs(): number {
-    if (process.env.NODE_ENV === 'test')
+    if (bunEnv.NODE_ENV === 'test')
       return 0
     return DEFAULT_TG_SEND_INTERVAL_MS
   }
@@ -1015,13 +1015,13 @@ export class ForwardFeature {
   destroy() {
     this.personalSyncService?.stop()
     this.mediaGroupHandler.destroy()
-    this.qqClient.removeListener('message', this.handleQQMessage)
-    this.qqClient.removeListener('poke', this.handlePokeEvent)
-    this.qqClient.removeListener('friend.increase', this.handleFriendIncrease)
-    this.qqClient.removeListener('friend.decrease', this.handleFriendDecrease)
-    this.qqClient.removeListener('group.increase', this.handleGroupIncrease)
-    this.qqClient.removeListener('group.decrease', this.handleGroupDecrease)
-    this.qqClient.removeListener('input.status', this.handleInputStatus)
+    this.qqClient.off('message', this.handleQQMessage)
+    this.qqClient.off('poke', this.handlePokeEvent)
+    this.qqClient.off('friend.increase', this.handleFriendIncrease)
+    this.qqClient.off('friend.decrease', this.handleFriendDecrease)
+    this.qqClient.off('group.increase', this.handleGroupIncrease)
+    this.qqClient.off('group.decrease', this.handleGroupDecrease)
+    this.qqClient.off('input.status', this.handleInputStatus)
     this.tgBot.removeNewMessageEventHandler(this.handleTgMessage)
     this.tgBot.removeEditedMessageEventHandler?.(this.handleTgEditedMessage)
     logger.info('ForwardFeature destroyed')

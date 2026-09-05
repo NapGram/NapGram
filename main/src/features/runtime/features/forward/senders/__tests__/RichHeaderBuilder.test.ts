@@ -1,8 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { RichHeaderBuilder } from '../RichHeaderBuilder.js'
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', () => ({
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -12,8 +11,8 @@ vi.mock('@napgram/env-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('../../../capabilities/hashing.js', () => ({
-  md5Hex: vi.fn((value: string) => value),
+mock.module('../../../capabilities/hashing.js', () => ({
+  md5Hex: mock((value: string) => value),
 }))
 
 describe('richHeaderBuilder', () => {

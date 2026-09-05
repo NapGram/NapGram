@@ -1,13 +1,16 @@
-import type { Buffer } from 'node:buffer'
 import type { Chat, MessageReceipt, Sender, UnifiedMessage } from './message.js'
 import type { NapCatCreateParams } from './interface.js'
 import type { ForwardMessage } from './types/index.js'
-import { EventEmitter } from 'node:events'
+import { EventEmitter } from './events.js'
 import { NapLink } from '@naplink/naplink'
 import { getQQClientDependencies, resolveLoggerFactory } from './deps.js'
 import { napCatForwardMultiple } from './napcatConvert.js'
 import { setupNapCatEvents } from './napcatEvents.js'
 import { buildReceipt, normalizeMediaIds, pickFirstDefined, unwrapApiResult } from './napcatReceipt.js'
+
+const bunRuntime = (globalThis as typeof globalThis & {
+  Bun: { env: Record<string, string | undefined> }
+}).Bun
 
 function getLogger(name: string) {
   const { loggerFactory } = getQQClientDependencies()
@@ -22,7 +25,7 @@ const DEFAULT_FORWARD_TIMEOUT_MS = 600_000
 const MAX_FORWARD_TIMEOUT_MS = 1_800_000
 
 function resolveForwardTimeoutMs(): number {
-  const raw = process.env.NAPCAT_FORWARD_TIMEOUT_MS?.trim()
+  const raw = bunRuntime.env.NAPCAT_FORWARD_TIMEOUT_MS?.trim()
   if (!raw || !/^\d+$/.test(raw)) return DEFAULT_FORWARD_TIMEOUT_MS
 
   const value = Number(raw)
@@ -443,16 +446,16 @@ export class NapCatAdapter extends EventEmitter {
     return this.client.api.setGroupAnonymousBan(groupId, anonymousFlag, duration)
   }
 
-  async uploadGroupFile(groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string, folder?: string, uploadFile?: boolean): Promise<any> {
+  async uploadGroupFile(groupId: string, file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>, name: string, folder?: string, uploadFile?: boolean): Promise<any> {
     return (this.client.api as any).uploadGroupFile(groupId, file, name, folder, uploadFile)
   }
 
-  async uploadPrivateFile(userId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream, name: string, uploadFile?: boolean): Promise<any> {
+  async uploadPrivateFile(userId: string, file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>, name: string, uploadFile?: boolean): Promise<any> {
     return (this.client.api as any).uploadPrivateFile(userId, file, name, uploadFile)
   }
 
-  async setGroupPortrait(groupId: string, file: string | Buffer | Uint8Array | NodeJS.ReadableStream): Promise<any> {
-    return this.client.api.setGroupPortrait(groupId, file)
+  async setGroupPortrait(groupId: string, file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>): Promise<any> {
+    return (this.client.api as any).setGroupPortrait(groupId, file)
   }
 
   async getGroupFileSystemInfo(groupId: string): Promise<any> {
@@ -488,7 +491,7 @@ export class NapCatAdapter extends EventEmitter {
   }
 
   async uploadFileStream(
-    file: string | Buffer | Uint8Array | NodeJS.ReadableStream,
+    file: string | Uint8Array | ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>,
     options?: {
       chunkSize?: number
       streamId?: string
@@ -499,7 +502,7 @@ export class NapCatAdapter extends EventEmitter {
       verifyOnly?: boolean
     },
   ): Promise<any> {
-    return this.client.api.uploadFileStream(file, options as any)
+    return (this.client.api as any).uploadFileStream(file, options as any)
   }
 
   async getUploadStreamStatus(streamId: string): Promise<any> {

@@ -1,20 +1,37 @@
-import { Buffer } from 'node:buffer'
-import fs from 'node:fs'
-import path from 'node:path'
+import { bytesFromUtf8 } from '../../../../../../shared/utils/binary.js'
+import { basename, joinPath } from '../../../../../../shared/utils/path.js'
 import { env } from '@napgram/env-kit'
 import { silk } from '@napgram/media-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { ForwardMediaPreparer } from '../MediaPreparer.js'
 
-vi.mock('@napgram/media-kit', () => ({
+const fileIOMocks = {
+  readBytes: mock().mockResolvedValue(bytesFromUtf8('dummy')),
+  readText: mock(),
+  write: mock().mockResolvedValue(0),
+  exists: mock().mockResolvedValue(true),
+  access: mock().mockResolvedValue(undefined),
+  mkdir: mock().mockResolvedValue(undefined),
+  mkdtemp: mock(),
+  stat: mock().mockResolvedValue({ size: 100 }),
+  readdir: mock().mockResolvedValue([]),
+  remove: mock().mockResolvedValue(undefined),
+  unlink: mock().mockResolvedValue(undefined),
+}
+
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO: fileIOMocks,
+  spawnFileWithBun: mock().mockResolvedValue({ command: [], stdout: '', stderr: '', exitCode: 0 }),
+}))
+
+mock.module('@napgram/media-kit', () => ({
   silk: {
-    encode: vi.fn(),
-    decode: vi.fn(),
+    encode: mock(),
+    decode: mock(),
   },
 }))
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', () => ({
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -24,36 +41,33 @@ vi.mock('@napgram/env-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    trace: mock(),
   })),
 }))
 
 describe('forwardMediaPreparer', () => {
   const mockInstance = {
     tgBot: {
-      downloadMedia: vi.fn(),
-      downloadMediaToTempFile: vi.fn(),
+      downloadMedia: mock(),
+      downloadMediaToTempFile: mock(),
     },
   } as any
   const mockMediaFeature = {
-    downloadMedia: vi.fn(),
+    downloadMedia: mock(),
   } as any
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.spyOn(fs.promises, 'access').mockResolvedValue(undefined)
-    vi.spyOn(fs.promises, 'readFile').mockResolvedValue(Buffer.from('dummy'))
-    vi.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined)
-    vi.spyOn(fs.promises, 'mkdir').mockResolvedValue(undefined)
-    vi.spyOn(fs.promises, 'stat').mockResolvedValue({ size: 100 } as any)
-    vi.spyOn(fs, 'existsSync').mockReturnValue(true)
+    fileIOMocks.access.mockResolvedValue(undefined)
+    fileIOMocks.readBytes.mockResolvedValue(bytesFromUtf8('dummy'))
+    fileIOMocks.write.mockResolvedValue(0)
+    fileIOMocks.mkdir.mockResolvedValue(undefined)
+    fileIOMocks.stat.mockResolvedValue({ size: 100 } as any)
   })
 
   it('prepareMediaForQQ skip sticker', async () => {
@@ -73,8 +87,8 @@ describe('forwardMediaPreparer', () => {
         { type: 'video', data: { file: 'vid.mp4' } },
       ],
     }
-    vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/file')
-    vi.spyOn(preparer, 'ensureFilePath').mockResolvedValue('http://example.com/file')
+    spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/file')
+    spyOn(preparer, 'ensureFilePath').mockResolvedValue('http://example.com/file')
 
     await preparer.prepareMediaForQQ(msg)
     expect(msg.content[0].data.file).toBe('http://example.com/file')
@@ -85,12 +99,12 @@ describe('forwardMediaPreparer', () => {
     const msg: any = {
       content: [{ type: 'audio', data: { file: 'aud.ogg' } }],
     }
-    vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/aud.ogg')
-    vi.spyOn(preparer, 'ensureFilePath')
+    spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/aud.ogg')
+    spyOn(preparer, 'ensureFilePath')
       .mockResolvedValueOnce('path/to/aud.ogg') // first call inside audio block
       .mockResolvedValueOnce('http://example.com/aud.silk') // second call after encode
 
-    vi.mocked(silk.encode).mockResolvedValueOnce(Buffer.from('silk-data'))
+    ;(silk as any).encode.mockResolvedValueOnce(bytesFromUtf8('silk-data'))
 
     await preparer.prepareMediaForQQ(msg)
     expect(msg.content[0].data.file).toBe('http://example.com/aud.silk')
@@ -101,33 +115,33 @@ describe('forwardMediaPreparer', () => {
     const msg: any = {
       content: [{ type: 'audio', data: { file: 'aud.ogg' } }],
     }
-    vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/aud.ogg')
-    vi.spyOn(preparer, 'ensureFilePath').mockResolvedValue('path/to/aud.ogg')
-    vi.mocked(silk.encode).mockRejectedValueOnce(new Error('fail'))
+    spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue('path/to/aud.ogg')
+    spyOn(preparer, 'ensureFilePath').mockResolvedValue('path/to/aud.ogg')
+    ;(silk as any).encode.mockRejectedValueOnce(new Error('fail'))
 
     await preparer.prepareMediaForQQ(msg)
     expect(msg.content[0].type).toBe('file')
     expect(msg.content[0].data.file).toBe('path/to/aud.ogg')
-    expect(msg.content[0].data.filename).toBe(path.basename('path/to/aud.ogg'))
+    expect(msg.content[0].data.filename).toBe(basename('path/to/aud.ogg'))
   })
 
   it('ensureBufferOrPath handles different cases', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
 
     // Case 1: Already buffer
-    const buf = Buffer.from('data')
+    const buf = bytesFromUtf8('data')
     expect(await preparer.ensureBufferOrPath({ data: { file: buf } } as any)).toBe(buf)
 
     // Case 2: Local file
     expect(await preparer.ensureBufferOrPath({ data: { file: '/local/path' } } as any)).toBe('/local/path')
 
     // Case 3: URL
-    mockMediaFeature.downloadMedia.mockResolvedValueOnce(Buffer.from('downloaded'))
-    expect(await preparer.ensureBufferOrPath({ data: { file: 'http://example.com/img' } } as any)).toEqual(Buffer.from('downloaded'))
+    mockMediaFeature.downloadMedia.mockResolvedValueOnce(bytesFromUtf8('downloaded'))
+    expect(await preparer.ensureBufferOrPath({ data: { file: 'http://example.com/img' } } as any)).toEqual(bytesFromUtf8('downloaded'))
 
     // Case 4: TG object
-    mockInstance.tgBot.downloadMedia.mockResolvedValueOnce(Buffer.from('tg-data'))
-    expect(await preparer.ensureBufferOrPath({ data: { file: { fileId: '123' } } } as any)).toEqual(Buffer.from('tg-data'))
+    mockInstance.tgBot.downloadMedia.mockResolvedValueOnce(bytesFromUtf8('tg-data'))
+    expect(await preparer.ensureBufferOrPath({ data: { file: { fileId: '123' } } } as any)).toEqual(bytesFromUtf8('tg-data'))
   })
 
   it('prepareMediaForQQ converts failing media to text', async () => {
@@ -135,7 +149,7 @@ describe('forwardMediaPreparer', () => {
     const msg: any = {
       content: [{ type: 'image', data: { file: 'img.jpg' } }],
     }
-    vi.spyOn(preparer, 'ensureBufferOrPath').mockRejectedValueOnce(new Error('boom'))
+    spyOn(preparer, 'ensureBufferOrPath').mockRejectedValueOnce(new Error('boom'))
 
     await preparer.prepareMediaForQQ(msg)
     expect(msg.content[0].type).toBe('text')
@@ -144,17 +158,17 @@ describe('forwardMediaPreparer', () => {
 
   it('ensureBufferOrPath downloads when local file missing', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
-    vi.spyOn(fs.promises, 'access').mockRejectedValueOnce(new Error('missing'))
-    mockMediaFeature.downloadMedia.mockResolvedValueOnce(Buffer.from('fallback'))
+    fileIOMocks.access.mockRejectedValueOnce(new Error('missing'))
+    mockMediaFeature.downloadMedia.mockResolvedValueOnce(bytesFromUtf8('fallback'))
 
     const result = await preparer.ensureBufferOrPath({ data: { file: '/missing/path' } } as any)
     expect(mockMediaFeature.downloadMedia).toHaveBeenCalledWith('/missing/path')
-    expect(result).toEqual(Buffer.from('fallback'))
+    expect(result).toEqual(bytesFromUtf8('fallback'))
   })
 
   it('waitFileStable should check file size stability', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
-    vi.spyOn(fs.promises, 'stat')
+    fileIOMocks.stat
       .mockResolvedValueOnce({ size: 10 } as any)
       .mockResolvedValueOnce({ size: 10 } as any)
 
@@ -164,7 +178,7 @@ describe('forwardMediaPreparer', () => {
 
   it('prepareAudioSource uses wav sibling when stable', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
-    vi.spyOn(preparer as any, 'waitFileStable').mockResolvedValue(true)
+    spyOn(preparer as any, 'waitFileStable').mockResolvedValue(true)
     const audioContent: any = { type: 'audio', data: { file: '/tmp/voice.amr' } }
 
     const result = await preparer.prepareAudioSource(audioContent)
@@ -173,7 +187,7 @@ describe('forwardMediaPreparer', () => {
 
   it('convertAudioToOgg detects SILK header in buffer', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
-    const silkBuf = Buffer.from('#!SILK_V3')
+    const silkBuf = bytesFromUtf8('#!SILK_V3x')
 
     await preparer.convertAudioToOgg(silkBuf)
     expect(silk.decode).toHaveBeenCalled()
@@ -181,13 +195,13 @@ describe('forwardMediaPreparer', () => {
 
   it('ensureFilePath returns web endpoint url or local path', async () => {
     const preparer = new ForwardMediaPreparer(mockInstance, mockMediaFeature)
-    const buf = Buffer.from('data')
+    const buf = bytesFromUtf8('data')
 
     const url = await preparer.ensureFilePath(buf, '.txt')
     expect(url).toContain(env.WEB_ENDPOINT)
 
     const local = await preparer.ensureFilePath(buf, '.txt', true)
-    expect(String(local)).toContain(path.join(env.DATA_DIR, 'temp'))
+    expect(String(local)).toContain(joinPath(env.DATA_DIR, 'temp'))
   })
 
   it('ensureBufferOrPath supports TG download to temp file when prefer path', async () => {

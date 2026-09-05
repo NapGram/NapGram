@@ -1,18 +1,16 @@
 import { definePlugin } from '@napgram/sdk'
 import type { PluginContext, PluginLogger } from '@napgram/sdk'
 import { getSystemOwners, type AdminIdentityValue } from '@napgram/env-kit'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import { sql } from 'drizzle-orm'
 import { PermissionService } from './services/PermissionService.js'
 import type { PermissionDatabase, PermissionServiceExports } from './services/PermissionService.js'
 import { PermissionCommands } from './commands/PermissionCommands.js'
 import { PermissionLevel } from './types/index.js'
 import { commandPermissions, permissionAuditLogs, userPermissions } from './database/schema.js'
-import { readFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 
-const moduleFilePath = fileURLToPath(import.meta.url)
-const moduleDir = dirname(moduleFilePath)
+const moduleFilePath = decodeURIComponent(new URL(import.meta.url).pathname)
+const moduleDir = moduleFilePath.slice(0, moduleFilePath.lastIndexOf('/'))
 
 type SystemOwnersConfig = {
     qq?: AdminIdentityValue
@@ -31,7 +29,7 @@ async function checkPermissionTablesExist(db: PermissionDatabase, logger: Plugin
               AND table_name IN ('UserPermissions', 'CommandPermissions', 'PermissionAuditLogs')
         `)
 
-        const count = parseInt(String((result.rows[0] as any)?.count || '0'))
+        const count = parseInt(String((result[0] as any)?.count || '0'))
         return count === 3
     } catch (error) {
         logger.warn({ error }, 'Failed to check permission tables')
@@ -44,8 +42,8 @@ async function checkPermissionTablesExist(db: PermissionDatabase, logger: Plugin
  */
 async function runAutoMigration(db: PermissionDatabase, logger: PluginLogger): Promise<void> {
     try {
-        const migrationPath = join(moduleDir, 'database/migrations/001_initial.sql')
-        const migrationSQL = readFileSync(migrationPath, 'utf-8')
+        const migrationPath = `${moduleDir}/database/migrations/001_initial.sql`
+        const migrationSQL = await runtimeFileIO.readText(migrationPath)
 
         logger.info('Running database migration for permission management...')
         await db.execute(sql.raw(migrationSQL))

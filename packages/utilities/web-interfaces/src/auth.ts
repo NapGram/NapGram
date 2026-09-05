@@ -1,5 +1,5 @@
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
 import type { FastifyInstance } from 'fastify'
-import process from 'node:process'
 import '@fastify/cookie'
 import { z } from 'zod'
 import { AuthService, requirePermission } from '@napgram/auth-kit'
@@ -55,7 +55,7 @@ export default async function (fastify: FastifyInstance) {
       // 设置 cookie
       reply.setCookie('admin_token', result.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: bunEnv.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60, // 7 days
       })
@@ -97,7 +97,7 @@ export default async function (fastify: FastifyInstance) {
       // 设置 cookie
       reply.setCookie('admin_token', body.token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: bunEnv.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60,
       })

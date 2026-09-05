@@ -1,5 +1,23 @@
-import { Buffer } from 'node:buffer'
-import crypto from 'node:crypto'
+import { readUint16BE, readUint32BE } from './binary.js'
+
+interface BunRandomRuntime {
+  randomUUIDv7?: () => string
+}
+
+function getBunRandomRuntime(): BunRandomRuntime | undefined {
+  return (globalThis as typeof globalThis & { Bun?: BunRandomRuntime }).Bun
+}
+
+function randomHex(length: number) {
+  const bytes = new Uint8Array(Math.ceil(length / 2))
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('').slice(0, length)
+}
+
+function createFallbackUuid() {
+  const hex = (length: number) => randomHex(length)
+  return `${hex(8)}-${hex(4)}-${hex(4)}-${hex(4)}-${hex(12)}`
+}
 
 const random = {
   int(min: number, max: number) {
@@ -8,22 +26,23 @@ const random = {
     return Math.floor(Math.random() * (max - min + 1)) + min
   },
   hex(length: number) {
-    return crypto.randomBytes(length / 2).toString('hex')
+    return randomHex(length)
   },
   pick<T>(...array: T[]) {
     const index = random.int(0, array.length - 1)
     return array[index]
   },
   fakeUuid() {
-    return `${random.hex(8)}-${random.hex(4)}-${random.hex(4)}-${random.hex(4)}-${random.hex(12)}`
+    const nativeUuid = getBunRandomRuntime()?.randomUUIDv7?.()
+    return nativeUuid || createFallbackUuid()
   },
   imei() {
     const uin = random.int(1000000, 4294967295)
     let imei = uin % 2 ? '86' : '35'
-    const buf = Buffer.alloc(4)
-    buf.writeUInt32BE(uin)
-    let a: number | string = buf.readUInt16BE()
-    let b: number | string = Buffer.concat([Buffer.alloc(1), buf.slice(1)]).readUInt32BE()
+    const buf = new Uint8Array(4)
+    new DataView(buf.buffer).setUint32(0, uin, false)
+    let a: number | string = readUint16BE(buf.subarray(0, 2))
+    let b: number | string = readUint32BE(new Uint8Array([0, ...buf.subarray(1)]))
     if (a > 9999)
       a = Math.trunc(a / 10)
     else if (a < 1000)

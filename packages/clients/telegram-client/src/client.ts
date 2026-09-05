@@ -1,10 +1,8 @@
 import type { InputPeerLike, InputText, User } from '@mtcute/core'
-import { Buffer } from 'node:buffer'
-import fs from 'node:fs'
-import path from 'node:path'
 import { Message } from '@mtcute/core'
 import { Dispatcher } from '@mtcute/dispatcher'
 import { HttpProxyTcpTransport, SocksProxyTcpTransport, TelegramClient } from '@mtcute/bun'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import {
   getTelegramClientDependencies,
   resolveLoggerFactory,
@@ -12,6 +10,16 @@ import {
   resolveTempPath,
 } from './deps.js'
 import type { LoggerLike, TelegramClientDependencies, TelegramEnv, TelegramSessionStore } from './deps.js'
+
+const bunRuntime = (globalThis as typeof globalThis & {
+  Bun: {
+    env: Record<string, string | undefined>
+    spawnSync(command: string[]): { exitCode: number }
+  }
+}).Bun
+
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
+const basename = (input: string) => input.replaceAll('\\', '/').split('/').pop() || ''
 
 // Define types for handlers
 export type MessageHandler = (message: Message) => Promise<boolean | void>
@@ -149,31 +157,22 @@ export default class Telegram {
     this.tempPath = resolveTempPath(this.env, deps.tempPath)
 
     const dataDir = this.env.DATA_DIR || '/app/data'
-    if (!fs.existsSync(dataDir)) {
-      try {
-        fs.mkdirSync(dataDir, { recursive: true })
-      }
-      catch (err: any) {
-        this.logger.error(`无法创建数据目录 ${dataDir}: 权限拒绝。请确保容器内用户对挂载卷有写权限。`, err)
-        throw new Error(`EACCES: 权限拒绝，无法创建目录 ${dataDir}`)
-      }
+    const mkdirResult = bunRuntime.spawnSync(['mkdir', '-p', dataDir])
+    if (mkdirResult.exitCode !== 0) {
+      this.logger.error(`无法创建数据目录 ${dataDir}。请确保容器内用户对挂载卷有写权限。`)
+      throw new Error(`EACCES: 权限拒绝，无法创建目录 ${dataDir}`)
     }
 
-    // 测试目录写权限
-    try {
-      const testFile = path.join(dataDir, `.perm_test_${Date.now()}`)
-      fs.writeFileSync(testFile, '')
-      fs.unlinkSync(testFile)
+    // Test directory write permissions with Bun's native subprocess contract.
+    const testFile = joinPath(dataDir, `.perm_test_${Date.now()}`)
+    const touchResult = bunRuntime.spawnSync(['touch', testFile])
+    if (touchResult.exitCode !== 0) {
+      this.logger.error(`对数据目录 ${dataDir} 没有写权限。请检查挂载卷权限。`)
+      throw new Error(`EACCES: 权限拒绝，无法写入目录 ${dataDir}`)
     }
-    catch (err: any) {
-      if (err.code === 'EACCES') {
-        this.logger.error(`对数据目录 ${dataDir} 没有写权限。
-请检查挂载卷权限，或运行: chown -R 1000:1000 <主机数据目录>`, err)
-        throw new Error(`EACCES: 权限拒绝，无法写入目录 ${dataDir}`)
-      }
-    }
+    bunRuntime.spawnSync(['rm', '-f', testFile])
 
-    const defaultStorage = path.join(dataDir, 'session.db')
+    const defaultStorage = joinPath(dataDir, 'session.db')
     const finalStorage = storage || defaultStorage
     const proxyTransport = this.createProxyTransport()
 
@@ -367,9 +366,9 @@ export default class Telegram {
   /**
    * 下载媒体文件
    * @param media 媒体对象或 Message
-   * @returns 文件内容的 Buffer
+   * @returns 文件内容的 Uint8Array
    */
-  public async downloadMedia(media: any | Message): Promise<Buffer> {
+  public async downloadMedia(media: any | Message): Promise<Uint8Array> {
     let result: Uint8Array
     if (media instanceof Message && media.media) {
       result = await this.client.downloadAsBuffer(media.media as any)
@@ -377,7 +376,7 @@ export default class Telegram {
     else {
       result = await this.client.downloadAsBuffer(media)
     }
-    return Buffer.from(result)
+    return result
   }
 
   private getTempUrl(filename: string) {
@@ -386,8 +385,7 @@ export default class Telegram {
   }
 
   private sanitizeFilename(name: string) {
-    return path
-      .basename(name)
+    return basename(name)
       .replace(/[\\/]/g, '_')
       .replace(/[^\w.\-+@() ]/g, '_')
       .trim()
@@ -414,8 +412,8 @@ export default class Telegram {
     const ext = options?.ext ? (options.ext.startsWith('.') ? options.ext : `.${options.ext}`) : ''
     const filename = ext && !sanitized.toLowerCase().endsWith(ext.toLowerCase()) ? `${sanitized}${ext}` : sanitized
 
-    await fs.promises.mkdir(this.tempPath, { recursive: true })
-    const filePath = path.join(this.tempPath, filename)
+    await runtimeFileIO.mkdir(this.tempPath, { recursive: true })
+    const filePath = joinPath(this.tempPath, filename)
 
     try {
       const location = media instanceof Message && (media as any).media ? (media as any).media : media
@@ -423,7 +421,7 @@ export default class Telegram {
     }
     catch (error) {
       try {
-        await fs.promises.rm(filePath, { force: true })
+        await runtimeFileIO.remove(filePath, { force: true })
       }
       catch { }
       throw error
@@ -435,16 +433,16 @@ export default class Telegram {
   /**
    * 下载用户头像
    * @param userId 用户 ID
-   * @returns 头像文件的 Buffer，如果没有头像则返回 null
+   * @returns 头像文件的 Uint8Array，如果没有头像则返回 null
    */
-  public async downloadProfilePhoto(userId: InputPeerLike): Promise<Buffer | null> {
+  public async downloadProfilePhoto(userId: InputPeerLike): Promise<Uint8Array | null> {
     try {
       const chat = await this.client.getChat(userId)
       if (!chat.photo) {
         return null
       }
       const result = await this.client.downloadAsBuffer(chat.photo.big as any)
-      return Buffer.from(result)
+      return result
     }
     catch (error) {
       this.logger.warn(`Failed to download profile photo for ${userId}:`, error)

@@ -1,8 +1,66 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import process from 'node:process'
-import { inspect } from 'node:util'
 import { env } from '@napgram/env-kit'
+
+interface BunLoggerWriter {
+  write(data: string): unknown
+  end(): unknown
+}
+
+interface BunLoggerRuntime {
+  env: Record<string, string | undefined>
+  file(path: string): { writer(): BunLoggerWriter }
+  stdout: { write(data: string): unknown }
+  stderr: { write(data: string): unknown }
+  inspect(value: unknown, options?: { depth?: number, colors?: boolean, breakLength?: number }): string
+  spawnSync(command: string[], options?: { stdin?: string | Uint8Array, stdout?: 'pipe', stderr?: 'pipe' }): {
+    exitCode: number
+    stdout?: Uint8Array
+  }
+}
+
+const bunRuntime = (globalThis as typeof globalThis & { Bun: BunLoggerRuntime }).Bun
+const decoder = new TextDecoder()
+
+function runBun(command: string[], options?: { stdin?: string | Uint8Array, stdout?: 'pipe', stderr?: 'pipe' }) {
+  return bunRuntime.spawnSync(command, options)
+}
+
+const pathUtils = {
+  dirname(filePath: string) {
+    const index = filePath.lastIndexOf('/')
+    return index > 0 ? filePath.slice(0, index) : '.'
+  },
+  join(...parts: string[]) {
+    return parts.filter(Boolean).join('/')
+  },
+}
+
+const bunFileIO = {
+  existsSync(filePath: string) {
+    return runBun(['test', '-e', filePath]).exitCode === 0
+  },
+  mkdirSync(filePath: string) {
+    const result = runBun(['mkdir', '-p', filePath])
+    if (result.exitCode !== 0) throw new Error(`Failed to create directory: ${filePath}`)
+  },
+  readdirSync(filePath: string) {
+    const result = runBun(['find', filePath, '-maxdepth', '1', '-type', 'f', '-printf', '%f\\n'], { stdout: 'pipe' })
+    if (result.exitCode !== 0) throw new Error(`Failed to list directory: ${filePath}`)
+    return decoder.decode(result.stdout ?? new Uint8Array()).trim().split('\\n').filter(Boolean)
+  },
+  statSync(filePath: string) {
+    const result = runBun(['stat', '-c', '%Y', filePath], { stdout: 'pipe' })
+    if (result.exitCode !== 0) throw new Error(`Failed to stat file: ${filePath}`)
+    return { mtimeMs: Number(decoder.decode(result.stdout ?? new Uint8Array()).trim()) * 1000 }
+  },
+  unlinkSync(filePath: string) {
+    const result = runBun(['rm', '-f', filePath])
+    if (result.exitCode !== 0) throw new Error(`Failed to remove file: ${filePath}`)
+  },
+  createWriteStream(filePath: string) {
+    return bunRuntime.file(filePath).writer()
+  },
+}
+
 
 type LogLevel = 'silly' | 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal'
 type EnvLogLevel = Exclude<LogLevel, 'silly'> | 'mark' | 'off'
@@ -32,7 +90,7 @@ const fileLevel = normalizeLevel(env.LOG_FILE_LEVEL as any)
 let consoleThreshold = levelId[consoleLevel]
 const fileThreshold = levelId[fileLevel]
 const fileLoggingRequested = fileThreshold < levelId.off
-const tz = process.env.TZ || 'Asia/Shanghai'
+const tz = bunRuntime.env.TZ || 'Asia/Shanghai'
 const timeFormatter = new Intl.DateTimeFormat('sv-SE', {
   timeZone: tz,
   hour12: false,
@@ -50,13 +108,13 @@ const dateFormatter = new Intl.DateTimeFormat('sv-SE', {
   day: '2-digit',
 })
 
-const logDir = path.dirname(env.LOG_FILE)
-let fileStream: fs.WriteStream | null = null
+const logDir = pathUtils.dirname(env.LOG_FILE)
+let fileStream: BunLoggerWriter | null = null
 let fileLoggingEnabled = fileLoggingRequested
 if (fileLoggingRequested) {
   try {
-    if (!fs.existsSync(logDir)) {
-      fs.mkdirSync(logDir, { recursive: true })
+    if (!bunFileIO.existsSync(logDir)) {
+      bunFileIO.mkdirSync(logDir)
     }
   }
   catch {
@@ -65,26 +123,26 @@ if (fileLoggingRequested) {
 }
 
 function cleanupOldLogs() {
-  if (!fileLoggingEnabled || !fs.existsSync(logDir)) return
+  if (!fileLoggingEnabled || !bunFileIO.existsSync(logDir)) return
 
   try {
     const retentionDays = env.LOG_RETENTION_DAYS
     if (retentionDays <= 0) return
 
     const now = Date.now()
-    const files = fs.readdirSync(logDir)
+    const files = bunFileIO.readdirSync(logDir)
 
     for (const file of files) {
       if (!file.endsWith('.log') && !file.endsWith('.jsonl')) continue
 
-      const filePath = path.join(logDir, file)
+      const filePath = pathUtils.join(logDir, file)
       try {
-        const stat = fs.statSync(filePath)
+        const stat = bunFileIO.statSync(filePath)
         const ageDays = (now - stat.mtimeMs) / (1000 * 60 * 60 * 24)
 
         if (ageDays > retentionDays) {
-          fs.unlinkSync(filePath)
-          process.stdout.write(`[Logger] Cleaned up old log file: ${file} (Age: ${ageDays.toFixed(1)} days)\n`)
+          bunFileIO.unlinkSync(filePath)
+          bunRuntime.stdout.write(`[Logger] Cleaned up old log file: ${file} (Age: ${ageDays.toFixed(1)} days)\n`)
         }
       }
       catch {
@@ -92,20 +150,20 @@ function cleanupOldLogs() {
     }
   }
   catch (error) {
-    process.stderr.write(`[Logger] Failed to cleanup logs: ${error}\n`)
+    bunRuntime.stderr.write(`[Logger] Failed to cleanup logs: ${error}\n`)
   }
 }
 
 cleanupOldLogs()
 
 function buildDatedFile(dateStr: string) {
-  return path.join(logDir, `${dateStr}.1.jsonl`)
+  return pathUtils.join(logDir, `${dateStr}.1.jsonl`)
 }
 
 let currentDate = dateFormatter.format(new Date())
 if (fileLoggingEnabled) {
   try {
-    fileStream = fs.createWriteStream(buildDatedFile(currentDate), { flags: 'a' })
+    fileStream = bunFileIO.createWriteStream(buildDatedFile(currentDate))
   }
   catch {
     fileLoggingEnabled = false
@@ -121,7 +179,7 @@ export function rotateIfNeeded() {
   fileStream.end()
   currentDate = today
   try {
-    fileStream = fs.createWriteStream(buildDatedFile(currentDate), { flags: 'a' })
+    fileStream = bunFileIO.createWriteStream(buildDatedFile(currentDate))
     cleanupOldLogs()
   }
   catch {
@@ -142,7 +200,7 @@ function formatArgs(args: unknown[]) {
     if (typeof arg === 'string')
       return redactSensitiveLogText(arg)
 
-    return redactSensitiveLogText(inspect(arg, { depth: 4, colors: false, breakLength: 120 }))
+    return redactSensitiveLogText(bunRuntime.inspect(arg, { depth: 4, colors: false, breakLength: 120 }))
   })
 }
 
@@ -257,7 +315,7 @@ function writeConsole(level: LogLevel, name: string, args: unknown[]) {
   const color = getLoggerColor(name)
   const levelLabel = level.toUpperCase().padEnd(5)
   const prefix = `${color}[${name}]${resetColor}`
-  process.stdout.write(`${ts} ${levelLabel} ${prefix} ${formatArgs(args).join(' ')}\n`)
+  bunRuntime.stdout.write(`${ts} ${levelLabel} ${prefix} ${formatArgs(args).join(' ')}\n`)
 }
 
 export function setConsoleLogLevel(level: string) {

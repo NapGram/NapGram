@@ -1,7 +1,11 @@
-import path from 'node:path'
+function extname(filename: string): string {
+  const basename = filename.slice(Math.max(filename.lastIndexOf('/'), filename.lastIndexOf('\\\\')) + 1)
+  const dot = basename.lastIndexOf('.')
+  return dot > 0 ? basename.slice(dot) : ''
+}
 
 export function getMimeType(filename: string) {
-  const ext = path.extname(filename).toLowerCase()
+  const ext = extname(filename).toLowerCase()
   const map: Record<string, string> = {
     '.html': 'text/html',
     '.css': 'text/css',

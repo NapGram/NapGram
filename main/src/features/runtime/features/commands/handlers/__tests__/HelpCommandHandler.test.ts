@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { HelpCommandHandler } from '../HelpCommandHandler.js'
 
 // Mock QQ Client
@@ -10,34 +10,34 @@ function createMockQQClient(): IQQClient {
     uin: 123456,
     nickname: 'TestBot',
     clientType: 'napcat',
-    isOnline: vi.fn().mockResolvedValue(true),
-    sendMessage: vi.fn().mockResolvedValue({ success: true }),
-    recallMessage: vi.fn(),
-    getMessage: vi.fn(),
-    getFriendList: vi.fn(),
-    getGroupList: vi.fn(),
-    getGroupMemberList: vi.fn(),
-    getGroupMemberInfo: vi.fn(),
-    getFriendInfo: vi.fn(),
-    getGroupInfo: vi.fn(),
-    on: vi.fn(),
-    once: vi.fn(),
-    off: vi.fn(),
-    removeListener: vi.fn(),
-    removeAllListeners: vi.fn(),
-    emit: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    destroy: vi.fn(),
+    isOnline: mock().mockResolvedValue(true),
+    sendMessage: mock().mockResolvedValue({ success: true }),
+    recallMessage: mock(),
+    getMessage: mock(),
+    getFriendList: mock(),
+    getGroupList: mock(),
+    getGroupMemberList: mock(),
+    getGroupMemberInfo: mock(),
+    getFriendInfo: mock(),
+    getGroupInfo: mock(),
+    on: mock(),
+    once: mock(),
+    off: mock(),
+    removeListener: mock(),
+    removeAllListeners: mock(),
+    emit: mock(),
+    login: mock(),
+    logout: mock(),
+    destroy: mock(),
   } as any
 }
 
 // Mock Telegram Bot
 function createMockTgBot() {
   return {
-    sendMessage: vi.fn().mockResolvedValue({}),
-    getChat: vi.fn().mockResolvedValue({
-      sendMessage: vi.fn().mockResolvedValue({}),
+    sendMessage: mock().mockResolvedValue({}),
+    getChat: mock().mockResolvedValue({
+      sendMessage: mock().mockResolvedValue({}),
     }),
   } as any
 }
@@ -46,14 +46,14 @@ function createMockTgBot() {
 function createMockRegistry() {
   return {
     prefix: '/',
-    getAll: vi.fn().mockReturnValue(
+    getAll: mock().mockReturnValue(
       new Map([
         [
           'bind',
           {
             name: 'bind',
             description: '绑定 QQ 群与 TG 聊天',
-            handler: vi.fn(),
+            handler: mock(),
             aliases: ['b'],
             adminOnly: false,
           },
@@ -63,7 +63,7 @@ function createMockRegistry() {
           {
             name: 'bind',
             description: '绑定 QQ 群与 TG 聊天',
-            handler: vi.fn(),
+            handler: mock(),
             aliases: ['b'],
             adminOnly: false,
           },
@@ -73,7 +73,7 @@ function createMockRegistry() {
           {
             name: 'unbind',
             description: '解绑绑定关系',
-            handler: vi.fn(),
+            handler: mock(),
             aliases: [],
             adminOnly: false,
           },
@@ -83,7 +83,7 @@ function createMockRegistry() {
           {
             name: 'status',
             description: '查看机器人状态',
-            handler: vi.fn(),
+            handler: mock(),
             aliases: [],
             adminOnly: false,
           },
@@ -93,7 +93,7 @@ function createMockRegistry() {
           {
             name: 'ban',
             description: '禁言用户',
-            handler: vi.fn(),
+            handler: mock(),
             aliases: [],
             adminOnly: true,
           },
@@ -115,11 +115,11 @@ function createMockContext(qqClient: IQQClient, tgBot: any): CommandContext {
       id: 1,
       owner: '123456',
       forwardPairs: {} as any,
-      reload: vi.fn().mockResolvedValue(undefined),
+      reload: mock().mockResolvedValue(undefined),
     } as any,
-    replyTG: vi.fn().mockResolvedValue(undefined),
-    replyBoth: vi.fn().mockResolvedValue(undefined),
-    extractThreadId: vi.fn().mockReturnValue(undefined),
+    replyTG: mock().mockResolvedValue(undefined),
+    replyBoth: mock().mockResolvedValue(undefined),
+    extractThreadId: mock().mockReturnValue(undefined),
   } as any
 }
 
@@ -177,7 +177,7 @@ describe('helpCommandHandler', () => {
       const msg = createMessage('/help', '999999', '777777')
       await handler.execute(msg, [])
 
-      const callArg = vi.mocked(mockContext.replyBoth).mock.calls[0][1]
+      const callArg = mockContext.replyBoth.mock.calls[0][1]
       expect(callArg).toContain('/bind')
       expect(callArg).toContain('/unbind')
       expect(callArg).toContain('/status')
@@ -187,7 +187,7 @@ describe('helpCommandHandler', () => {
       const msg = createMessage('/help', '999999', '777777')
       await handler.execute(msg, [])
 
-      const callArg = vi.mocked(mockContext.replyBoth).mock.calls[0][1]
+      const callArg = mockContext.replyBoth.mock.calls[0][1]
       expect(callArg).toContain('绑定 QQ 群与 TG 聊天')
       expect(callArg).toContain('解绑绑定关系')
       expect(callArg).toContain('查看机器人状态')
@@ -197,7 +197,7 @@ describe('helpCommandHandler', () => {
       const msg = createMessage('/help', '999999', '777777')
       await handler.execute(msg, [])
 
-      const callArg = vi.mocked(mockContext.replyBoth).mock.calls[0][1]
+      const callArg = mockContext.replyBoth.mock.calls[0][1]
       // Admin commands should be marked with [管理员]
       expect(callArg).toContain('/ban')
       expect(callArg).toContain('[管理员]')
@@ -206,7 +206,7 @@ describe('helpCommandHandler', () => {
 
   describe('edge Cases', () => {
     it('should handle empty command registry', async () => {
-      mockContext.registry.getAll = vi.fn().mockReturnValue(new Map())
+      mockContext.registry.getAll = mock().mockReturnValue(new Map())
 
       const msg = createMessage('/help', '999999', '777777')
       await handler.execute(msg, [])
@@ -215,14 +215,14 @@ describe('helpCommandHandler', () => {
     })
 
     it('should handle commands with no description', async () => {
-      mockContext.registry.getAll = vi.fn().mockReturnValue(
+      mockContext.registry.getAll = mock().mockReturnValue(
         new Map([
           [
             'test',
             {
               name: 'test',
               description: '',
-              handler: vi.fn(),
+              handler: mock(),
               aliases: [],
               adminOnly: false,
             },
@@ -241,18 +241,18 @@ describe('helpCommandHandler', () => {
       const sharedCommand = {
         name: 'test1',
         description: 'Test command 1',
-        handler: vi.fn(),
+        handler: mock(),
         aliases: ['t1'],
         adminOnly: false,
       }
 
-      mockContext.registry.getAll = vi.fn().mockReturnValue(
+      mockContext.registry.getAll = mock().mockReturnValue(
         new Map([
           ['test1', sharedCommand], // First entry - will be processed
           ['another', { // Different command
             name: 'another',
             description: 'Another command',
-            handler: vi.fn(),
+            handler: mock(),
             aliases: [],
             adminOnly: false,
           }],
@@ -263,7 +263,7 @@ describe('helpCommandHandler', () => {
       const msg = createMessage('/help', '999999', '777777')
       await handler.execute(msg, [])
 
-      const callArg = vi.mocked(mockContext.replyBoth).mock.calls[0][1]
+      const callArg = mockContext.replyBoth.mock.calls[0][1]
       // Should only contain test1 once and another once
       const test1Count = (callArg.match(/\/test1[^-]/g) || []).length
       const anotherCount = (callArg.match(/\/another/g) || []).length
@@ -273,7 +273,7 @@ describe('helpCommandHandler', () => {
     })
 
     it('should handle error when sending help message (line 44)', async () => {
-      mockContext.replyBoth = vi.fn().mockRejectedValue(new Error('Send failed'))
+      mockContext.replyBoth = mock().mockRejectedValue(new Error('Send failed'))
 
       const msg = createMessage('/help', '999999', '777777')
       // Should not throw, just log the error

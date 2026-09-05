@@ -11,11 +11,13 @@
     "paths": {
       "@napgram/app/*": [
         "./src/*"
+      ],
+      "bun:test": [
+        "./node_modules/bun-types/test.d.ts"
       ]
     },
     "types": [
-      "node",
-      "vitest/globals"
+      "bun-types"
     ],
     "noEmit": true,
     "outDir": "build",
@@ -77,12 +79,14 @@
   ],
   "include": [
     "src/**/*",
-    "vitest.setup.ts",
     "build.ts",
     "package.json"
   ],
   "exclude": [
     "node_modules",
-    "tools/**"
+    "tools/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**"
   ]
 }

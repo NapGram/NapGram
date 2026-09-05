@@ -2,13 +2,13 @@
  * Tests for Instance.enableQQMediaDownloadDiagnostics()
  * Covers lines 399-446 (downloadFileStreamToFile and getFile monkey-patch branches)
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import Instance from '../Instance'
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
-const { mockInstance, mockUpdate, mockInsert } = vi.hoisted(() => ({
+const { mockInstance, mockUpdate, mockInsert } = (() => ({
   mockInstance: {
     id: 1,
     owner: 0,
@@ -18,28 +18,28 @@ const { mockInstance, mockUpdate, mockInsert } = vi.hoisted(() => ({
     botSessionId: 0,
     qqBot: { wsUrl: 'ws://fake' },
   },
-  mockUpdate: vi.fn(() => ({
-    set: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue(undefined),
+  mockUpdate: mock(() => ({
+    set: mock(() => ({
+      where: mock().mockResolvedValue(undefined),
     })),
   })),
-  mockInsert: vi.fn(() => ({
-    values: vi.fn(() => ({
-      returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+  mockInsert: mock(() => ({
+    values: mock(() => ({
+      returning: mock().mockResolvedValue([{ id: 1 }]),
     })),
   })),
-}))
+}))()
 
 // QQ client mock — will be replaced per-test with getFile/downloadFileStreamToFile
-const mockQQClient = vi.hoisted(() => ({
-  login: vi.fn(),
-  on: vi.fn(),
-  downloadFile: vi.fn(),
+const mockQQClient = (() => ({
+  login: mock(),
+  on: mock(),
+  downloadFile: mock(),
   downloadFileStreamToFile: undefined as any,
   getFile: undefined as any,
-}))
+}))()
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: {
     TG_BOT_TOKEN: 'fake-token',
     NAPCAT_WS_URL: 'ws://fake',
@@ -49,61 +49,61 @@ vi.mock('@napgram/env-kit', () => ({
   },
 }))
 
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: {
     query: {
       instance: {
-        findFirst: vi.fn().mockResolvedValue(mockInstance),
+        findFirst: mock().mockResolvedValue(mockInstance),
       },
     },
     insert: mockInsert,
     update: mockUpdate,
   },
   schema: { instance: { id: 'id' } },
-  eq: vi.fn(),
-  ForwardMap: { load: vi.fn().mockResolvedValue({ map: true }) },
+  eq: mock(),
+  ForwardMap: { load: mock().mockResolvedValue({ map: true }) },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    info: mock(),
+    debug: mock(),
+    error: mock(),
+    warn: mock(),
+    trace: mock(),
   })),
-  telemetry: { captureException: vi.fn() },
+  telemetry: { captureException: mock() },
 }))
 
-vi.mock('../../../infrastructure/clients/qq', () => ({
+mock.module('../../../infrastructure/clients/qq', () => ({
   qqClientFactory: {
-    create: vi.fn().mockResolvedValue(mockQQClient),
+    create: mock().mockResolvedValue(mockQQClient),
   },
 }))
 
-vi.mock('../../../infrastructure/clients/telegram', () => ({
+mock.module('../../../infrastructure/clients/telegram', () => ({
   telegramClientFactory: {
-    connect: vi.fn(),
-    create: vi.fn().mockResolvedValue({
+    connect: mock(),
+    create: mock().mockResolvedValue({
       sessionId: 123,
       me: { id: 123, username: 'test_bot' },
     }),
   },
 }))
 
-vi.mock('../../../features/runtime/instance-registry', () => ({
+mock.module('../../../features/runtime/instance-registry', () => ({
   instanceRegistry: {
-    add: vi.fn(),
-    remove: vi.fn(),
+    add: mock(),
+    remove: mock(),
   },
 }))
 
-vi.mock('@napgram/plugin-kit', () => ({
-  getEventPublisher: vi.fn(() => ({
-    publishInstanceStatus: vi.fn(),
-    publishFriendRequest: vi.fn(),
-    publishGroupRequest: vi.fn(),
-    publishNotice: vi.fn(),
+mock.module('@napgram/plugin-kit', () => ({
+  getEventPublisher: mock(() => ({
+    publishInstanceStatus: mock(),
+    publishFriendRequest: mock(),
+    publishGroupRequest: mock(),
+    publishNotice: mock(),
   })),
 }))
 
@@ -119,7 +119,7 @@ async function createInstance() {
 // ---------------------------------------------------------------------------
 describe('instance.enableQQMediaDownloadDiagnostics', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    // mocks cleared
     // Reset per-test overrides
     mockQQClient.downloadFileStreamToFile = undefined as any
     mockQQClient.getFile = undefined as any
@@ -131,7 +131,7 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
   // -------------------------------------------------------------------------
   describe('downloadFileStreamToFile wrapping', () => {
     it('wraps downloadFileStreamToFile and returns result with path', async () => {
-      const rawImpl = vi.fn().mockResolvedValue({ path: '/local/file.mp4', info: { size: 100 } })
+      const rawImpl = mock().mockResolvedValue({ path: '/local/file.mp4', info: { size: 100 } })
       mockQQClient.downloadFileStreamToFile = rawImpl
 
       const instance = await createInstance()
@@ -143,12 +143,12 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
     })
 
     it('logs warn when downloadFileStreamToFile returns no path', async () => {
-      const rawImpl = vi.fn().mockResolvedValue({ path: undefined })
+      const rawImpl = mock().mockResolvedValue({ path: undefined })
       mockQQClient.downloadFileStreamToFile = rawImpl
 
       const instance = await createInstance()
       const qq = instance.qqClient as any
-      const warnSpy = vi.spyOn(instance.log ?? (instance as any).log ?? {}, 'warn').mockImplementation(() => { })
+      const warnSpy = spyOn(instance.log ?? (instance as any).log ?? {}, 'warn').mockImplementation(() => { })
 
       await qq.downloadFileStreamToFile('file-id')
       // No throw — just logs warn internally (covered by line 405)
@@ -158,7 +158,7 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
 
     it('rethrows error from downloadFileStreamToFile (line 410-411)', async () => {
       const err = new Error('stream failed')
-      const rawImpl = vi.fn().mockRejectedValue(err)
+      const rawImpl = mock().mockRejectedValue(err)
       mockQQClient.downloadFileStreamToFile = rawImpl
 
       const instance = await createInstance()
@@ -168,7 +168,7 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
     })
 
     it('strips leading slash from fileId', async () => {
-      const rawImpl = vi.fn().mockResolvedValue({ path: '/out/file.mp4' })
+      const rawImpl = mock().mockResolvedValue({ path: '/out/file.mp4' })
       mockQQClient.downloadFileStreamToFile = rawImpl
 
       const instance = await createInstance()
@@ -184,8 +184,8 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
   // -------------------------------------------------------------------------
   describe('getFile wrapping (stream-first)', () => {
     it('returns streamed result when downloadFileStreamToFile succeeds with local path', async () => {
-      const streamImpl = vi.fn().mockResolvedValue({ path: '/local/video.mp4', info: { size: 200 } })
-      const getFileImpl = vi.fn()
+      const streamImpl = mock().mockResolvedValue({ path: '/local/video.mp4', info: { size: 200 } })
+      const getFileImpl = mock()
       mockQQClient.downloadFileStreamToFile = streamImpl
       mockQQClient.getFile = getFileImpl
 
@@ -199,8 +199,8 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
     })
 
     it('falls back to rawGetFile when stream returns no local path (line 433)', async () => {
-      const streamImpl = vi.fn().mockResolvedValue({ path: 'relative/path' }) // not starting with /
-      const getFileImpl = vi.fn().mockResolvedValue({ file: '/fallback.mp4' })
+      const streamImpl = mock().mockResolvedValue({ path: 'relative/path' }) // not starting with /
+      const getFileImpl = mock().mockResolvedValue({ file: '/fallback.mp4' })
       mockQQClient.downloadFileStreamToFile = streamImpl
       mockQQClient.getFile = getFileImpl
 
@@ -213,8 +213,8 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
     })
 
     it('falls back to rawGetFile when stream throws (line 435-437)', async () => {
-      const streamImpl = vi.fn().mockRejectedValue(new Error('stream error'))
-      const getFileImpl = vi.fn().mockResolvedValue({ file: '/fallback.mp4' })
+      const streamImpl = mock().mockRejectedValue(new Error('stream error'))
+      const getFileImpl = mock().mockResolvedValue({ file: '/fallback.mp4' })
       mockQQClient.downloadFileStreamToFile = streamImpl
       mockQQClient.getFile = getFileImpl
 
@@ -227,8 +227,8 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
     })
 
     it('logs warn when rawGetFile returns empty (line 441-443)', async () => {
-      const streamImpl = vi.fn().mockRejectedValue(new Error('stream error'))
-      const getFileImpl = vi.fn().mockResolvedValue(null)
+      const streamImpl = mock().mockRejectedValue(new Error('stream error'))
+      const getFileImpl = mock().mockResolvedValue(null)
       mockQQClient.downloadFileStreamToFile = streamImpl
       mockQQClient.getFile = getFileImpl
 
@@ -241,7 +241,7 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
 
     it('uses rawGetFile directly when downloadFileStreamToFile is absent (line 440)', async () => {
       // No downloadFileStreamToFile — only getFile
-      const getFileImpl = vi.fn().mockResolvedValue({ file: '/direct.mp4' })
+      const getFileImpl = mock().mockResolvedValue({ file: '/direct.mp4' })
       mockQQClient.getFile = getFileImpl
       // downloadFileStreamToFile stays undefined
 
@@ -263,7 +263,7 @@ describe('instance.enableQQMediaDownloadDiagnostics', () => {
     })
 
     it('does not re-wrap when __napgramMediaWrapped is already set', async () => {
-      const streamImpl = vi.fn().mockResolvedValue({ path: '/file.mp4' })
+      const streamImpl = mock().mockResolvedValue({ path: '/file.mp4' })
       mockQQClient.downloadFileStreamToFile = streamImpl
       ; (mockQQClient as any).__napgramMediaWrapped = true
 

@@ -1,8 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { fetchFile, getAvatar, getAvatarUrl, getBigFaceUrl, getImageUrlByMd5, hasSupportedImageExt, isContainsUrl, isValidQQ, isValidRoomId, isValidUrl } from '../urls.js'
 
 // Mock global fetch
-const fetchMock = vi.fn()
+const fetchMock = mock()
 globalThis.fetch = fetchMock
 
 describe('urls utility', () => {

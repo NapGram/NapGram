@@ -1,18 +1,11 @@
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
-import * as schema from './schema/main.js';
-import process from 'node:process';
+import { drizzle } from 'drizzle-orm/bun-sql'
+import * as schema from './schema/main.js'
 
-const { Pool } = pg;
+const bunEnv = (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env
+const connectionString = bunEnv.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/napgram'
 
-const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:password@localhost:5432/napgram';
-
-export const pool = new Pool({
-    connectionString,
-});
-
-export const db = drizzle(pool, { schema });
-export const drizzleDb = db;
+export const db = drizzle(connectionString, { schema })
+export const drizzleDb = db
 
 // Export schema for easy access
-export { schema };
+export { schema }

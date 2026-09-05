@@ -1,4 +1,3 @@
-import process from 'node:process'
 import type { AdminRole } from './authorization.js'
 import { normalizeAdminRole } from './authorization.js'
 import { count, db, eq, getLogger, schema, stringifyBigInts } from './shared-runtime.js'
@@ -29,7 +28,7 @@ export class AuthService {
       return null
     }
 
-    if (!PasswordUtil.verifyPassword(password, user.passwordHash)) {
+    if (!await PasswordUtil.verifyPassword(password, user.passwordHash)) {
       return null
     }
 
@@ -84,7 +83,7 @@ export class AuthService {
     createdBy?: number,
     role: AdminRole = 'admin',
   ): Promise<{ id: number, username: string, role: AdminRole }> {
-    const passwordHash = PasswordUtil.hashPassword(password)
+    const passwordHash = await PasswordUtil.hashPassword(password)
 
     const userArr = await db.insert(schema.adminUser).values({
       username,
@@ -126,11 +125,11 @@ export class AuthService {
       return false
     }
 
-    if (!PasswordUtil.verifyPassword(oldPassword, user.passwordHash)) {
+    if (!await PasswordUtil.verifyPassword(oldPassword, user.passwordHash)) {
       return false
     }
 
-    const newPasswordHash = PasswordUtil.hashPassword(newPassword)
+    const newPasswordHash = await PasswordUtil.hashPassword(newPassword)
 
     await db.update(schema.adminUser)
       .set({ passwordHash: newPasswordHash })
@@ -179,8 +178,8 @@ export class AuthService {
     const hasUsers = await this.hasAdminUsers()
 
     if (!hasUsers) {
-      const defaultUsername = process.env.DEFAULT_ADMIN_USERNAME || 'admin'
-      const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || TokenManager.generateToken().slice(0, 16)
+      const defaultUsername = Bun.env.DEFAULT_ADMIN_USERNAME || 'admin'
+      const defaultPassword = Bun.env.DEFAULT_ADMIN_PASSWORD || TokenManager.generateToken().slice(0, 16)
 
       await this.createAdminUser(defaultUsername, defaultPassword, 'Default Admin')
 

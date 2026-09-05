@@ -1,19 +1,19 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, jest, setSystemTime } from 'bun:test'
 import { createInstanceAPI, InstanceAPIImpl } from '../instance.js'
 import type { PluginInstancesResolver } from '../../core/interfaces.js'
 
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  error: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  debug: mock(),
+  error: mock(),
+}))()
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
 describe('instanceAPI', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('throws when resolver is missing', async () => {
@@ -25,8 +25,8 @@ describe('instanceAPI', () => {
   })
 
   it('lists instances with mapped info', async () => {
-    vi.useFakeTimers()
-    vi.setSystemTime(new Date('2020-01-01T00:00:00Z'))
+    jest.useFakeTimers()
+    setSystemTime(new Date('2020-01-01T00:00:00Z'))
     const resolver: PluginInstancesResolver = () => [
       {
         id: 1,
@@ -35,13 +35,13 @@ describe('instanceAPI', () => {
         status: 'running',
         qqClient: {
           uin: 123,
-          sendMessage: vi.fn(),
-          recallMessage: vi.fn(),
-          getMessage: vi.fn(),
+          sendMessage: mock(),
+          recallMessage: mock(),
+          getMessage: mock(),
         },
         tgBot: {
           username: 'tg',
-          getChat: vi.fn(),
+          getChat: mock(),
         },
       },
       {
@@ -103,7 +103,7 @@ describe('instanceAPI', () => {
         createdAt: new Date('2020-01-02T00:00:00Z'),
       },
     ])
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   it('gets instance or returns null', async () => {
@@ -122,13 +122,13 @@ describe('instanceAPI', () => {
         id: 1,
         qqClient: {
           isConnected: true,
-          sendMessage: vi.fn(),
-          recallMessage: vi.fn(),
-          getMessage: vi.fn(),
+          sendMessage: mock(),
+          recallMessage: mock(),
+          getMessage: mock(),
         },
         tgBot: {
           isRunning: true,
-          getChat: vi.fn(),
+          getChat: mock(),
         },
       },
       {

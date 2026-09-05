@@ -1,4 +1,8 @@
 export { default as convertWithFfmpeg } from './encoding/convertWithFfmpeg.js'
+export { createBunFileIO, createRuntimeFileIO, isBunFileIOAvailable, runtimeFileIO } from './bun-file-io.js'
+export type { BunFileIO, BunFileLike, BunFileRuntime, FileStatLike } from './bun-file-io.js'
+export { BunSpawnError, spawnFileWithBun } from './encoding/bun-spawn.js'
+export type { BunSpawnProcess, BunSpawnResult, BunSpawnRuntime } from './encoding/bun-spawn.js'
 export { default as tgsToGif } from './encoding/tgsToGif.js'
 export { default as silk } from './encoding/silk.js'
 export { default as convert } from './convert.js'

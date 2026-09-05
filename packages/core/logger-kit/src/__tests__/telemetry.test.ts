@@ -1,25 +1,30 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+/// <reference types="bun-types" />
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 
-const mocks = vi.hoisted(() => {
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/')
+const tempDirectory = () => {
+  const result = Bun.spawnSync(['mktemp', '-d', '-t', 'napgram-telemetry-XXXXXX'], { stdout: 'pipe' })
+  return new TextDecoder().decode(result.stdout).trim()
+}
+const removePath = (path: string) => Bun.spawnSync(['rm', '-rf', path])
+
+const mocks = (() => {
   const spans: Array<{ name: string, attributes?: Record<string, unknown>, error?: unknown }> = []
   const provider = {
-    forceFlush: vi.fn().mockResolvedValue(undefined),
-    register: vi.fn(),
-    shutdown: vi.fn().mockResolvedValue(undefined),
+    forceFlush: mock().mockResolvedValue(undefined),
+    register: mock(),
+    shutdown: mock().mockResolvedValue(undefined),
   }
   return {
-    exporter: vi.fn(),
+    exporter: mock(),
     provider,
-    providerConstructor: vi.fn(function NodeTracerProvider() { return provider }),
-    resourceFromAttributes: vi.fn((attributes: Record<string, unknown>) => ({ attributes })),
+    providerConstructor: mock(function NodeTracerProvider() { return provider }),
+    resourceFromAttributes: mock((attributes: Record<string, unknown>) => ({ attributes })),
     spans,
   }
-})
+})()
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   env: {
     COMMIT: 'abc123',
     DATA_DIR: '',
@@ -31,22 +36,23 @@ const envMock = vi.hoisted(() => ({
     REF: 'refs/heads/beta',
     REPO: 'magisk3171/NapGram',
   },
-}))
+}))()
 
-vi.mock('@napgram/env-kit', () => envMock)
-vi.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
+mock.module('@napgram/env-kit', () => envMock)
+mock.module('@opentelemetry/exporter-trace-otlp-http', () => ({
   OTLPTraceExporter: mocks.exporter,
 }))
-vi.mock('@opentelemetry/resources', () => ({
+mock.module('@opentelemetry/resources', () => ({
   resourceFromAttributes: mocks.resourceFromAttributes,
 }))
-vi.mock('@opentelemetry/sdk-trace-node', () => ({
-  BatchSpanProcessor: vi.fn(),
-  NodeTracerProvider: mocks.providerConstructor,
+mock.module('@opentelemetry/sdk-trace-base/build/src/index-shim.js', () => ({
+  BasicTracerProvider: mocks.providerConstructor,
+  BatchSpanProcessor: mock(),
 }))
-vi.mock('@opentelemetry/api', () => ({
+mock.module('@opentelemetry/api', () => ({
   SpanStatusCode: { ERROR: 2, OK: 1 },
   trace: {
+    setGlobalTracerProvider: mock(),
     getTracer: () => ({
       startSpan: (name: string, options: { attributes?: Record<string, unknown> }) => {
         const entry = { name, attributes: options.attributes } as {
@@ -56,9 +62,9 @@ vi.mock('@opentelemetry/api', () => ({
         }
         mocks.spans.push(entry)
         return {
-          end: vi.fn(),
+          end: mock(),
           recordException: (error: unknown) => { entry.error = error },
-          setStatus: vi.fn(),
+          setStatus: mock(),
         }
       },
     }),
@@ -69,20 +75,20 @@ describe('telemetry', () => {
   let dataDir: string
 
   beforeEach(() => {
-    vi.resetModules()
-    vi.clearAllMocks()
+    mock.restore()
+    mock.clearAllMocks()
     mocks.spans.length = 0
-    dataDir = mkdtempSync(join(tmpdir(), 'napgram-telemetry-'))
+    dataDir = tempDirectory()
     envMock.env.DATA_DIR = dataDir
     envMock.env.ERROR_REPORTING = true
-    delete process.env.OTEL_SERVICE_INSTANCE_ID
-    delete process.env.TELEMETRY_ENABLED
+    delete Bun.env.OTEL_SERVICE_INSTANCE_ID
+    delete Bun.env.TELEMETRY_ENABLED
   })
 
   afterEach(() => {
-    rmSync(dataDir, { force: true, recursive: true })
-    delete process.env.OTEL_SERVICE_INSTANCE_ID
-    delete process.env.TELEMETRY_ENABLED
+    removePath(dataDir)
+    delete Bun.env.OTEL_SERVICE_INSTANCE_ID
+    delete Bun.env.TELEMETRY_ENABLED
   })
 
   it('creates and persists an installation UUID', async () => {
@@ -92,19 +98,19 @@ describe('telemetry', () => {
 
     expect(first).toMatch(/^[0-9a-f-]{36}$/)
     expect(second).toBe(first)
-    expect(readFileSync(join(dataDir, '.telemetry-instance-id'), 'utf8').trim()).toBe(first)
+    expect((await Bun.file(joinPath(dataDir, '.telemetry-instance-id')).text()).trim()).toBe(first)
   })
 
   it('regenerates an invalid persisted UUID and honors a valid override', async () => {
-    const path = join(dataDir, '.telemetry-instance-id')
-    writeFileSync(path, 'invalid\n')
+    const path = joinPath(dataDir, '.telemetry-instance-id')
+    await Bun.write(path, 'invalid\n')
     const { resolveServiceInstanceId } = await import('../telemetry.js')
     const regenerated = resolveServiceInstanceId()
     expect(regenerated).toMatch(/^[0-9a-f-]{36}$/)
     expect(regenerated).not.toBe('invalid')
 
-    process.env.OTEL_SERVICE_INSTANCE_ID = '123e4567-e89b-42d3-a456-426614174000'
-    expect(resolveServiceInstanceId()).toBe(process.env.OTEL_SERVICE_INSTANCE_ID)
+    Bun.env.OTEL_SERVICE_INSTANCE_ID = '123e4567-e89b-42d3-a456-426614174000'
+    expect(resolveServiceInstanceId()).toBe(Bun.env.OTEL_SERVICE_INSTANCE_ID)
   })
 
   it('uses UTC daily, ISO-weekly, and monthly buckets', async () => {
@@ -133,7 +139,7 @@ describe('telemetry', () => {
   })
 
   it('does nothing when telemetry is disabled', async () => {
-    process.env.TELEMETRY_ENABLED = 'false'
+    Bun.env.TELEMETRY_ENABLED = 'false'
     const { telemetry } = await import('../telemetry.js')
     telemetry.init()
     telemetry.captureMessage('ignored')

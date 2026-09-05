@@ -1,6 +1,4 @@
-import { randomBytes, scryptSync } from 'node:crypto'
 import { normalizeAdminRole, type AdminRole } from './authorization.js'
-import process from 'node:process'
 import { and, db, eq, gt, isNull, lt, or, schema } from './shared-runtime.js'
 
 /**
@@ -14,7 +12,7 @@ export class TokenManager {
    * 生成随机 token
    */
   static generateToken(): string {
-    return randomBytes(32).toString('hex')
+    return crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '')
   }
 
   /**
@@ -143,7 +141,7 @@ export class TokenManager {
    * 从环境变量获取初始 Admin Token
    */
   static getEnvAdminToken(): string | undefined {
-    return process.env.ADMIN_TOKEN
+    return Bun.env.ADMIN_TOKEN
   }
 
   /**
@@ -190,18 +188,22 @@ export class PasswordUtil {
   /**
    * Hash 密码
    */
-  static hashPassword(password: string): string {
-    const salt = randomBytes(16).toString('hex')
-    const hash = scryptSync(password, salt, 64).toString('hex')
-    return `${salt}:${hash}`
+  static async hashPassword(password: string): Promise<string> {
+    if (password.length === 0) {
+      throw new TypeError('Password must not be empty')
+    }
+
+    return await Bun.password.hash(password, { algorithm: 'argon2id' })
   }
 
   /**
    * 验证密码
    */
-  static verifyPassword(password: string, storedHash: string): boolean {
-    const [salt, hash] = storedHash.split(':')
-    const hashToCompare = scryptSync(password, salt, 64).toString('hex')
-    return hash === hashToCompare
+  static async verifyPassword(password: string, storedHash: string): Promise<boolean> {
+    if (password.length === 0) {
+      return false
+    }
+
+    return await Bun.password.verify(password, storedHash)
   }
 }

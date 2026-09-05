@@ -1,25 +1,48 @@
-import { Buffer } from 'node:buffer'
-import { execFile } from 'node:child_process'
-import fs from 'node:fs/promises'
-import path from 'node:path'
+import { bytesFromUtf8 } from '../../../../../../shared/utils/binary.js'
+import { joinPath } from '../../../../../../shared/utils/path.js'
 import { env } from '@napgram/env-kit'
 import { silk } from '@napgram/media-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { ForwardMediaPreparer } from '../MediaPreparer.js'
 
-vi.mock('node:child_process', () => ({
-  execFile: vi.fn(),
+const spawnFileMock = mock()
+
+const runtimeFileIO = {
+  readBytes: async (filePath: string) => await Bun.file(filePath).bytes(),
+  readText: async (filePath: string) => await Bun.file(filePath).text(),
+  write: async (filePath: string, data: any) => await Bun.write(filePath, data),
+  exists: async (filePath: string) => await Bun.file(filePath).exists(),
+  access: async (filePath: string) => {
+    if (!await Bun.file(filePath).exists())
+      throw new Error(`Missing file: ${filePath}`)
+  },
+  mkdir: async (filePath: string) => {
+    await Bun.$`mkdir -p ${filePath}`
+  },
+  mkdtemp: async (prefix: string) => (await Bun.$`mktemp -d ${prefix}XXXXXX`).text().then(value => value.trim()),
+  stat: async (filePath: string) => ({ size: Bun.file(filePath).size }),
+  readdir: async (filePath: string) => [...new Bun.Glob('*').scanSync({ cwd: filePath })],
+  remove: async (filePath: string) => {
+    await Bun.$`rm -rf ${filePath}`
+  },
+  unlink: async (filePath: string) => {
+    await Bun.$`rm -f ${filePath}`
+  },
+}
+
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO,
+  spawnFileWithBun: spawnFileMock,
 }))
 
-vi.mock('@napgram/media-kit', () => ({
+mock.module('@napgram/media-kit', () => ({
   silk: {
-    encode: vi.fn(),
-    decode: vi.fn(),
+    encode: mock(),
+    decode: mock(),
   },
 }))
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', () => ({
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -32,37 +55,28 @@ vi.mock('@napgram/env-kit', async importOriginal => ({
 describe('forwardMediaPreparer audio', () => {
   const instance = {
     tgBot: {
-      downloadMedia: vi.fn(),
-      downloadMediaToTempFile: vi.fn(),
+      downloadMedia: mock(),
+      downloadMediaToTempFile: mock(),
     },
   }
   const media = {
-    downloadMedia: vi.fn(),
+    downloadMedia: mock(),
   }
 
-  const execFileMock = vi.mocked(execFile)
-  const silkMock = vi.mocked(silk)
+  const silkMock = silk as any
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    execFileMock.mockImplementation((...args) => {
-      const callback = args[args.length - 1] as ((err: Error | null, stdout: string, stderr: string) => void) | undefined
-      if (typeof callback === 'function') {
-        callback(null, '', '')
-      }
-      return {} as any
-    })
+    spawnFileMock.mockResolvedValue({ command: [], stdout: '', stderr: '', exitCode: 0 })
   })
 
   it('encodes audio to silk and updates content', async () => {
     const preparer = new ForwardMediaPreparer(instance as any, media as any)
-    const ensureBufferSpy = vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue(Buffer.from('ogg'))
-    const ensureFileSpy = vi
-      .spyOn(preparer, 'ensureFilePath')
+    const ensureBufferSpy = spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue(bytesFromUtf8('ogg'))
+    const ensureFileSpy = spyOn(preparer, 'ensureFilePath')
       .mockResolvedValueOnce('/tmp/audio.ogg')
       .mockResolvedValueOnce('http://example.com/audio.silk')
 
-    silkMock.encode.mockResolvedValueOnce(Buffer.from('silk-data'))
+    silkMock.encode.mockResolvedValueOnce(bytesFromUtf8('silk-data'))
 
     const msg: any = {
       id: '1',
@@ -83,8 +97,8 @@ describe('forwardMediaPreparer audio', () => {
 
   it('falls back to file when silk encode fails', async () => {
     const preparer = new ForwardMediaPreparer(instance as any, media as any)
-    vi.spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue(Buffer.from('ogg'))
-    vi.spyOn(preparer, 'ensureFilePath').mockResolvedValueOnce('/tmp/audio.ogg')
+    spyOn(preparer, 'ensureBufferOrPath').mockResolvedValue(bytesFromUtf8('ogg'))
+    spyOn(preparer, 'ensureFilePath').mockResolvedValueOnce('/tmp/audio.ogg')
 
     silkMock.encode.mockRejectedValueOnce(new Error('encode failed'))
 
@@ -106,35 +120,29 @@ describe('forwardMediaPreparer audio', () => {
 
   it('uses silk decode when buffer has SILK header', async () => {
     const preparer = new ForwardMediaPreparer(instance as any, media as any)
-    const buffer = Buffer.from('#!SILK_V3xx')
+    const buffer = bytesFromUtf8('#!SILK_V3xx')
 
     const result = await preparer.convertAudioToOgg(buffer)
 
     expect(silkMock.decode).toHaveBeenCalled()
-    expect(execFileMock).not.toHaveBeenCalled()
+    expect(spawnFileMock).not.toHaveBeenCalled()
     expect(result.voicePath).toContain('.ogg')
   })
 
   it('returns fallback path when ffmpeg and silk decode fail', async () => {
     const preparer = new ForwardMediaPreparer(instance as any, media as any)
-    execFileMock.mockImplementation((...args) => {
-      const callback = args[args.length - 1] as ((err: Error | null, stdout: string, stderr: string) => void) | undefined
-      if (typeof callback === 'function') {
-        callback(new Error('ffmpeg failed'), '', '')
-      }
-      return {} as any
-    })
+    spawnFileMock.mockRejectedValueOnce(new Error('ffmpeg failed'))
     silkMock.decode.mockRejectedValueOnce(new Error('silk failed'))
 
-    const result = await preparer.convertAudioToOgg(Buffer.from('no-silk-data'))
+    const result = await preparer.convertAudioToOgg(bytesFromUtf8('no-silk-data'))
 
     expect(result.voicePath).toBeUndefined()
     expect(result.fallbackPath).toBeTruthy()
 
     if (result.fallbackPath) {
-      const expectedDir = path.join(env.DATA_DIR, 'temp')
+      const expectedDir = joinPath(env.DATA_DIR, 'temp')
       expect(result.fallbackPath.startsWith(expectedDir)).toBe(true)
-      await fs.unlink(result.fallbackPath)
+      await runtimeFileIO.unlink(result.fallbackPath)
     }
   })
 })

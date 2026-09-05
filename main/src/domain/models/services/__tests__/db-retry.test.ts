@@ -1,16 +1,16 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { isTransientDbError, withDbRetry } from '../db-retry'
 
 const mockLog = {
-  warn: vi.fn(),
-  info: vi.fn(),
-  error: vi.fn(),
-  debug: vi.fn(),
-  fatal: vi.fn(),
-  trace: vi.fn(),
-  child: vi.fn(),
+  warn: mock(),
+  info: mock(),
+  error: mock(),
+  debug: mock(),
+  fatal: mock(),
+  trace: mock(),
+  child: mock(),
   level: 'info',
-  silent: vi.fn(),
+  silent: mock(),
 } as any
 
 describe('isTransientDbError', () => {
@@ -40,14 +40,14 @@ describe('isTransientDbError', () => {
 
 describe('withDbRetry', () => {
   it('returns result on first success', async () => {
-    const action = vi.fn().mockResolvedValue('ok')
+    const action = mock().mockResolvedValue('ok')
     const result = await withDbRetry(action, 'test', mockLog)
     expect(result).toBe('ok')
     expect(action).toHaveBeenCalledTimes(1)
   })
 
   it('retries on transient error and succeeds', async () => {
-    const action = vi.fn()
+    const action = mock()
       .mockRejectedValueOnce(new Error('ECONNRESET'))
       .mockResolvedValue('recovered')
 
@@ -58,13 +58,13 @@ describe('withDbRetry', () => {
   })
 
   it('throws non-transient errors immediately', async () => {
-    const action = vi.fn().mockRejectedValue(new Error('syntax error'))
+    const action = mock().mockRejectedValue(new Error('syntax error'))
     await expect(withDbRetry(action, 'test-fail', mockLog)).rejects.toThrow('syntax error')
     expect(action).toHaveBeenCalledTimes(1)
   })
 
   it('throws after max attempts exhausted', async () => {
-    const action = vi.fn().mockRejectedValue(new Error('ECONNRESET'))
+    const action = mock().mockRejectedValue(new Error('ECONNRESET'))
     await expect(withDbRetry(action, 'test-exhaust', mockLog, 2)).rejects.toThrow('ECONNRESET')
     expect(action).toHaveBeenCalledTimes(2)
   })

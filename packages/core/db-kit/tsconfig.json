@@ -28,6 +28,9 @@
         },
         {
             "path": "../logger-kit"
+        },
+        {
+            "path": "../runtime-kit"
         }
     ]
 }

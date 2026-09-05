@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { createUserAPI, UserAPIImpl } from '../user.js'
 
 describe('userAPI', () => {
@@ -12,7 +12,7 @@ describe('userAPI', () => {
     })
 
     it('throws error when instance not found', async () => {
-      const resolver = vi.fn().mockReturnValue(null)
+      const resolver = mock().mockReturnValue(null)
       const api = new UserAPIImpl(resolver)
 
       await expect(
@@ -21,7 +21,7 @@ describe('userAPI', () => {
     })
 
     it('throws error for invalid userId format', async () => {
-      const resolver = vi.fn().mockReturnValue({})
+      const resolver = mock().mockReturnValue({})
       const api = new UserAPIImpl(resolver)
 
       await expect(
@@ -30,7 +30,7 @@ describe('userAPI', () => {
     })
 
     it('throws error for unknown platform', async () => {
-      const resolver = vi.fn().mockReturnValue({})
+      const resolver = mock().mockReturnValue({})
       const api = new UserAPIImpl(resolver)
 
       await expect(
@@ -39,7 +39,7 @@ describe('userAPI', () => {
     })
 
     it('handles QQ user info request', async () => {
-      const resolver = vi.fn().mockReturnValue({})
+      const resolver = mock().mockReturnValue({})
       const api = new UserAPIImpl(resolver)
 
       const result = await api.getInfo({ instanceId: 1, userId: 'qq:u:123456' })
@@ -48,7 +48,7 @@ describe('userAPI', () => {
     })
 
     it('handles TG user info request', async () => {
-      const resolver = vi.fn().mockReturnValue({})
+      const resolver = mock().mockReturnValue({})
       const api = new UserAPIImpl(resolver)
 
       const result = await api.getInfo({ instanceId: 1, userId: 'tg:u:123456' })
@@ -57,7 +57,7 @@ describe('userAPI', () => {
     })
 
     it('parses userId with colon in id part', async () => {
-      const resolver = vi.fn().mockReturnValue({})
+      const resolver = mock().mockReturnValue({})
       const api = new UserAPIImpl(resolver)
 
       // userId with multiple colons
@@ -68,10 +68,10 @@ describe('userAPI', () => {
     })
 
     it('handles success log when userInfo found', async () => {
-      const resolver = vi.fn().mockReturnValue({})
+      const resolver = mock().mockReturnValue({})
       const api = new UserAPIImpl(resolver);
       // Mock internal getQQUserInfo
-      (api as any).getQQUserInfo = vi.fn().mockResolvedValue({ id: '1', nickname: 'Test' })
+      (api as any).getQQUserInfo = mock().mockResolvedValue({ id: '1', nickname: 'Test' })
       await api.getInfo({ instanceId: 1, userId: 'qq:u:1' })
       // Should log debug (lines 62-63)
     })
@@ -86,7 +86,7 @@ describe('userAPI', () => {
       })
 
       it('throws error when instance not found', async () => {
-        const resolver = vi.fn().mockReturnValue(null)
+        const resolver = mock().mockReturnValue(null)
         const api = new UserAPIImpl(resolver)
 
         await expect(
@@ -95,7 +95,7 @@ describe('userAPI', () => {
       })
 
       it('returns false for QQ platform (Phase 4 not implemented)', async () => {
-        const resolver = vi.fn().mockReturnValue({})
+        const resolver = mock().mockReturnValue({})
         const api = new UserAPIImpl(resolver)
 
         const result = await api.isFriend({ instanceId: 1, userId: 'qq:u:123456' })
@@ -104,7 +104,7 @@ describe('userAPI', () => {
       })
 
       it('returns false for TG platform (no friend concept)', async () => {
-        const resolver = vi.fn().mockReturnValue({})
+        const resolver = mock().mockReturnValue({})
         const api = new UserAPIImpl(resolver)
 
         const result = await api.isFriend({ instanceId: 1, userId: 'tg:u:123456' })
@@ -113,7 +113,7 @@ describe('userAPI', () => {
       })
 
       it('returns false for unknown platform', async () => {
-        const resolver = vi.fn().mockReturnValue({})
+        const resolver = mock().mockReturnValue({})
         const api = new UserAPIImpl(resolver)
 
         // parseUserId allows any string as platform, validation only checks parts length
@@ -131,7 +131,7 @@ describe('userAPI', () => {
       })
 
       it('creates user API with resolver', () => {
-        const resolver = vi.fn()
+        const resolver = mock()
         const api = createUserAPI(resolver)
 
         expect(api).toBeInstanceOf(UserAPIImpl)

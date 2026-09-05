@@ -1,22 +1,22 @@
 import { db } from '@napgram/db-kit'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import Instance from '../Instance'
 
 // Local mock removed to rely on fixed global mock
-const { mockUpdate, mockInsert } = vi.hoisted(() => ({
-  mockUpdate: vi.fn(() => ({
-    set: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue({}),
+const { mockUpdate, mockInsert } = (() => ({
+  mockUpdate: mock(() => ({
+    set: mock(() => ({
+      where: mock().mockResolvedValue({}),
     })),
   })),
-  mockInsert: vi.fn(() => ({
-    values: vi.fn(() => ({
-      returning: vi.fn().mockResolvedValue([{ id: 1 }]),
+  mockInsert: mock(() => ({
+    values: mock(() => ({
+      returning: mock().mockResolvedValue([{ id: 1 }]),
     })),
   })),
-}))
+}))()
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: {
     TG_BOT_TOKEN: 'fake-token',
     NAPCAT_WS_URL: 'ws://fake',
@@ -26,70 +26,70 @@ vi.mock('@napgram/env-kit', () => ({
   },
 }))
 
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: {
     query: {
       instance: {
-        findFirst: vi.fn(),
+        findFirst: mock(),
       },
     },
     insert: mockInsert,
     update: mockUpdate,
   },
   schema: { instance: { id: 'id' } },
-  eq: vi.fn(),
+  eq: mock(),
   ForwardMap: {
-    load: vi.fn().mockResolvedValue({ map: true }),
+    load: mock().mockResolvedValue({ map: true }),
   },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    debug: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    info: mock(),
+    debug: mock(),
+    error: mock(),
+    warn: mock(),
+    trace: mock(),
   })),
   telemetry: {
-    captureException: vi.fn(),
+    captureException: mock(),
   },
 }))
 
-vi.mock('../../../infrastructure/clients/qq', () => ({
-  qqClientFactory: { create: vi.fn().mockResolvedValue({ login: vi.fn(), on: vi.fn() }) },
+mock.module('../../../infrastructure/clients/qq', () => ({
+  qqClientFactory: { create: mock().mockResolvedValue({ login: mock(), on: mock() }) },
 }))
 
 // Mock telegram with undefined sessionId
-vi.mock('../../../infrastructure/clients/telegram', () => ({
+mock.module('../../../infrastructure/clients/telegram', () => ({
   telegramClientFactory: {
-    connect: vi.fn(),
-    create: vi.fn().mockResolvedValue({
+    connect: mock(),
+    create: mock().mockResolvedValue({
       sessionId: undefined, // The Key Difference
-      start: vi.fn(),
-      setParseMode: vi.fn(),
+      start: mock(),
+      setParseMode: mock(),
       me: { id: 123, username: 'test_bot' },
     }),
   },
 }))
 
-vi.mock('../../../features/runtime/instance-registry', () => ({
+mock.module('../../../features/runtime/instance-registry', () => ({
   instanceRegistry: {
-    add: vi.fn(),
-    remove: vi.fn(),
+    add: mock(),
+    remove: mock(),
   },
 }))
 
-vi.mock('@napgram/plugin-kit', () => ({
-  getEventPublisher: vi.fn(() => ({
-    publishInstanceStatus: vi.fn(),
+mock.module('@napgram/plugin-kit', () => ({
+  getEventPublisher: mock(() => ({
+    publishInstanceStatus: mock(),
   })),
 }))
 
 describe('instance Session Coverage', () => {
   it('should default botSessionId to 0 when sessionId is undefined', async () => {
     // Setup mock return values via the global mock
-    vi.mocked(db.query.instance.findFirst).mockResolvedValue({ id: 1 } as any)
+    (db.query.instance.findFirst as any).mockResolvedValue({ id: 1 } as any)
 
     const instance = await Instance.createNew('token') as Instance
 

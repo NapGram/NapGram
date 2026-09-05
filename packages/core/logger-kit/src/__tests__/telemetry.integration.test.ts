@@ -1,53 +1,63 @@
-import { execFile } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
-import { createServer } from 'node:http'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import { promisify } from 'node:util'
-import { afterEach, describe, expect, it } from 'vitest'
+/// <reference types="bun-types" />
+import { afterEach, describe, expect, it } from 'bun:test'
 
-const execFileAsync = promisify(execFile)
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/')
+const tempDirectory = () => {
+  const result = Bun.spawnSync(['mktemp', '-d', '-t', 'napgram-telemetry-XXXXXX'], { stdout: 'pipe' })
+  return new TextDecoder().decode(result.stdout).trim()
+}
+const removePath = (path: string) => Bun.spawnSync(['rm', '-rf', path])
+
+async function runBunScript(script: string, env: Record<string, string | undefined>) {
+  const child = Bun.spawn(['bun', '--eval', script], { env, stdout: 'pipe', stderr: 'pipe' })
+  const [exitCode, stdout, stderr] = await Promise.all([
+    child.exited,
+    child.stdout.text(),
+    child.stderr.text(),
+  ])
+  if (exitCode !== 0) throw new Error(stderr || `Bun child exited with ${exitCode}`)
+  return stdout
+}
+
+function restoreEnv(originalEnv: Record<string, string | undefined>) {
+  for (const key of Object.keys(Bun.env)) {
+    if (!(key in originalEnv)) delete Bun.env[key]
+  }
+  Object.assign(Bun.env, originalEnv)
+}
 
 describe('telemetry OTLP integration', () => {
-  const originalEnv = { ...process.env }
+  const originalEnv = { ...Bun.env }
   let dataDir = ''
 
   afterEach(() => {
-    process.env = { ...originalEnv }
-    if (dataDir) rmSync(dataDir, { force: true, recursive: true })
+    restoreEnv(originalEnv)
+    if (dataDir) removePath(dataDir)
   })
 
   it('exports resource, active, event, and exception spans to an HTTP collector', async () => {
-    const requests: Array<{ body: Buffer, contentType: string | undefined }> = []
-    const server = createServer((request, response) => {
-      const chunks: Buffer[] = []
-      request.on('data', chunk => chunks.push(Buffer.from(chunk)))
-      request.on('end', () => {
+    const requests: Array<{ body: Uint8Array, contentType: string | undefined }> = []
+    const server = Bun.serve({
+      hostname: '127.0.0.1',
+      port: 0,
+      async fetch(request) {
         requests.push({
-          body: Buffer.concat(chunks),
-          contentType: request.headers['content-type'],
+          body: new Uint8Array(await request.arrayBuffer()),
+          contentType: request.headers.get('content-type') ?? undefined,
         })
-        response.writeHead(200)
-        response.end()
-      })
-    })
-    await new Promise<void>((resolve, reject) => {
-      server.once('error', reject)
-      server.listen(0, '127.0.0.1', resolve)
+        return new Response(null, { status: 200 })
+      },
     })
 
     try {
-      const address = server.address()
-      if (!address || typeof address === 'string') throw new Error('Collector did not bind to a TCP port')
-
-      dataDir = mkdtempSync(join(tmpdir(), 'napgram-otlp-integration-'))
-      process.env.DATA_DIR = dataDir
-      process.env.ERROR_REPORTING = '1'
-      process.env.LOG_FILE = join(dataDir, 'app.log')
-      process.env.LOG_FILE_LEVEL = 'off'
-      process.env.LOG_LEVEL = 'off'
-      process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = `http://127.0.0.1:${address.port}/v1/traces`
-      process.env.TELEMETRY_ENABLED = 'true'
+      dataDir = tempDirectory()
+      Bun.env.DATA_DIR = dataDir
+      Bun.env.ERROR_REPORTING = '1'
+      Bun.env.LOG_FILE = joinPath(dataDir, 'app.log')
+      Bun.env.LOG_FILE_LEVEL = 'off'
+      Bun.env.LOG_LEVEL = 'off'
+      Bun.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT = `http://127.0.0.1:${server.port}/v1/traces`
+      Bun.env.TELEMETRY_ENABLED = 'true'
 
       const { telemetry } = await import('../telemetry.js')
       telemetry.event('integration.event', { stage: 'collector-test' })
@@ -59,12 +69,12 @@ describe('telemetry OTLP integration', () => {
       expect(requests).not.toHaveLength(0)
       expect(requests.every(request => request.contentType === 'application/json')).toBe(true)
 
-      const payloads = requests.map(request => JSON.parse(request.body.toString('utf8')))
+      const payloads = requests.map(request => JSON.parse(new TextDecoder().decode(request.body)))
       const resourceSpans = payloads.flatMap(payload => payload.resourceSpans ?? [])
       const spans = resourceSpans.flatMap(resource =>
         (resource.scopeSpans ?? []).flatMap((scope: any) => scope.spans ?? []),
       )
-      const instanceId = readFileSync(join(dataDir, '.telemetry-instance-id'), 'utf8').trim()
+      const instanceId = (await Bun.file(joinPath(dataDir, '.telemetry-instance-id')).text()).trim()
       const resourceAttributes = resourceSpans.flatMap(resource => resource.resource?.attributes ?? [])
       expect(resourceAttributes).toContainEqual({
         key: 'service.instance.id',
@@ -82,37 +92,33 @@ describe('telemetry OTLP integration', () => {
       }
     }
     finally {
-      await new Promise<void>(resolve => server.close(() => resolve()))
+      server.stop()
     }
   }, 15_000)
 
   it('returns one UUID when multiple processes initialize the same data directory', async () => {
-    dataDir = mkdtempSync(join(tmpdir(), 'napgram-uuid-race-'))
+    dataDir = tempDirectory()
     const telemetryUrl = new URL('../telemetry.ts', import.meta.url).href
     const script = `
       import(${JSON.stringify(telemetryUrl)}).then(({ resolveServiceInstanceId }) => {
-        process.stdout.write(resolveServiceInstanceId());
+        Bun.stdout.write(resolveServiceInstanceId());
       });
     `
     const childEnv = {
-      ...process.env,
+      ...Bun.env,
       DATA_DIR: dataDir,
       ERROR_REPORTING: '1',
-      LOG_FILE: join(dataDir, 'app.log'),
+      LOG_FILE: joinPath(dataDir, 'app.log'),
       LOG_FILE_LEVEL: 'off',
       LOG_LEVEL: 'off',
       NODE_ENV: 'test',
     }
 
-    const results = await Promise.all(Array.from({ length: 6 }, () =>
-      execFileAsync('bun', ['--eval', script], {
-        env: childEnv,
-      }),
-    ))
-    const ids = results.map(result => result.stdout.trim())
+    const results = await Promise.all(Array.from({ length: 6 }, () => runBunScript(script, childEnv)))
+    const ids = results.map(result => result.trim())
 
     expect([...new Set(ids)]).toHaveLength(1)
     expect(ids[0]).toMatch(/^[0-9a-f-]{36}$/)
-    expect(readFileSync(join(dataDir, '.telemetry-instance-id'), 'utf8').trim()).toBe(ids[0])
+    expect((await Bun.file(joinPath(dataDir, '.telemetry-instance-id')).text()).trim()).toBe(ids[0])
   }, 15_000)
 })

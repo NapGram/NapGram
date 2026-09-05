@@ -1,28 +1,28 @@
 import { db } from '@napgram/db-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import processNestedForward from '../processNestedForward'
 
 // Mock db
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: {
     query: {
       forwardMultiple: {
-        findFirst: vi.fn(),
+        findFirst: mock(),
       },
     },
-    insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([{ id: 'uuid-new' }]),
+    insert: mock(() => ({
+      values: mock(() => ({
+        returning: mock().mockResolvedValue([{ id: 'uuid-new' }]),
       })),
     })),
   },
   schema: { forwardMultiple: { id: 'id', resId: 'resId' } },
-  eq: vi.fn(),
+  eq: mock(),
 }))
 
 describe('processNestedForward', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('should skip invalid messages', async () => {
@@ -53,7 +53,7 @@ describe('processNestedForward', () => {
 
     // Mock existing
     const existing = { id: 'uuid-123' }
-    vi.mocked(db.query.forwardMultiple.findFirst).mockResolvedValueOnce(existing as any)
+    db.query.forwardMultiple.findFirst.mockResolvedValueOnce(existing as any)
 
     await processNestedForward(msgs, 1)
 
@@ -70,7 +70,7 @@ describe('processNestedForward', () => {
     const elem = { type: 'json', data: jsonData }
     const msgs = [{ message: [elem] }] as any
 
-    vi.mocked(db.query.forwardMultiple.findFirst).mockResolvedValueOnce(undefined)
+    db.query.forwardMultiple.findFirst.mockResolvedValueOnce(undefined)
 
     await processNestedForward(msgs, 2)
 
@@ -85,7 +85,7 @@ describe('processNestedForward', () => {
     const elem = { type: 'json', data: jsonData }
     const msgs = [{ message: [elem] }] as any
 
-    vi.mocked(db.query.forwardMultiple.findFirst).mockResolvedValueOnce({ id: 'uuid-exists' } as any)
+    db.query.forwardMultiple.findFirst.mockResolvedValueOnce({ id: 'uuid-exists' } as any)
 
     await processNestedForward(msgs, 4)
 
@@ -98,10 +98,10 @@ describe('processNestedForward', () => {
     const elem = { type: 'json', data: jsonData }
     const msgs = [{ message: [elem] }] as any
 
-    vi.mocked(db.query.forwardMultiple.findFirst).mockResolvedValueOnce(undefined)
-    vi.mocked(db.insert).mockReturnValueOnce({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([]),
+    db.query.forwardMultiple.findFirst.mockResolvedValueOnce(undefined)
+    db.insert.mockReturnValueOnce({
+      values: mock(() => ({
+        returning: mock().mockResolvedValue([]),
       })),
     } as any)
 
@@ -126,7 +126,7 @@ describe('processNestedForward', () => {
     const elem = { type: 'json', data: jsonData }
     const msgs = [{ message: [elem] }] as any
 
-    vi.mocked(db.query.forwardMultiple.findFirst).mockResolvedValueOnce(undefined)
+    db.query.forwardMultiple.findFirst.mockResolvedValueOnce(undefined)
 
     await processNestedForward(msgs, 3)
 

@@ -1,13 +1,11 @@
 import { performanceMonitor } from '@napgram/infra-kit'
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, jest, mock } from 'bun:test'
 import { getTelemetryErrorMessage, isTransientConnectionError, maskProxyUrl, startWindowedPerformanceLog } from '../bootstrap.js'
 
-vi.mock('@napgram/infra-kit', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@napgram/infra-kit')>()
+mock.module('@napgram/infra-kit', async () => {
   return {
-    ...actual,
     performanceMonitor: {
-      getStats: vi.fn().mockReturnValue({ totalMessages: 100, errorRate: 0.1 }),
+      getStats: mock().mockReturnValue({ totalMessages: 100, errorRate: 0.1 }),
     },
   }
 })
@@ -34,21 +32,21 @@ describe('bootstrap utils', () => {
   })
 
   it('startWindowedPerformanceLog works', () => {
-    vi.useFakeTimers()
-    const log = { debug: vi.fn(), warn: vi.fn() }
+    jest.useFakeTimers()
+    const log = { debug: mock(), warn: mock() }
     startWindowedPerformanceLog(log as any)
 
-    vi.advanceTimersByTime(60_000)
+    jest.advanceTimersByTime(60_000)
     expect(log.debug).toHaveBeenCalled()
     expect(performanceMonitor.getStats).toHaveBeenCalled()
 
     // Test error branch
-    vi.mocked(performanceMonitor.getStats).mockImplementationOnce(() => {
+    performanceMonitor.getStats.mockImplementationOnce(() => {
       throw new Error('Test')
     })
-    vi.advanceTimersByTime(60_000)
+    jest.advanceTimersByTime(60_000)
     expect(log.warn).toHaveBeenCalled()
 
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 })

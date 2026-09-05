@@ -1,6 +1,40 @@
-import { db } from '@napgram/db-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
+
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
+
+const queryResult = (() => (
+  rows: Record<string, unknown>[] = [],
+  rowCount = rows.length,
+) => ({
+  rows,
+  rowCount,
+  command: 'SELECT',
+  oid: 0,
+  fields: [],
+}))()
+
+mock.module('@napgram/db-kit', async () => ({
+  db: {
+    execute: mock().mockResolvedValue(queryResult([], 1)),
+  },
+  sql: mock((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
+}))
+
+mock.module('@napgram/logger-kit', async () => ({
+  getLogger: mock(() => loggerMocks),
+}))
+
+mock.module('../../../capabilities/logging.js', () => ({
+  getLogger: mock(() => loggerMocks),
+}))
+
+const { db } = await import('@napgram/db-kit')
+const {
   addForwardPairWithChatType,
   findPairByQQWithChatType,
   findPairByTGWithChatType,
@@ -11,38 +45,7 @@ import {
   qqChatTypeFromMessage,
   qqChatTypeToMessageChatType,
   removeForwardPairById,
-} from '../ForwardPairChatType.js'
-
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}))
-
-const queryResult = vi.hoisted(() => (
-  rows: Record<string, unknown>[] = [],
-  rowCount = rows.length,
-) => ({
-  rows,
-  rowCount,
-  command: 'SELECT',
-  oid: 0,
-  fields: [],
-}))
-
-vi.mock('@napgram/db-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  db: {
-    execute: vi.fn().mockResolvedValue(queryResult([], 1)),
-  },
-  sql: vi.fn((strings: TemplateStringsArray, ...values: unknown[]) => ({ strings: [...strings], values })),
-}))
-
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => loggerMocks),
-}))
+} = await import('../ForwardPairChatType.js')
 
 function createRawPair(overrides: Record<string, unknown> = {}) {
   return {
@@ -70,24 +73,24 @@ function createRawPair(overrides: Record<string, unknown> = {}) {
 
 function createForwardMap(overrides: Record<string, unknown> = {}) {
   return {
-    findByTG: vi.fn(),
-    findByQQ: vi.fn(),
-    getAll: vi.fn().mockReturnValue([]),
-    reload: vi.fn().mockResolvedValue(undefined),
-    add: vi.fn(),
+    findByTG: mock(),
+    findByQQ: mock(),
+    getAll: mock().mockReturnValue([]),
+    reload: mock().mockResolvedValue(undefined),
+    add: mock(),
     ...overrides,
   } as any
 }
 
 describe('forwardPairChatType', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.mocked(db.execute).mockReset()
-    vi.mocked(db.execute).mockResolvedValue(queryResult([], 1))
+    mock.clearAllMocks()
+    db.execute.mockReset()
+    db.execute.mockResolvedValue(queryResult([], 1))
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    mock.restore()
   })
 
   it('normalizes, parses, and formats QQ chat type aliases', () => {
@@ -116,7 +119,7 @@ describe('forwardPairChatType', () => {
 
   it('loads and attaches chat type for pairs without an in-memory type', async () => {
     const pair = { id: 10 } as any
-    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([createRawPair({ qqChatType: 'private' })]))
+    db.execute.mockResolvedValueOnce(queryResult([createRawPair({ qqChatType: 'private' })]))
 
     await expect(getForwardPairChatType(pair)).resolves.toBe('private')
 
@@ -125,7 +128,7 @@ describe('forwardPairChatType', () => {
   })
 
   it('falls back to group when legacy databases lack personal-mode columns', async () => {
-    vi.mocked(db.execute).mockRejectedValueOnce(new Error('column qqChatType does not exist'))
+    db.execute.mockRejectedValueOnce(new Error('column qqChatType does not exist'))
 
     await expect(getForwardPairChatType({ id: 10 } as any)).resolves.toBe('group')
 
@@ -134,7 +137,7 @@ describe('forwardPairChatType', () => {
 
   it('logs unexpected chat type lookup failures and falls back to group', async () => {
     const error = new Error('network down')
-    vi.mocked(db.execute).mockRejectedValueOnce(error)
+    db.execute.mockRejectedValueOnce(error)
 
     await expect(getForwardPairChatType({ id: 10 } as any)).resolves.toBe('group')
 
@@ -144,9 +147,9 @@ describe('forwardPairChatType', () => {
   it('finds TG pairs and attaches chat type from storage', async () => {
     const loaded = { id: 10 } as any
     const forwardMap = createForwardMap({
-      findByTG: vi.fn().mockReturnValue(loaded),
+      findByTG: mock().mockReturnValue(loaded),
     })
-    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([createRawPair({ qqChatType: 'private' })]))
+    db.execute.mockResolvedValueOnce(queryResult([createRawPair({ qqChatType: 'private' })]))
 
     const pair = await findPairByTGWithChatType(forwardMap, -10040004, undefined, false)
 
@@ -156,7 +159,7 @@ describe('forwardPairChatType', () => {
   })
 
   it('returns undefined when no TG pair exists', async () => {
-    const forwardMap = createForwardMap({ findByTG: vi.fn().mockReturnValue(undefined) })
+    const forwardMap = createForwardMap({ findByTG: mock().mockReturnValue(undefined) })
 
     await expect(findPairByTGWithChatType(forwardMap, -10040004, undefined, false)).resolves.toBeUndefined()
 
@@ -166,9 +169,9 @@ describe('forwardPairChatType', () => {
   it('finds QQ pairs from storage and prefers loaded pair instances', async () => {
     const loaded = { id: 10, qqRoomId: BigInt(20002) } as any
     const forwardMap = createForwardMap({
-      getAll: vi.fn().mockReturnValue([loaded]),
+      getAll: mock().mockReturnValue([loaded]),
     })
-    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([createRawPair({ id: 10, qqChatType: 'private' })]))
+    db.execute.mockResolvedValueOnce(queryResult([createRawPair({ id: 10, qqChatType: 'private' })]))
 
     const pair = await findPairByQQWithChatType(forwardMap, 7, 20002, 'private')
 
@@ -179,9 +182,9 @@ describe('forwardPairChatType', () => {
   it('falls back to loaded group mappings only for group lookups', async () => {
     const fallback = { id: 11, qqRoomId: BigInt(20002) } as any
     const forwardMap = createForwardMap({
-      findByQQ: vi.fn().mockReturnValue(fallback),
+      findByQQ: mock().mockReturnValue(fallback),
     })
-    vi.mocked(db.execute).mockResolvedValue(queryResult())
+    db.execute.mockResolvedValue(queryResult())
 
     await expect(findPairByQQWithChatType(forwardMap, 7, 20002, 'private')).resolves.toBeUndefined()
     const groupPair = await findPairByQQWithChatType(forwardMap, 7, 20002, 'group')
@@ -192,9 +195,9 @@ describe('forwardPairChatType', () => {
 
   it('uses legacy fallback for missing group columns and rejects private fallback', async () => {
     const forwardMap = createForwardMap({
-      add: vi.fn().mockResolvedValue({ id: 12, qqRoomId: BigInt(20002) }),
+      add: mock().mockResolvedValue({ id: 12, qqRoomId: BigInt(20002) }),
     })
-    vi.mocked(db.execute).mockRejectedValue(new Error('no such column: qqChatType'))
+    db.execute.mockRejectedValue(new Error('no such column: qqChatType'))
 
     const groupPair = await addForwardPairWithChatType(forwardMap, 7, 20002, -10040004, BigInt(9), 'group')
 
@@ -209,9 +212,9 @@ describe('forwardPairChatType', () => {
     const existingTg = { id: 20, qqChatType: 'group' } as any
     const existingQq = createRawPair({ id: 21, qqChatType: 'group' })
     const forwardMap = createForwardMap({
-      findByTG: vi.fn().mockReturnValue(existingTg),
+      findByTG: mock().mockReturnValue(existingTg),
     })
-    vi.mocked(db.execute)
+    db.execute
       .mockResolvedValueOnce(queryResult())
       .mockResolvedValueOnce(queryResult([existingQq]))
 
@@ -225,11 +228,11 @@ describe('forwardPairChatType', () => {
     const existingQq = createRawPair({ id: 21, qqChatType: 'group', qqDisplayName: 'Old Name' })
     const reloaded = { id: 21, qqChatType: 'group', tgChatId: BigInt(-10040004) } as any
     const forwardMap = createForwardMap({
-      findByTG: vi.fn()
+      findByTG: mock()
         .mockReturnValueOnce(undefined)
         .mockReturnValueOnce(reloaded),
     })
-    vi.mocked(db.execute)
+    db.execute
       .mockResolvedValueOnce(queryResult([existingQq]))
       .mockResolvedValueOnce(queryResult([], 1))
 
@@ -242,7 +245,7 @@ describe('forwardPairChatType', () => {
 
     expect(pair).toBe(reloaded)
     expect(db.execute).toHaveBeenCalledTimes(2)
-    expect((vi.mocked(db.execute).mock.calls[1][0] as any).values).toEqual([
+    expect((db.execute.mock.calls[1][0] as any).values).toEqual([
       BigInt(-10040004),
       BigInt(9),
       'group',
@@ -258,10 +261,10 @@ describe('forwardPairChatType', () => {
 
   it('inserts a new typed pair and throws if reload cannot observe it', async () => {
     const forwardMap = createForwardMap({
-      findByTG: vi.fn().mockReturnValue(undefined),
-      findByQQ: vi.fn().mockReturnValue(undefined),
+      findByTG: mock().mockReturnValue(undefined),
+      findByQQ: mock().mockReturnValue(undefined),
     })
-    vi.mocked(db.execute)
+    db.execute
       .mockResolvedValueOnce(queryResult())
       .mockResolvedValueOnce(queryResult())
       .mockResolvedValueOnce(queryResult([], 1))
@@ -272,7 +275,7 @@ describe('forwardPairChatType', () => {
       autoCreated: true,
     })).rejects.toThrow('绑定失败：操作未生效，请重试')
 
-    expect((vi.mocked(db.execute).mock.calls[1][0] as any).values.slice(0, 10)).toEqual([
+    expect((db.execute.mock.calls[1][0] as any).values.slice(0, 10)).toEqual([
       BigInt(20002),
       BigInt(-10040004),
       null,
@@ -288,12 +291,12 @@ describe('forwardPairChatType', () => {
 
   it('removes pairs by id and reports row count', async () => {
     const forwardMap = createForwardMap()
-    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([], 0))
+    db.execute.mockResolvedValueOnce(queryResult([], 0))
 
     await expect(removeForwardPairById(forwardMap, 10)).resolves.toBe(false)
     expect(forwardMap.reload).toHaveBeenCalledTimes(1)
 
-    vi.mocked(db.execute).mockResolvedValueOnce(queryResult([], 2))
+    db.execute.mockResolvedValueOnce(queryResult([], 2))
     await expect(removeForwardPairById(forwardMap, 11)).resolves.toBe(true)
     expect(forwardMap.reload).toHaveBeenCalledTimes(2)
   })

@@ -1,53 +1,47 @@
-import { Buffer } from 'node:buffer'
-import fs from 'node:fs'
-import { readdir } from 'node:fs/promises'
-import { Readable } from 'node:stream'
+import { bytesFromUtf8, bytesToUtf8 } from '../../../../../../shared/utils/binary.js'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { fileTypeFromBuffer } from 'file-type'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FileNormalizer } from '../FileNormalizer.js'
 
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal() as any
-  return {
-    ...actual,
-    default: {
-      ...actual.default,
-      promises: {
-        readFile: vi.fn(),
-        access: vi.fn(),
-      },
-    },
-  }
-})
+const fileIOMocks = {
+  readBytes: mock(),
+  readText: mock(),
+  write: mock(),
+  exists: mock(),
+  access: mock(),
+  mkdir: mock(),
+  mkdtemp: mock(),
+  stat: mock(),
+  readdir: mock(),
+  remove: mock(),
+  unlink: mock(),
+}
 
-vi.mock('node:fs/promises', async (importOriginal) => {
-  const actual = await importOriginal() as any
-  return {
-    ...actual,
-    readdir: vi.fn(),
-    readFile: vi.fn(),
-    access: vi.fn(),
-  }
-})
-
-vi.mock('file-type', () => ({
-  fileTypeFromBuffer: vi.fn(),
+mock.module('file-type', () => ({
+  fileTypeFromBuffer: mock(),
 }))
 
 describe('fileNormalizer', () => {
   let normalizer: FileNormalizer
   const mediaFeature = {
-    downloadMedia: vi.fn(),
-    processImage: vi.fn(),
-    processVideo: vi.fn(),
-    processAudio: vi.fn(),
-    fetchFileById: vi.fn(),
+    downloadMedia: mock(),
+    processImage: mock(),
+    processVideo: mock(),
+    processAudio: mock(),
+    fetchFileById: mock(),
   }
 
+  let readFileSpy: any
+  let accessSpy: any
+  let readdirSpy: any
+
   beforeEach(() => {
-    vi.clearAllMocks()
-    normalizer = new FileNormalizer(mediaFeature as any)
-    vi.mocked(fileTypeFromBuffer).mockResolvedValue({ ext: 'jpg', mime: 'image/jpeg' } as any)
+    normalizer = new FileNormalizer(mediaFeature as any, fileIOMocks as any)
+    ;(fileTypeFromBuffer as any).mockResolvedValue({ ext: 'jpg', mime: 'image/jpeg' } as any)
+    Object.values(fileIOMocks).forEach((fn: any) => fn.mockReset())
+    readFileSpy = fileIOMocks.readBytes.mockResolvedValue(bytesFromUtf8('dummy'))
+    accessSpy = fileIOMocks.access.mockResolvedValue(undefined)
+    readdirSpy = fileIOMocks.readdir.mockResolvedValue([])
   })
 
   describe('normalizeInputFile', () => {
@@ -56,17 +50,17 @@ describe('fileNormalizer', () => {
     })
 
     it('should handle Object with data and fileName', async () => {
-      const buf = Buffer.from('data')
+      const buf = bytesFromUtf8('data')
       const src = { data: buf, fileName: 'test.png' }
       const result = await normalizer.normalizeInputFile(src, 'f.jpg')
       expect(result).toMatchObject({ fileName: 'test.jpg' })
     })
 
     it('should handle Stream in Object', async () => {
-      const stream = Readable.from(['chunk'])
+      const stream = (async function* () { yield bytesFromUtf8('chunk') })()
       const src = { data: stream, fileName: 's.bin' }
       const result = await normalizer.normalizeInputFile(src, 'f.jpg')
-      expect(result?.data.toString()).toBe('chunk')
+      expect(bytesToUtf8(result?.data as Uint8Array)).toBe('chunk')
     })
 
     it('should handle URL download failure', async () => {
@@ -76,8 +70,8 @@ describe('fileNormalizer', () => {
     })
 
     it('should handle file type detection failure', async () => {
-      vi.mocked(fileTypeFromBuffer).mockRejectedValue(new Error('type fail'))
-      const buf = Buffer.from('data')
+      (fileTypeFromBuffer as any).mockRejectedValue(new Error('type fail'))
+      const buf = bytesFromUtf8('data')
       const result = await normalizer.normalizeInputFile(buf, 'test.txt')
       expect(result).toMatchObject({ fileName: 'test.txt', data: buf })
     })
@@ -85,7 +79,7 @@ describe('fileNormalizer', () => {
 
   describe('handleLocalOrMtcuteMedia', () => {
     it('should handle local read failure', async () => {
-      vi.mocked(fs.promises.readFile).mockRejectedValue(new Error('no read'))
+      readFileSpy.mockRejectedValue(new Error('no read'))
       const result = await normalizer.handleLocalOrMtcuteMedia('/local/missing.jpg', 'jpg')
       expect(result).toBe('/local/missing.jpg')
     })
@@ -98,21 +92,21 @@ describe('fileNormalizer', () => {
 
     it('should handle mtcute empty buffer', async () => {
       const mediaObj = { type: 'photo', id: '1' }
-      const downloader = vi.fn().mockResolvedValue(Buffer.alloc(0))
+      const downloader = mock().mockResolvedValue(new Uint8Array(0))
       const result = await normalizer.handleLocalOrMtcuteMedia(mediaObj, 'jpg', downloader)
       expect(result).toBeUndefined()
     })
 
     it('should handle mtcute download failure', async () => {
       const mediaObj = { type: 'photo', id: '1' }
-      const downloader = vi.fn().mockRejectedValue(new Error('crash'))
+      const downloader = mock().mockRejectedValue(new Error('crash'))
       const result = await normalizer.handleLocalOrMtcuteMedia(mediaObj, 'jpg', downloader)
       expect(result).toBeUndefined()
     })
 
     it('should handle image type detection during wrap', async () => {
-      const buf = Buffer.from('img')
-      vi.mocked(fileTypeFromBuffer).mockResolvedValue({ ext: 'png', mime: 'image/png' } as any)
+      const buf = bytesFromUtf8('img')
+      ;(fileTypeFromBuffer as any).mockResolvedValue({ ext: 'png', mime: 'image/png' } as any)
       const result = await normalizer.handleLocalOrMtcuteMedia(buf, 'jpg')
       expect(result).toEqual({ fileName: 'media.png', data: buf })
     })
@@ -120,11 +114,11 @@ describe('fileNormalizer', () => {
 
   describe('resolveMediaInput', () => {
     it('should handle video and audio', async () => {
-      mediaFeature.processVideo.mockResolvedValue(Buffer.from('vid'))
+      mediaFeature.processVideo.mockResolvedValue(bytesFromUtf8('vid'))
       const resVid = await normalizer.resolveMediaInput({ type: 'video', data: {} } as any)
       expect(resVid).toMatchObject({ fileName: 'media.mp4' })
 
-      mediaFeature.processAudio.mockResolvedValue(Buffer.from('aud'))
+      mediaFeature.processAudio.mockResolvedValue(bytesFromUtf8('aud'))
       const resAud = await normalizer.resolveMediaInput({ type: 'audio', data: {} } as any)
       expect(resAud).toMatchObject({ fileName: 'media.amr' })
     })
@@ -133,16 +127,16 @@ describe('fileNormalizer', () => {
       const content = { type: 'file', data: { file: '/p.zip', url: 'http://e.com/z.zip', fileId: 'fid' } } as any
 
       // Case 1: Local access fail, URL download success
-      vi.mocked(fs.promises.access).mockRejectedValue(new Error('no local'))
-      mediaFeature.downloadMedia.mockResolvedValue(Buffer.from('zip from url'))
+      accessSpy.mockRejectedValue(new Error('no local'))
+      mediaFeature.downloadMedia.mockResolvedValue(bytesFromUtf8('zip from url'))
       const res1 = await normalizer.resolveMediaInput(content)
-      expect(res1.toString()).toBe('zip from url')
+      expect(bytesToUtf8(res1 as Uint8Array)).toBe('zip from url')
 
       // Case 2: URL download fail, fetchFileById success
       mediaFeature.downloadMedia.mockRejectedValue(new Error('no url'))
-      mediaFeature.fetchFileById.mockResolvedValue({ buffer: Buffer.from('zip from id') })
+      mediaFeature.fetchFileById.mockResolvedValue({ buffer: bytesFromUtf8('zip from id') })
       const res2 = await normalizer.resolveMediaInput(content)
-      expect(res2.toString()).toBe('zip from id')
+      expect(bytesToUtf8(res2 as Uint8Array)).toBe('zip from id')
 
       // Case 3: Both fail, return path
       mediaFeature.fetchFileById.mockResolvedValue(null)
@@ -152,14 +146,14 @@ describe('fileNormalizer', () => {
 
     it('should handle local file missing and fetchFileById retry', async () => {
       const content = { type: 'file', data: { file: '/missing.zip', fileId: 'fid' } } as any
-      vi.mocked(fs.promises.access).mockRejectedValue(new Error('no'))
-      mediaFeature.fetchFileById.mockResolvedValue({ buffer: Buffer.from('fetched') })
+      accessSpy.mockRejectedValue(new Error('no'))
+      mediaFeature.fetchFileById.mockResolvedValue({ buffer: bytesFromUtf8('fetched') })
       const result = await normalizer.resolveMediaInput(content)
-      expect(result.toString()).toBe('fetched')
+      expect(bytesToUtf8(result as Uint8Array)).toBe('fetched')
     })
 
     it('should work without media feature', async () => {
-      const normNoMedia = new FileNormalizer()
+      const normNoMedia = new FileNormalizer(undefined, fileIOMocks as any)
       const content = { type: 'image', data: { url: 'http://e.com/i.jpg' } } as any
       expect(await normNoMedia.resolveMediaInput(content)).toBe('http://e.com/i.jpg')
     })
@@ -167,9 +161,9 @@ describe('fileNormalizer', () => {
 
   describe('isGifMedia', () => {
     it('should detect gif by mime or extension', () => {
-      expect(normalizer.isGifMedia({ fileName: 'a.gif', data: Buffer.alloc(0) })).toBe(true)
-      expect(normalizer.isGifMedia({ fileName: 'a.jpg', data: Buffer.alloc(0), fileMime: 'image/gif' })).toBe(true)
-      expect(normalizer.isGifMedia({ fileName: 'a.jpg', data: Buffer.alloc(0) })).toBe(false)
+      expect(normalizer.isGifMedia({ fileName: 'a.gif', data: new Uint8Array(0) })).toBe(true)
+      expect(normalizer.isGifMedia({ fileName: 'a.jpg', data: new Uint8Array(0), fileMime: 'image/gif' })).toBe(true)
+      expect(normalizer.isGifMedia({ fileName: 'a.jpg', data: new Uint8Array(0) })).toBe(false)
     })
   })
 
@@ -178,26 +172,26 @@ describe('fileNormalizer', () => {
       const primary = '/dir/original.jpg'
 
       // Fail direct read
-      vi.mocked(fs.promises.readFile).mockRejectedValueOnce(new Error('fail 1'))
+      readFileSpy.mockRejectedValueOnce(new Error('fail 1'))
 
       // Mock readdir
-      vi.mocked(readdir).mockResolvedValue(['original_matched.jpg'] as any)
+      readdirSpy.mockResolvedValue(['original_matched.jpg'] as any)
 
       // Second read succeeds
-      vi.mocked(fs.promises.readFile).mockImplementation(async (p: any) => {
+      readFileSpy.mockImplementation(async (p: any) => {
         if (p === '/dir/original_matched.jpg')
-          return Buffer.from('found')
+          return bytesFromUtf8('found')
         throw new Error('fail')
       })
 
       const result = await normalizer.normalizeInputFile(primary, 'f.jpg')
-      expect(result?.data.toString()).toBe('found')
+      expect(bytesToUtf8(result?.data as Uint8Array)).toBe('found')
     })
 
     it('should return undefined if all attempts fail including fuzzy', async () => {
       const primary = '/dir/none.jpg'
-      vi.mocked(fs.promises.readFile).mockRejectedValue(new Error('no'))
-      vi.mocked(readdir).mockResolvedValue(['something_else.txt'] as any)
+      readFileSpy.mockRejectedValue(new Error('no'))
+      readdirSpy.mockResolvedValue(['something_else.txt'] as any)
 
       const result = await normalizer.normalizeInputFile(primary, 'f.jpg')
       expect(result).toBeUndefined()
@@ -205,8 +199,8 @@ describe('fileNormalizer', () => {
 
     it('should handle readdir failure', async () => {
       const primary = '/dir/none.jpg'
-      vi.mocked(fs.promises.readFile).mockRejectedValue(new Error('no'))
-      vi.mocked(readdir).mockRejectedValue(new Error('readdir crash'))
+      readFileSpy.mockRejectedValue(new Error('no'))
+      readdirSpy.mockRejectedValue(new Error('readdir crash'))
 
       const result = await normalizer.normalizeInputFile(primary, 'f.jpg')
       expect(result).toBeUndefined()
@@ -215,21 +209,18 @@ describe('fileNormalizer', () => {
 
   describe('ensureTelegramPhotoCompatible', () => {
     it('returns unmodified if not webp', async () => {
-      const file = { fileName: 'a.jpg', data: Buffer.alloc(0), fileMime: 'image/jpeg' }
+      const file = { fileName: 'a.jpg', data: new Uint8Array(0), fileMime: 'image/jpeg' }
       const res = await normalizer.ensureTelegramPhotoCompatible(file)
       expect(res).toBe(file)
     })
 
-    it('handles webp to png conversion via image-js failure and ffmpeg fallback', async () => {
-      const file = { fileName: 'a.webp', data: Buffer.alloc(0), fileMime: 'image/webp' }
+    it('falls back to ffmpeg and then preserves the original when native conversion fails', async () => {
+      const file = { fileName: 'a.webp', data: new Uint8Array(0), fileMime: 'image/webp' }
 
-      // We don't want to actually run ffmpeg or image-js in unit test, so we just let it fail
-      // or mock them if possible. Here image-js `decode` will throw because Buffer is empty.
-      // And ffmpeg will fail because we mock nothing or it throws.
+      // Invalid input makes the native Transformer fail; ffmpeg is also unavailable in this unit test.
       const res = await normalizer.ensureTelegramPhotoCompatible(file)
 
-      // It should fallback to returning the original file because both failed
       expect(res).toBe(file)
-    })
+    }, 15_000)
   })
 })

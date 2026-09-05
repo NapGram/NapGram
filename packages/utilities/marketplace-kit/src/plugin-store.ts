@@ -1,10 +1,8 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
-import { fileURLToPath } from 'node:url'
 import YAML from 'yaml'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
+import { runtimeFileIO, spawnFileWithBun } from '@napgram/runtime-kit'
+import { basename, bunRuntime, dirname, extname, fileURLToPath, joinPath, relative, resolvePath } from './path-utils.js'
 
 const logger = getLogger('PluginStore')
 
@@ -21,36 +19,32 @@ export interface PluginsConfigFile {
 }
 
 function resolveDataDir(): string {
-  const dataDir = String(env.DATA_DIR || process.env.DATA_DIR || '/app/data')
-  return path.resolve(dataDir)
+  const dataDir = String(env.DATA_DIR || bunRuntime.env.DATA_DIR || '/app/data')
+  return resolvePath(dataDir)
 }
 
 function readStringEnv(keys: string[]): string {
   for (const key of keys) {
-    const raw = String((process.env as any)[key] || '').trim()
+    const raw = String((bunRuntime.env as any)[key] || '').trim()
     if (raw)
       return raw
   }
   return ''
 }
 
-async function realpathSafe(p: string): Promise<string> {
-  try {
-    return await fs.realpath(p)
-  }
-  catch {
-    return p
-  }
+async function resolveRealPath(p: string): Promise<string> {
+  const { stdout } = await spawnFileWithBun('realpath', ['-m', p])
+  return stdout.trim()
 }
 
 async function ensureUnderDataDir(absolutePath: string): Promise<string> {
   const dataDir = resolveDataDir()
-  const abs = path.resolve(absolutePath)
-  const real = await realpathSafe(abs)
-  const dataReal = await realpathSafe(dataDir)
+  const abs = resolvePath(absolutePath)
+  const real = await resolveRealPath(abs)
+  const dataReal = await resolveRealPath(dataDir)
   if (real === dataReal)
     return real
-  if (!real.startsWith(dataReal + path.sep)) {
+  if (!real.startsWith(dataReal + '/')) {
     throw new Error(`Path is outside DATA_DIR: ${absolutePath}`)
   }
   return real
@@ -58,7 +52,7 @@ async function ensureUnderDataDir(absolutePath: string): Promise<string> {
 
 async function exists(p: string): Promise<boolean> {
   try {
-    await fs.access(p)
+    await runtimeFileIO.access(p)
     return true
   }
   catch {
@@ -68,9 +62,9 @@ async function exists(p: string): Promise<boolean> {
 
 async function writeAtomic(filePath: string, content: string): Promise<void> {
   const tmpPath = `${filePath}.tmp`
-  await fs.mkdir(path.dirname(filePath), { recursive: true })
-  await fs.writeFile(tmpPath, content, 'utf8')
-  await fs.rename(tmpPath, filePath)
+  await runtimeFileIO.mkdir(dirname(filePath), { recursive: true })
+  await runtimeFileIO.write(tmpPath, content)
+  await runtimeFileIO.rename(tmpPath, filePath)
 }
 
 async function backupConfig(filePath: string): Promise<void> {
@@ -78,7 +72,7 @@ async function backupConfig(filePath: string): Promise<void> {
     return
   try {
     const backupPath = `${filePath}.bak`
-    await fs.copyFile(filePath, backupPath)
+    await runtimeFileIO.copyFile(filePath, backupPath)
   }
   catch (error) {
     logger.warn({ error, filePath }, 'Failed to backup config file')
@@ -111,10 +105,10 @@ function parseConfig(raw: string, ext: string): PluginsConfigFile {
 
 function inferIdFromModule(modulePath: string): string {
   const clean = modulePath.startsWith('file://') ? fileURLToPath(modulePath) : modulePath
-  const ext = path.extname(clean)
-  const base = path.basename(clean, ext)
+  const ext = extname(clean)
+  const base = basename(clean, ext)
   if (base.toLowerCase() === 'index') {
-    return path.basename(path.dirname(clean)) || 'plugin'
+    return basename(dirname(clean)) || 'plugin'
   }
   return base || 'plugin'
 }
@@ -129,8 +123,8 @@ function sanitizeId(id: string): string {
 }
 
 function getLegacyConfigCandidates(configPath: string): string[] {
-  const ext = path.extname(configPath).toLowerCase()
-  const base = path.join(path.dirname(configPath), path.basename(configPath, ext))
+  const ext = extname(configPath).toLowerCase()
+  const base = joinPath(dirname(configPath), basename(configPath, ext))
   return legacyConfigExtensions
     .filter(candidate => candidate !== ext)
     .map(candidate => `${base}${candidate}`)
@@ -143,8 +137,8 @@ async function migrateLegacyPluginsConfig(configPath: string): Promise<PluginsCo
       continue
     try {
       await ensureUnderDataDir(candidate)
-      const raw = await fs.readFile(candidate, 'utf8')
-      const ext = path.extname(candidate).toLowerCase()
+      const raw = await runtimeFileIO.readText(candidate)
+      const ext = extname(candidate).toLowerCase()
       const config = parseConfig(raw, ext)
       await writePluginsConfigFile(configPath, config)
       logger.info({ from: candidate, to: configPath }, 'Migrated legacy plugins config')
@@ -160,16 +154,16 @@ async function migrateLegacyPluginsConfig(configPath: string): Promise<PluginsCo
 export async function getManagedPluginsConfigPath(): Promise<string> {
   const override = readStringEnv(['PLUGINS_CONFIG_PATH'])
   if (override)
-    return path.resolve(override)
+    return resolvePath(override)
 
-  const baseDir = path.join(resolveDataDir(), 'plugins')
-  return path.join(baseDir, 'plugins.yaml')
+  const baseDir = joinPath(resolveDataDir(), 'plugins')
+  return joinPath(baseDir, 'plugins.yaml')
 }
 
 export async function normalizeModuleSpecifierForPluginsConfig(moduleRaw: string): Promise<{ stored: string, absolute: string }> {
   const configPath = await getManagedPluginsConfigPath()
   await ensureUnderDataDir(configPath)
-  const baseDir = path.dirname(configPath)
+  const baseDir = dirname(configPath)
 
   const raw = String(moduleRaw || '').trim()
   if (!raw)
@@ -178,11 +172,11 @@ export async function normalizeModuleSpecifierForPluginsConfig(moduleRaw: string
   const absolute
     = raw.startsWith('file://')
       ? await ensureUnderDataDir(fileURLToPath(raw))
-      : await ensureUnderDataDir(path.resolve(baseDir, raw))
+      : await ensureUnderDataDir(resolvePath(baseDir, raw))
 
-  const rel = path.relative(baseDir, absolute)
-  const stored = !rel.startsWith(`..${path.sep}`) && rel !== '..'
-    ? `./${rel.split(path.sep).join('/')}`
+  const rel = relative(baseDir, absolute)
+  const stored = !rel.startsWith('../') && rel !== '..'
+    ? `./${rel.split('/').join('/')}`
     : absolute
 
   return { stored, absolute }
@@ -196,7 +190,7 @@ export async function readPluginsConfig(): Promise<{ path: string, config: Plugi
     const backupPath = `${configPath}.bak`
     if (await exists(backupPath)) {
       try {
-        await fs.copyFile(backupPath, configPath)
+        await runtimeFileIO.copyFile(backupPath, configPath)
         logger.warn({ backupPath, configPath }, 'Restored config from backup (main file missing)')
       }
       catch (error) {
@@ -217,11 +211,11 @@ export async function readPluginsConfig(): Promise<{ path: string, config: Plugi
     return { path: configPath, config: { plugins: [] }, exists: false }
 
   try {
-    const raw = await fs.readFile(configPath, 'utf8')
+    const raw = await runtimeFileIO.readText(configPath)
     if (!raw.trim()) {
       throw new Error('Empty config file')
     }
-    const ext = path.extname(configPath).toLowerCase()
+    const ext = extname(configPath).toLowerCase()
     return { path: configPath, config: parseConfig(raw, ext), exists: true }
   }
   catch (error) {
@@ -229,10 +223,10 @@ export async function readPluginsConfig(): Promise<{ path: string, config: Plugi
     const backupPath = `${configPath}.bak`
     if (await exists(backupPath)) {
       try {
-        const rawBak = await fs.readFile(backupPath, 'utf8')
-        await fs.copyFile(backupPath, configPath)
+        const rawBak = await runtimeFileIO.readText(backupPath)
+        await runtimeFileIO.copyFile(backupPath, configPath)
         logger.warn('Restored config from backup (main file corrupted)')
-        const ext = path.extname(configPath).toLowerCase()
+        const ext = extname(configPath).toLowerCase()
         return { path: configPath, config: parseConfig(rawBak, ext), exists: true }
       }
       catch (bakError) {

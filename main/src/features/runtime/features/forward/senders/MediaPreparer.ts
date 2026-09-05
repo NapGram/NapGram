@@ -1,18 +1,14 @@
 import type { AudioContent, FileContent, ImageContent, MessageContent, UnifiedMessage, VideoContent } from '@napgram/message-kit'
 import type { Instance } from '../../../runtime-types.js'
 import type { MediaFeature } from '../../MediaFeature.js'
-import { Buffer } from 'node:buffer'
-import { execFile } from 'node:child_process'
-import fs from 'node:fs'
-import path from 'node:path'
-import { promisify } from 'node:util'
+import { bytesEqual, bytesFromUtf8, bytesToUtf8, concatBytes } from '../../../../../shared/utils/binary.js'
+import { basename, joinPath } from '../../../../../shared/utils/path.js'
 import { fileTypeFromBuffer } from 'file-type'
 import { env } from '../../../capabilities/env.js'
 import { getLogger } from '../../../capabilities/logging.js'
 import { silk } from '../../../capabilities/media.js'
+import { runtimeFileIO, spawnFileWithBun } from '@napgram/runtime-kit'
 import { renderContent } from '../utils/render.js'
-
-const execFileAsync = promisify(execFile)
 
 export class ForwardMediaPreparer {
   private readonly logger = getLogger('ForwardFeature')
@@ -21,10 +17,11 @@ export class ForwardMediaPreparer {
     private readonly instance: Instance,
     private readonly media?: MediaFeature,
     private readonly contentRenderer: (content: MessageContent) => string = renderContent,
+    private readonly fileIO = runtimeFileIO,
   ) { }
 
   /**
-   * 为 QQ 侧填充媒体 Buffer/URL，提升兼容性。
+   * 为 QQ 侧填充媒体字节或 URL，提升兼容性。
    */
   async prepareMediaForQQ(msg: UnifiedMessage) {
     if (!this.media)
@@ -60,18 +57,18 @@ export class ForwardMediaPreparer {
           if (oggPath) {
             try {
               const silkBuffer = await silk.encode(oggPath)
-              const header = Buffer.from('#!SILK_V3', 'binary')
-              const prefixedHeader = Buffer.from('\x02#!SILK_V3', 'binary')
+              const header = bytesFromUtf8('#!SILK_V3')
+              const prefixedHeader = bytesFromUtf8('\x02#!SILK_V3')
 
               let finalBuffer = silkBuffer
-              const hasPrefixedHeader = finalBuffer.subarray(0, prefixedHeader.length).equals(prefixedHeader)
-              const hasHeader = finalBuffer.subarray(0, header.length).equals(header)
+              const hasPrefixedHeader = bytesEqual(finalBuffer.subarray(0, prefixedHeader.length), prefixedHeader)
+              const hasHeader = bytesEqual(finalBuffer.subarray(0, header.length), header)
 
               // Ensure single prefixed header: if only "#!SILK_V3", add the \x02 prefix; if missing entirely, prepend full header.
               if (!hasPrefixedHeader) {
                 finalBuffer = hasHeader
-                  ? Buffer.concat([Buffer.from('\x02', 'binary'), finalBuffer])
-                  : Buffer.concat([prefixedHeader, finalBuffer])
+                  ? concatBytes(bytesFromUtf8('\x02'), finalBuffer)
+                  : concatBytes(prefixedHeader, finalBuffer)
               }
 
               this.logger.debug(`Encoded silk buffer size: ${finalBuffer.length} (with prefixedHeader=${hasPrefixedHeader || hasHeader})`)
@@ -82,7 +79,7 @@ export class ForwardMediaPreparer {
               content.type = 'file'
               content.data = {
                 file: oggPath,
-                filename: path.basename(oggPath),
+                filename: basename(oggPath),
               } as any
             }
           }
@@ -109,22 +106,22 @@ export class ForwardMediaPreparer {
   async ensureBufferOrPath(
     content: ImageContent | VideoContent | AudioContent | FileContent,
     options?: { forceDownload?: boolean, prefer?: 'buffer' | 'path' | 'url', ext?: string, filename?: string, prefix?: string },
-  ): Promise<Buffer | string | undefined> {
+  ): Promise<Uint8Array | string | undefined> {
     const forceDownload = options?.forceDownload
     const prefer = options?.prefer || 'buffer'
     this.logger.debug(`[ensureBufferOrPath] Start - content.type: ${content.type}, forceDownload: ${forceDownload}, prefer: ${prefer}`)
     this.logger.debug(`[ensureBufferOrPath] content.data keys: ${Object.keys(content.data).join(', ')}`)
 
     if (content.data.file) {
-      this.logger.debug(`[ensureBufferOrPath] content.data.file type: ${typeof content.data.file}, isBuffer: ${Buffer.isBuffer(content.data.file)}`)
+      this.logger.debug(`[ensureBufferOrPath] content.data.file type: ${typeof content.data.file}, isBuffer: ${content.data.file instanceof Uint8Array}`)
 
-      if (Buffer.isBuffer(content.data.file))
+      if (content.data.file instanceof Uint8Array)
         return content.data.file
       if (typeof content.data.file === 'string') {
         if (!forceDownload && !/^https?:\/\//.test(content.data.file)) {
           try {
             this.logger.debug(`Processing media:\n${JSON.stringify(content, null, 2)}`)
-            await fs.promises.access(content.data.file)
+            await this.fileIO.access(content.data.file)
             this.logger.debug(`Media file exists locally: ${content.data.file}`)
             return content.data.file
           }
@@ -155,7 +152,7 @@ export class ForwardMediaPreparer {
             this.logger.warn('Downloaded buffer is empty, treating as failure')
             return undefined
           }
-          return buffer as Buffer
+          return buffer as Uint8Array
         }
 
         const urlOrPath = await this.instance.tgBot.downloadMediaToTempFile(mediaObj, {
@@ -187,17 +184,15 @@ export class ForwardMediaPreparer {
     return undefined
   }
 
-  async ensureFilePath(file: Buffer | string | undefined, ext?: string, forceLocal?: boolean) {
+  async ensureFilePath(file: Uint8Array | string | undefined, ext?: string, forceLocal?: boolean) {
     if (!file)
       return undefined
-    if (Buffer.isBuffer(file)) {
+    if (file instanceof Uint8Array) {
       const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext || ''}`
-      const tempDir = path.join(env.DATA_DIR, 'temp')
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true })
-      }
-      const tempPath = path.join(tempDir, filename)
-      await fs.promises.writeFile(tempPath, file)
+      const tempDir = joinPath(env.DATA_DIR, 'temp')
+      await this.fileIO.mkdir(tempDir, { recursive: true })
+      const tempPath = joinPath(tempDir, filename)
+      await this.fileIO.write(tempPath, file)
 
       if (!forceLocal) {
         if (env.INTERNAL_WEB_ENDPOINT) {
@@ -213,15 +208,15 @@ export class ForwardMediaPreparer {
     return file
   }
 
-  async prepareAudioSource(audioContent: AudioContent, processedFile?: Buffer | string) {
-    let source: Buffer | string | undefined = processedFile
+  async prepareAudioSource(audioContent: AudioContent, processedFile?: Uint8Array | string) {
+    let source: Uint8Array | string | undefined = processedFile
 
     if (!source && typeof audioContent.data.file === 'string') {
       let candidate = audioContent.data.file
       if (candidate.endsWith('.amr')) {
         const wavPath = `${candidate}.wav`
         try {
-          await fs.promises.access(wavPath)
+          await this.fileIO.access(wavPath)
           candidate = wavPath
         }
         catch {
@@ -239,13 +234,13 @@ export class ForwardMediaPreparer {
     }
 
     if (source) {
-      let buffer: Buffer | undefined
-      if (Buffer.isBuffer(source)) {
+      let buffer: Uint8Array | undefined
+      if (source instanceof Uint8Array) {
         buffer = source
       }
       else {
         try {
-          buffer = await fs.promises.readFile(source)
+          buffer = new Uint8Array(await this.fileIO.readBytes(source))
         }
         catch {
           buffer = undefined
@@ -273,7 +268,7 @@ export class ForwardMediaPreparer {
     let lastSize = -1
     for (let i = 0; i < attempts; i++) {
       try {
-        const stat = await fs.promises.stat(filePath)
+        const stat = await this.fileIO.stat(filePath)
         if (stat.size > 0 && stat.size === lastSize) {
           return true
         }
@@ -284,7 +279,7 @@ export class ForwardMediaPreparer {
       await new Promise(r => setTimeout(r, intervalMs))
     }
     try {
-      await fs.promises.access(filePath)
+      await this.fileIO.access(filePath)
       return true
     }
     catch {
@@ -292,27 +287,27 @@ export class ForwardMediaPreparer {
     }
   }
 
-  async convertAudioToOgg(source: Buffer | string): Promise<{ voicePath?: string, fallbackPath?: string }> {
-    const tempDir = path.join(env.DATA_DIR, 'temp')
-    await fs.promises.mkdir(tempDir, { recursive: true })
+  async convertAudioToOgg(source: Uint8Array | string): Promise<{ voicePath?: string, fallbackPath?: string }> {
+    const tempDir = joinPath(env.DATA_DIR, 'temp')
+    await this.fileIO.mkdir(tempDir, { recursive: true })
 
     let inputPath: string
-    let inputBuffer: Buffer
+    let inputBuffer: Uint8Array
 
     if (typeof source === 'string') {
       inputPath = source
-      inputBuffer = await fs.promises.readFile(inputPath)
+      inputBuffer = new Uint8Array(await this.fileIO.readBytes(inputPath))
     }
     else {
       inputBuffer = source
-      inputPath = path.join(tempDir, `audio-${Date.now()}-${Math.random().toString(16).slice(2)}.amr`)
-      await fs.promises.writeFile(inputPath, source)
+      inputPath = joinPath(tempDir, `audio-${Date.now()}-${Math.random().toString(16).slice(2)}.amr`)
+      await this.fileIO.write(inputPath, source)
     }
 
-    const outputPath = path.join(tempDir, `audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`)
+    const outputPath = joinPath(tempDir, `audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`)
 
     try {
-      if (inputBuffer.length >= 10 && inputBuffer.subarray(0, 10).toString('utf8').includes('SILK_V3')) {
+      if (inputBuffer.length >= 10 && bytesToUtf8(inputBuffer.subarray(0, 10)).includes('SILK_V3')) {
         await silk.decode(inputBuffer, outputPath)
         return { voicePath: outputPath }
       }
@@ -322,7 +317,7 @@ export class ForwardMediaPreparer {
     }
 
     const tryConvert = async (inPath: string) => {
-      await execFileAsync('ffmpeg', [
+      await spawnFileWithBun('ffmpeg', [
         '-y',
         '-i',
         inPath,
@@ -347,7 +342,7 @@ export class ForwardMediaPreparer {
       if (typeof source === 'string') {
         const wavPath = `${inputPath}.wav`
         try {
-          await fs.promises.access(wavPath)
+          await this.fileIO.access(wavPath)
           return { voicePath: await tryConvert(wavPath) }
         }
         catch {

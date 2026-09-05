@@ -1,11 +1,11 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { fetchFile, getAvatar } from '../urls.js'
 
 describe('urls', () => {
   it('fetchFile handles success and failure', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
+    global.fetch = mock().mockResolvedValueOnce({
       ok: true,
       arrayBuffer: async () => new ArrayBuffer(8),
     }).mockResolvedValueOnce({
@@ -21,7 +21,7 @@ describe('urls', () => {
   })
 
   it('getAvatar', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
+    global.fetch = mock().mockResolvedValueOnce({
       ok: true,
       arrayBuffer: async () => new ArrayBuffer(8),
     })

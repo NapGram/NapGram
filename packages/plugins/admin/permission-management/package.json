@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "vitest run"
+    "test": "bun test --isolate src"
   },
   "keywords": [
     "napgram",
@@ -27,10 +27,8 @@
   "author": "NapGram Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "26.4.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
     "main": "./dist/index.js",
@@ -51,6 +49,7 @@
   ],
   "dependencies": {
     "@napgram/env-kit": "workspace:*",
+    "@napgram/runtime-kit": "workspace:*",
     "@napgram/sdk": "workspace:*",
     "drizzle-orm": "^0.45.1"
   }

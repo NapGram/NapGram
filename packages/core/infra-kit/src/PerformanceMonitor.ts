@@ -1,5 +1,27 @@
-import process from 'node:process'
 import { getLogger } from '@napgram/logger-kit'
+interface BunHeapSnapshot {
+  nodes: number[]
+}
+
+interface BunPerformanceRuntime {
+  env: Record<string, string | undefined>
+  generateHeapSnapshot: () => BunHeapSnapshot
+}
+
+const detectedBunRuntime = (globalThis as typeof globalThis & { Bun?: BunPerformanceRuntime }).Bun
+if (!detectedBunRuntime) {
+  throw new Error('Bun runtime is required for PerformanceMonitor')
+}
+const bunRuntime: BunPerformanceRuntime = detectedBunRuntime
+
+function getMemoryUsage(): { heapUsed: number } {
+  const nodes = bunRuntime.generateHeapSnapshot().nodes
+  let heapUsed = 0
+  for (let index = 3; index < nodes.length; index += 6) {
+    heapUsed += nodes[index] ?? 0
+  }
+  return { heapUsed }
+}
 
 const logger = getLogger('PerformanceMonitor')
 
@@ -9,7 +31,7 @@ export interface PerformanceMetrics {
   errorCount: number
   cacheHits: number
   cacheMisses: number
-  memoryUsage: NodeJS.MemoryUsage
+  memoryUsage: { heapUsed: number }
   startTime: number
 }
 
@@ -33,7 +55,7 @@ export class PerformanceMonitor {
     errorCount: 0,
     cacheHits: 0,
     cacheMisses: 0,
-    memoryUsage: process.memoryUsage(),
+    memoryUsage: getMemoryUsage(),
     startTime: Date.now(),
   }
 
@@ -61,7 +83,7 @@ export class PerformanceMonitor {
   }
 
   updateMemoryUsage() {
-    this.metrics.memoryUsage = process.memoryUsage()
+    this.metrics.memoryUsage = getMemoryUsage()
   }
 
   getStats(): PerformanceStats {
@@ -110,7 +132,7 @@ export class PerformanceMonitor {
       errorCount: 0,
       cacheHits: 0,
       cacheMisses: 0,
-      memoryUsage: process.memoryUsage(),
+      memoryUsage: getMemoryUsage(),
       startTime: Date.now(),
     }
     logger.info('Performance metrics reset')
@@ -141,6 +163,6 @@ export const startMonitoring = () => {
   }, 300000)
 }
 
-if (process.env.NODE_ENV !== 'test') {
+if (bunRuntime.env.NODE_ENV !== 'test') {
   startMonitoring()
 }

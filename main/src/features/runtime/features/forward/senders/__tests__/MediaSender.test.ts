@@ -1,20 +1,20 @@
 import { env } from '@napgram/env-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { MediaSender } from '../MediaSender.js'
 
 describe('mediaSender', () => {
   const fileNormalizer = {
-    normalizeInputFile: vi.fn(),
-    isGifMedia: vi.fn(),
-    ensureTelegramPhotoCompatible: vi.fn(async input => input),
+    normalizeInputFile: mock(),
+    isGifMedia: mock(),
+    ensureTelegramPhotoCompatible: mock(async input => input),
   }
   const richHeaderBuilder = {
-    applyRichHeader: vi.fn(),
-    buildReplyTo: vi.fn(),
+    applyRichHeader: mock(),
+    buildReplyTo: mock(),
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('returns null when media group is empty', async () => {
@@ -26,7 +26,7 @@ describe('mediaSender', () => {
 
   it('delegates single media to sendMediaToTG', async () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
-    const sendMediaToTG = vi.fn().mockResolvedValue({ id: 1 })
+    const sendMediaToTG = mock().mockResolvedValue({ id: 1 })
 
     const result = await sender.sendMediaGroup(
       {} as any,
@@ -50,9 +50,9 @@ describe('mediaSender', () => {
     const chat = {
       id: 100,
       client: {
-        sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]),
+        sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]),
       },
-      sendMessage: vi.fn(),
+      sendMessage: mock(),
     }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue({ data: 'file', fileName: 'a.jpg' })
@@ -75,10 +75,10 @@ describe('mediaSender', () => {
     )
 
     expect(chat.client.sendMediaGroup).toHaveBeenCalled()
-    const mediaInputs = vi.mocked(chat.client.sendMediaGroup).mock.calls[0][1] as any[]
+    const mediaInputs = chat.client.sendMediaGroup.mock.calls[0][1] as any[]
     expect(mediaInputs[0].caption).toContain('header:')
     expect(mediaInputs[0].caption).toContain('caption')
-    const sendParams = vi.mocked(chat.client.sendMediaGroup).mock.calls[0][2]
+    const sendParams = chat.client.sendMediaGroup.mock.calls[0][2]
     expect(sendParams.replyTo).toBe(77)
     expect(result).toEqual({ id: 10 })
   })
@@ -88,7 +88,7 @@ describe('mediaSender', () => {
     const chat = {
       id: 200,
       client: {
-        sendMedia: vi.fn().mockResolvedValue({ id: 20 }),
+        sendMedia: mock().mockResolvedValue({ id: 20 }),
       },
     }
 
@@ -98,8 +98,8 @@ describe('mediaSender', () => {
     await sender.sendLocationToTG(chat as any, venueContent as any)
     await sender.sendLocationToTG(chat as any, geoContent as any)
 
-    const firstCall = vi.mocked(chat.client.sendMedia).mock.calls[0][1]
-    const secondCall = vi.mocked(chat.client.sendMedia).mock.calls[1][1]
+    const firstCall = chat.client.sendMedia.mock.calls[0][1]
+    const secondCall = chat.client.sendMedia.mock.calls[1][1]
 
     expect(firstCall.type).toBe('venue')
     expect(secondCall.type).toBe('geo')
@@ -110,9 +110,9 @@ describe('mediaSender', () => {
     const chat = {
       id: 300,
       client: {
-        sendMedia: vi.fn(),
+        sendMedia: mock(),
       },
-      sendMessage: vi.fn().mockResolvedValue({ id: 30 }),
+      sendMessage: mock().mockResolvedValue({ id: 30 }),
     }
 
     richHeaderBuilder.applyRichHeader.mockReturnValue({ text: 'msg', params: {} })
@@ -129,9 +129,9 @@ describe('mediaSender', () => {
     const chat = {
       id: 300,
       client: {
-        sendMedia: vi.fn(),
+        sendMedia: mock(),
       },
-      sendMessage: vi.fn().mockResolvedValue({ id: 30 }),
+      sendMessage: mock().mockResolvedValue({ id: 30 }),
     }
 
     richHeaderBuilder.applyRichHeader.mockReturnValue({ text: 'msg', params: {} })
@@ -139,7 +139,7 @@ describe('mediaSender', () => {
     const content = { type: 'dice', data: { emoji: '🪨', value: 1 } }
     await sender.sendDiceToTG(chat as any, content as any, 11, 9, 'User:')
 
-    const params = vi.mocked(chat.sendMessage).mock.calls[0][1]
+    const params = chat.sendMessage.mock.calls[0][1]
     expect(params.replyTo).toBe(11)
   })
 
@@ -148,9 +148,9 @@ describe('mediaSender', () => {
     const chat = {
       id: 400,
       client: {
-        sendMedia: vi.fn().mockResolvedValue({ id: 40 }),
+        sendMedia: mock().mockResolvedValue({ id: 40 }),
       },
-      sendMessage: vi.fn(),
+      sendMessage: mock(),
     }
 
     const content = { type: 'dice', data: { emoji: '🎲', value: 6 } }
@@ -163,8 +163,8 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]) },
-      sendMessage: vi.fn().mockResolvedValue({ id: 5 }),
+      client: { sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]) },
+      sendMessage: mock().mockResolvedValue({ id: 5 }),
     }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue({ data: 'file', fileName: 'a.jpg' })
@@ -195,8 +195,8 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]) },
-      sendMessage: vi.fn().mockRejectedValue(new Error('Send failed')),
+      client: { sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]) },
+      sendMessage: mock().mockRejectedValue(new Error('Send failed')),
     }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue({ data: 'file', fileName: 'a.jpg' })
@@ -225,7 +225,7 @@ describe('mediaSender', () => {
 
   it('returns null when all media normalization fails', async () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
-    const chat = { id: 100, client: { sendMediaGroup: vi.fn() } }
+    const chat = { id: 100, client: { sendMediaGroup: mock() } }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue(null)
     richHeaderBuilder.buildReplyTo.mockReturnValue(undefined)
@@ -244,7 +244,7 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]) },
+      client: { sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]) },
     }
 
     fileNormalizer.normalizeInputFile
@@ -263,7 +263,7 @@ describe('mediaSender', () => {
     )
 
     expect(chat.client.sendMediaGroup).toHaveBeenCalled()
-    const mediaInputs = vi.mocked(chat.client.sendMediaGroup).mock.calls[0][1] as any[]
+    const mediaInputs = chat.client.sendMediaGroup.mock.calls[0][1] as any[]
     expect(mediaInputs.length).toBe(1)
     expect(result).toEqual({ id: 10 })
   })
@@ -272,7 +272,7 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]) },
+      client: { sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]) },
     }
 
     fileNormalizer.normalizeInputFile
@@ -291,7 +291,7 @@ describe('mediaSender', () => {
     )
 
     expect(chat.client.sendMediaGroup).toHaveBeenCalled()
-    const mediaInputs = vi.mocked(chat.client.sendMediaGroup).mock.calls[0][1] as any[]
+    const mediaInputs = chat.client.sendMediaGroup.mock.calls[0][1] as any[]
     expect(mediaInputs.length).toBe(1)
     expect(result).toEqual({ id: 10 })
   })
@@ -300,7 +300,7 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn() },
+      client: { sendMediaGroup: mock() },
     }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue({ data: 'file', fileName: 'a.jpg' })
@@ -345,7 +345,7 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn().mockRejectedValue(new Error('Complete failure')) },
+      client: { sendMediaGroup: mock().mockRejectedValue(new Error('Complete failure')) },
     }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue({ data: 'file', fileName: 'a.jpg' })
@@ -368,7 +368,7 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 100,
-      client: { sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]) },
+      client: { sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]) },
     }
 
     fileNormalizer.normalizeInputFile.mockResolvedValue({ data: 'file', fileName: 'a.gif' })
@@ -384,13 +384,13 @@ describe('mediaSender', () => {
       '',
     )
 
-    const mediaInputs = vi.mocked(chat.client.sendMediaGroup).mock.calls[0][1] as any[]
+    const mediaInputs = chat.client.sendMediaGroup.mock.calls[0][1] as any[]
     expect(mediaInputs[0].type).toBe('animation')
   })
 
   it('returns null for location without coordinates', async () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
-    const chat = { id: 200, client: { sendMedia: vi.fn() } }
+    const chat = { id: 200, client: { sendMedia: mock() } }
 
     const invalidContent = { type: 'location', data: {} }
     const result = await sender.sendLocationToTG(chat as any, invalidContent as any)
@@ -403,13 +403,13 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 200,
-      client: { sendMedia: vi.fn().mockResolvedValue({ id: 20 }) },
+      client: { sendMedia: mock().mockResolvedValue({ id: 20 }) },
     }
 
     const content = { type: 'location', data: { latitude: 1, longitude: 2 } }
     await sender.sendLocationToTG(chat as any, content as any, 10, 5, 'User: ')
 
-    const sendParams = vi.mocked(chat.client.sendMedia).mock.calls[0][2]
+    const sendParams = chat.client.sendMedia.mock.calls[0][2]
     expect(sendParams.caption).toBe('User: ')
     expect(sendParams.replyTo).toBe(10)
   })
@@ -418,8 +418,8 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 300,
-      client: { sendMedia: vi.fn() },
-      sendMessage: vi.fn().mockResolvedValue({ id: 30 }),
+      client: { sendMedia: mock() },
+      sendMessage: mock().mockResolvedValue({ id: 30 }),
     }
 
     richHeaderBuilder.applyRichHeader.mockReturnValue({ text: 'msg', params: {} })
@@ -437,13 +437,13 @@ describe('mediaSender', () => {
     const sender = new MediaSender(fileNormalizer as any, richHeaderBuilder as any)
     const chat = {
       id: 400,
-      client: { sendMedia: vi.fn().mockResolvedValue({ id: 40 }) },
+      client: { sendMedia: mock().mockResolvedValue({ id: 40 }) },
     }
 
     const content = { type: 'dice', data: { emoji: '🎲' } }
     await sender.sendDiceToTG(chat as any, content as any, undefined, 7)
 
-    const sendParams = vi.mocked(chat.client.sendMedia).mock.calls[0][2]
+    const sendParams = chat.client.sendMedia.mock.calls[0][2]
     expect(sendParams.replyTo).toBe(7)
   })
 })

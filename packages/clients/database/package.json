@@ -15,6 +15,11 @@
       "types": "./dist/schema/index.d.ts",
       "import": "./dist/schema/index.js",
       "default": "./dist/schema/index.js"
+    },
+    "./bun-sql": {
+      "types": "./dist/bun-sql.d.ts",
+      "import": "./dist/bun-sql.js",
+      "default": "./dist/bun-sql.js"
     }
   },
   "publishConfig": {
@@ -24,11 +29,11 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "test": "vitest --passWithNoTests",
+    "test": "bun test --isolate --pass-with-no-tests src",
     "type-check": "tsc --noEmit",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push"
+    "db:generate": "bun --bun x drizzle-kit generate",
+    "db:migrate": "bun --bun x drizzle-kit migrate",
+    "db:push": "bun --bun x drizzle-kit push"
   },
   "keywords": [
     "napgram",
@@ -39,16 +44,12 @@
   "author": "NapGram Team",
   "license": "MIT",
   "dependencies": {
-    "drizzle-orm": "^0.45.1",
-    "pg": "^8.16.3"
+    "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
-    "@types/node": "26.4.1",
-    "@types/pg": "^8.16.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "drizzle-kit": "^0.31.8",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "files": [
     "dist",

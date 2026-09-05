@@ -1,17 +1,13 @@
-import type { Buffer } from 'node:buffer'
-import { execFile } from 'node:child_process'
-import fs from 'node:fs'
-import path from 'node:path'
-import { promisify } from 'node:util'
+import { bytesToUtf8 } from '../../../../../shared/utils/binary.js'
+import { extname, joinPath, parsePath } from '../../../../../shared/utils/path.js'
+import { runtimeFileIO, spawnFileWithBun } from '@napgram/runtime-kit'
 import { env } from '../../../capabilities/env.js'
 import { getLogger } from '../../../capabilities/logging.js'
 import { silk } from '../../../capabilities/media.js'
 
-const execFileAsync = promisify(execFile)
-
 export interface NormalizedFile {
   fileName: string
-  data: Buffer
+  data: Uint8Array
   fileMime?: string
 }
 
@@ -21,6 +17,8 @@ export interface NormalizedFile {
  */
 export class AudioConverter {
   private readonly logger = getLogger('AudioConverter')
+
+  constructor(private readonly fileIO = runtimeFileIO) {}
 
   /**
    * Prepare voice media for Telegram (convert to OGG/Opus)
@@ -49,7 +47,7 @@ export class AudioConverter {
       return { ...file, fileName: this.ensureOggFileName(file.fileName), fileMime: 'audio/ogg' }
     }
 
-    const header = file.data.subarray(0, 10).toString('utf8')
+    const header = bytesToUtf8(file.data.subarray(0, 10))
     const isSilk = header.includes('SILK_V3')
 
     const oggBuffer = await this.transcodeToOgg(file.data, file.fileName, isSilk)
@@ -67,7 +65,7 @@ export class AudioConverter {
    * Ensure filename has .ogg extension
    */
   ensureOggFileName(name: string) {
-    const parsed = path.parse(name || 'audio')
+    const parsed = parsePath(name || 'audio')
     const base = parsed.name || 'audio'
     return `${base}.ogg`
   }
@@ -75,27 +73,27 @@ export class AudioConverter {
   /**
    * Transcode audio to OGG/Opus using SILK or FFmpeg
    */
-  async transcodeToOgg(data: Buffer, sourceName: string, preferSilk?: boolean): Promise<Buffer | undefined> {
-    const tempDir = path.join(env.DATA_DIR, 'temp')
-    await fs.promises.mkdir(tempDir, { recursive: true })
+  async transcodeToOgg(data: Uint8Array, sourceName: string, preferSilk?: boolean): Promise<Uint8Array | undefined> {
+    const tempDir = joinPath(env.DATA_DIR, 'temp')
+    await this.fileIO.mkdir(tempDir, { recursive: true })
 
-    const inputPath = path.join(tempDir, `tg-audio-${Date.now()}-${Math.random().toString(16).slice(2)}${path.extname(sourceName) || '.tmp'}`)
-    const outputPath = path.join(tempDir, `tg-audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`)
+    const inputPath = joinPath(tempDir, `tg-audio-${Date.now()}-${Math.random().toString(16).slice(2)}${extname(sourceName) || '.tmp'}`)
+    const outputPath = joinPath(tempDir, `tg-audio-${Date.now()}-${Math.random().toString(16).slice(2)}.ogg`)
 
-    await fs.promises.writeFile(inputPath, data)
+    await this.fileIO.write(inputPath, data)
 
     try {
       if (preferSilk) {
         try {
           await silk.decode(data, outputPath)
-          return await fs.promises.readFile(outputPath)
+          return new Uint8Array(await this.fileIO.readBytes(outputPath))
         }
         catch (err) {
           this.logger.warn(err, 'Silk decode failed, fallback to ffmpeg')
         }
       }
 
-      await execFileAsync('ffmpeg', [
+      await spawnFileWithBun('ffmpeg', [
         '-y',
         '-i',
         inputPath,
@@ -109,15 +107,15 @@ export class AudioConverter {
         '1',
         outputPath,
       ])
-      return await fs.promises.readFile(outputPath)
+      return new Uint8Array(await this.fileIO.readBytes(outputPath))
     }
     catch (err) {
       this.logger.error(err, 'Audio transcode failed:')
       return undefined
     }
     finally {
-      fs.promises.unlink(inputPath).catch(() => { })
-      fs.promises.unlink(outputPath).catch(() => { })
+      this.fileIO.unlink(inputPath).catch(() => { })
+      this.fileIO.unlink(outputPath).catch(() => { })
     }
   }
 }

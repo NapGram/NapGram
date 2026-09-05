@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-26-green.svg" alt="Node.js" /></a>
+  <a href="https://bun.sh/"><img src="https://img.shields.io/badge/Bun-1.4+-f9f1e1.svg?logo=bun&logoColor=black" alt="Bun" /></a>
   <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5.0+-blue.svg" alt="TypeScript" /></a>
   <a href="https://gitlab.com/magisk3171/NapGram"><img src="https://img.shields.io/badge/GitLab-magisk3171%2FNapGram-FC6D26?logo=gitlab&logoColor=white" alt="GitLab" /></a>
   <a href="https://gitlab.com/magisk3171/NapGram/-/pipelines?ref=beta"><img src="https://img.shields.io/gitlab/pipeline-status/magisk3171%2FNapGram?branch=beta&logo=gitlab&label=GitLab%20CI" alt="GitLab CI" /></a>
@@ -67,9 +67,9 @@
 | **TG 适配** | [mtcute](https://github.com/mtcute/mtcute) | 原生 MTProto 实现，无需 Bot API 中转 |
 | **核心语言** | TypeScript 5.0+ | 严格模式，全链路类型安全 |
 | **前端框架** | React 19 + Vite | Tailwind CSS 4, Shadcn UI, Recharts |
-| **运行时** | Node.js 26 (ESM) | 现代化模块系统 |
+| **运行时** | Bun 1.4+ | Bun 原生运行时 |
 | **数据持久化** | PostgreSQL + Drizzle ORM | 强类型 ORM，支持自动迁移 |
-| **测试框架** | Vitest | 单元测试覆盖率 >80% |
+| **测试框架** | Bun Test | 单元测试与 lcov 覆盖率门槛 |
 
 ## 🚀 部署指南
 

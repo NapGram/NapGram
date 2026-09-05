@@ -1,7 +1,30 @@
-import { EventEmitter } from 'node:events'
 import { getLogger } from '@napgram/logger-kit'
 
 const logger = getLogger('ReconnectingWS')
+
+type EventListener = (...args: any[]) => void
+
+class EventRegistry {
+  private readonly listeners = new Map<string, Set<EventListener>>()
+
+  on(event: string, listener: EventListener) {
+    const listeners = this.listeners.get(event) ?? new Set<EventListener>()
+    listeners.add(listener)
+    this.listeners.set(event, listeners)
+    return this
+  }
+
+  removeListener(event: string, listener: EventListener) {
+    this.listeners.get(event)?.delete(listener)
+    return this
+  }
+
+  protected emit(event: string, ...args: any[]) {
+    for (const listener of this.listeners.get(event) ?? [])
+      listener(...args)
+    return this.listeners.has(event)
+  }
+}
 
 export interface ReconnectOptions {
   minDelay?: number
@@ -10,11 +33,11 @@ export interface ReconnectOptions {
   maxRetries?: number
 }
 
-export class ReconnectingWebSocket extends EventEmitter {
+export class ReconnectingWebSocket extends EventRegistry {
   private ws: WebSocket | null = null
   private retryCount = 0
   private isIntentionalClose = false
-  private reconnectTimer: NodeJS.Timeout | null = null
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
   private options: Required<ReconnectOptions>
 
@@ -97,7 +120,7 @@ export class ReconnectingWebSocket extends EventEmitter {
     }
   }
 
-  send(data: string | ArrayBufferLike | Blob | ArrayBufferView) {
+  send(data: Parameters<WebSocket['send']>[0]) {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(data)
     }

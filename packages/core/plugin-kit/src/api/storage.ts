@@ -5,10 +5,9 @@
  */
 
 import type { PluginStorage } from '../core/interfaces.js'
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
 import { getLogger } from '@napgram/logger-kit'
+import { runtimeFileIO } from '@napgram/runtime-kit'
+import { bunRuntime, joinPath } from '../internal/path.js'
 
 const logger = getLogger('PluginStorage')
 
@@ -16,7 +15,7 @@ const logger = getLogger('PluginStorage')
  * 获取数据目录
  */
 function getDataDir(): string {
-  return process.env.DATA_DIR || '/app/data'
+  return bunRuntime.env.DATA_DIR || '/app/data'
 }
 
 /**
@@ -26,7 +25,7 @@ function getDataDir(): string {
  * @returns 插件存储实例
  */
 export function createPluginStorage(pluginId: string): PluginStorage {
-  const storageDir = path.join(getDataDir(), 'plugins-data', sanitizePluginId(pluginId))
+  const storageDir = joinPath(getDataDir(), 'plugins-data', sanitizePluginId(pluginId))
 
   return new FileSystemPluginStorage(pluginId, storageDir)
 }
@@ -52,7 +51,7 @@ class FileSystemPluginStorage implements PluginStorage {
    */
   private async ensureDir(): Promise<void> {
     try {
-      await fs.mkdir(this.storageDir, { recursive: true })
+      await runtimeFileIO.mkdir(this.storageDir, { recursive: true })
     }
     catch (error) {
       logger.error({ error, pluginId: this.pluginId }, 'Failed to create storage directory')
@@ -65,22 +64,21 @@ class FileSystemPluginStorage implements PluginStorage {
    */
   private getFilePath(key: string): string {
     const safeKey = key.replace(/[^\w-]/g, '-')
-    return path.join(this.storageDir, `${safeKey}.json`)
+    return joinPath(this.storageDir, `${safeKey}.json`)
   }
 
   /**
    * 获取数据
    */
   async get<T = any>(key: string): Promise<T | null> {
+    const filePath = this.getFilePath(key)
+    if (!await runtimeFileIO.exists(filePath))
+      return null
     try {
-      const filePath = this.getFilePath(key)
-      const data = await fs.readFile(filePath, 'utf8')
+      const data = await runtimeFileIO.readText(filePath)
       return JSON.parse(data) as T
     }
-    catch (error: any) {
-      if (error.code === 'ENOENT') {
-        return null
-      }
+    catch (error) {
       logger.error({ error, pluginId: this.pluginId, key }, 'Failed to get data')
       throw error
     }
@@ -94,7 +92,7 @@ class FileSystemPluginStorage implements PluginStorage {
       await this.ensureDir()
       const filePath = this.getFilePath(key)
       const data = JSON.stringify(value, null, 2)
-      await fs.writeFile(filePath, data, 'utf8')
+      await runtimeFileIO.write(filePath, data)
     }
     catch (error) {
       logger.error({ error, pluginId: this.pluginId, key }, 'Failed to set data')
@@ -106,14 +104,13 @@ class FileSystemPluginStorage implements PluginStorage {
    * 删除数据
    */
   async delete(key: string): Promise<void> {
+    const filePath = this.getFilePath(key)
+    if (!await runtimeFileIO.exists(filePath))
+      return
     try {
-      const filePath = this.getFilePath(key)
-      await fs.unlink(filePath)
+      await runtimeFileIO.unlink(filePath)
     }
-    catch (error: any) {
-      if (error.code === 'ENOENT') {
-        return // 文件不存在，视为删除成功
-      }
+    catch (error) {
       logger.error({ error, pluginId: this.pluginId, key }, 'Failed to delete data')
       throw error
     }
@@ -125,7 +122,7 @@ class FileSystemPluginStorage implements PluginStorage {
   async keys(): Promise<string[]> {
     try {
       await this.ensureDir()
-      const files = await fs.readdir(this.storageDir)
+      const files = await runtimeFileIO.readdir(this.storageDir)
       return files
         .filter(file => file.endsWith('.json'))
         .map(file => file.slice(0, -5)) // 移除 .json 扩展名

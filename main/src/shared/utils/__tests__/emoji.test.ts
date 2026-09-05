@@ -1,11 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import emoji from '../emoji'
 
-// Polyfill Intl.Segmenter mostly works in node 16+, environment seems to support it?
-// If not, we might need a workaround. Assuming it persists.
-// But wait, if node version is old, Segmenter might be missing.
-// Vitest runs in node.
-// Let's assume it works for now.
+// Polyfill Intl.Segmenter mostly works in Bun and modern Node runtimes.
+// The test only verifies the utility contract.
 
 describe('emoji utility', () => {
   it('should pick random picture', () => {

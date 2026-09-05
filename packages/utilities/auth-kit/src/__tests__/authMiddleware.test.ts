@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 
-const verifyToken = vi.fn()
-const logAudit = vi.fn()
+const verifyToken = mock()
+const logAudit = mock()
 
-vi.mock('../TokenManager.js', () => ({
+mock.module('../TokenManager.js', () => ({
   TokenManager: { verifyToken },
 }))
-vi.mock('../AuthService.js', () => ({
+mock.module('../AuthService.js', () => ({
   AuthService: { logAudit },
 }))
 
@@ -27,8 +27,8 @@ describe('authMiddleware', () => {
       ip: '127.0.0.1',
     } as any
     const reply = {
-      code: vi.fn().mockReturnThis(),
-      send: vi.fn().mockResolvedValue(undefined),
+      code: mock().mockReturnThis(),
+      send: mock().mockResolvedValue(undefined),
     } as any
 
     await expect(authMiddleware(request, reply)).resolves.toBe(false)
@@ -47,8 +47,8 @@ describe('authMiddleware', () => {
       ip: '127.0.0.1',
     } as any
     const reply = {
-      code: vi.fn().mockReturnThis(),
-      send: vi.fn().mockResolvedValue(undefined),
+      code: mock().mockReturnThis(),
+      send: mock().mockResolvedValue(undefined),
     } as any
 
     await expect(authMiddleware(request, reply)).resolves.toBe(true)

@@ -8,3 +8,6 @@
 export * from './runtime-types.js'
 export * from './runtime-holder.js'
 export * from './web-runtime-bridge.js'
+export * from './hash-io.js'
+export * from './file-io.js'
+export * from './process-io.js'

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { bridgeQQEvents } from '../QQEventBridge.js'
 
 describe('qQEventBridge', () => {
@@ -9,18 +9,18 @@ describe('qQEventBridge', () => {
 
   beforeEach(() => {
     qqClient = {
-      on: vi.fn(),
-      handleFriendRequest: vi.fn(),
-      handleGroupRequest: vi.fn(),
+      on: mock(),
+      handleFriendRequest: mock(),
+      handleGroupRequest: mock(),
     }
     eventPublisher = {
-      publishFriendRequest: vi.fn(),
-      publishGroupRequest: vi.fn(),
-      publishNotice: vi.fn(),
+      publishFriendRequest: mock(),
+      publishGroupRequest: mock(),
+      publishNotice: mock(),
     }
-    log = { debug: vi.fn() }
+    log = { debug: mock() }
     instance = {
-      hasConfiguredWorkMode: vi.fn().mockReturnValue(true),
+      hasConfiguredWorkMode: mock().mockReturnValue(true),
     }
   })
 

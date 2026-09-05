@@ -1,28 +1,28 @@
-import { Buffer } from 'node:buffer'
-import { describe, expect, it, vi } from 'vitest'
+import { bytesFromUtf8 } from '../../../../shared/utils/binary.js'
+import { describe, expect, it, mock } from 'bun:test'
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   TG_MEDIA_TTL_SECONDS: 10,
   WEB_ENDPOINT: 'http://example.test',
   DATA_DIR: '/tmp',
   CACHE_DIR: '/tmp/cache',
-}))
+  flags: { DISABLE_RICH_HEADER: 16384 },
+}))()
 
-const loggerMocks = vi.hoisted(() => ({
-  info: vi.fn(),
-  warn: vi.fn(),
-  debug: vi.fn(),
-  error: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  info: mock(),
+  warn: mock(),
+  debug: mock(),
+  error: mock(),
+}))()
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', async () => ({
   get env() { return envMock },
+  get flags() { return envMock.flags },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', async () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
 describe('telegram media TTL', () => {
@@ -35,9 +35,9 @@ describe('telegram media TTL', () => {
 
     const chat: any = {
       id: 1001,
-      sendMessage: vi.fn().mockResolvedValue({ id: 1 }),
+      sendMessage: mock().mockResolvedValue({ id: 1 }),
       client: {
-        sendMediaGroup: vi.fn().mockResolvedValue([{ id: 10 }]),
+        sendMediaGroup: mock().mockResolvedValue([{ id: 10 }]),
       },
     }
 
@@ -45,8 +45,8 @@ describe('telegram media TTL', () => {
     await sender.sendMediaGroup(
       chat,
       [
-        { type: 'image', data: { file: Buffer.from('a'), fileName: 'a.jpg' } } as any,
-        { type: 'video', data: { file: Buffer.from('b'), fileName: 'b.mp4' } } as any,
+        { type: 'image', data: { file: bytesFromUtf8('a'), fileName: 'a.jpg' } } as any,
+        { type: 'video', data: { file: bytesFromUtf8('b'), fileName: 'b.mp4' } } as any,
       ],
       '',
     )

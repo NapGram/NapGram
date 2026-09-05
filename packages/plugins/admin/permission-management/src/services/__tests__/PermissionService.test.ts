@@ -1,20 +1,20 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { PermissionLevel } from '../../types/index.js'
 import { PermissionService } from '../PermissionService.js'
 
 function createService(instanceResolver?: (instanceId: number) => Promise<any> | any) {
   const db = {
-    select: vi.fn(),
-    insert: vi.fn(),
-    delete: vi.fn(),
-    execute: vi.fn(),
+    select: mock(),
+    insert: mock(),
+    delete: mock(),
+    execute: mock(),
   }
 
   const logger = {
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
   }
 
   return {

@@ -81,7 +81,7 @@ if [ $FOUND_PATTERN -eq 1 ]; then
     echo "请使用环境变量替代。"
     echo ""
     echo "正确做法："
-    echo "  const token = process.env.TG_BOT_TOKEN  // ✓"
+    echo "  const token = Bun.env.TG_BOT_TOKEN  // ✓"
     echo ""
     echo "错误做法："
     echo "  const token = '123456:abcdef...'       // ✗"

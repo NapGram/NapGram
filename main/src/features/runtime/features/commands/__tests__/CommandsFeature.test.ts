@@ -1,177 +1,172 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
 /* eslint-disable prefer-arrow-callback -- class mocks must use function expressions to be constructable via `new` */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import * as actualForwardPairChatType from '../utils/ForwardPairChatType.js'
 
 // Mock dependencies
-vi.mock('../services/CommandRegistry', () => {
+mock.module('../services/CommandRegistry', () => {
   return {
-    CommandRegistry: vi.fn(function CommandRegistryMock() {
+    CommandRegistry: mock(function CommandRegistryMock() {
       return {
-        register: vi.fn(),
-        unregister: vi.fn(),
-        getCommand: vi.fn(),
-        get: vi.fn(),
-        clear: vi.fn(),
-        getAll: vi.fn().mockReturnValue(new Map()),
-        getUniqueCommandCount: vi.fn().mockReturnValue(0),
+        register: mock(),
+        unregister: mock(),
+        getCommand: mock(),
+        get: mock(),
+        clear: mock(),
+        getAll: mock().mockReturnValue(new Map()),
+        getUniqueCommandCount: mock().mockReturnValue(0),
         prefix: '/',
       }
     }),
   }
 })
 
-vi.mock('../services/CommandAccessChecker', () => {
+mock.module('../services/CommandAccessChecker', () => {
   return {
-    CommandAccessChecker: vi.fn(function CommandAccessCheckerMock() {
+    CommandAccessChecker: mock(function CommandAccessCheckerMock() {
       return {
-        check: vi.fn().mockReturnValue(true),
-        isAdmin: vi.fn().mockReturnValue(true),
+        check: mock().mockReturnValue(true),
+        isAdmin: mock().mockReturnValue(true),
       }
     }),
   }
 })
 
-vi.mock('../services/InteractiveStateManager', () => {
+mock.module('../services/InteractiveStateManager', () => {
   return {
-    InteractiveStateManager: vi.fn(function InteractiveStateManagerMock() {
+    InteractiveStateManager: mock(function InteractiveStateManagerMock() {
       return {
-        get: vi.fn(),
-        set: vi.fn(),
-        delete: vi.fn(),
-        getBindingState: vi.fn(),
-        isTimeout: vi.fn(),
-        deleteBindingState: vi.fn(),
+        get: mock(),
+        set: mock(),
+        delete: mock(),
+        getBindingState: mock(),
+        isTimeout: mock(),
+        deleteBindingState: mock(),
       }
     }),
   }
 })
 
-vi.mock('../handlers/CommandContext', () => {
+mock.module('../handlers/CommandContext', () => {
   return {
-    CommandContext: vi.fn(function CommandContextMock() {
+    CommandContext: mock(function CommandContextMock() {
       return {
-        extractThreadId: vi.fn().mockReturnValue(undefined),
-        replyTG: vi.fn().mockResolvedValue({}),
-        replyQQ: vi.fn().mockResolvedValue({}),
-        replenish: vi.fn().mockImplementation((msg: any) => msg),
+        extractThreadId: mock().mockReturnValue(undefined),
+        replyTG: mock().mockResolvedValue({}),
+        replyQQ: mock().mockResolvedValue({}),
+        replenish: mock().mockImplementation((msg: any) => msg),
       }
     }),
   }
 })
 
 // Mock all handlers
-const mockHandler = { execute: vi.fn() }
-vi.mock('../handlers/InfoCommandHandler', () => ({
-  InfoCommandHandler: vi.fn(function InfoCommandHandlerMock() {
+const mockHandler = { execute: mock() }
+mock.module('../handlers/InfoCommandHandler', () => ({
+  InfoCommandHandler: mock(function InfoCommandHandlerMock() {
     return mockHandler
   }),
 }))
-vi.mock('../handlers/HelpCommandHandler', () => ({
-  HelpCommandHandler: vi.fn(function HelpCommandHandlerMock() {
+mock.module('../handlers/HelpCommandHandler', () => ({
+  HelpCommandHandler: mock(function HelpCommandHandlerMock() {
     return mockHandler
   }),
 }))
-vi.mock('../handlers/StatusCommandHandler', () => ({
-  StatusCommandHandler: vi.fn(function StatusCommandHandlerMock() {
+mock.module('../handlers/StatusCommandHandler', () => ({
+  StatusCommandHandler: mock(function StatusCommandHandlerMock() {
     return mockHandler
   }),
 }))
-vi.mock('../handlers/BindCommandHandler', () => ({
-  BindCommandHandler: vi.fn(function BindCommandHandlerMock() {
+mock.module('../handlers/BindCommandHandler', () => ({
+  BindCommandHandler: mock(function BindCommandHandlerMock() {
     return mockHandler
   }),
 }))
-vi.mock('../handlers/UnbindCommandHandler', () => ({
-  UnbindCommandHandler: vi.fn(function UnbindCommandHandlerMock() {
+mock.module('../handlers/UnbindCommandHandler', () => ({
+  UnbindCommandHandler: mock(function UnbindCommandHandlerMock() {
     return mockHandler
   }),
 }))
-vi.mock('../handlers/RecallCommandHandler', () => ({
-  RecallCommandHandler: vi.fn(function RecallCommandHandlerMock() {
+mock.module('../handlers/RecallCommandHandler', () => ({
+  RecallCommandHandler: mock(function RecallCommandHandlerMock() {
     return mockHandler
   }),
 }))
-vi.mock('../handlers/ForwardControlCommandHandler', () => ({
-  ForwardControlCommandHandler: vi.fn(function ForwardControlCommandHandlerMock() {
+mock.module('../handlers/ForwardControlCommandHandler', () => ({
+  ForwardControlCommandHandler: mock(function ForwardControlCommandHandlerMock() {
     return mockHandler
   }),
 }))
 
-vi.mock('@napgram/message-kit', () => {
+mock.module('@napgram/message-kit', () => {
   return {
     messageConverter: {
-      fromTelegram: vi.fn().mockReturnValue({
+      fromTelegram: mock().mockReturnValue({
         metadata: {},
         sender: { userId: 'tg:u:456', userName: 'User', name: 'User' },
         text: '/help',
         content: [{ type: 'text', data: { text: '/help' } }],
       }),
-      fromQQ: vi.fn().mockReturnValue({}),
-      toNapCat: vi.fn().mockReturnValue([]),
+      fromQQ: mock().mockReturnValue({}),
+      toNapCat: mock().mockReturnValue([]),
     },
   }
 })
 
-vi.mock('@napgram/plugin-kit', () => ({
-  getEventPublisher: vi.fn().mockReturnValue({
-    publishMessage: vi.fn(),
+mock.module('@napgram/plugin-kit', () => ({
+  getEventPublisher: mock().mockReturnValue({
+    publishMessage: mock(),
     eventBus: {},
-    publishFriendRequest: vi.fn(),
-    publishGroupRequest: vi.fn(),
-    publishNotice: vi.fn(),
-    publishInstanceStatus: vi.fn(),
+    publishFriendRequest: mock(),
+    publishGroupRequest: mock(),
+    publishNotice: mock(),
+    publishInstanceStatus: mock(),
   }),
 }))
 
-vi.mock('../services/ThreadIdExtractor', () => ({
-  ThreadIdExtractor: vi.fn(function ThreadIdExtractorMock() {
+mock.module('../services/ThreadIdExtractor', () => ({
+  ThreadIdExtractor: mock(function ThreadIdExtractorMock() {
     return {
-      extractFromRaw: vi.fn().mockReturnValue(undefined),
+      extractFromRaw: mock().mockReturnValue(undefined),
     }
   }),
 }))
 
-vi.mock('../utils/ForwardPairChatType.js', async (importOriginal) => {
-  const actual = await importOriginal() as any
+mock.module('../utils/ForwardPairChatType.js', async () => {
   return {
-    ...actual,
-    findPairByTGWithChatType: vi.fn().mockResolvedValue(undefined),
-    findPairByQQWithChatType: vi.fn().mockResolvedValue(undefined),
-    addForwardPairWithChatType: vi.fn().mockResolvedValue(undefined),
+    ...actualForwardPairChatType,
+    findPairByTGWithChatType: mock().mockResolvedValue(undefined),
+    findPairByQQWithChatType: mock().mockResolvedValue(undefined),
+    addForwardPairWithChatType: mock().mockResolvedValue(undefined),
   }
 })
 
-vi.mock('@napgram/plugin-kit', async (importOriginal: () => Promise<any>) => {
-  const actual = await importOriginal()
-  return {
-    ...actual,
-    getGlobalRuntime: vi.fn().mockReturnValue({
-      getLastReport: vi.fn().mockReturnValue({ loadedPlugins: [] }),
+mock.module('@napgram/plugin-kit', async () => ({
+    getGlobalRuntime: mock().mockReturnValue({
+      getLastReport: mock().mockReturnValue({ loadedPlugins: [] }),
     }),
-    getEventPublisher: vi.fn().mockReturnValue({
-      publishMessage: vi.fn(),
+    getEventPublisher: mock().mockReturnValue({
+      publishMessage: mock(),
       eventBus: {},
-      publishFriendRequest: vi.fn(),
-      publishGroupRequest: vi.fn(),
-      publishNotice: vi.fn(),
-      publishInstanceStatus: vi.fn(),
+      publishFriendRequest: mock(),
+      publishGroupRequest: mock(),
+      publishNotice: mock(),
+      publishInstanceStatus: mock(),
     }),
-  }
-})
-
-const { mockLogger } = vi.hoisted(() => ({
-  mockLogger: {
-    info: vi.fn(),
-    debug: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => mockLogger),
+const { mockLogger } = (() => ({
+  mockLogger: {
+    info: mock(),
+    debug: mock(),
+    warn: mock(),
+    error: mock(),
+  },
+}))()
+
+mock.module('@napgram/logger-kit', async () => ({
+    getLogger: mock(() => mockLogger),
 }))
 
 describe('commandsFeature', () => {
@@ -182,8 +177,7 @@ describe('commandsFeature', () => {
   let mockQqClient: any
 
   beforeEach(async () => {
-    vi.clearAllMocks()
-    vi.resetModules() // Important to reload modules
+    mock.clearAllMocks()
 
     // Import module under test dynamically
     const mod = await import('../CommandsFeature.js')
@@ -193,30 +187,30 @@ describe('commandsFeature', () => {
       id: 1,
       workMode: 'group',
       forwardPairs: {
-        reload: vi.fn().mockResolvedValue(undefined),
-        getPairs: vi.fn().mockReturnValue([]),
-        findByTG: vi.fn(),
-        findByQQ: vi.fn(),
-        add: vi.fn(),
+        reload: mock().mockResolvedValue(undefined),
+        getPairs: mock().mockReturnValue([]),
+        findByTG: mock(),
+        findByQQ: mock(),
+        add: mock(),
       },
       config: {
         adminUsers: ['123'],
       },
     }
     mockTgBot = {
-      addNewMessageEventHandler: vi.fn(),
-      removeNewMessageEventHandler: vi.fn(),
+      addNewMessageEventHandler: mock(),
+      removeNewMessageEventHandler: mock(),
       me: { id: 999, username: 'bot' },
       client: {
-        getMessages: vi.fn(),
+        getMessages: mock(),
       },
-      getChat: vi.fn(),
-      sendText: vi.fn().mockResolvedValue({ id: 321 }),
+      getChat: mock(),
+      sendText: mock().mockResolvedValue({ id: 321 }),
     }
     mockQqClient = {
-      on: vi.fn(),
-      off: vi.fn(),
-      recallMessage: vi.fn(),
+      on: mock(),
+      off: mock(),
+      recallMessage: mock(),
     }
     commandsFeature = new CommandsFeature(mockInstance, mockTgBot, mockQqClient)
   })
@@ -229,7 +223,7 @@ describe('commandsFeature', () => {
 
   it('reloads commands', async () => {
     const registry = (commandsFeature as any).registry
-      ; (commandsFeature as any).loadPluginCommands = vi.fn().mockResolvedValue(new Set())
+      ; (commandsFeature as any).loadPluginCommands = mock().mockResolvedValue(new Set())
     await commandsFeature.reloadCommands()
     expect(registry.clear).toHaveBeenCalled()
     expect(registry.register).toHaveBeenCalled()
@@ -257,10 +251,10 @@ describe('commandsFeature', () => {
     expect(fromArgs).toBe(123n)
 
     const { ThreadIdExtractor } = await import('../services/ThreadIdExtractor.js')
-    vi.mocked(ThreadIdExtractor).mockImplementationOnce(function ThreadIdExtractorMock() {
+    ThreadIdExtractor.mockImplementationOnce(function ThreadIdExtractorMock() {
       return {
-        extractFromRaw: vi.fn().mockReturnValue(456),
-        extract: vi.fn().mockReturnValue(456n),
+        extractFromRaw: mock().mockReturnValue(456),
+        extract: mock().mockReturnValue(456n),
       } as any
     })
     const fromRaw = (commandsFeature as any).extractThreadId(msgWithRaw, ['cmd'])
@@ -297,7 +291,7 @@ describe('commandsFeature', () => {
       const registry = (commandsFeature as any).registry
       const checker = (commandsFeature as any).permissionChecker
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
 
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
@@ -319,7 +313,7 @@ describe('commandsFeature', () => {
       const registry = (commandsFeature as any).registry
       const checker = (commandsFeature as any).permissionChecker
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn().mockRejectedValue(new Error('boom')), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock().mockRejectedValue(new Error('boom')), adminOnly: false }
 
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
@@ -339,32 +333,32 @@ describe('commandsFeature', () => {
     it('publishes plugin event helpers for TG commands', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
       let capturedEvent: any
-      const publishMessage = vi.fn((event: any) => {
+      const publishMessage = mock((event: any) => {
         capturedEvent = event
       })
 
       const { getEventPublisher } = await import('@napgram/plugin-kit')
-      vi.mocked(getEventPublisher).mockReturnValue({
+      getEventPublisher.mockReturnValue({
         publishMessage,
         eventBus: {},
-        publishFriendRequest: vi.fn(),
-        publishGroupRequest: vi.fn(),
-        publishNotice: vi.fn(),
-        publishInstanceStatus: vi.fn(),
+        publishFriendRequest: mock(),
+        publishGroupRequest: mock(),
+        publishNotice: mock(),
+        publishInstanceStatus: mock(),
       } as any)
 
-      const deleteMessages = vi.fn().mockResolvedValue(undefined)
+      const deleteMessages = mock().mockResolvedValue(undefined)
       mockTgBot.getChat.mockResolvedValue({ deleteMessages })
 
       const { ThreadIdExtractor } = await import('../services/ThreadIdExtractor.js')
-      vi.mocked(ThreadIdExtractor).mockImplementationOnce(function ThreadIdExtractorMock() {
+      ThreadIdExtractor.mockImplementationOnce(function ThreadIdExtractorMock() {
         return {
-          extractFromRaw: vi.fn().mockReturnValue(888),
+          extractFromRaw: mock().mockReturnValue(888),
         } as any
       })
 
@@ -395,22 +389,22 @@ describe('commandsFeature', () => {
     it('swallows publishMessage failures', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
-      const publishMessage = vi.fn(() => {
+      const publishMessage = mock(() => {
         throw new Error('boom')
       })
 
       const { getEventPublisher } = await import('@napgram/plugin-kit')
-      vi.mocked(getEventPublisher).mockReturnValue({
+      getEventPublisher.mockReturnValue({
         publishMessage,
         eventBus: {},
-        publishFriendRequest: vi.fn(),
-        publishGroupRequest: vi.fn(),
-        publishNotice: vi.fn(),
-        publishInstanceStatus: vi.fn(),
+        publishFriendRequest: mock(),
+        publishGroupRequest: mock(),
+        publishNotice: mock(),
+        publishInstanceStatus: mock(),
       } as any)
 
       const result = await handler({
@@ -426,22 +420,22 @@ describe('commandsFeature', () => {
     it('returns early if recall messageId is missing', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
       let capturedEvent: any
-      const publishMessage = vi.fn((event: any) => {
+      const publishMessage = mock((event: any) => {
         capturedEvent = event
       })
 
       const { getEventPublisher } = await import('@napgram/plugin-kit')
-      vi.mocked(getEventPublisher).mockReturnValue({
+      getEventPublisher.mockReturnValue({
         publishMessage,
         eventBus: {},
       } as any)
 
-      const deleteMessages = vi.fn()
+      const deleteMessages = mock()
       mockTgBot.getChat.mockResolvedValue({ deleteMessages })
 
       await handler({
@@ -458,7 +452,7 @@ describe('commandsFeature', () => {
     it('replenishes replyToMessage when it lacks text and handles contentToText edge cases', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
@@ -476,13 +470,13 @@ describe('commandsFeature', () => {
 
       // Trigger contentToText edge cases by dispatching a plugin message back
       let capturedEvent: any
-      const publishMessage = vi.fn((event: any) => {
+      const publishMessage = mock((event: any) => {
         capturedEvent = event
       })
       const { getEventPublisher } = await import('@napgram/plugin-kit')
-      vi.mocked(getEventPublisher).mockReturnValue({ publishMessage } as any)
+      getEventPublisher.mockReturnValue({ publishMessage } as any)
 
-      mockTgBot.getChat.mockResolvedValue({ sendMessage: vi.fn() })
+      mockTgBot.getChat.mockResolvedValue({ sendMessage: mock() })
 
       await handler({
         id: 112,
@@ -499,7 +493,7 @@ describe('commandsFeature', () => {
       const registry = (commandsFeature as any).registry
       const checker = (commandsFeature as any).permissionChecker
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'bind', handler: vi.fn(), adminOnly: true }
+      const mockCmd = { name: 'bind', handler: mock(), adminOnly: true }
       registry.get.mockReturnValue(mockCmd)
       checker.isAdmin.mockReturnValue(false)
 
@@ -527,7 +521,7 @@ describe('commandsFeature', () => {
     it('handles command addressed to me with @bot suffix', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
@@ -553,7 +547,7 @@ describe('commandsFeature', () => {
     it('handles command addressed to me in args with @bot suffix', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
@@ -569,7 +563,7 @@ describe('commandsFeature', () => {
     it('handles replied message fetch error gracefully', async () => {
       const registry = (commandsFeature as any).registry
       const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-      const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+      const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
       registry.get.mockReturnValue(mockCmd)
       registry.prefix = '/'
 
@@ -640,10 +634,10 @@ describe('commandsFeature', () => {
       stateManager.isTimeout.mockReturnValue(false)
 
       const { findPairByTGWithChatType } = await import('../utils/ForwardPairChatType.js')
-      vi.mocked(findPairByTGWithChatType).mockResolvedValueOnce({ qqRoomId: '999', qqChatType: 'private' } as any)
+      findPairByTGWithChatType.mockResolvedValueOnce({ qqRoomId: '999', qqChatType: 'private' } as any)
 
       const CommandContextModule = await import('../handlers/CommandContext.js')
-      const replyTGMock = vi.fn().mockResolvedValue(undefined)
+      const replyTGMock = mock().mockResolvedValue(undefined)
       // replace replyTG on context... wait, interactive bind uses this.replyTG which is CommandsFeature.replyTG
       commandsFeature.replyTG = replyTGMock
 
@@ -666,10 +660,10 @@ describe('commandsFeature', () => {
       stateManager.isTimeout.mockReturnValue(false)
 
       const { findPairByTGWithChatType, addForwardPairWithChatType } = await import('../utils/ForwardPairChatType.js')
-      vi.mocked(findPairByTGWithChatType).mockResolvedValueOnce(undefined)
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({ qqRoomId: '123456', qqChatType: 'group' } as any)
+      findPairByTGWithChatType.mockResolvedValueOnce(undefined)
+      addForwardPairWithChatType.mockResolvedValueOnce({ qqRoomId: '123456', qqChatType: 'group' } as any)
 
-      const replyTGMock = vi.fn().mockResolvedValue(undefined)
+      const replyTGMock = mock().mockResolvedValue(undefined)
       commandsFeature.replyTG = replyTGMock
 
       const result = await handler({
@@ -692,10 +686,10 @@ describe('commandsFeature', () => {
       stateManager.isTimeout.mockReturnValue(false)
 
       const { findPairByTGWithChatType, addForwardPairWithChatType } = await import('../utils/ForwardPairChatType.js')
-      vi.mocked(findPairByTGWithChatType).mockResolvedValueOnce(undefined)
-      vi.mocked(addForwardPairWithChatType).mockRejectedValueOnce(new Error('DB Error'))
+      findPairByTGWithChatType.mockResolvedValueOnce(undefined)
+      addForwardPairWithChatType.mockRejectedValueOnce(new Error('DB Error'))
 
-      const replyTGMock = vi.fn().mockResolvedValue(undefined)
+      const replyTGMock = mock().mockResolvedValue(undefined)
       commandsFeature.replyTG = replyTGMock
 
       const result = await handler({
@@ -712,7 +706,7 @@ describe('commandsFeature', () => {
 
   describe('qQ command handling', () => {
     it('recalls QQ /rm command message after handling', async () => {
-      const command = { name: 'rm', handler: vi.fn().mockResolvedValue(undefined) }
+      const command = { name: 'rm', handler: mock().mockResolvedValue(undefined) }
       const registry = (commandsFeature as any).registry
       registry.get.mockReturnValue(command)
       registry.prefix = '/'
@@ -731,7 +725,7 @@ describe('commandsFeature', () => {
     })
 
     it('logs when QQ recall fails', async () => {
-      const command = { name: 'rm', handler: vi.fn().mockResolvedValue(undefined) }
+      const command = { name: 'rm', handler: mock().mockResolvedValue(undefined) }
       const registry = (commandsFeature as any).registry
       registry.get.mockReturnValue(command)
       registry.prefix = '/'
@@ -807,33 +801,33 @@ describe('commandsFeature', () => {
     })
 
     it('sendQQCommandReply handles string content', async () => {
-      const mockReplyQQ = vi.fn()
+      const mockReplyQQ = mock()
       ;(commandsFeature as any).commandContext = { replyQQ: mockReplyQQ }
       const msg = { chat: { id: '777', type: 'group' } } as any
-      await (commandsFeature as any).sendQQCommandReply(msg, 'test', vi.fn())
+      await (commandsFeature as any).sendQQCommandReply(msg, 'test', mock())
       expect(mockReplyQQ).toHaveBeenCalledWith('777', 'test', expect.anything())
     })
 
     it('sendQQCommandReply handles empty array content', async () => {
-      const mockReplyQQ = vi.fn()
+      const mockReplyQQ = mock()
       ;(commandsFeature as any).commandContext = { replyQQ: mockReplyQQ }
       const msg = { chat: { id: '777', type: 'group' } } as any
-      await (commandsFeature as any).sendQQCommandReply(msg, [], vi.fn())
+      await (commandsFeature as any).sendQQCommandReply(msg, [], mock())
       expect(mockReplyQQ).toHaveBeenCalledWith('777', '', expect.anything())
     })
 
     it('sendQQCommandReply handles fallback forward segment for private chat', async () => {
-      const mockReplyQQ = vi.fn()
+      const mockReplyQQ = mock()
       ;(commandsFeature as any).commandContext = { replyQQ: mockReplyQQ }
       const msg = { chat: { id: '777', type: 'private' } } as any
       const content = [{ type: 'node', data: { messages: [] } }] // using node or forward doesn't matter, we check fallback
-      vi.spyOn(commandsFeature as any, 'isForwardSegment').mockReturnValue(true)
+      spyOn(commandsFeature as any, 'isForwardSegment').mockReturnValue(true)
       await (commandsFeature as any).sendQQCommandReply(msg, content, () => 'fallback')
       expect(mockReplyQQ).toHaveBeenCalledWith('777', 'fallback', expect.anything())
     })
 
     it('sendQQCommandReply handles forward segment for group chat', async () => {
-      const mockSendGroupForwardMsg = vi.fn()
+      const mockSendGroupForwardMsg = mock()
       ;(commandsFeature as any).qqClient = { uin: 123, nickname: 'Bot', sendGroupForwardMsg: mockSendGroupForwardMsg }
       const msg = { chat: { id: '777', type: 'group' } } as any
       const content = [{
@@ -842,7 +836,7 @@ describe('commandsFeature', () => {
           messages: [{ userId: '456', segments: [{ type: 'text', data: { text: 'test' } }] }]
         }
       }]
-      vi.spyOn(commandsFeature as any, 'isForwardSegment').mockReturnValue(true)
+      spyOn(commandsFeature as any, 'isForwardSegment').mockReturnValue(true)
       await (commandsFeature as any).sendQQCommandReply(msg, content, () => '')
       expect(mockSendGroupForwardMsg).toHaveBeenCalled()
     })
@@ -852,7 +846,7 @@ describe('commandsFeature', () => {
       registry.prefix = '/'
       registry.get.mockReturnValue({
         name: 'help',
-        handler: vi.fn().mockRejectedValue(new Error('boom')),
+        handler: mock().mockRejectedValue(new Error('boom')),
       })
 
       await (commandsFeature as any).handleQqMessage({
@@ -922,7 +916,7 @@ describe('commandsFeature', () => {
 
   describe('work mode management', () => {
     it('applies personal work mode and starts user bot', async () => {
-      const startUserBot = vi.fn().mockResolvedValue(undefined)
+      const startUserBot = mock().mockResolvedValue(undefined)
       const instance = { ...mockInstance, startUserBot } as any
       const feature = new CommandsFeature(instance, mockTgBot as any, mockQqClient as any)
       await (feature as any).applyWorkMode('personal')
@@ -931,7 +925,7 @@ describe('commandsFeature', () => {
     })
 
     it('applies group work mode and stops user bot', async () => {
-      const stopUserBot = vi.fn().mockResolvedValue(undefined)
+      const stopUserBot = mock().mockResolvedValue(undefined)
       const instance = { ...mockInstance, stopUserBot } as any
       const feature = new CommandsFeature(instance, mockTgBot as any, mockQqClient as any)
       await (feature as any).applyWorkMode('group')
@@ -940,7 +934,7 @@ describe('commandsFeature', () => {
     })
 
     it('uses setWorkMode function if available', async () => {
-      const setWorkMode = vi.fn().mockResolvedValue(undefined)
+      const setWorkMode = mock().mockResolvedValue(undefined)
       const instance = { ...mockInstance, setWorkMode } as any
       const feature = new CommandsFeature(instance, mockTgBot as any, mockQqClient as any)
       await (feature as any).applyWorkMode('group')
@@ -953,21 +947,21 @@ describe('commandsFeature', () => {
         chat: { id: 111 },
         sender: { id: 'admin-id' },
       } as any
-      const spy = vi.spyOn(commandsFeature as any, 'replyTG').mockResolvedValue(undefined)
+      const spy = spyOn(commandsFeature as any, 'replyTG').mockResolvedValue(undefined)
       await (commandsFeature as any).handleWorkModeCommand(msg, ['personal'])
       expect(spy).toHaveBeenCalledWith(111, expect.stringContaining('个人模式'), undefined)
     })
 
     it('rejects work mode command if not admin', async () => {
       const msg = { platform: 'telegram', chat: { id: 111 }, sender: { id: 'non-admin' } } as any
-      vi.mocked((commandsFeature as any).permissionChecker.isAdmin).mockReturnValueOnce(false)
-      const spy = vi.spyOn(commandsFeature as any, 'replyTG').mockResolvedValue(undefined)
+      (commandsFeature as any).permissionChecker.isAdmin.mockReturnValueOnce(false)
+      const spy = spyOn(commandsFeature as any, 'replyTG').mockResolvedValue(undefined)
       await (commandsFeature as any).handleWorkModeCommand(msg, ['group'])
       expect(spy).toHaveBeenCalledWith(111, expect.stringContaining('没有权限'), undefined)
     })
 
     it('blocks until work mode configured', async () => {
-      const spy = vi.spyOn(commandsFeature as any, 'isWorkModeConfigured').mockReturnValue(false)
+      const spy = spyOn(commandsFeature as any, 'isWorkModeConfigured').mockReturnValue(false)
       const msg = { platform: 'qq', chat: { id: '222' }, sender: { id: 'user' } } as any
       const blocked = await (commandsFeature as any).blockUntilWorkModeConfigured(msg, 'help')
       expect(blocked).toBe(true)
@@ -977,7 +971,7 @@ describe('commandsFeature', () => {
 
   describe('permissions and audit', () => {
     it('checks permissions via plugin service if available', async () => {
-      const checkCommandPermission = vi.fn().mockResolvedValue({ allowed: true })
+      const checkCommandPermission = mock().mockResolvedValue({ allowed: true })
       ;(commandsFeature as any).permissionPlugin = { permissionService: { checkCommandPermission } }
       const res = await (commandsFeature as any).checkPermission('user1', { name: 'test', permission: { level: 2 } })
       expect(res.allowed).toBe(true)
@@ -985,14 +979,14 @@ describe('commandsFeature', () => {
     })
 
     it('falls back to local checker on plugin error', async () => {
-      const checkCommandPermission = vi.fn().mockRejectedValue(new Error('fail'))
+      const checkCommandPermission = mock().mockRejectedValue(new Error('fail'))
       ;(commandsFeature as any).permissionPlugin = { permissionService: { checkCommandPermission } }
       const res = await (commandsFeature as any).checkPermission('user1', { name: 'test', permission: { level: 1 } })
       expect(res.allowed).toBe(true) // local isAdmin returns true in setup
     })
 
     it('logs audit via plugin service', async () => {
-      const logAudit = vi.fn().mockResolvedValue(undefined)
+      const logAudit = mock().mockResolvedValue(undefined)
       ;(commandsFeature as any).permissionPlugin = { permissionService: { logAudit } }
       await (commandsFeature as any).logAudit({ eventType: 'test', userId: 'u1', commandName: 'cmd' })
       expect(logAudit).toHaveBeenCalled()
@@ -1001,14 +995,14 @@ describe('commandsFeature', () => {
 
   describe('handleAddQQTargetCommand', () => {
     it('creates telegram group for new friend', async () => {
-      const inst = { ...mockInstance, workMode: 'personal', forwardPairs: { findByQQ: vi.fn(), findByTG: vi.fn() } } as any
+      const inst = { ...mockInstance, workMode: 'personal', forwardPairs: { findByQQ: mock(), findByTG: mock() } } as any
       const feat = new CommandsFeature(inst, mockTgBot as any, mockQqClient as any)
       const msg = { platform: 'telegram', chat: { id: 111 }, sender: { id: 'admin' } } as any
 
-      const provisionerMock = { ensurePairForQQTarget: vi.fn().mockResolvedValue({ tgChatId: '-999' }) }
+      const provisionerMock = { ensurePairForQQTarget: mock().mockResolvedValue({ tgChatId: '-999' }) }
       ;(feat as any).personalPairProvisioner = provisionerMock
 
-      const spy = vi.spyOn(feat as any, 'replyTG').mockResolvedValue(undefined)
+      const spy = spyOn(feat as any, 'replyTG').mockResolvedValue(undefined)
       await (feat as any).handleAddQQTargetCommand(msg, ['10001'], 'private')
       expect(provisionerMock.ensurePairForQQTarget).toHaveBeenCalledWith('10001', 'private')
       expect(spy).toHaveBeenCalledWith(111, expect.stringContaining('-999'), undefined)
@@ -1017,8 +1011,8 @@ describe('commandsFeature', () => {
 
   describe('loadPluginCommands', () => {
     it('loads commands from runtime if available', async () => {
-      const mockHandler = vi.fn()
-      const mockGetGlobalRuntime = vi.fn().mockReturnValue({
+      const mockHandler = mock()
+      const mockGetGlobalRuntime = mock().mockReturnValue({
         getLastReport: () => ({
           loadedPlugins: [{
             id: 'test-plugin',
@@ -1030,7 +1024,7 @@ describe('commandsFeature', () => {
           }],
         }),
       })
-      vi.doMock('@napgram/runtime-kit', () => ({ getGlobalRuntime: mockGetGlobalRuntime }))
+      mock.module('@napgram/runtime-kit', () => ({ getGlobalRuntime: mockGetGlobalRuntime }))
 
       const loaded = await (commandsFeature as any).loadPluginCommands()
       expect(loaded.has('mycmd')).toBe(true)
@@ -1048,12 +1042,12 @@ describe('commandsFeature', () => {
         } as any
 
         // Mock registry to return a command
-        const mockCmd = { name: 'help', permission: { level: 3 }, handler: vi.fn() }
-      ;(commandsFeature as any).registry.get = vi.fn().mockReturnValue(mockCmd)
+        const mockCmd = { name: 'help', permission: { level: 3 }, handler: mock() }
+      ;(commandsFeature as any).registry.get = mock().mockReturnValue(mockCmd)
         // Bypass work mode block
-        vi.spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(false)
+        spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(false)
         // Allow permission
-        vi.spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: true })
+        spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: true })
 
         await (commandsFeature as any).handleQqMessage(msg)
         expect(mockCmd.handler).toHaveBeenCalled()
@@ -1092,11 +1086,11 @@ describe('commandsFeature', () => {
           sender: { id: '10001' },
           content: [{ type: 'text', data: { text: '/admin' } }],
         } as any
-        const mockCmd = { name: 'admin', permission: { level: 1 }, handler: vi.fn() }
-      ;(commandsFeature as any).registry.get = vi.fn().mockReturnValue(mockCmd)
-        vi.spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(false)
-        vi.spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: false, reason: 'not admin' })
-        vi.spyOn(commandsFeature as any, 'logAudit').mockResolvedValue(undefined)
+        const mockCmd = { name: 'admin', permission: { level: 1 }, handler: mock() }
+      ;(commandsFeature as any).registry.get = mock().mockReturnValue(mockCmd)
+        spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(false)
+        spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: false, reason: 'not admin' })
+        spyOn(commandsFeature as any, 'logAudit').mockResolvedValue(undefined)
 
         await (commandsFeature as any).handleQqMessage(msg)
         expect(mockCmd.handler).not.toHaveBeenCalled()
@@ -1111,9 +1105,9 @@ describe('commandsFeature', () => {
 
       it('handleTgMessage executes command', async () => {
         const tgMsg = { text: '/help', chat: { id: 111 }, sender: { id: 222 } } as any
-        const mockCmd = { name: 'help', handler: vi.fn() }
-      ;(commandsFeature as any).registry.get = vi.fn().mockReturnValue(mockCmd)
-        vi.spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: true })
+        const mockCmd = { name: 'help', handler: mock() }
+      ;(commandsFeature as any).registry.get = mock().mockReturnValue(mockCmd)
+        spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: true })
 
         const result = await (commandsFeature as any).handleTgMessage(tgMsg)
         expect(result).toBe(true)
@@ -1122,10 +1116,10 @@ describe('commandsFeature', () => {
 
       it('handleTgMessage denies access', async () => {
         const tgMsg = { text: '/admin', chat: { id: 111 }, sender: { id: 222 } } as any
-        const mockCmd = { name: 'admin', handler: vi.fn() }
-      ;(commandsFeature as any).registry.get = vi.fn().mockReturnValue(mockCmd)
-        vi.spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: false })
-        const spyReply = vi.spyOn(commandsFeature as any, 'replyTG').mockResolvedValue(undefined)
+        const mockCmd = { name: 'admin', handler: mock() }
+      ;(commandsFeature as any).registry.get = mock().mockReturnValue(mockCmd)
+        spyOn(commandsFeature as any, 'checkPermission').mockResolvedValue({ allowed: false })
+        const spyReply = spyOn(commandsFeature as any, 'replyTG').mockResolvedValue(undefined)
 
         const result = await (commandsFeature as any).handleTgMessage(tgMsg)
         expect(result).toBe(true)
@@ -1141,10 +1135,10 @@ describe('commandsFeature', () => {
 
       it('handleTgMessage handles work mode command', async () => {
         const tgMsg = { text: '/workmode personal', chat: { id: 111 }, sender: { id: 'admin-id', isBot: false } } as any
-        const mockCmd = { name: 'workmode', handler: vi.fn() }
-      ;(commandsFeature as any).registry.get = vi.fn().mockReturnValue(mockCmd)
-        vi.spyOn(commandsFeature as any, 'isWorkModeConfigured').mockReturnValue(true)
-        vi.spyOn(commandsFeature as any, 'handleWorkModeCommand').mockResolvedValue(undefined)
+        const mockCmd = { name: 'workmode', handler: mock() }
+      ;(commandsFeature as any).registry.get = mock().mockReturnValue(mockCmd)
+        spyOn(commandsFeature as any, 'isWorkModeConfigured').mockReturnValue(true)
+        spyOn(commandsFeature as any, 'handleWorkModeCommand').mockResolvedValue(undefined)
 
         const result = await (commandsFeature as any).handleTgMessage(tgMsg)
         expect(result).toBe(true)
@@ -1152,9 +1146,9 @@ describe('commandsFeature', () => {
 
       it('handleTgMessage blocks when work mode not configured', async () => {
         const tgMsg = { text: '/help', chat: { id: 111 }, sender: { id: 222, isBot: false } } as any
-        const mockCmd = { name: 'help', handler: vi.fn() }
-      ;(commandsFeature as any).registry.get = vi.fn().mockReturnValue(mockCmd)
-        vi.spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(true)
+        const mockCmd = { name: 'help', handler: mock() }
+      ;(commandsFeature as any).registry.get = mock().mockReturnValue(mockCmd)
+        spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(true)
 
         const result = await (commandsFeature as any).handleTgMessage(tgMsg)
         expect(result).toBe(true)
@@ -1164,7 +1158,7 @@ describe('commandsFeature', () => {
       it('handleTgMessage handles stale binding state when work mode not configured', async () => {
         const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
         const stateManager = (commandsFeature as any).stateManager
-        vi.spyOn(commandsFeature as any, 'isWorkModeConfigured').mockReturnValue(false)
+        spyOn(commandsFeature as any, 'isWorkModeConfigured').mockReturnValue(false)
         stateManager.getBindingState.mockReturnValueOnce({ threadId: 9 })
 
         const result = await handler({
@@ -1210,7 +1204,7 @@ describe('commandsFeature', () => {
       it('handleTgMessage removes @self mention from args', async () => {
         const registry = (commandsFeature as any).registry
         const handler = mockTgBot.addNewMessageEventHandler.mock.calls[0][0]
-        const mockCmd = { name: 'help', handler: vi.fn(), adminOnly: false }
+        const mockCmd = { name: 'help', handler: mock(), adminOnly: false }
         registry.get.mockReturnValue(mockCmd)
         registry.prefix = '/'
 
@@ -1229,10 +1223,10 @@ describe('commandsFeature', () => {
         const registry = (commandsFeature as any).registry
         registry.prefix = '/'
         // 'workmode' is in WORK_MODE_COMMANDS set, so isWorkModeCommand returns true
-        const mockCmd = { name: 'workmode', handler: vi.fn() }
+        const mockCmd = { name: 'workmode', handler: mock() }
         registry.get.mockReturnValue(mockCmd)
         // Mock handleWorkModeCommand on the instance since it's the method being called
-        const spy = vi.spyOn(commandsFeature as any, 'handleWorkModeCommand').mockResolvedValue(undefined)
+        const spy = spyOn(commandsFeature as any, 'handleWorkModeCommand').mockResolvedValue(undefined)
 
         await (commandsFeature as any).handleQqMessage({
           id: 'qq-wm',
@@ -1250,9 +1244,9 @@ describe('commandsFeature', () => {
       it('blocks QQ command when work mode not configured', async () => {
         const registry = (commandsFeature as any).registry
         registry.prefix = '/'
-        const mockCmd = { name: 'help', handler: vi.fn() }
+        const mockCmd = { name: 'help', handler: mock() }
         registry.get.mockReturnValue(mockCmd)
-        vi.spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(true)
+        spyOn(commandsFeature as any, 'blockUntilWorkModeConfigured').mockResolvedValue(true)
 
         await (commandsFeature as any).handleQqMessage({
           id: 'qq-blk',
@@ -1318,7 +1312,7 @@ describe('commandsFeature', () => {
       })
 
       it('uses logger from plugin if provided', () => {
-        const customLogger = { info: vi.fn(), debug: vi.fn() }
+        const customLogger = { info: mock(), debug: mock() }
         const event = (commandsFeature as any).convertToMessageEvent(
           {
             id: 'tg-3',
@@ -1382,7 +1376,7 @@ describe('commandsFeature', () => {
 
       it('returns true for telegram with private pair', async () => {
         const { findPairByTGWithChatType } = await import('../utils/ForwardPairChatType.js')
-        vi.mocked(findPairByTGWithChatType).mockResolvedValueOnce({ qqChatType: 'private' } as any)
+        findPairByTGWithChatType.mockResolvedValueOnce({ qqChatType: 'private' } as any)
         
         const result = await (commandsFeature as any).isFriendPairCommand({
           platform: 'telegram',

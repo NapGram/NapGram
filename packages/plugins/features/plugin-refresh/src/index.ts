@@ -21,12 +21,12 @@ const plugin = definePlugin({
             return `https://p.qlogo.cn/gh/${gid}/${gid}/${size}/`;
         };
 
-        // Helper: Fetch Buffer
-        const fetchBuffer = async (url: string): Promise<Buffer> => {
+        // Helper: Fetch bytes
+        const fetchBuffer = async (url: string): Promise<Uint8Array> => {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
             const ab = await res.arrayBuffer();
-            return Buffer.from(ab);
+            return new Uint8Array(ab);
         };
 
         // Helper: Pick Group Description

@@ -2,27 +2,25 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
 import { db, schema } from '@napgram/db-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 
 import { ForwardControlCommandHandler } from '../ForwardControlCommandHandler.js'
 
-vi.mock('@napgram/db-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/db-kit', async () => ({
   db: {
-    update: vi.fn(() => ({
-      set: vi.fn(() => ({
-        where: vi.fn().mockResolvedValue({}),
+    update: mock(() => ({
+      set: mock(() => ({
+        where: mock().mockResolvedValue({}),
       })),
     })),
   },
   schema: {
     forwardPair: { id: 'id' },
   },
-  eq: vi.fn(),
+  eq: mock(),
 }))
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', async () => ({
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -32,14 +30,13 @@ vi.mock('@napgram/env-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', async () => ({
+  getLogger: mock(() => ({
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    trace: mock(),
   })),
 }))
 
@@ -49,32 +46,32 @@ function createMockQQClient(): IQQClient {
     uin: 123456,
     nickname: 'TestBot',
     clientType: 'napcat',
-    isOnline: vi.fn().mockResolvedValue(true),
-    sendMessage: vi.fn(),
-    recallMessage: vi.fn(),
-    getMessage: vi.fn(),
-    getFriendList: vi.fn(),
-    getGroupList: vi.fn(),
-    getGroupMemberList: vi.fn(),
-    getGroupMemberInfo: vi.fn(),
-    getFriendInfo: vi.fn(),
-    getGroupInfo: vi.fn(),
-    on: vi.fn(),
-    once: vi.fn(),
-    off: vi.fn(),
-    removeListener: vi.fn(),
-    removeAllListeners: vi.fn(),
-    emit: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    destroy: vi.fn(),
+    isOnline: mock().mockResolvedValue(true),
+    sendMessage: mock(),
+    recallMessage: mock(),
+    getMessage: mock(),
+    getFriendList: mock(),
+    getGroupList: mock(),
+    getGroupMemberList: mock(),
+    getGroupMemberInfo: mock(),
+    getFriendInfo: mock(),
+    getGroupInfo: mock(),
+    on: mock(),
+    once: mock(),
+    off: mock(),
+    removeListener: mock(),
+    removeAllListeners: mock(),
+    emit: mock(),
+    login: mock(),
+    logout: mock(),
+    destroy: mock(),
   } as any
 }
 
 // Mock Telegram Bot
 function createMockTgBot() {
   return {
-    sendMessage: vi.fn().mockResolvedValue({}),
+    sendMessage: mock().mockResolvedValue({}),
   } as any
 }
 
@@ -90,16 +87,16 @@ function createMockContext(qqClient: IQQClient, tgBot: any): CommandContext {
       id: 1,
       owner: '123456',
       forwardPairs: {
-        reload: vi.fn().mockResolvedValue(undefined),
-        findByTG: vi.fn().mockReturnValue(null),
-        findByQQ: vi.fn(),
-        find: vi.fn(),
-        add: vi.fn(),
-        remove: vi.fn(),
+        reload: mock().mockResolvedValue(undefined),
+        findByTG: mock().mockReturnValue(null),
+        findByQQ: mock(),
+        find: mock(),
+        add: mock(),
+        remove: mock(),
       },
     } as any,
-    replyTG: vi.fn().mockResolvedValue(undefined),
-    extractThreadId: vi.fn().mockReturnValue(undefined),
+    replyTG: mock().mockResolvedValue(undefined),
+    extractThreadId: mock().mockReturnValue(undefined),
   } as any
 }
 
@@ -148,8 +145,8 @@ describe('forwardControlCommandHandler', () => {
       forwardMode: null,
     }
 
-    mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue(mockPair)
-    vi.mocked(db.update).mockClear()
+    mockContext.instance.forwardPairs.findByTG = mock().mockReturnValue(mockPair)
+    db.update.mockClear()
   })
 
   describe('platform Filtering', () => {
@@ -164,7 +161,7 @@ describe('forwardControlCommandHandler', () => {
 
   describe('no Binding Scenario', () => {
     it('should show error when chat is not bound', async () => {
-      mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue(null)
+      mockContext.instance.forwardPairs.findByTG = mock().mockReturnValue(null)
 
       const msg = createMessage('/forwardoff', '999999', '777777')
       await handler.execute(msg, [], 'forwardoff')
@@ -339,7 +336,7 @@ describe('forwardControlCommandHandler', () => {
 
     it('should include thread ID in binding info when present', async () => {
       mockPair.tgThreadId = 12345
-      vi.mocked(mockContext.extractThreadId).mockReturnValue(BigInt(12345))
+      mockContext.extractThreadId.mockReturnValue(BigInt(12345))
 
       const msg = createMessage('/forwardoff', '999999', '777777')
       await handler.execute(msg, [], 'forwardoff')
@@ -354,9 +351,9 @@ describe('forwardControlCommandHandler', () => {
 
   describe('error Handling', () => {
     it('should handle database update failure', async () => {
-      vi.mocked(db.update).mockReturnValue({
-        set: vi.fn(() => ({
-          where: vi.fn().mockRejectedValue(new Error('DB Error')),
+      db.update.mockReturnValue({
+        set: mock(() => ({
+          where: mock().mockRejectedValue(new Error('DB Error')),
         })),
       } as any)
 
@@ -372,9 +369,9 @@ describe('forwardControlCommandHandler', () => {
 
     it('should not update memory on database failure', async () => {
       const originalMode = mockPair.forwardMode
-      vi.mocked(db.update).mockReturnValue({
-        set: vi.fn(() => ({
-          where: vi.fn().mockRejectedValue(new Error('DB Error')),
+      db.update.mockReturnValue({
+        set: mock(() => ({
+          where: mock().mockRejectedValue(new Error('DB Error')),
         })),
       } as any)
 
@@ -388,7 +385,7 @@ describe('forwardControlCommandHandler', () => {
 
   describe('thread Support', () => {
     it('should use extracted thread ID', async () => {
-      vi.mocked(mockContext.extractThreadId).mockReturnValue(BigInt(99999))
+      mockContext.extractThreadId.mockReturnValue(BigInt(99999))
 
       const msg = createMessage('/forwardoff', '999999', '777777')
       await handler.execute(msg, [], 'forwardoff')
@@ -401,7 +398,7 @@ describe('forwardControlCommandHandler', () => {
     })
 
     it('should reply to correct thread', async () => {
-      vi.mocked(mockContext.extractThreadId).mockReturnValue(BigInt(54321))
+      mockContext.extractThreadId.mockReturnValue(BigInt(54321))
 
       const msg = createMessage('/forwardoff', '999999', '777777')
       await handler.execute(msg, [], 'forwardoff')

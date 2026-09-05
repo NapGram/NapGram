@@ -1,14 +1,12 @@
-import { Buffer } from 'node:buffer'
-import path from 'node:path'
-import Telegram from '@napgram/telegram-client'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { basename, joinPath } from '../../../../shared/utils/path.js'
+import { beforeAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { createMockChat, createMockMessage } from './mtcuteTestHelpers'
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks (evaluated before any imports)
 // ---------------------------------------------------------------------------
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   DATA_DIR: '/tmp',
   TG_API_ID: '1',
   TG_API_HASH: 'hash',
@@ -20,134 +18,99 @@ const envMock = vi.hoisted(() => ({
   INTERNAL_WEB_ENDPOINT: 'http://internal',
   WEB_ENDPOINT: 'http://web',
   DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/napgram_test',
-}))
+}))()
 
-const fsMocks = vi.hoisted(() => ({
-  existsSync: vi.fn((_path?: any) => true),
-  mkdirSync: vi.fn(),
-  createWriteStream: vi.fn(() => ({
-    write: vi.fn(),
-    end: vi.fn(),
+
+const fileMocks = (() => ({
+  exists: mock((_path?: any) => true),
+  mkdir: mock(),
+  createWriteStream: mock(() => ({
+    write: mock(),
+    end: mock(),
   })),
-}))
+}))()
 
-const fsPromMocks = vi.hoisted(() => ({
-  mkdir: vi.fn().mockResolvedValue(undefined),
-  rm: vi.fn().mockResolvedValue(undefined),
-}))
+const fileSystemMocks = (() => ({
+  mkdir: mock().mockResolvedValue(undefined),
+  remove: mock().mockResolvedValue(undefined),
+}))()
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
 
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}))
-
-const dispatcherMocks = vi.hoisted(() => ({
-  onNewMessage: vi.fn(),
-  onEditMessage: vi.fn(),
-  onDeleteMessage: vi.fn(),
-}))
+const dispatcherMocks = (() => ({
+  onNewMessage: mock(),
+  onEditMessage: mock(),
+  onDeleteMessage: mock(),
+}))()
 
 /**
  * Mocks for the underlying mtcute client methods.
  * These are called by the fake TelegramInstance below.
  */
-const clientMethods = vi.hoisted(() => ({
-  start: vi.fn().mockResolvedValue(undefined),
-  importSession: vi.fn().mockResolvedValue(undefined),
-  exportSession: vi.fn().mockResolvedValue('session-export'),
-  getMe: vi.fn().mockResolvedValue({ id: 1 }),
-  downloadAsBuffer: vi.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
-  downloadToFile: vi.fn().mockResolvedValue(undefined),
-  getChat: vi.fn(),
-  disconnect: vi.fn().mockResolvedValue(undefined),
-}))
+const clientMethods = (() => ({
+  start: mock().mockResolvedValue(undefined),
+  importSession: mock().mockResolvedValue(undefined),
+  exportSession: mock().mockResolvedValue('session-export'),
+  getMe: mock().mockResolvedValue({ id: 1 }),
+  downloadAsBuffer: mock().mockResolvedValue(new Uint8Array([1, 2, 3])),
+  downloadToFile: mock().mockResolvedValue(undefined),
+  getChat: mock(),
+  disconnect: mock().mockResolvedValue(undefined),
+}))()
 
-const sessionMocks = vi.hoisted(() => ({
+const sessionMocks = (() => ({
   mockSessionString: undefined as string | undefined,
-  load: vi.fn(),
-  save: vi.fn(),
-}))
+  load: mock(),
+  save: mock(),
+}))()
 
-const proxyOptions = vi.hoisted(() => ({
+const proxyOptions = (() => ({
   captured: [] as any[],
-}))
+}))()
 
-const FakeTelegramChat = vi.hoisted(() => {
+const FakeTelegramChat = (() => {
   return class FakeTelegramChat {
     chat: any
     constructor(_bot: any, _client: any, chat: any) {
       this.chat = chat
     }
   }
-})
+})()
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock('node:fs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs')>()
-  return {
-    ...actual,
-    default: {
-      ...actual,
-      existsSync: fsMocks.existsSync,
-      mkdirSync: fsMocks.mkdirSync,
-      createWriteStream: fsMocks.createWriteStream,
-      promises: {
-        ...actual.promises,
-        mkdir: fsPromMocks.mkdir,
-        rm: fsPromMocks.rm,
-      },
-    },
-    existsSync: fsMocks.existsSync,
-    mkdirSync: fsMocks.mkdirSync,
-    createWriteStream: fsMocks.createWriteStream,
-    promises: {
-      ...actual.promises,
-      mkdir: fsPromMocks.mkdir,
-      rm: fsPromMocks.rm,
-    },
-  }
-})
-
-vi.mock('node:fs/promises', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('node:fs/promises')>()
-  return {
-    ...actual,
-    mkdir: fsPromMocks.mkdir,
-    rm: fsPromMocks.rm,
-  }
-})
-
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: envMock,
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
-vi.mock('../../../temp', () => ({
+mock.module('../../../temp', () => ({
   TEMP_PATH: '/tmp/napgram-temp',
-  file: vi.fn(),
-  createTempFile: vi.fn(),
+  file: mock(),
+  createTempFile: mock(),
 }))
 
-vi.mock('@mtcute/core', async (importOriginal) => {
-  const { createMtcuteCoreMock } = await import('./mtcuteVitestMocks')
-  return createMtcuteCoreMock(importOriginal)
+mock.module('@mtcute/core', async () => {
+  const { createMtcuteCoreMock } = await import('./mtcuteTestMocks')
+  return createMtcuteCoreMock()
 })
 
-vi.mock('@mtcute/dispatcher', () => ({
+mock.module('@mtcute/dispatcher', () => ({
   Dispatcher: {
-    for: vi.fn(() => dispatcherMocks),
+    for: mock(() => dispatcherMocks),
   },
 }))
 
-vi.mock('../../../../domain/models/TelegramSession', () => ({
+mock.module('../../../../domain/models/TelegramSession', () => ({
   default: class TelegramSessionMock {
     dbId?: number
     sessionString?: string
@@ -178,9 +141,9 @@ vi.mock('../../../../domain/models/TelegramSession', () => ({
  * network loops that cannot be stopped by mocking @mtcute/bun alone.
  *
  * By mocking the package itself we return a fake Telegram class whose `client`
- * property is a plain object with vi.fn() stubs, so no real connections are made.
+ * property is a plain object with mock() stubs, so no real connections are made.
  */
-vi.mock('@napgram/telegram-client', () => {
+mock.module('@napgram/telegram-client', () => {
   // A fake inner client that delegates to clientMethods stubs
   class FakeInnerClient {
     start = (...args: any[]) => clientMethods.start(...args)
@@ -221,8 +184,8 @@ vi.mock('@napgram/telegram-client', () => {
 
       // Replicate real client: create DATA_DIR if missing
       const dataDir = envMock.DATA_DIR || '/app/data'
-      if (!fsMocks.existsSync(dataDir)) {
-        fsMocks.mkdirSync(dataDir, { recursive: true })
+      if (!fileMocks.exists(dataDir)) {
+        fileMocks.mkdir(dataDir, { recursive: true })
       }
 
       if (session.sessionString) {
@@ -336,7 +299,7 @@ vi.mock('@napgram/telegram-client', () => {
       return new FakeTelegramChat(this as any, this.client as any, chat)
     }
 
-    async downloadMedia(media: any): Promise<Buffer> {
+    async downloadMedia(media: any): Promise<Uint8Array> {
       const { Message: Msg } = await import('@mtcute/core')
       let result: Uint8Array
       if (media instanceof Msg && media.media) {
@@ -345,7 +308,7 @@ vi.mock('@napgram/telegram-client', () => {
       else {
         result = await this.client.downloadAsBuffer(media)
       }
-      return Buffer.from(result)
+      return result
     }
 
     private getTempUrl(filename: string) {
@@ -354,7 +317,7 @@ vi.mock('@napgram/telegram-client', () => {
     }
 
     private sanitizeFilename(name: string) {
-      return path.basename(name)
+      return basename(name)
         .replace(/[\\/]/g, '_')
         .replace(/[^\w.\-+@() ]/g, '_')
         .trim()
@@ -375,8 +338,8 @@ vi.mock('@napgram/telegram-client', () => {
       const ext = options?.ext ? (options.ext.startsWith('.') ? options.ext : `.${options.ext}`) : ''
       const filename = ext && !sanitized.toLowerCase().endsWith(ext.toLowerCase()) ? `${sanitized}${ext}` : sanitized
 
-      await fsPromMocks.mkdir('/tmp/napgram-temp', { recursive: true })
-      const filePath = path.join('/tmp/napgram-temp', filename)
+      await fileSystemMocks.mkdir('/tmp/napgram-temp', { recursive: true })
+      const filePath = joinPath('/tmp/napgram-temp', filename)
 
       try {
         const location = media instanceof Msg && (media as any).media ? (media as any).media : media
@@ -384,7 +347,7 @@ vi.mock('@napgram/telegram-client', () => {
       }
       catch (error) {
         try {
-          await fsPromMocks.rm(filePath, { force: true })
+          await fileSystemMocks.remove(filePath, { force: true })
         }
         catch { }
         throw error
@@ -393,13 +356,13 @@ vi.mock('@napgram/telegram-client', () => {
       return options?.returnType === 'path' ? filePath : this.getTempUrl(filename)
     }
 
-    async downloadProfilePhoto(userId: any): Promise<Buffer | null> {
+    async downloadProfilePhoto(userId: any): Promise<Uint8Array | null> {
       try {
         const chat = await this.client.getChat(userId)
         if (!chat.photo)
           return null
         const result = await this.client.downloadAsBuffer(chat.photo.big)
-        return Buffer.from(result)
+        return result
       }
       catch {
         return null
@@ -414,7 +377,7 @@ vi.mock('@napgram/telegram-client', () => {
 
   return {
     default: FakeTelegram,
-    configureTelegramClient: vi.fn(),
+    configureTelegramClient: mock(),
     TelegramChat: FakeTelegramChat,
   }
 })
@@ -423,14 +386,19 @@ vi.mock('@napgram/telegram-client', () => {
 // Tests
 // ---------------------------------------------------------------------------
 
+let Telegram: any
+beforeAll(async () => {
+  ;({ default: Telegram } = await import('@napgram/telegram-client'))
+})
+
 describe('telegram client', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     sessionMocks.mockSessionString = undefined
     envMock.PROXY_IP = undefined
     envMock.PROXY_PORT = undefined
     proxyOptions.captured.length = 0
-    fsMocks.existsSync.mockReturnValue(true)
+    fileMocks.exists.mockReturnValue(true)
     ; (Telegram as any).existedBots = {}
   })
 
@@ -483,11 +451,11 @@ describe('telegram client', () => {
   })
 
   it('creates data dir when missing', async () => {
-    fsMocks.existsSync.mockReturnValueOnce(false)
+    fileMocks.exists.mockReturnValueOnce(false)
 
     await Telegram.create({ botToken: 'bot' })
 
-    expect(fsMocks.mkdirSync).toHaveBeenCalledWith('/tmp', { recursive: true })
+    expect(fileMocks.mkdir).toHaveBeenCalledWith('/tmp', { recursive: true })
   })
 
   it('rethrows when create login fails', async () => {
@@ -533,16 +501,16 @@ describe('telegram client', () => {
     const bufferFromMessage = await bot.downloadMedia(msg)
     const bufferFromObject = await bot.downloadMedia({ id: 'x' })
 
-    expect(bufferFromMessage).toBeInstanceOf(Buffer)
-    expect(bufferFromObject).toBeInstanceOf(Buffer)
+    expect(bufferFromMessage).toBeInstanceOf(Uint8Array)
+    expect(bufferFromObject).toBeInstanceOf(Uint8Array)
     expect(clientMethods.downloadAsBuffer).toHaveBeenCalledWith(msg.media)
     expect(clientMethods.downloadAsBuffer).toHaveBeenCalledWith({ id: 'x' })
   })
 
   it('downloads media to temp file and returns url or path', async () => {
     const bot = await Telegram.connect(4, 'NapGram')
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.123456)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.123456)
 
     const url = await bot.downloadMediaToTempFile(
       { fileName: 'bad/fi?le.txt' },
@@ -553,7 +521,7 @@ describe('telegram client', () => {
       { prefix: 'tg', returnType: 'path' },
     )
 
-    expect(fsPromMocks.mkdir).toHaveBeenCalledWith('/tmp/napgram-temp', { recursive: true })
+    expect(fileSystemMocks.mkdir).toHaveBeenCalledWith('/tmp/napgram-temp', { recursive: true })
     expect(clientMethods.downloadToFile).toHaveBeenCalled()
     expect(url).toContain('http://internal/temp/')
     expect(filePath).toContain('/tmp/napgram-temp/')
@@ -561,13 +529,13 @@ describe('telegram client', () => {
 
   it('cleans up when download to temp fails', async () => {
     const bot = await Telegram.connect(6, 'NapGram')
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000)
-    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    spyOn(Date, 'now').mockReturnValue(1700000000000)
+    spyOn(Math, 'random').mockReturnValue(0.5)
     clientMethods.downloadToFile.mockRejectedValueOnce(new Error('fail'))
 
     await expect(bot.downloadMediaToTempFile({ fileName: 'file.txt' })).rejects.toThrow('fail')
 
-    expect(fsPromMocks.rm).toHaveBeenCalledWith(expect.stringContaining('/tmp/napgram-temp/'), { force: true })
+    expect(fileSystemMocks.remove).toHaveBeenCalledWith(expect.stringContaining('/tmp/napgram-temp/'), { force: true })
   })
 
   it('wraps getChat with TelegramChat', async () => {
@@ -591,7 +559,7 @@ describe('telegram client', () => {
     const buffer = await bot.downloadProfilePhoto(1)
 
     expect(none).toBeNull()
-    expect(buffer).toBeInstanceOf(Buffer)
+    expect(buffer).toBeInstanceOf(Uint8Array)
   })
 
   it('returns null when profile photo download fails', async () => {
@@ -603,8 +571,8 @@ describe('telegram client', () => {
 
   it('dispatches new message handlers until handled', async () => {
     const bot = await Telegram.connect(13, 'NapGram')
-    const handler1 = vi.fn().mockResolvedValue(true)
-    const handler2 = vi.fn().mockResolvedValue(undefined)
+    const handler1 = mock().mockResolvedValue(true)
+    const handler2 = mock().mockResolvedValue(undefined)
 
     bot.addNewMessageEventHandler(handler1)
     bot.addNewMessageEventHandler(handler2)
@@ -617,7 +585,7 @@ describe('telegram client', () => {
 
   it('removes new message handlers', async () => {
     const bot = await Telegram.connect(14, 'NapGram')
-    const handler = vi.fn().mockResolvedValue(undefined)
+    const handler = mock().mockResolvedValue(undefined)
 
     bot.addNewMessageEventHandler(handler)
     bot.removeNewMessageEventHandler(handler)
@@ -629,7 +597,7 @@ describe('telegram client', () => {
 
   it('dispatches edited message handlers and supports removal', async () => {
     const bot = await Telegram.connect(15, 'NapGram')
-    const handler = vi.fn().mockResolvedValue(undefined)
+    const handler = mock().mockResolvedValue(undefined)
 
     bot.addEditedMessageEventHandler(handler)
     await (bot as any).onEditedMessage(createMockMessage(3, { chatId: 3 }))
@@ -641,7 +609,7 @@ describe('telegram client', () => {
 
   it('dispatches deleted message handlers and supports removal', async () => {
     const bot = await Telegram.connect(16, 'NapGram')
-    const handler = vi.fn().mockResolvedValue(undefined)
+    const handler = mock().mockResolvedValue(undefined)
 
     bot.addDeletedMessageEventHandler(handler)
     await (bot as any).onDeleteMessage({ channelId: 1, messageIds: [1, 2] })

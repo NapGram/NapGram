@@ -1,15 +1,14 @@
-import { Buffer } from 'node:buffer'
-import crypto from 'node:crypto'
 import db, { schema, eq } from '../db.js'
 import { flags } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
+import { hashWithRuntime } from '@napgram/runtime-kit'
 
 export type ForwardPairQqRoom = { uin: number } | { gid: number }
 
 export interface ForwardPairTelegramChat {
   readonly id: number | bigint | string
   editTitle(title: string): Promise<unknown>
-  setProfilePhoto(photo: Buffer): Promise<unknown>
+  setProfilePhoto(photo: Uint8Array): Promise<unknown>
 }
 
 export interface ForwardPairQqClient {
@@ -18,13 +17,14 @@ export interface ForwardPairQqClient {
 
 const log = getLogger('ForwardPair')
 
-function md5(input: crypto.BinaryLike) {
-  const hash = crypto.createHash('md5')
-  if (typeof input === 'string') return hash.update(input).digest()
-  const bytes = 'buffer' in input
-    ? Buffer.from(input.buffer, input.byteOffset, input.byteLength)
-    : Buffer.from(input)
-  return hash.update(bytes).digest()
+function bytesEqual(left: ArrayLike<number>, right: ArrayLike<number>): boolean {
+  if (left.length !== right.length)
+    return false
+  for (let i = 0; i < left.length; i++) {
+    if (left[i] !== right[i])
+      return false
+  }
+  return true
 }
 
 function getAvatarUrl(room: number | bigint | ForwardPairQqRoom): string {
@@ -41,7 +41,7 @@ async function getAvatar(room: number | bigint | ForwardPairQqRoom) {
   if (!res.ok) {
     throw new Error(`Fetch failed: ${res.status} ${res.statusText}`)
   }
-  return Buffer.from(await res.arrayBuffer())
+  return new Uint8Array(await res.arrayBuffer())
 }
 
 export class Pair {
@@ -80,7 +80,7 @@ export class Pair {
     const avatarCache = rows[0]
     const lastHash = avatarCache ? avatarCache.hash : null
     const avatar = await getAvatar(this.qqRoomId)
-    const newHash = md5(avatar)
+    const newHash = new Uint8Array(hashWithRuntime('md5', avatar, 'buffer') as Uint8Array)
 
     if (!(this.flags & flags.NAME_LOCKED) && this.qqRoomId < 0) {
       try {
@@ -94,17 +94,17 @@ export class Pair {
       }
     }
 
-    if (!lastHash || Buffer.from(lastHash).compare(newHash) !== 0) {
+    if (!lastHash || !bytesEqual(lastHash, newHash)) {
       log.debug(`更新群头像: ${this.qqRoomId}`)
       await this._tg.setProfilePhoto(avatar)
       if (avatarCache) {
         await db.update(schema.avatarCache)
-          .set({ hash: newHash })
+          .set({ hash: newHash as never })
           .where(eq(schema.avatarCache.forwardPairId, this.dbId))
       }
       else {
         await db.insert(schema.avatarCache)
-          .values({ forwardPairId: this.dbId, hash: newHash })
+          .values({ forwardPairId: this.dbId, hash: newHash } as never)
       }
     }
   }

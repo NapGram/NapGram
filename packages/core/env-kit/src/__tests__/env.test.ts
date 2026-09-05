@@ -1,4 +1,31 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
+
+const bunRuntime = (globalThis as typeof globalThis & {
+  Bun: { env: Record<string, string | undefined> }
+}).Bun
+const originalEnv = { ...bunRuntime.env }
+const envKeysToReset = [
+  'DATA_DIR', 'CACHE_DIR', 'DATABASE_URL', 'LOG_LEVEL', 'LOG_FILE_LEVEL', 'LOG_FILE',
+  'LOG_RETENTION_DAYS', 'OICQ_LOG_LEVEL', 'TG_LOG_LEVEL', 'FFMPEG_PATH', 'FFPROBE_PATH',
+  'NAPCAT_WS_URL', 'NAPCAT_WS_TOKEN', 'SIGN_API', 'SIGN_VER', 'TG_API_ID', 'TG_API_HASH',
+  'TG_BOT_TOKEN', 'TG_CONNECTION', 'TG_INITIAL_DCID', 'TG_INITIAL_SERVER', 'TG_USE_TEST_DC',
+  'TG_MEDIA_TTL_SECONDS', 'IPV6', 'ADMIN_QQ', 'ADMIN_TG', 'PROXY_IP', 'PROXY_PORT',
+  'PROXY_USERNAME', 'PROXY_PASSWORD', 'TGS_TO_GIF', 'DISABLE_FILE_UPLOAD_TIP', 'IMAGE_SUMMARY',
+  'ENABLE_FEATURE_MANAGER', 'LISTEN_PORT', 'ADMIN_TOKEN', 'UI_PATH', 'UI_PROXY', 'WEB_ENDPOINT',
+  'RICH_HEADER_VERSION', 'INTERNAL_WEB_ENDPOINT', 'ERROR_REPORTING', 'SHOW_NICKNAME_MODE',
+  'FORWARD_MODE', 'COMMAND_REPLY_BOTH_SIDES', 'ENABLE_AUTO_RECALL', 'ENABLE_OFFLINE_NOTIFICATION',
+  'OFFLINE_NOTIFICATION_COOLDOWN', 'REPO', 'REF', 'COMMIT',
+]
+
+beforeAll(() => {
+  bunRuntime.env.NODE_ENV = 'test'
+  for (const key of envKeysToReset) delete bunRuntime.env[key]
+})
+
+afterAll(() => {
+  for (const key of Object.keys(bunRuntime.env)) delete bunRuntime.env[key]
+  Object.assign(bunRuntime.env, originalEnv)
+})
 
 describe('env', () => {
   it('should export parsed environment config in test mode', async () => {

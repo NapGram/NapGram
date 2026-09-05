@@ -1,10 +1,7 @@
-import { closeSync, mkdirSync, openSync, readFileSync, writeFileSync, writeSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { randomUUID } from 'node:crypto'
 import { SpanStatusCode, trace, type Attributes } from '@opentelemetry/api'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import { BatchSpanProcessor, NodeTracerProvider } from '@opentelemetry/sdk-trace-node'
+import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-base/build/src/index-shim.js'
 import {
   ATTR_DEPLOYMENT_ENVIRONMENT_NAME,
   ATTR_SERVICE_INSTANCE_ID,
@@ -13,6 +10,57 @@ import {
 } from '@opentelemetry/semantic-conventions'
 import { env } from '@napgram/env-kit'
 import getLogger from './logger.js'
+
+interface BunTelemetryRuntime {
+  env: Record<string, string | undefined>
+  spawnSync(command: string[], options?: { stdin?: string | Uint8Array, stdout?: 'pipe', stderr?: 'pipe' }): {
+    exitCode: number
+    stdout?: Uint8Array
+  }
+}
+
+const bunRuntime = (globalThis as typeof globalThis & { Bun: BunTelemetryRuntime }).Bun
+const decoder = new TextDecoder()
+
+function runBun(command: string[], options?: { stdin?: string | Uint8Array, stdout?: 'pipe', stderr?: 'pipe' }) {
+  return bunRuntime.spawnSync(command, options)
+}
+
+const pathUtils = {
+  dirname(filePath: string) {
+    const index = filePath.lastIndexOf('/')
+    return index > 0 ? filePath.slice(0, index) : '.'
+  },
+  join(...parts: string[]) {
+    return parts.filter(Boolean).join('/')
+  },
+}
+
+function readText(filePath: string): string {
+  const result = runBun(['cat', filePath], { stdout: 'pipe' })
+  if (result.exitCode !== 0) throw new Error(`Failed to read file: ${filePath}`)
+  return decoder.decode(result.stdout ?? new Uint8Array())
+}
+
+function writeText(filePath: string, content: string): void {
+  const result = runBun(['tee', filePath], { stdin: new TextEncoder().encode(content), stdout: 'pipe' })
+  if (result.exitCode !== 0) throw new Error(`Failed to write file: ${filePath}`)
+  const chmod = runBun(['chmod', '600', filePath])
+  if (chmod.exitCode !== 0) throw new Error(`Failed to secure file: ${filePath}`)
+}
+
+function ensureDirectory(directory: string): void {
+  const result = runBun(['mkdir', '-p', directory])
+  if (result.exitCode !== 0) throw new Error(`Failed to create directory: ${directory}`)
+}
+
+function removePath(filePath: string): void {
+  runBun(['rm', '-f', filePath])
+}
+
+function acquireDirectoryLock(lockPath: string): boolean {
+  return runBun(['mkdir', lockPath]).exitCode === 0
+}
 
 const logger = getLogger('Telemetry')
 const DEFAULT_ENDPOINT = 'https://136325658.otel.gitlab-o11y.com:14318/v1/traces'
@@ -27,7 +75,7 @@ type Scalar = string | number | boolean
 type ExceptionFilter = (error: unknown) => boolean
 type ActiveWindow = { window: 'daily' | 'weekly' | 'monthly', bucket: string }
 
-let provider: NodeTracerProvider | undefined
+let provider: BasicTracerProvider | undefined
 let initialized = false
 let instanceId = ''
 let exceptionFilter: ExceptionFilter = () => true
@@ -38,7 +86,7 @@ function parseBoolean(value: string | undefined): boolean | undefined {
 }
 
 function isEnabled(): boolean {
-  return parseBoolean(process.env.TELEMETRY_ENABLED) ?? env.ERROR_REPORTING
+  return parseBoolean(bunRuntime.env.TELEMETRY_ENABLED) ?? env.ERROR_REPORTING
 }
 
 function canonicalUuid(value: string | undefined): string | undefined {
@@ -50,22 +98,32 @@ function canonicalUuid(value: string | undefined): string | undefined {
 }
 
 function dataPath(name: string): string {
-  return join(String(env.DATA_DIR || process.env.DATA_DIR || './data'), name)
+  return pathUtils.join(String(env.DATA_DIR || bunRuntime.env.DATA_DIR || './data'), name)
 }
 
 function readUuidFile(path: string): string | undefined {
   try {
-    return canonicalUuid(readFileSync(path, 'utf8'))
+    return canonicalUuid(readText(path))
   }
   catch {
     return undefined
   }
 }
 
+function waitForUuidFile(path: string): string | undefined {
+  const waitBuffer = new Int32Array(new SharedArrayBuffer(4))
+  for (let attempt = 0; attempt < 100; attempt++) {
+    const raced = readUuidFile(path)
+    if (raced) return raced
+    if (attempt < 99) Atomics.wait(waitBuffer, 0, 0, 1)
+  }
+  return undefined
+}
+
 export function resolveServiceInstanceId(): string {
-  const override = canonicalUuid(process.env.OTEL_SERVICE_INSTANCE_ID)
+  const override = canonicalUuid(bunRuntime.env.OTEL_SERVICE_INSTANCE_ID)
   if (override) return override
-  if (process.env.OTEL_SERVICE_INSTANCE_ID) {
+  if (bunRuntime.env.OTEL_SERVICE_INSTANCE_ID) {
     logger.warn('Ignoring invalid OTEL_SERVICE_INSTANCE_ID')
   }
 
@@ -73,24 +131,26 @@ export function resolveServiceInstanceId(): string {
   const existing = readUuidFile(path)
   if (existing) return existing
 
-  mkdirSync(dirname(path), { recursive: true })
-  const generated = randomUUID()
-  try {
-    const descriptor = openSync(path, 'wx', 0o600)
-    try {
-      writeSync(descriptor, `${generated}\n`)
+  ensureDirectory(pathUtils.dirname(path))
+  const generated = crypto.randomUUID()
+  const lockPath = `${path}.lock`
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (acquireDirectoryLock(lockPath)) {
+      try {
+        const lockedExisting = readUuidFile(path)
+        if (lockedExisting) return lockedExisting
+        writeText(path, `${generated}\n`)
+        return generated
+      }
+      finally {
+        removePath(lockPath)
+      }
     }
-    finally {
-      closeSync(descriptor)
-    }
-    return generated
-  }
-  catch {
     const raced = readUuidFile(path)
     if (raced) return raced
-    writeFileSync(path, `${generated}\n`, { encoding: 'utf8', mode: 0o600 })
-    return generated
+    if (attempt < 99) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1)
   }
+  throw new Error(`Unable to acquire telemetry instance lock: ${lockPath}`)
 }
 
 function isoWeek(date: Date): { year: number, week: number } {
@@ -120,7 +180,7 @@ function claimActiveWindows(now = new Date()): ActiveWindow[] {
   const path = dataPath(ACTIVE_FILE)
   let state: Record<string, string> = {}
   try {
-    const parsed = JSON.parse(readFileSync(path, 'utf8'))
+    const parsed = JSON.parse(readText(path))
     if (parsed && typeof parsed === 'object') state = parsed as Record<string, string>
   }
   catch {}
@@ -128,8 +188,8 @@ function claimActiveWindows(now = new Date()): ActiveWindow[] {
   const claimed = activeWindows(now).filter(item => state[item.window] !== item.bucket)
   if (claimed.length > 0) {
     claimed.forEach((item) => { state[item.window] = item.bucket })
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, `${JSON.stringify(state)}\n`, { encoding: 'utf8', mode: 0o600 })
+    ensureDirectory(pathUtils.dirname(path))
+    writeText(path, `${JSON.stringify(state)}\n`)
   }
   return claimed
 }
@@ -172,14 +232,14 @@ export function initTelemetry(): void {
   if (!isEnabled() || initialized) return
   instanceId = resolveServiceInstanceId()
   const exporter = new OTLPTraceExporter({
-    url: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || DEFAULT_ENDPOINT,
+    url: bunRuntime.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || DEFAULT_ENDPOINT,
   })
-  provider = new NodeTracerProvider({
+  provider = new BasicTracerProvider({
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: SERVICE_NAME,
       [ATTR_SERVICE_INSTANCE_ID]: instanceId,
       [ATTR_SERVICE_VERSION]: String((env as any).COMMIT || 'unknown'),
-      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: process.env.NODE_ENV || 'production',
+      [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: bunRuntime.env.NODE_ENV || 'production',
       'gitlab.project.id': PROJECT_ID,
       'gitlab.project.name': PROJECT_NAME,
       'git.repository': String((env as any).REPO || ''),
@@ -188,7 +248,7 @@ export function initTelemetry(): void {
     }),
     spanProcessors: [new BatchSpanProcessor(exporter)],
   })
-  provider.register()
+  trace.setGlobalTracerProvider(provider)
   initialized = true
   logger.info({ serviceInstanceId: instanceId }, 'OpenTelemetry initialized')
 }

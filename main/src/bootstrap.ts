@@ -1,4 +1,4 @@
-import process from 'node:process'
+import { bunEnv, onBunSignal } from './shared/utils/runtime.js'
 import { builtins } from '@napgram/builtins'
 import { db } from '@napgram/db-kit'
 import { env } from '@napgram/env-kit'
@@ -86,12 +86,15 @@ export async function initInfra(log: ReturnType<typeof getLogger>) {
   telemetry.event('app.boot', { stage: 'infrastructure' })
   startWindowedPerformanceLog(log)
 
-  process.on('unhandledRejection', (error) => {
-    log.error(error, 'UnhandledRejection: ')
-    telemetry.captureException(error, { type: 'unhandledRejection' })
+  globalThis.addEventListener('unhandledrejection', (event) => {
+    const reason = (event as Event & { reason?: unknown }).reason
+    log.error(reason, 'UnhandledRejection: ')
+    telemetry.captureException(reason, { type: 'unhandledRejection' })
   })
 
-  process.on('uncaughtException', (error) => {
+  globalThis.addEventListener('error', (event) => {
+    const errorEvent = event as Event & { error?: unknown, message?: string }
+    const error = errorEvent.error ?? errorEvent.message
     log.error(error, 'UncaughtException: ')
     telemetry.captureException(error, { type: 'uncaughtException' })
   })
@@ -223,13 +226,15 @@ export async function bootstrap(options: BootstrapOptions = {}) {
       log.warn({ error }, 'Failed to reset runtime registry')
     }
 
-    process.exit(exitCode)
+    if (exitCode !== 0) {
+      throw new Error(`NapGram shutdown failed with exit code ${exitCode}`)
+    }
   }
 
-  process.on('SIGINT', () => {
+  onBunSignal('SIGINT', () => {
     void shutdown('SIGINT', 0)
   })
-  process.on('SIGTERM', () => {
+  onBunSignal('SIGTERM', () => {
     void shutdown('SIGTERM', 0)
   })
 
@@ -244,17 +249,17 @@ export async function bootstrap(options: BootstrapOptions = {}) {
   log.info(`LOG_LEVEL: ${env.LOG_LEVEL}`)
   log.info(`TG_LOG_LEVEL: ${env.TG_LOG_LEVEL}`)
 
-  const proxyUrl = process.env.PROXY_URL || process.env.PROXY
+  const proxyUrl = bunEnv.PROXY_URL || bunEnv.PROXY
   if (proxyUrl) {
     log.info(`PROXY: ${maskProxyUrl(proxyUrl)}`)
   }
   else if (env.PROXY_IP && env.PROXY_PORT) {
-    const proxyType = (process.env.PROXY_TYPE || 'socks5').toLowerCase()
+    const proxyType = (bunEnv.PROXY_TYPE || 'socks5').toLowerCase()
     log.info(`PROXY: ${proxyType}://${env.PROXY_IP}:${env.PROXY_PORT}`)
   }
 
-  if (process.env.ADMIN_TOKEN) {
-    if (process.env.SHOW_FULL_TOKEN === 'true' || process.env.NODE_ENV === 'development') {
+  if (bunEnv.ADMIN_TOKEN) {
+    if (bunEnv.SHOW_FULL_TOKEN === 'true' || bunEnv.NODE_ENV === 'development') {
       log.info(`ADMIN_TOKEN (FULL): ${env.ADMIN_TOKEN}`)
       log.info(`Login URL: ${env.WEB_ENDPOINT || 'http://localhost:8080'}/login`)
     }
@@ -268,7 +273,7 @@ export async function bootstrap(options: BootstrapOptions = {}) {
   }
   else {
     const randomToken = random.hex(32)
-    process.env.ADMIN_TOKEN = randomToken
+    bunEnv.ADMIN_TOKEN = randomToken
     ;(env as any).ADMIN_TOKEN = randomToken
 
     log.info('━'.repeat(80))
@@ -313,5 +318,5 @@ export async function handleFatalStartupError(error: unknown) {
     await telemetry.shutdown(3_000)
   }
   catch {}
-  process.exit(1)
+  throw error instanceof Error ? error : new Error(getTelemetryErrorMessage(error))
 }

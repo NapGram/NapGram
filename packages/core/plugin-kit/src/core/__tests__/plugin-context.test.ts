@@ -1,20 +1,20 @@
 import type { EventBus } from '../event-bus.js'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { PluginContextImpl } from '../plugin-context.js'
 
 const mockLogger = {
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
 }
 
-vi.mock('../../api/logger', () => ({
-  createPluginLogger: vi.fn(() => mockLogger),
+mock.module('../../api/logger', () => ({
+  createPluginLogger: mock(() => mockLogger),
 }))
 
-vi.mock('../../api/storage', () => ({
-  createPluginStorage: vi.fn(() => ({})),
+mock.module('../../api/storage', () => ({
+  createPluginStorage: mock(() => ({})),
 }))
 
 describe('pluginContextImpl', () => {
@@ -22,11 +22,11 @@ describe('pluginContextImpl', () => {
   let context: PluginContextImpl
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     eventBus = {
-      subscribe: vi.fn(),
-      publish: vi.fn(),
-      removePluginSubscriptions: vi.fn(),
+      subscribe: mock(),
+      publish: mock(),
+      removePluginSubscriptions: mock(),
     } as any
     context = new PluginContextImpl('test-plugin', { foo: 'bar' }, eventBus)
   })
@@ -39,7 +39,7 @@ describe('pluginContextImpl', () => {
   })
 
   it('event subscription', () => {
-    const handler = vi.fn()
+    const handler = mock()
     context.on('message', handler)
     expect(eventBus.subscribe).toHaveBeenCalledWith('message', handler, undefined, 'test-plugin')
   })
@@ -65,8 +65,8 @@ describe('pluginContextImpl', () => {
   })
 
   it('lifecycle hooks registration', () => {
-    const onReload = vi.fn()
-    const onUnload = vi.fn()
+    const onReload = mock()
+    const onUnload = mock()
     context.onReload(onReload)
     context.onUnload(onUnload)
     expect((context as any).reloadCallbacks).toContain(onReload)
@@ -74,8 +74,8 @@ describe('pluginContextImpl', () => {
   })
 
   it('lifecycle hooks triggering', async () => {
-    const onReload = vi.fn()
-    const onUnload = vi.fn()
+    const onReload = mock()
+    const onUnload = mock()
     context.onReload(onReload)
     context.onUnload(onUnload)
 
@@ -107,12 +107,12 @@ describe('pluginContextImpl', () => {
   })
 
   it('should inject all provided APIs', () => {
-    const messageAPI = { send: vi.fn(), recall: vi.fn(), get: vi.fn() } as any
-    const instanceAPI = { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() } as any
-    const userAPI = { getInfo: vi.fn(), isFriend: vi.fn() } as any
-    const groupAPI = { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() } as any
-    const webAPI = { registerRoutes: vi.fn() } as any
-    const nativeAPI = { getInstance: vi.fn(), getInstances: vi.fn() } as any
+    const messageAPI = { send: mock(), recall: mock(), get: mock() } as any
+    const instanceAPI = { list: mock(), get: mock(), getStatus: mock() } as any
+    const userAPI = { getInfo: mock(), isFriend: mock() } as any
+    const groupAPI = { getInfo: mock(), getMembers: mock(), setAdmin: mock(), muteUser: mock(), kickUser: mock() } as any
+    const webAPI = { registerRoutes: mock() } as any
+    const nativeAPI = { getInstance: mock(), getInstances: mock() } as any
 
     const ctx = new PluginContextImpl('test-plugin-with-apis', {}, eventBus, {
       message: messageAPI,
@@ -133,19 +133,19 @@ describe('pluginContextImpl', () => {
   })
 
   it('should wrap web API to auto-inject pluginId', () => {
-    const webAPI = { registerRoutes: vi.fn() } as any
+    const webAPI = { registerRoutes: mock() } as any
 
     const ctx = new PluginContextImpl('test-web-plugin', {}, eventBus, {
       web: webAPI,
       database: null,
-      message: { send: vi.fn(), recall: vi.fn(), get: vi.fn() },
-      instance: { list: vi.fn(), get: vi.fn(), getStatus: vi.fn() },
-      user: { getInfo: vi.fn(), isFriend: vi.fn() },
-      group: { getInfo: vi.fn(), getMembers: vi.fn(), setAdmin: vi.fn(), muteUser: vi.fn(), kickUser: vi.fn() },
-      native: { getInstance: vi.fn(), getInstances: vi.fn() },
+      message: { send: mock(), recall: mock(), get: mock() },
+      instance: { list: mock(), get: mock(), getStatus: mock() },
+      user: { getInfo: mock(), isFriend: mock() },
+      group: { getInfo: mock(), getMembers: mock(), setAdmin: mock(), muteUser: mock(), kickUser: mock() },
+      native: { getInstance: mock(), getInstances: mock() },
     })
 
-    const mockRegister = vi.fn()
+    const mockRegister = mock()
     ctx.web.registerRoutes(mockRegister)
 
     expect(webAPI.registerRoutes).toHaveBeenCalledWith(mockRegister, 'test-web-plugin')
@@ -178,7 +178,7 @@ describe('pluginContextImpl', () => {
     expect(context.native.getInstances()).toEqual([])
 
     // WebAPI
-    context.web.registerRoutes(vi.fn())
+    context.web.registerRoutes(mock())
     expect(mockLogger.warn).toHaveBeenCalledWith('WebAPI not yet integrated (Phase 3)')
   })
 })

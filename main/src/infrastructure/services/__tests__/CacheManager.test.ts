@@ -1,17 +1,17 @@
 import * as performanceMonitorModule from '@napgram/infra-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, jest, mock, spyOn } from 'bun:test'
 import { CacheManager } from '../CacheManager'
 
 describe('cacheManager', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.useFakeTimers()
-    vi.spyOn(performanceMonitorModule.performanceMonitor, 'recordCacheHit')
-    vi.spyOn(performanceMonitorModule.performanceMonitor, 'recordCacheMiss')
+    mock.clearAllMocks()
+    jest.useFakeTimers()
+    spyOn(performanceMonitorModule.performanceMonitor, 'recordCacheHit')
+    spyOn(performanceMonitorModule.performanceMonitor, 'recordCacheMiss')
   })
 
   afterEach(() => {
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   describe('constructor', () => {
@@ -35,7 +35,7 @@ describe('cacheManager', () => {
     })
 
     it('should start cleanup timer', () => {
-      const setIntervalSpy = vi.spyOn(globalThis, 'setInterval')
+      const setIntervalSpy = spyOn(globalThis, 'setInterval')
       const cache = new CacheManager({ cleanupInterval: 10000 })
 
       expect(setIntervalSpy).toHaveBeenCalled()
@@ -59,7 +59,7 @@ describe('cacheManager', () => {
       cache.set('key1', 'value1', 500)
 
       // Advance time past custom TTL but before default TTL
-      vi.advanceTimersByTime(600)
+      jest.advanceTimersByTime(600)
 
       expect(cache.get('key1')).toBeNull()
     })
@@ -112,7 +112,7 @@ describe('cacheManager', () => {
       cache.set('key1', 'value1')
 
       // Advance time past TTL
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       const value = cache.get('key1')
 
@@ -137,7 +137,7 @@ describe('cacheManager', () => {
       const cache = new CacheManager<string>({ defaultTTL: 1000 })
 
       cache.set('key1', 'value1')
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       cache.get('key1')
 
@@ -199,7 +199,7 @@ describe('cacheManager', () => {
       const cache = new CacheManager<string>({ defaultTTL: 1000 })
 
       cache.set('key1', 'value1')
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       expect(cache.has('key1')).toBe(false)
     })
@@ -208,7 +208,7 @@ describe('cacheManager', () => {
       const cache = new CacheManager<string>({ defaultTTL: 1000 })
 
       cache.set('key1', 'value1')
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       cache.has('key1')
 
@@ -257,7 +257,7 @@ describe('cacheManager', () => {
       cache.set('key1', 'value1')
       cache.set('key2', 'value2')
 
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       const stats = cache.getStats()
       expect(stats.expiredCount).toBe(2)
@@ -286,10 +286,10 @@ describe('cacheManager', () => {
       cache.set('key2', 'value2')
 
       // Expire key1
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       // Trigger cleanup
-      vi.advanceTimersByTime(5000)
+      jest.advanceTimersByTime(5000)
 
       expect(cache.size()).toBe(0) // Both items should be cleaned up
     })
@@ -302,10 +302,10 @@ describe('cacheManager', () => {
       cache.set('key1', 'value1', 1000)
       cache.set('key2', 'value2', 10000)
 
-      vi.advanceTimersByTime(1100)
+      jest.advanceTimersByTime(1100)
 
       // Trigger cleanup
-      vi.advanceTimersByTime(5000)
+      jest.advanceTimersByTime(5000)
 
       expect(cache.has('key1')).toBe(false)
       expect(cache.has('key2')).toBe(true)
@@ -335,7 +335,7 @@ describe('cacheManager', () => {
 
   describe('destroy', () => {
     it('should clear cache and stop cleanup timer', () => {
-      const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval')
+      const clearIntervalSpy = spyOn(globalThis, 'clearInterval')
       const cache = new CacheManager<string>()
 
       cache.set('key1', 'value1')
@@ -357,7 +357,7 @@ describe('cacheManager', () => {
       cache.destroy()
 
       // Try to trigger cleanup
-      vi.advanceTimersByTime(10000)
+      jest.advanceTimersByTime(10000)
 
       // Size should remain 0 (cleanup not running)
       expect(cache.size()).toBe(0)
@@ -370,10 +370,10 @@ describe('cacheManager', () => {
 
       cache.set('key1', 'value1')
 
-      vi.advanceTimersByTime(4000)
+      jest.advanceTimersByTime(4000)
       expect(cache.get('key1')).toBe('value1')
 
-      vi.advanceTimersByTime(2000)
+      jest.advanceTimersByTime(2000)
       expect(cache.get('key1')).toBeNull()
     })
 
@@ -382,7 +382,7 @@ describe('cacheManager', () => {
 
       cache.set('key1', 'value1', 2000)
 
-      vi.advanceTimersByTime(2100)
+      jest.advanceTimersByTime(2100)
       expect(cache.get('key1')).toBeNull()
     })
   })
@@ -426,7 +426,7 @@ describe('cacheManager', () => {
 
       cache.set('key1', 'value1')
 
-      vi.advanceTimersByTime(600)
+      jest.advanceTimersByTime(600)
 
       // Get while cleanup might be running
       const value = cache.get('key1')

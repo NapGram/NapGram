@@ -1,37 +1,37 @@
-import { Buffer } from 'node:buffer'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { bytesFromUtf8 } from '../../../shared/utils/binary.js'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import TelegramSession from '../TelegramSession'
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   TG_INITIAL_DCID: 9,
   TG_INITIAL_SERVER: '203.0.113.10',
-}))
+}))()
 
-const dbMocks = vi.hoisted(() => ({
+const dbMocks = (() => ({
   query: {
     instance: {
-      findFirst: vi.fn(),
+      findFirst: mock(),
     },
     session: {
-      findFirst: vi.fn(),
+      findFirst: mock(),
     },
   },
-  insert: vi.fn(() => ({
-    values: vi.fn(() => ({
-      returning: vi.fn().mockResolvedValue([]),
-      onConflictDoUpdate: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([]),
+  insert: mock(() => ({
+    values: mock(() => ({
+      returning: mock().mockResolvedValue([]),
+      onConflictDoUpdate: mock(() => ({
+        returning: mock().mockResolvedValue([]),
       })),
     })),
   })),
-  update: vi.fn(() => ({
-    set: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue(undefined),
+  update: mock(() => ({
+    set: mock(() => ({
+      where: mock().mockResolvedValue(undefined),
     })),
   })),
-}))
+}))()
 
-const schemaMocks = vi.hoisted(() => ({
+const schemaMocks = (() => ({
   instance: {
     id: 'id',
     owner: 'owner',
@@ -47,38 +47,45 @@ const schemaMocks = vi.hoisted(() => ({
     serverAddress: 'serverAddress',
     authKey: 'authKey',
   },
-}))
+}))()
 
-const eqMock = vi.hoisted(() => vi.fn((left, right) => ({ left, right })))
+const eqMock = (() => mock((left, right) => ({ left, right })))()
 
-const loggerMocks = vi.hoisted(() => ({
-  trace: vi.fn(),
-  debug: vi.fn(),
-  warn: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  trace: mock(),
+  debug: mock(),
+  warn: mock(),
+}))()
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: envMock,
 }))
 
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: dbMocks,
   schema: schemaMocks,
   eq: eqMock,
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
 describe('telegramSession', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    dbMocks.query.instance.findFirst.mockClear()
+    dbMocks.query.session.findFirst.mockClear()
+    dbMocks.insert.mockClear()
+    dbMocks.update.mockClear()
+    eqMock.mockClear()
+    loggerMocks.trace.mockClear()
+    loggerMocks.debug.mockClear()
+    loggerMocks.warn.mockClear()
   })
 
   it('creates a new session entry when dbId is missing', async () => {
-    const returningMock = vi.fn().mockResolvedValue([{ id: 42 }])
-    const valuesMock = vi.fn().mockReturnValue({ returning: returningMock })
+    const returningMock = mock().mockResolvedValue([{ id: 42 }])
+    const valuesMock = mock().mockReturnValue({ returning: returningMock })
     dbMocks.insert.mockReturnValue({ values: valuesMock })
     const session = new TelegramSession()
 
@@ -96,7 +103,7 @@ describe('telegramSession', () => {
 
   it('loads session string when authKey looks valid', async () => {
     dbMocks.query.session.findFirst.mockResolvedValue({
-      authKey: Buffer.from('abc123', 'utf-8'),
+      authKey: bytesFromUtf8('abc123'),
     })
     const session = new TelegramSession(7)
 
@@ -111,7 +118,7 @@ describe('telegramSession', () => {
 
   it('ignores authKey that does not look like a session string', async () => {
     dbMocks.query.session.findFirst.mockResolvedValue({
-      authKey: Buffer.from([0, 1, 2]),
+      authKey: new Uint8Array([0, 1, 2]),
     })
     const session = new TelegramSession(8)
 
@@ -122,8 +129,8 @@ describe('telegramSession', () => {
   })
 
   it('upserts session string when dbId is set', async () => {
-    const onConflictMock = vi.fn()
-    const valuesMock = vi.fn().mockReturnValue({
+    const onConflictMock = mock()
+    const valuesMock = mock().mockReturnValue({
       onConflictDoUpdate: onConflictMock,
     })
     dbMocks.insert.mockReturnValue({ values: valuesMock })
@@ -131,7 +138,7 @@ describe('telegramSession', () => {
 
     await session.save('session-value')
 
-    const expectedAuthKey = Buffer.from('session-value', 'utf-8')
+    const expectedAuthKey = bytesFromUtf8('session-value')
     expect(dbMocks.insert).toHaveBeenCalledWith(schemaMocks.session)
     expect(valuesMock).toHaveBeenCalledWith({
       id: 9,
@@ -155,8 +162,8 @@ describe('telegramSession', () => {
     // @ts-expect-error: mock env value
     envMock.TG_INITIAL_SERVER = undefined
 
-    const returningMock = vi.fn().mockResolvedValue([{ id: 50 }])
-    const valuesMock = vi.fn().mockReturnValue({ returning: returningMock })
+    const returningMock = mock().mockResolvedValue([{ id: 50 }])
+    const valuesMock = mock().mockReturnValue({ returning: returningMock })
     dbMocks.insert.mockReturnValue({ values: valuesMock })
     const session = new TelegramSession()
     await session.load()
@@ -196,8 +203,8 @@ describe('telegramSession', () => {
     // @ts-expect-error: mock env value
     envMock.TG_INITIAL_SERVER = undefined
 
-    const valuesMock = vi.fn().mockReturnValue({
-      onConflictDoUpdate: vi.fn(),
+    const valuesMock = mock().mockReturnValue({
+      onConflictDoUpdate: mock(),
     })
     dbMocks.insert.mockReturnValue({ values: valuesMock })
     const session = new TelegramSession(11)

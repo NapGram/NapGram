@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
 import type { default as TelegramClient } from '@napgram/telegram-client'
-import fs from 'node:fs'
+const bunRuntime = (globalThis as typeof globalThis & { Bun: { file(path: string): { stream(): ReadableStream<Uint8Array> } } }).Bun
 import { convert, getLogger } from './web-deps.js'
 import {
   ErrorResponses,
@@ -41,7 +41,7 @@ export default async function (fastify: FastifyInstance) {
     }
 
     reply.header('content-type', 'image/jpeg')
-    return fs.createReadStream(avatar)
+    return bunRuntime.file(avatar).stream()
   }
 
   registerDualRoute(

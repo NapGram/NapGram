@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import random from '../random.js'
 
 describe('random utility', () => {
@@ -30,6 +30,14 @@ describe('random utility', () => {
     const uuid = random.fakeUuid()
     // 8-4-4-4-12 hex chars
     expect(uuid).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+  })
+
+  it('should use Bun native UUIDv7 when available', () => {
+    const runtime = (globalThis as typeof globalThis & { Bun?: { randomUUIDv7?: () => string } }).Bun
+    if (typeof runtime?.randomUUIDv7 !== 'function')
+      return
+
+    expect(random.fakeUuid()[14]).toBe('7')
   })
 
   it('should generate imei', () => {

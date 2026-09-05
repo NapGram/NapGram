@@ -1,9 +1,9 @@
 import type { TelegramClient } from '@mtcute/bun'
 import type { Chat } from '@mtcute/core'
 import type Telegram from '@napgram/telegram-client'
-import { Buffer } from 'node:buffer'
+import { bytesFromUtf8 } from '../../../../shared/utils/binary.js'
 import { TelegramChat } from '@napgram/telegram-client'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import { createMockChat } from './mtcuteTestHelpers'
 
 describe('telegramChat', () => {
@@ -15,15 +15,15 @@ describe('telegramChat', () => {
   beforeEach(() => {
     // Create mock TelegramClient
     mockClient = {
-      sendText: vi.fn(),
-      setChatPhoto: vi.fn(),
-      setChatDescription: vi.fn(),
-      setChatTitle: vi.fn(),
-      createInviteLink: vi.fn(),
-      getChatMember: vi.fn(),
-      addChatMembers: vi.fn(),
-      editAdminRights: vi.fn(),
-      setTyping: vi.fn(),
+      sendText: mock(),
+      setChatPhoto: mock(),
+      setChatDescription: mock(),
+      setChatTitle: mock(),
+      createInviteLink: mock(),
+      getChatMember: mock(),
+      addChatMembers: mock(),
+      editAdminRights: mock(),
+      setTyping: mock(),
     } as any
 
     // Create mock parent
@@ -45,7 +45,7 @@ describe('telegramChat', () => {
   describe('sendMessage', () => {
     it('should send text message', async () => {
       const mockResult = { id: 1, chatId: 123456789 }
-      vi.mocked(mockClient.sendText).mockResolvedValue(mockResult as any)
+      mockClient.sendText.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.sendMessage('Hello, World!')
 
@@ -56,7 +56,7 @@ describe('telegramChat', () => {
     it('should send message with params', async () => {
       const mockResult = { id: 2, chatId: 123456789 }
       const params = { replyToMessageId: 100 } as any
-      vi.mocked(mockClient.sendText).mockResolvedValue(mockResult as any)
+      mockClient.sendText.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.sendMessage('Reply message', params)
 
@@ -66,10 +66,10 @@ describe('telegramChat', () => {
   })
 
   describe('setProfilePhoto', () => {
-    it('should set profile photo with Buffer', async () => {
-      const mockBuffer = Buffer.from('photo data')
+    it('should set profile photo with bytes', async () => {
+      const mockBuffer = bytesFromUtf8('photo data')
       const mockResult = { success: true }
-      vi.mocked(mockClient.setChatPhoto).mockResolvedValue(mockResult as any)
+      mockClient.setChatPhoto.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.setProfilePhoto(mockBuffer)
 
@@ -84,7 +84,7 @@ describe('telegramChat', () => {
     it('should set profile photo with string path', async () => {
       const photoPath = '/path/to/photo.jpg'
       const mockResult = { success: true }
-      vi.mocked(mockClient.setChatPhoto).mockResolvedValue(mockResult as any)
+      mockClient.setChatPhoto.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.setProfilePhoto(photoPath)
 
@@ -100,7 +100,7 @@ describe('telegramChat', () => {
   describe('setAdmin', () => {
     it('should set default admin rights', async () => {
       const mockResult = { success: true }
-      vi.mocked(mockClient.editAdminRights).mockResolvedValue(mockResult as any)
+      mockClient.editAdminRights.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.setAdmin(987654321)
 
@@ -137,7 +137,7 @@ describe('telegramChat', () => {
         manageTopics: false,
       }
       const mockResult = { success: true }
-      vi.mocked(mockClient.editAdminRights).mockResolvedValue(mockResult as any)
+      mockClient.editAdminRights.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.setAdmin(987654321, customRights, 'helper')
 
@@ -153,7 +153,7 @@ describe('telegramChat', () => {
   describe('editAbout', () => {
     it('should edit chat description', async () => {
       const mockResult = { success: true }
-      vi.mocked(mockClient.setChatDescription).mockResolvedValue(mockResult as any)
+      mockClient.setChatDescription.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.editAbout('New description')
 
@@ -165,7 +165,7 @@ describe('telegramChat', () => {
   describe('editTitle', () => {
     it('should edit chat title', async () => {
       const mockResult = { success: true }
-      vi.mocked(mockClient.setChatTitle).mockResolvedValue(mockResult as any)
+      mockClient.setChatTitle.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.editTitle('New Title')
 
@@ -177,7 +177,7 @@ describe('telegramChat', () => {
   describe('getInviteLink', () => {
     it('should get invite link', async () => {
       const mockLink = 'https://t.me/joinchat/abc123'
-      vi.mocked(mockClient.createInviteLink).mockResolvedValue(mockLink as any)
+      mockClient.createInviteLink.mockResolvedValue(mockLink as any)
 
       const result = await telegramChat.getInviteLink()
 
@@ -189,7 +189,7 @@ describe('telegramChat', () => {
   describe('getMember', () => {
     it('should get chat member info', async () => {
       const mockMember = { userId: 987654321, status: 'member' }
-      vi.mocked(mockClient.getChatMember).mockResolvedValue(mockMember as any)
+      mockClient.getChatMember.mockResolvedValue(mockMember as any)
 
       const result = await telegramChat.getMember(987654321)
 
@@ -204,9 +204,9 @@ describe('telegramChat', () => {
   describe('deleteMessages', () => {
     it('should delete messages by IDs', async () => {
       const mockResult = { success: true }
-      // vi.mock cannot intercept dynamic imports inside compiled npm packages.
+      // mock cannot intercept dynamic imports inside compiled npm packages.
       // Spy on the prototype method directly instead.
-      const spy = vi.spyOn(telegramChat, 'deleteMessages').mockResolvedValue(mockResult as any)
+      const spy = spyOn(telegramChat, 'deleteMessages').mockResolvedValue(mockResult as any)
 
       const messageIds = [1, 2, 3]
       const result = await telegramChat.deleteMessages(messageIds)
@@ -219,7 +219,7 @@ describe('telegramChat', () => {
   describe('inviteMember', () => {
     it('should invite members to chat', async () => {
       const mockResult = { success: true }
-      vi.mocked(mockClient.addChatMembers).mockResolvedValue(mockResult as any)
+      mockClient.addChatMembers.mockResolvedValue(mockResult as any)
 
       const users = [111111, 222222, 333333]
       const result = await telegramChat.inviteMember(users)
@@ -232,7 +232,7 @@ describe('telegramChat', () => {
   describe('setTyping', () => {
     it('should set typing status with default action', async () => {
       const mockResult = { success: true }
-      vi.mocked(mockClient.setTyping).mockResolvedValue(mockResult as any)
+      mockClient.setTyping.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.setTyping()
 
@@ -245,7 +245,7 @@ describe('telegramChat', () => {
 
     it('should set typing status with custom action', async () => {
       const mockResult = { success: true }
-      vi.mocked(mockClient.setTyping).mockResolvedValue(mockResult as any)
+      mockClient.setTyping.mockResolvedValue(mockResult as any)
 
       const result = await telegramChat.setTyping('upload_photo')
 

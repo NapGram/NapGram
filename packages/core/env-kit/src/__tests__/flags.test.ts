@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
 
 describe('flags', () => {
   it('should export all flag values as powers of 2', async () => {
@@ -27,7 +27,7 @@ describe('flags', () => {
     ]
 
     for (const [name, value] of expectedFlags) {
-      expect(flags[name as keyof typeof flags]).toBe(value)
+      expect(flags[name as keyof typeof flags]).toBe(value as any)
     }
   })
 

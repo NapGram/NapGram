@@ -19,6 +19,9 @@
         },
         {
             "path": "../../core/logger-kit"
+        },
+        {
+            "path": "../../core/runtime-kit"
         }
     ]
 }

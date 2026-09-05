@@ -1,20 +1,20 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, beforeEach, afterEach, mock, jest } from 'bun:test'
 
 // Mock runtime
-vi.mock('../runtime.js', () => {
+mock.module('../runtime.js', () => {
   const chain: any = {}
-  chain.select = vi.fn().mockReturnValue(chain)
-  chain.from = vi.fn().mockReturnValue(chain)
-  chain.where = vi.fn().mockReturnValue(chain)
-  chain.orderBy = vi.fn().mockReturnValue(chain)
-  chain.limit = vi.fn().mockReturnValue(chain)
-  chain.groupBy = vi.fn().mockReturnValue(chain)
-  chain.insert = vi.fn().mockReturnValue(chain)
-  chain.values = vi.fn().mockReturnValue(chain)
-  chain.update = vi.fn().mockReturnValue(chain)
-  chain.set = vi.fn().mockReturnValue(chain)
-  chain.delete = vi.fn().mockReturnValue(chain)
-  chain.returning = vi.fn().mockResolvedValue([])
+  chain.select = mock().mockReturnValue(chain)
+  chain.from = mock().mockReturnValue(chain)
+  chain.where = mock().mockReturnValue(chain)
+  chain.orderBy = mock().mockReturnValue(chain)
+  chain.limit = mock().mockReturnValue(chain)
+  chain.groupBy = mock().mockReturnValue(chain)
+  chain.insert = mock().mockReturnValue(chain)
+  chain.values = mock().mockReturnValue(chain)
+  chain.update = mock().mockReturnValue(chain)
+  chain.set = mock().mockReturnValue(chain)
+  chain.delete = mock().mockReturnValue(chain)
+  chain.returning = mock().mockResolvedValue([])
 
   return {
     db: chain,
@@ -23,13 +23,13 @@ vi.mock('../runtime.js', () => {
       automationRule: { instanceId: 'iid', enabled: 'e', target: 't', priority: 'p', id: 'id', matchCount: 'mc' },
       requestStatistics: { instanceId: 'iid' },
     },
-    eq: vi.fn(() => ({})),
-    and: vi.fn(() => ({})),
-    or: vi.fn(() => ({})),
-    lt: vi.fn(() => ({})),
-    desc: vi.fn(() => ({})),
-    sql: vi.fn(() => ({})),
-    getLogger: vi.fn().mockReturnValue({ trace: vi.fn(), debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+    eq: mock(() => ({})),
+    and: mock(() => ({})),
+    or: mock(() => ({})),
+    lt: mock(() => ({})),
+    desc: mock(() => ({})),
+    sql: mock(() => ({})),
+    getLogger: mock().mockReturnValue({ trace: mock(), debug: mock(), info: mock(), warn: mock(), error: mock() }),
   }
 })
 
@@ -38,14 +38,14 @@ describe('RequestAutomationService', () => {
   let mockGateway: any
 
   beforeEach(async () => {
-    vi.clearAllMocks()
-    vi.useFakeTimers()
+    mock.clearAllMocks()
+    jest.useFakeTimers()
 
     mockGateway = {
-      approveFriendRequest: vi.fn().mockResolvedValue(undefined),
-      rejectFriendRequest: vi.fn().mockResolvedValue(undefined),
-      approveGroupRequest: vi.fn().mockResolvedValue(undefined),
-      rejectGroupRequest: vi.fn().mockResolvedValue(undefined),
+      approveFriendRequest: mock().mockResolvedValue(undefined),
+      rejectFriendRequest: mock().mockResolvedValue(undefined),
+      approveGroupRequest: mock().mockResolvedValue(undefined),
+      rejectGroupRequest: mock().mockResolvedValue(undefined),
     }
 
     const { RequestAutomationService } = await import('../RequestAutomationService.js')
@@ -54,7 +54,7 @@ describe('RequestAutomationService', () => {
 
   afterEach(() => {
     service?.destroy()
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   it('should create service instance', () => {

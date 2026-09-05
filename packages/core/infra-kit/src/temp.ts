@@ -1,32 +1,35 @@
-import { randomBytes } from 'node:crypto'
-import fs from 'node:fs'
-import { rm } from 'node:fs/promises'
-import { join } from 'node:path'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import env from './env.js'
 
-export const TEMP_PATH = join(env.DATA_DIR, 'temp')
+function joinPath(...parts: string[]): string {
+    return parts.reduce((joined, part) => {
+        if (!joined) return part
+        return `${joined.replace(/[\\/]+$/, '')}/${part.replace(/^[/\\]+/, '')}`
+    }, '')
+}
+
+export const TEMP_PATH = joinPath(env.DATA_DIR, 'temp')
 
 // Initialize lazily to avoid permission issues when only importing.
 let tempDirInitialized = false
-function ensureTempDir() {
-    if (!tempDirInitialized) {
-        if (!fs.existsSync(TEMP_PATH)) {
-            fs.mkdirSync(TEMP_PATH, { recursive: true })
-        }
-        tempDirInitialized = true
+async function ensureTempDir() {
+    if (tempDirInitialized && await runtimeFileIO.exists(TEMP_PATH)) return
+    if (!await runtimeFileIO.exists(TEMP_PATH)) {
+        await runtimeFileIO.mkdir(TEMP_PATH, { recursive: true })
     }
+    tempDirInitialized = true
 }
 
 export async function createTempFile(options?: { postfix?: string, prefix?: string }) {
-    ensureTempDir()
-    const filename = `temp-${randomBytes(6).toString('hex')}${options?.postfix || '.tmp'}`
-    const filePath = join(TEMP_PATH, filename)
+    await ensureTempDir()
+    const filename = `temp-${crypto.randomUUID().replaceAll('-', '').slice(0, 12)}${options?.postfix || '.tmp'}`
+    const filePath = joinPath(TEMP_PATH, filename)
 
     return {
         path: filePath,
         cleanup: async () => {
             try {
-                await rm(filePath, { force: true })
+                await runtimeFileIO.remove(filePath, { force: true })
             }
             catch { }
         },

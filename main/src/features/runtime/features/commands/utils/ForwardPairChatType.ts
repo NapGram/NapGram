@@ -1,6 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap, ForwardPairRecord } from '../../../runtime-types.js'
-import { randomUUID } from 'node:crypto'
 import { db, sql } from '../../../capabilities/db.js'
 import { getLogger } from '../../../capabilities/logging.js'
 
@@ -298,7 +297,7 @@ export async function addForwardPairWithChatType(
           ${metadata.autoCreated ?? false},
           ${metadata.forwardMode ?? null},
           ${metadata.nicknameMode ?? null},
-          ${randomUUID()}
+          ${crypto.randomUUID()}
         )
       `)
     }

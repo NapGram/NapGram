@@ -4,10 +4,19 @@
  * Utility functions for NapGram native plugins
  */
 
-import type { MessageSegment, ForwardMessage } from '@napgram/sdk-core';
-import { Buffer } from 'node:buffer';
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import type { MessageSegment, ForwardMessage } from '@napgram/sdk-core'
+import { runtimeFileIO } from '@napgram/runtime-kit'
+
+const bunRuntime = (globalThis as typeof globalThis & {
+    Bun: { env: Record<string, string | undefined> }
+}).Bun
+
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
+const extname = (input: string) => {
+    const base = input.slice(input.lastIndexOf('/') + 1)
+    const index = base.lastIndexOf('.')
+    return index > 0 ? base.slice(index) : ''
+}
 
 /**
  * 提取消息片段中的纯文本
@@ -126,8 +135,8 @@ const MEDIA_EXT_BY_TYPE: Record<string, string> = {
 };
 
 function resolveTempDir(tempDir?: string): string {
-    const baseDir = tempDir || process.env.DATA_DIR || '/app/data';
-    return path.join(baseDir, 'temp');
+    const baseDir = tempDir || bunRuntime.env.DATA_DIR || '/app/data';
+    return joinPath(baseDir, 'temp');
 }
 
 function normalizeExt(value?: string): string {
@@ -162,7 +171,7 @@ function inferExtFromContentType(contentType?: string): string {
 function inferExtFromUrl(url: string): string {
     try {
         const parsed = new URL(url);
-        return normalizeExt(path.extname(parsed.pathname));
+        return normalizeExt(extname(parsed.pathname));
     } catch {
         return '';
     }
@@ -177,7 +186,7 @@ function buildTempName(prefix: string, ext: string): string {
     return `${prefix}-${Date.now()}-${suffix}${ext}`;
 }
 
-async function downloadToBuffer(url: string, options: ForwardMediaPrepareOptions): Promise<{ buffer: Buffer; contentType?: string }> {
+async function downloadToBuffer(url: string, options: ForwardMediaPrepareOptions): Promise<{ buffer: Uint8Array; contentType?: string }> {
     const fetchFn = options.fetchFn || fetch;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -187,18 +196,18 @@ async function downloadToBuffer(url: string, options: ForwardMediaPrepareOptions
             throw new Error(`Download failed: ${response.status} ${response.statusText}`);
         }
         const arrayBuffer = await response.arrayBuffer();
-        return { buffer: Buffer.from(arrayBuffer), contentType: response.headers.get('content-type') || undefined };
+        return { buffer: new Uint8Array(arrayBuffer), contentType: response.headers.get('content-type') || undefined };
     } finally {
         clearTimeout(timeout);
     }
 }
 
-async function writeBufferToTemp(buffer: Buffer, options: ForwardMediaPrepareOptions, ext: string, prefix: string): Promise<string> {
+async function writeBufferToTemp(buffer: Uint8Array, options: ForwardMediaPrepareOptions, ext: string, prefix: string): Promise<string> {
     const tempDir = resolveTempDir(options.tempDir);
-    await fs.mkdir(tempDir, { recursive: true });
+    await runtimeFileIO.mkdir(tempDir, { recursive: true });
     const name = buildTempName(prefix, ext);
-    const filePath = path.join(tempDir, name);
-    await fs.writeFile(filePath, buffer);
+    const filePath = joinPath(tempDir, name);
+    await runtimeFileIO.write(filePath, buffer);
     return filePath;
 }
 
@@ -206,12 +215,12 @@ async function materializeMediaFile(
     type: string,
     data: Record<string, any>,
     options: ForwardMediaPrepareOptions,
-): Promise<string | Buffer | undefined> {
+): Promise<string | Uint8Array | undefined> {
     const existingFile = data.file;
     if (typeof existingFile === 'string' && existingFile.startsWith('/')) {
         return existingFile;
     }
-    if (Buffer.isBuffer(existingFile)) {
+    if (existingFile instanceof Uint8Array) {
         return existingFile;
     }
 

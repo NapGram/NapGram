@@ -1,26 +1,26 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 
-const dbMocks = vi.hoisted(() => ({
+const dbMocks = (() => ({
   query: {
     message: {
-      findFirst: vi.fn(),
+      findFirst: mock(),
     },
   },
-  update: vi.fn(() => ({
-    set: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue(undefined),
+  update: mock(() => ({
+    set: mock(() => ({
+      where: mock().mockResolvedValue(undefined),
     })),
   })),
-}))
+}))()
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   ENABLE_AUTO_RECALL: true,
   DATA_DIR: '/tmp/napgram',
   CACHE_DIR: '/tmp/napgram/cache',
   LOG_FILE: '/tmp/napgram-plugin-recall.log',
-}))
+}))()
 
-const schemaMock = vi.hoisted(() => ({
+const schemaMock = (() => ({
   message: {
     instanceId: 'instanceId',
     qqRoomId: 'qqRoomId',
@@ -31,17 +31,17 @@ const schemaMock = vi.hoisted(() => ({
     tgMsgId: 'tgMsgId',
     ignoreDelete: 'ignoreDelete',
   },
-}))
+}))()
 
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: dbMocks,
   env: envMock,
-  eq: vi.fn((left: unknown, right: unknown) => ({ left, right })),
-  and: vi.fn((...clauses: unknown[]) => clauses),
+  eq: mock((left: unknown, right: unknown) => ({ left, right })),
+  and: mock((...clauses: unknown[]) => clauses),
   schema: schemaMock,
 }))
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: envMock,
 }))
 
@@ -51,44 +51,44 @@ describe('plugin-recall', () => {
   let recallHandler: ((event: any) => Promise<void>) | undefined
   let deleteHandler: ((update: any) => Promise<void>) | undefined
   let unloadCallback: (() => Promise<void> | void) | undefined
-  let fakeChat: { deleteMessages: ReturnType<typeof vi.fn> }
+  let fakeChat: { deleteMessages: ReturnType<typeof mock> }
   let fakeQqClient: {
-    on: ReturnType<typeof vi.fn>
-    off: ReturnType<typeof vi.fn>
-    recallMessage: ReturnType<typeof vi.fn>
+    on: ReturnType<typeof mock>
+    off: ReturnType<typeof mock>
+    recallMessage: ReturnType<typeof mock>
   }
   let fakeTgBot: {
-    getChat: ReturnType<typeof vi.fn>
-    addDeletedMessageEventHandler: ReturnType<typeof vi.fn>
-    removeDeletedMessageEventHandler: ReturnType<typeof vi.fn>
+    getChat: ReturnType<typeof mock>
+    addDeletedMessageEventHandler: ReturnType<typeof mock>
+    removeDeletedMessageEventHandler: ReturnType<typeof mock>
   }
   let fakeInstance: any
   let ctx: any
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     recallHandler = undefined
     deleteHandler = undefined
     unloadCallback = undefined
 
     fakeChat = {
-      deleteMessages: vi.fn().mockResolvedValue(undefined),
+      deleteMessages: mock().mockResolvedValue(undefined),
     }
     fakeQqClient = {
-      on: vi.fn((event: string, handler: any) => {
+      on: mock((event: string, handler: any) => {
         if (event === 'recall') {
           recallHandler = handler
         }
       }),
-      off: vi.fn(),
-      recallMessage: vi.fn().mockResolvedValue(undefined),
+      off: mock(),
+      recallMessage: mock().mockResolvedValue(undefined),
     }
     fakeTgBot = {
-      getChat: vi.fn().mockResolvedValue(fakeChat),
-      addDeletedMessageEventHandler: vi.fn((handler: any) => {
+      getChat: mock().mockResolvedValue(fakeChat),
+      addDeletedMessageEventHandler: mock((handler: any) => {
         deleteHandler = handler
       }),
-      removeDeletedMessageEventHandler: vi.fn(),
+      removeDeletedMessageEventHandler: mock(),
     }
     fakeInstance = {
       id: 7,
@@ -100,33 +100,33 @@ describe('plugin-recall', () => {
 
     ctx = {
       logger: {
-        info: vi.fn(),
-        debug: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
+        info: mock(),
+        debug: mock(),
+        warn: mock(),
+        error: mock(),
       },
       native: {
-        getInstance: vi.fn((instanceId: number) => (instanceId === 7 ? fakeInstance : undefined)),
-        getInstances: vi.fn(() => [fakeInstance]),
+        getInstance: mock((instanceId: number) => (instanceId === 7 ? fakeInstance : undefined)),
+        getInstances: mock(() => [fakeInstance]),
       },
-      on: vi.fn((event: string, handler: any) => {
+      on: mock((event: string, handler: any) => {
         if (event === 'instance-status') {
           return {
-            unsubscribe: vi.fn(),
+            unsubscribe: mock(),
           }
         }
         return {
-          unsubscribe: vi.fn(),
+          unsubscribe: mock(),
         }
       }),
-      onUnload: vi.fn((handler: any) => {
+      onUnload: mock((handler: any) => {
         unloadCallback = handler
       }),
     }
   })
 
   afterEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('attaches recall handlers and processes QQ/TG recall events', async () => {

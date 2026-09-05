@@ -1,26 +1,32 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { getLogger } from '@napgram/logger-kit'
-import { EventBus } from '../event-bus.js'
+import { beforeAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    warn: vi.fn(),
-  })),
+const loggerInstance = {
+  debug: mock(),
+  info: mock(),
+  error: mock(),
+  warn: mock(),
+}
+const getLoggerMock = mock(() => loggerInstance)
+
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: getLoggerMock,
 }))
 
+let EventBus: typeof import('../event-bus.js').EventBus
+beforeAll(async () => {
+  ({ EventBus } = await import('../event-bus.js'))
+})
+
 describe('eventBus', () => {
-  let eventBus: EventBus
+  let eventBus: InstanceType<typeof EventBus>
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     eventBus = new EventBus()
   })
 
   it('subscribe and unsubscribe', () => {
-    const handler = vi.fn()
+    const handler = mock()
     const subscription = eventBus.subscribe('message', handler)
 
     expect(eventBus.getSubscriptionCount('message')).toBe(1)
@@ -31,7 +37,7 @@ describe('eventBus', () => {
   })
 
   it('once', async () => {
-    const handler = vi.fn()
+    const handler = mock()
     eventBus.once('message', handler)
 
     expect(eventBus.getSubscriptionCount('message')).toBe(1)
@@ -42,8 +48,8 @@ describe('eventBus', () => {
   })
 
   it('publish calls all handlers', async () => {
-    const handler1 = vi.fn()
-    const handler2 = vi.fn()
+    const handler1 = mock()
+    const handler2 = mock()
     eventBus.subscribe('message', handler1)
     eventBus.subscribe('message', handler2)
 
@@ -56,7 +62,7 @@ describe('eventBus', () => {
   })
 
   it('publish with filter', async () => {
-    const handler = vi.fn()
+    const handler = mock()
     const filter = (event: any) => event.id === '1'
     eventBus.subscribe('message', handler, filter)
 
@@ -68,10 +74,10 @@ describe('eventBus', () => {
   })
 
   it('publish handles error in handler', async () => {
-    const handler1 = vi.fn(() => {
+    const handler1 = mock(() => {
       throw new Error('fail')
     })
-    const handler2 = vi.fn()
+    const handler2 = mock()
     eventBus.subscribe('message', handler1)
     eventBus.subscribe('message', handler2)
 
@@ -82,7 +88,7 @@ describe('eventBus', () => {
   })
 
   it('publishSync', () => {
-    const handler = vi.fn()
+    const handler = mock()
     eventBus.subscribe('message', handler)
 
     eventBus.publishSync('message', { id: '1' } as any)
@@ -91,18 +97,8 @@ describe('eventBus', () => {
   })
 
   it('publishSync logs errors from publish', async () => {
-    vi.resetModules()
-    const loggerInstance = {
-      debug: vi.fn(),
-      info: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-    }
-    vi.mocked(getLogger).mockReturnValue(loggerInstance as any)
-
-    const { EventBus: FreshEventBus } = await import('../event-bus.js')
-    const freshBus = new FreshEventBus()
-    vi.spyOn(freshBus, 'publish').mockRejectedValueOnce(new Error('boom'))
+    const freshBus = new EventBus()
+    spyOn(freshBus, 'publish').mockRejectedValueOnce(new Error('boom'))
 
     freshBus.publishSync('message', { id: '1' } as any)
 
@@ -112,8 +108,8 @@ describe('eventBus', () => {
   })
 
   it('removePluginSubscriptions', () => {
-    const handler1 = vi.fn()
-    const handler2 = vi.fn()
+    const handler1 = mock()
+    const handler2 = mock()
     eventBus.subscribe('message', handler1, undefined, 'plugin1')
     eventBus.subscribe('message', handler2, undefined, 'plugin2')
     eventBus.subscribe('notice', handler1, undefined, 'plugin1')
@@ -128,7 +124,7 @@ describe('eventBus', () => {
   })
 
   it('getStats and resetStats', async () => {
-    eventBus.subscribe('message', vi.fn())
+    eventBus.subscribe('message', mock())
     await eventBus.publish('message', {} as any)
 
     expect(eventBus.getStats().published).toBe(1)
@@ -139,8 +135,8 @@ describe('eventBus', () => {
   })
 
   it('clear', () => {
-    eventBus.subscribe('message', vi.fn())
-    eventBus.subscribe('notice', vi.fn())
+    eventBus.subscribe('message', mock())
+    eventBus.subscribe('notice', mock())
 
     expect(eventBus.getSubscriptionCount()).toBe(2)
     eventBus.clear()
@@ -148,8 +144,8 @@ describe('eventBus', () => {
   })
 
   it('getEventTypes', () => {
-    eventBus.subscribe('message', vi.fn())
-    eventBus.subscribe('notice', vi.fn())
+    eventBus.subscribe('message', mock())
+    eventBus.subscribe('notice', mock())
 
     expect(eventBus.getEventTypes()).toContain('message')
     expect(eventBus.getEventTypes()).toContain('notice')
@@ -157,7 +153,7 @@ describe('eventBus', () => {
 
   it('should clean up empty subscription set after unsubscribe', () => {
     // Test coverage for lines 161-169 (unsubscribe loop and cleanup)
-    const handler = vi.fn()
+    const handler = mock()
     const sub1 = eventBus.subscribe('message', handler)
     const sub2 = eventBus.subscribe('message', handler)
 
@@ -175,7 +171,7 @@ describe('eventBus', () => {
 
   it('should unsubscribe specific subscription when multiple exist', () => {
     // Test coverage for line 161 (loop iteration finding specific ID)
-    const handler = vi.fn()
+    const handler = mock()
     const sub1 = eventBus.subscribe('message', handler)
     const sub2 = eventBus.subscribe('message', handler)
     const sub3 = eventBus.subscribe('message', handler)
@@ -197,7 +193,7 @@ describe('eventBus', () => {
 
   it('should handle error without pluginId context', async () => {
     // Test coverage for line 254 (context without pluginId)
-    const handler = vi.fn(() => {
+    const handler = mock(() => {
       throw new Error('test error')
     })
 
@@ -211,7 +207,7 @@ describe('eventBus', () => {
 
   it('should handle error with pluginId context', async () => {
     // Test coverage for line 254 (context with pluginId)
-    const handler = vi.fn(() => {
+    const handler = mock(() => {
       throw new Error('test error')
     })
 

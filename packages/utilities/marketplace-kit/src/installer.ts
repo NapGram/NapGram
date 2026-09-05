@@ -1,16 +1,9 @@
-import { Buffer } from 'node:buffer'
-import { execFile } from 'node:child_process'
-import crypto from 'node:crypto'
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
-import { pathToFileURL } from 'node:url'
-import { promisify } from 'node:util'
 import { unzipSync } from 'fflate'
+import { spawnFileWithBun, createHashWithRuntime, runtimeFileIO } from '@napgram/runtime-kit'
+import { dirname, bunRuntime, isWithin, joinPath, relative, resolvePath } from './path-utils.js'
 import { env, getGlobalRuntime, getLogger, patchPluginConfig, readPluginsConfig, removePluginConfig, upsertPluginConfig } from './shared-runtime.js'
 import { readMarketplaceCache } from './marketplace.js'
 
-const execFileAsync = promisify(execFile)
 const logger = getLogger('PluginInstaller')
 
 export type DistType = 'zip' | 'tgz'
@@ -100,11 +93,11 @@ export interface PluginInstallResult {
 let installQueue: Promise<void> = Promise.resolve()
 
 function resolveDataDir(): string {
-  return path.resolve(String(env.DATA_DIR || process.env.DATA_DIR || '/app/data'))
+  return resolvePath(String(env.DATA_DIR || bunRuntime.env.DATA_DIR || '/app/data'))
 }
 
 function resolvePluginsRoot(...parts: string[]): string {
-  return path.join(resolveDataDir(), 'plugins', ...parts)
+  return joinPath(resolveDataDir(), 'plugins', ...parts)
 }
 
 function normalizeHexSha256(input: string): string {
@@ -124,9 +117,8 @@ function sanitizeId(input: string): string {
 }
 
 function safeJoin(root: string, rel: string): string {
-  const out = path.resolve(root, rel)
-  const rootReal = path.resolve(root) + path.sep
-  if ((out + path.sep).startsWith(rootReal))
+  const out = resolvePath(root, rel)
+  if (isWithin(root, out))
     return out
   throw new Error(`Unsafe path traversal: ${rel}`)
 }
@@ -181,12 +173,12 @@ function resolveRequestedPermissions(p?: MarketplacePluginVersion['permissions']
 }
 
 async function ensureDir(p: string) {
-  await fs.mkdir(p, { recursive: true })
+  await runtimeFileIO.mkdir(p, { recursive: true })
 }
 
 async function pathExists(p: string): Promise<boolean> {
   try {
-    await fs.access(p)
+    await runtimeFileIO.access(p)
     return true
   }
   catch {
@@ -201,14 +193,14 @@ async function downloadToFile(url: string, filePath: string): Promise<{ sha256: 
     throw new Error(`Download failed: ${res.status} ${res.statusText}`)
   }
 
-  await ensureDir(path.dirname(filePath))
-  const file = await fs.open(filePath, 'w')
-  const hash = crypto.createHash('sha256')
+  await ensureDir(dirname(filePath))
+  const file = await runtimeFileIO.openWrite(filePath)
+  const hash = createHashWithRuntime('sha256')
   let bytes = 0
 
   try {
     for await (const chunk of res.body) {
-      const buf = Buffer.from(chunk as any)
+      const buf = chunk instanceof Uint8Array ? chunk : new Uint8Array(chunk as ArrayBuffer)
       bytes += buf.length
       hash.update(buf)
       await file.write(buf)
@@ -219,12 +211,12 @@ async function downloadToFile(url: string, filePath: string): Promise<{ sha256: 
   }
 
   logger.info({ url, bytes }, 'Plugin archive downloaded')
-  return { sha256: hash.digest('hex'), bytes }
+  return { sha256: hash.digest('hex') as string, bytes }
 }
 
 async function extractZip(zipPath: string, destDir: string): Promise<void> {
   logger.info({ zipPath }, 'Extracting zip archive')
-  const data = await fs.readFile(zipPath)
+  const data = await runtimeFileIO.readBytes(zipPath)
   const files = unzipSync(new Uint8Array(data))
   for (const [name, content] of Object.entries(files)) {
     if (name.endsWith('/'))
@@ -233,14 +225,14 @@ async function extractZip(zipPath: string, destDir: string): Promise<void> {
       throw new Error(`Unsafe zip entry path: ${name}`)
     }
     const outPath = safeJoin(destDir, name)
-    await ensureDir(path.dirname(outPath))
-    await fs.writeFile(outPath, Buffer.from(content))
+    await ensureDir(dirname(outPath))
+    await runtimeFileIO.write(outPath, content)
   }
   logger.info({ zipPath }, 'Zip archive extracted')
 }
 
 async function listTarEntriesVerbose(tgzPath: string): Promise<Array<{ type: string, name: string }>> {
-  const { stdout } = await execFileAsync('tar', ['-tvzf', tgzPath], { maxBuffer: 10 * 1024 * 1024 })
+  const { stdout } = await spawnFileWithBun('tar', ['-tvzf', tgzPath])
   const lines = String(stdout || '').split('\n').map(s => s.trim()).filter(Boolean)
   return lines.map((line) => {
     const type = line[0] || '?'
@@ -261,7 +253,7 @@ async function extractTgz(tgzPath: string, destDir: string): Promise<void> {
       throw new Error(`Unsupported tar entry type "${e.type}" for: ${e.name}`)
     }
   }
-  await execFileAsync('tar', ['-xzf', tgzPath, '-C', destDir, '--no-same-owner', '--no-same-permissions'], { maxBuffer: 10 * 1024 * 1024 })
+  await spawnFileWithBun('tar', ['-xzf', tgzPath, '-C', destDir, '--no-same-owner', '--no-same-permissions'])
   logger.info({ tgzPath }, 'Tgz archive extracted')
 }
 
@@ -284,7 +276,7 @@ async function resolveEntryFile(destDir: string, entryPath: string): Promise<str
   const direct = safeJoin(destDir, entryPath)
   if (await pathExists(direct))
     return direct
-  const npmLayout = safeJoin(destDir, path.join('package', entryPath))
+  const npmLayout = safeJoin(destDir, joinPath('package', entryPath))
   if (await pathExists(npmLayout))
     return npmLayout
   throw new Error(`Entry not found after extract: ${entryPath}`)
@@ -295,87 +287,45 @@ async function resolveEntryFile(destDir: string, entryPath: string): Promise<str
  * This allows plugins to import '@napgram/sdk' without bundling it
  */
 async function linkHostSdk(installDir: string): Promise<void> {
-  try {
-    // Find the actual plugin directory (could be at root or under 'package/')
-    const candidates = [installDir, path.join(installDir, 'package')]
-    let pluginRoot: string | null = null
+  const candidates = [installDir, joinPath(installDir, 'package')]
+  let pluginRoot: string | null = null
 
-    for (const candidate of candidates) {
-      const pkgPath = path.join(candidate, 'package.json')
-      if (await pathExists(pkgPath)) {
-        pluginRoot = candidate
-        break
-      }
-    }
-
-    if (!pluginRoot) {
-      // No package.json found, skip SDK linking
-      return
-    }
-
-    // Create node_modules/@napgram directory in plugin
-    const pluginNodeModules = path.join(pluginRoot, 'node_modules', '@napgram')
-    await ensureDir(pluginNodeModules)
-
-    // Host SDK packages location (in main app)
-    const hostNodeModules = path.resolve('/app/node_modules/@napgram')
-
-    // Check if host SDK exists
-    if (!await pathExists(hostNodeModules)) {
-      // Fallback: try relative to current working directory
-      const fallbackHost = path.resolve(process.cwd(), 'node_modules', '@napgram')
-      if (!await pathExists(fallbackHost)) {
-        // SDK not found, skip linking
-        return
-      }
-    }
-
-    const sdkPackages = await fs.readdir(hostNodeModules).catch(() => [])
-
-    for (const pkg of sdkPackages) {
-      const hostPkg = path.join(hostNodeModules, pkg)
-      const pluginPkg = path.join(pluginNodeModules, pkg)
-
-      // Check if host package exists
-      if (!await pathExists(hostPkg))
-        continue
-
-      // Remove existing link/directory if present
-      try {
-        await fs.rm(pluginPkg, { recursive: true, force: true })
-      }
-      catch {
-        // Ignore errors
-      }
-
-      // Create symlink
-      try {
-        await fs.symlink(hostPkg, pluginPkg, 'dir')
-      }
-      catch {
-        // If symlink fails (permissions, platform), try copying instead
-        try {
-          await fs.cp(hostPkg, pluginPkg, { recursive: true })
-        }
-        catch {
-          // Ignore copy errors
-        }
-      }
+  for (const candidate of candidates) {
+    const pkgPath = joinPath(candidate, 'package.json')
+    if (await pathExists(pkgPath)) {
+      pluginRoot = candidate
+      break
     }
   }
-  catch {
-    // SDK linking is optional, don't fail the installation
-    // Just log and continue
+
+  if (!pluginRoot)
+    throw new Error(`Plugin package.json not found under ${installDir}`)
+
+  const pluginNodeModules = joinPath(pluginRoot, 'node_modules', '@napgram')
+  await ensureDir(pluginNodeModules)
+
+  const hostNodeModules = resolvePath('/app/node_modules/@napgram')
+  if (!await pathExists(hostNodeModules))
+    throw new Error(`Host SDK packages not found: ${hostNodeModules}`)
+
+  const sdkPackages = await runtimeFileIO.readdir(hostNodeModules)
+  for (const pkg of sdkPackages) {
+    const hostPkg = joinPath(hostNodeModules, pkg)
+    const pluginPkg = joinPath(pluginNodeModules, pkg)
+    if (!await pathExists(hostPkg))
+      throw new Error(`Host SDK package not found: ${hostPkg}`)
+    await runtimeFileIO.remove(pluginPkg, { recursive: true, force: true })
+    await spawnFileWithBun('ln', ['-s', hostPkg, pluginPkg])
   }
 }
 
 async function findBunProjectDir(destDir: string): Promise<string | null> {
-  const direct = path.join(destDir, 'package.json')
+  const direct = joinPath(destDir, 'package.json')
   if (await pathExists(direct))
     return destDir
-  const npm = path.join(destDir, 'package', 'package.json')
+  const npm = joinPath(destDir, 'package', 'package.json')
   if (await pathExists(npm))
-    return path.join(destDir, 'package')
+    return joinPath(destDir, 'package')
   return null
 }
 
@@ -389,16 +339,21 @@ async function runBunInstall(projectDir: string, opts: Required<NonNullable<Mark
   if (opts.frozenLockfile)
     args.push('--frozen-lockfile')
 
-  const envVars: NodeJS.ProcessEnv = { ...process.env }
+  const envVars: Record<string, string | undefined> = { ...bunRuntime.env }
   if (opts.registry)
     envVars.npm_config_registry = opts.registry
 
-  await execFileAsync('bun', args, {
+  await spawnFileWithBun('bun', args, {
     cwd: projectDir,
     env: envVars,
-    maxBuffer: 20 * 1024 * 1024,
-  }).catch((error) => {
-    logger.error({ error: error?.message || String(error), stderr: error?.stderr, stdout: error?.stdout, projectDir }, 'bun install failed')
+  }).catch((error: unknown) => {
+    const processError = error as Error & { result?: { stderr?: string, stdout?: string } }
+    logger.error({
+      error: processError.message,
+      stderr: processError.result?.stderr,
+      stdout: processError.result?.stdout,
+      projectDir,
+    }, 'bun install failed')
     throw error
   })
   logger.info({ projectDir }, 'bun install completed')
@@ -406,11 +361,11 @@ async function runBunInstall(projectDir: string, opts: Required<NonNullable<Mark
 
 async function loadPluginDefaultConfig(installDir: string): Promise<any | null> {
   const candidates = [
-    path.join(installDir, 'dist', 'config.js'),
-    path.join(installDir, 'dist', 'config.mjs'),
-    path.join(installDir, 'config.js'),
-    path.join(installDir, 'config.mjs'),
-    path.join(installDir, 'config.json'),
+    joinPath(installDir, 'dist', 'config.js'),
+    joinPath(installDir, 'dist', 'config.mjs'),
+    joinPath(installDir, 'config.js'),
+    joinPath(installDir, 'config.mjs'),
+    joinPath(installDir, 'config.json'),
   ]
 
   for (const candidate of candidates) {
@@ -418,10 +373,10 @@ async function loadPluginDefaultConfig(installDir: string): Promise<any | null> 
       continue
     try {
       if (candidate.endsWith('.json')) {
-        const raw = await fs.readFile(candidate, 'utf8')
+        const raw = await runtimeFileIO.readText(candidate)
         return JSON.parse(raw)
       }
-      const mod = await import(pathToFileURL(candidate).href)
+      const mod = await import(candidate)
       if (mod?.defaultConfig)
         return mod.defaultConfig
       if (mod?.default)
@@ -437,9 +392,9 @@ async function loadPluginDefaultConfig(installDir: string): Promise<any | null> 
 
 async function syncPluginSchemaIfNeeded(installDir: string, pluginId: string) {
   const candidates = [
-    path.join(installDir, 'dist', 'schema.ts'),
-    path.join(installDir, 'src', 'schema.ts'),
-    path.join(installDir, 'schema.ts'),
+    joinPath(installDir, 'dist', 'schema.ts'),
+    joinPath(installDir, 'src', 'schema.ts'),
+    joinPath(installDir, 'schema.ts'),
   ]
 
   for (const schemaPath of candidates) {
@@ -482,14 +437,14 @@ function pickVersion(versions: MarketplacePluginVersion[], requested?: string): 
 }
 
 function buildModuleSpecifier(pluginId: string, version: string, entryPath: string): string {
-  return `./${pluginId}/${version}/${entryPath.split(path.sep).join('/')}`
+  return `./${pluginId}/${version}/${entryPath.split('/').join('/')}`
 }
 
 async function listInstalledVersions(pluginId: string): Promise<string[]> {
   const root = resolvePluginsRoot(pluginId)
   if (!await pathExists(root))
     return []
-  const entries = await fs.readdir(root, { withFileTypes: true })
+  const entries = await runtimeFileIO.readdirEntries(root)
   return entries
     .filter(e => e.isDirectory())
     .map(e => e.name)
@@ -512,7 +467,7 @@ async function inferCurrentVersion(pluginId: string): Promise<string | null> {
 }
 
 async function writeInstallMeta(installDir: string, meta: any) {
-  await fs.writeFile(path.join(installDir, 'napgram-plugin.json'), JSON.stringify(meta, null, 2), 'utf8')
+  await runtimeFileIO.write(joinPath(installDir, 'napgram-plugin.json'), JSON.stringify(meta, null, 2))
 }
 
 async function withInstallLock<T>(fn: () => Promise<T>): Promise<T> {
@@ -574,7 +529,7 @@ async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<Plu
 
   const installDir = resolvePluginsRoot(pluginId, target.version)
   const tmpDir = resolvePluginsRoot('tmp')
-  const archivePath = path.join(tmpDir, `${pluginId}-${target.version}.${distType}`)
+  const archivePath = joinPath(tmpDir, `${pluginId}-${target.version}.${distType}`)
 
   if (opts.dryRun) {
     const module = buildModuleSpecifier(pluginId, target.version, entryPath)
@@ -597,7 +552,7 @@ async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<Plu
     throw new Error(`sha256 mismatch: expected=${expected} got=${sha256}`)
   }
 
-  await fs.rm(installDir, { recursive: true, force: true })
+  await runtimeFileIO.remove(installDir, { recursive: true, force: true })
   await ensureDir(installDir)
   logger.info({ pluginId, version: target.version, distType }, 'Extracting plugin package')
   await extractArchive(distType, archivePath, installDir)
@@ -616,7 +571,7 @@ async function installFromMarketplaceUnlocked(opts: InstallOptions): Promise<Plu
   await linkHostSdk(installDir)
 
   const entryFile = await resolveEntryFile(installDir, entryPath)
-  const entryRel = path.relative(installDir, entryFile).split(path.sep).join('/')
+  const entryRel = relative(installDir, entryFile).split('/').join('/')
   const module = buildModuleSpecifier(pluginId, target.version, entryRel)
 
   const source = { type: 'marketplace', marketplaceId, pluginId, version: target.version, dist: { type: distType, url, sha256: expected }, install, permissions }
@@ -713,8 +668,8 @@ export async function rollbackPlugin(pluginIdRaw: string, options: RollbackOptio
       throw new Error(`Target version not installed: ${target}`)
 
     const installDir = resolvePluginsRoot(pluginId, target)
-    const metaPath = path.join(installDir, 'napgram-plugin.json')
-    const meta = await pathExists(metaPath) ? JSON.parse(await fs.readFile(metaPath, 'utf8')) : null
+    const metaPath = joinPath(installDir, 'napgram-plugin.json')
+    const meta = await pathExists(metaPath) ? JSON.parse(await runtimeFileIO.readText(metaPath)) : null
     const entryRel = String(meta?.entry?.path || '').trim()
     if (!entryRel)
       throw new Error('Missing entry metadata for rollback target')
@@ -786,7 +741,7 @@ export async function uninstallPlugin(pluginIdRaw: string, options: UninstallOpt
     let filesRemoved = false
     if (options.removeFiles && !options.dryRun) {
       const dir = resolvePluginsRoot(pluginId)
-      await fs.rm(dir, { recursive: true, force: true })
+      await runtimeFileIO.remove(dir, { recursive: true, force: true })
       filesRemoved = true
     }
     return { id: pluginId, removed, filesRemoved }

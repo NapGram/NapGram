@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import * as performanceMonitorModule from '@napgram/infra-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, jest, mock, spyOn } from 'bun:test'
 import { MessageQueue } from '../MessageQueue'
 
 describe('messageQueue', () => {
@@ -8,12 +8,12 @@ describe('messageQueue', () => {
   let mockMessage: UnifiedMessage
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    vi.useFakeTimers()
-    vi.spyOn(performanceMonitorModule.performanceMonitor, 'recordMessage')
-    vi.spyOn(performanceMonitorModule.performanceMonitor, 'recordError')
+    mock.clearAllMocks()
+    jest.useFakeTimers()
+    spyOn(performanceMonitorModule.performanceMonitor, 'recordMessage')
+    spyOn(performanceMonitorModule.performanceMonitor, 'recordError')
 
-    mockHandler = vi.fn().mockResolvedValue(undefined)
+    mockHandler = mock().mockResolvedValue(undefined)
     mockMessage = {
       id: 'test-message-1',
       platform: 'qq',
@@ -26,7 +26,7 @@ describe('messageQueue', () => {
   })
 
   afterEach(() => {
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   describe('constructor', () => {
@@ -108,7 +108,7 @@ describe('messageQueue', () => {
       await queue.enqueue({ ...mockMessage, id: 'msg-2' } as UnifiedMessage)
 
       // Advance timer to trigger processing
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
 
       expect(mockHandler).toHaveBeenCalledTimes(2)
     })
@@ -119,10 +119,10 @@ describe('messageQueue', () => {
       await queue.enqueue(mockMessage)
 
       // First interval processes the message
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
 
       // Wait for another interval to allow stopProcessing to be called
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
 
       const status = queue.getStatus()
       expect(status.size).toBe(0)
@@ -131,7 +131,7 @@ describe('messageQueue', () => {
 
     it('should sort by priority when enabled', async () => {
       const callOrder: string[] = []
-      const priorityHandler = vi.fn(async (msg: UnifiedMessage) => {
+      const priorityHandler = mock(async (msg: UnifiedMessage) => {
         callOrder.push(msg.id)
       })
 
@@ -145,7 +145,7 @@ describe('messageQueue', () => {
       await queue.enqueue({ ...mockMessage, id: 'high' } as UnifiedMessage, 10)
       await queue.enqueue({ ...mockMessage, id: 'medium' } as UnifiedMessage, 5)
 
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
 
       // High priority should be processed first
       expect(callOrder[0]).toBe('high')
@@ -154,12 +154,12 @@ describe('messageQueue', () => {
     })
 
     it('should handle message processing errors', async () => {
-      const errorHandler = vi.fn().mockRejectedValue(new Error('Processing failed'))
+      const errorHandler = mock().mockRejectedValue(new Error('Processing failed'))
       const queue = new MessageQueue(errorHandler, { processInterval: 100 })
 
       await queue.enqueue(mockMessage)
 
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
 
       expect(performanceMonitorModule.performanceMonitor.recordError).toHaveBeenCalled()
     })
@@ -170,9 +170,9 @@ describe('messageQueue', () => {
       await queue.enqueue(mockMessage)
 
       // Simulate some time passing
-      await vi.advanceTimersByTimeAsync(50)
+      await jest.advanceTimersByTime(50)
 
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
 
       expect(performanceMonitorModule.performanceMonitor.recordMessage).toHaveBeenCalled()
     })
@@ -189,15 +189,15 @@ describe('messageQueue', () => {
       }
 
       // First batch (2 messages)
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
       expect(mockHandler).toHaveBeenCalledTimes(2)
 
       // Second batch (2 messages)
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
       expect(mockHandler).toHaveBeenCalledTimes(4)
 
       // Third batch (1 message)
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
       expect(mockHandler).toHaveBeenCalledTimes(5)
     })
   })
@@ -269,7 +269,7 @@ describe('messageQueue', () => {
       queue.destroy()
 
       // Try to advance timer
-      await vi.advanceTimersByTimeAsync(200)
+      await jest.advanceTimersByTime(200)
 
       // Handler should not be called after destroy
       expect(mockHandler).not.toHaveBeenCalled()
@@ -293,7 +293,7 @@ describe('messageQueue', () => {
     })
 
     it('should handle handler that takes time to process', async () => {
-      const slowHandler = vi.fn(async () => {
+      const slowHandler = mock(async () => {
         await new Promise(resolve => setTimeout(resolve, 50))
       })
 
@@ -304,8 +304,8 @@ describe('messageQueue', () => {
 
       await queue.enqueue(mockMessage)
 
-      await vi.advanceTimersByTimeAsync(100)
-      await vi.advanceTimersByTimeAsync(50) // Wait for handler to complete
+      await jest.advanceTimersByTime(100)
+      await jest.advanceTimersByTime(50) // Wait for handler to complete
 
       expect(slowHandler).toHaveBeenCalled()
     })
@@ -316,7 +316,7 @@ describe('messageQueue', () => {
         startProcessing: () => void
         stopProcessing: () => void
         processing: boolean
-        processTimer?: NodeJS.Timeout
+        processTimer?: ReturnType<typeof setTimeout>
       }
 
       queueInternal.startProcessing()
@@ -342,7 +342,7 @@ describe('messageQueue', () => {
       expect(status.processing).toBe(true)
 
       // Should only have one timer running
-      await vi.advanceTimersByTimeAsync(100)
+      await jest.advanceTimersByTime(100)
       expect(mockHandler).toHaveBeenCalled()
     })
   })

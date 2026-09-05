@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "vitest run",
+    "test": "bun test --isolate src",
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
@@ -23,8 +23,7 @@
     "@mtcute/bun": "^0.32.0",
     "@napgram/message-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",
-    "@napgram/telegram-client": "workspace:*",
-    "ws": "^8.18.3"
+    "@napgram/telegram-client": "workspace:*"
   },
   "keywords": [
     "napgram",
@@ -33,11 +32,8 @@
   "author": "NapGram Team",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "26.4.1",
-    "@types/ws": "^8.18.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
     "main": "./dist/index.js",

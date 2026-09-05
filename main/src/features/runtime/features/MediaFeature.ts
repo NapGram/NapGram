@@ -1,11 +1,10 @@
 import type { AudioContent, ImageContent, VideoContent } from '@napgram/message-kit'
 import type { Instance, IQQClient, Telegram } from '../runtime-types.js'
 
-import { Buffer } from 'node:buffer'
-import fsP from 'node:fs/promises'
+import { Transformer } from '@napi-rs/image'
 import { fileTypeFromBuffer } from 'file-type'
-import { decode, encode } from 'image-js'
 import { getLogger } from '../capabilities/logging.js'
+import { runtimeFileIO } from '@napgram/runtime-kit'
 import { temp } from '../capabilities/temp.js'
 
 const logger = getLogger('MediaFeature')
@@ -19,6 +18,7 @@ export class MediaFeature {
     private readonly instance: Instance,
     private readonly tgBot: Telegram,
     private readonly qqClient: IQQClient,
+    private readonly fileIO = runtimeFileIO,
   ) {
     logger.info('MediaFeature ✓ 初始化完成')
   }
@@ -26,27 +26,27 @@ export class MediaFeature {
   /**
    * 下载媒体文件
    */
-  async downloadMedia(url: string): Promise<Buffer> {
+  async downloadMedia(url: string): Promise<Uint8Array> {
     try {
       logger.debug(`Downloading media from: ${url}`)
 
       // Handle local file paths
       if (url.startsWith('/')) {
         try {
-          const stat = await fsP.stat(url)
+          const stat = await this.fileIO.stat(url)
           if (stat.size === 0 && url.endsWith('.amr')) {
             const wavPath = `${url}.wav`
             try {
-              const wavStat = await fsP.stat(wavPath)
+              const wavStat = await this.fileIO.stat(wavPath)
               if (wavStat.size > 0) {
-                return await fsP.readFile(wavPath)
+                return new Uint8Array(await this.fileIO.readBytes(wavPath))
               }
             }
             catch {
               // ignore
             }
           }
-          return await fsP.readFile(url)
+          return new Uint8Array(await this.fileIO.readBytes(url))
         }
         catch (error) {
           logger.warn(`Local file not accessible: ${url}`, error)
@@ -69,7 +69,7 @@ export class MediaFeature {
         }
 
         const arrayBuffer = await response.arrayBuffer()
-        return Buffer.from(arrayBuffer)
+        return new Uint8Array(arrayBuffer)
       }
       finally {
         clearTimeout(timeoutId)
@@ -84,7 +84,7 @@ export class MediaFeature {
   /**
    * 通过 NapCat file_id 获取文件（兜底：naplink get_file / download_file）
    */
-  async fetchFileById(fileId: string): Promise<{ buffer?: Buffer, url?: string, path?: string }> {
+  async fetchFileById(fileId: string): Promise<{ buffer?: Uint8Array, url?: string, path?: string }> {
     const normalizedId = fileId.replace(/^\//, '')
     const qq: any = this.qqClient as any
     try {
@@ -114,7 +114,7 @@ export class MediaFeature {
               const local = downloaded?.file || downloaded?.path
               if (local && typeof local === 'string') {
                 try {
-                  return { buffer: await fsP.readFile(local), path: local }
+                  return { buffer: new Uint8Array(await this.fileIO.readBytes(local)), path: local }
                 }
                 catch {
                   // ignore
@@ -127,7 +127,7 @@ export class MediaFeature {
           // 本地路径
           if (typeof fileUrl === 'string' && fileUrl.startsWith('/')) {
             try {
-              return { buffer: await fsP.readFile(fileUrl), path: fileUrl }
+              return { buffer: new Uint8Array(await this.fileIO.readBytes(fileUrl)), path: fileUrl }
             }
             catch {
               // fallthrough
@@ -135,7 +135,7 @@ export class MediaFeature {
           }
         }
 
-        if (res.data && Buffer.isBuffer(res.data)) {
+        if (res.data && res.data instanceof Uint8Array) {
           return { buffer: res.data }
         }
       }
@@ -148,7 +148,7 @@ export class MediaFeature {
         const local = streamed?.path
         if (local && typeof local === 'string') {
           try {
-            return { buffer: await fsP.readFile(local), path: local }
+            return { buffer: new Uint8Array(await this.fileIO.readBytes(local)), path: local }
           }
           catch {
             // ignore
@@ -165,10 +165,10 @@ export class MediaFeature {
   /**
    * 处理图片
    */
-  async processImage(content: ImageContent): Promise<Buffer | string> {
+  async processImage(content: ImageContent): Promise<Uint8Array | string> {
     // 优先使用可访问的 file 字段
     if (content.data.file) {
-      if (Buffer.isBuffer(content.data.file))
+      if (content.data.file instanceof Uint8Array)
         return content.data.file
       if (typeof content.data.file === 'string') {
         if (/^https?:\/\//.test(content.data.file)) {
@@ -177,7 +177,7 @@ export class MediaFeature {
         // 本地路径，尝试读取；失败则尝试 url 兜底
         if (content.data.file.startsWith('/')) {
           try {
-            await fsP.access(content.data.file)
+            await this.fileIO.access(content.data.file)
             return content.data.file
           }
           catch {
@@ -195,9 +195,9 @@ export class MediaFeature {
   /**
    * 处理视频
    */
-  async processVideo(content: VideoContent): Promise<Buffer | string> {
+  async processVideo(content: VideoContent): Promise<Uint8Array | string> {
     if (content.data.file) {
-      if (Buffer.isBuffer(content.data.file))
+      if (content.data.file instanceof Uint8Array)
         return content.data.file
       if (typeof content.data.file === 'string') {
         if (/^https?:\/\//.test(content.data.file)) {
@@ -205,7 +205,7 @@ export class MediaFeature {
         }
         if (content.data.file.startsWith('/')) {
           try {
-            await fsP.access(content.data.file)
+            await this.fileIO.access(content.data.file)
             return content.data.file
           }
           catch {
@@ -223,16 +223,16 @@ export class MediaFeature {
   /**
    * 处理音频
    */
-  async processAudio(content: AudioContent): Promise<Buffer | string> {
+  async processAudio(content: AudioContent): Promise<Uint8Array | string> {
     if (content.data.file) {
-      if (Buffer.isBuffer(content.data.file))
+      if (content.data.file instanceof Uint8Array)
         return content.data.file
       if (typeof content.data.file === 'string') {
         // NapCat 录音会生成 .amr 和 .amr.wav，优先使用可读的 wav
         if (content.data.file.endsWith('.amr')) {
           const wavPath = `${content.data.file}.wav`
           try {
-            await fsP.access(wavPath)
+            await this.fileIO.access(wavPath)
             return wavPath
           }
           catch {
@@ -244,7 +244,7 @@ export class MediaFeature {
         }
         if (content.data.file.startsWith('/')) {
           try {
-            await fsP.access(content.data.file)
+            await this.fileIO.access(content.data.file)
             return content.data.file
           }
           catch {
@@ -262,30 +262,30 @@ export class MediaFeature {
   /**
    * 创建临时文件
    */
-  async createTempFileFromBuffer(buffer: Buffer, extension: string = '.tmp') {
+  async createTempFileFromUint8Array(buffer: Uint8Array, extension: string = '.tmp') {
     const tempFile = await temp.createTempFile({ postfix: extension })
-    await fsP.writeFile(tempFile.path, buffer)
+    await this.fileIO.write(tempFile.path, buffer)
     return tempFile
   }
 
   /**
    * 获取媒体文件大小
    */
-  getMediaSize(buffer: Buffer): number {
+  getMediaSize(buffer: Uint8Array): number {
     return buffer.length
   }
 
   /**
    * 检查媒体大小是否超限
    */
-  isMediaTooLarge(buffer: Buffer, maxSize: number = 20 * 1024 * 1024): boolean {
+  isMediaTooLarge(buffer: Uint8Array, maxSize: number = 20 * 1024 * 1024): boolean {
     return buffer.length > maxSize
   }
 
   /**
    * 压缩图片（如果需要）
    */
-  async compressImage(buffer: Buffer, maxSize: number = 5 * 1024 * 1024): Promise<Buffer> {
+  async compressImage(buffer: Uint8Array, maxSize: number = 5 * 1024 * 1024): Promise<Uint8Array> {
     try {
       // 如果文件已经小于限制，直接返回
       if (buffer.length <= maxSize) {
@@ -298,23 +298,18 @@ export class MediaFeature {
       const type = await fileTypeFromBuffer(buffer)
       const mime = type?.mime || 'image/jpeg'
 
-      // 简单的格式检查 (Image-JS 支持的 format)
+      // Native Transformer supports the formats that can be compressed here.
       if (!['image/jpeg', 'image/png', 'image/bmp', 'image/tiff', 'image/webp'].includes(mime)) {
         logger.warn(`Unsupported/Unnecessary image format for compression: ${mime}`)
         return buffer
       }
 
-      // 使用 Image-JS 读取图片
-      let image = decode(buffer)
+      const image = new Transformer(buffer)
+      const metadata = image.metadataSync()
 
-      // 计算压缩目标
-      let quality = 80
-      // 获取原始宽高
-      let width = image.width
-      let height = image.height
-
-      // 如果图片过大，先尝试调整尺寸
-      // 限制最大边长为 1920
+      // Limit the longest edge to 1920 while preserving the source ratio.
+      let width = metadata.width
+      let height = metadata.height
       const MAX_DIMENSION = 1920
       if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
         if (width > height) {
@@ -326,49 +321,29 @@ export class MediaFeature {
           height = MAX_DIMENSION
         }
         logger.info(`Resizing image to ${width}x${height}`)
-        image = image.resize({ width, height })
+        image.resize(width, height)
       }
 
-      // 尝试压缩循环
-      let compressedBuffer: Buffer
+      const format: 'jpeg' | 'png' = mime === 'image/png' ? 'png' : 'jpeg'
+      let quality = 80
+      const encode = async () => format === 'jpeg' ? image.jpeg(quality) : image.png()
+      let compressedUint8Array = await encode()
 
-      // Determine format for Image-JS
-      let format: 'jpeg' | 'png' = 'jpeg'
-      if (mime === 'image/png')
-        format = 'png'
-      // WebP is not directly supported for encoding in basic image-js without plugins, usually falls back to png/jpeg if forced or fails.
-      // Logic above filters to jpeg/png/bmp/tiff.
-
-      // 第一次尝试
+      // PNG has no lossy quality loop; JPEG quality is reduced until the target is met.
       if (format === 'jpeg') {
-        compressedBuffer = Buffer.from(encode(image, { format: 'jpeg', encoderOptions: { quality } }))
-      }
-      else {
-        compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
-      }
-
-      // 如果还是太大，继续降低质量 (Only effective for JPEG usually, PNG quality affects compression speed not much size lossy)
-      while (compressedBuffer.length > maxSize && quality > 20) {
-        quality -= 20
-        logger.debug(`Image still too large (${compressedBuffer.length}), trying quality ${quality}`)
-        if (format === 'jpeg') {
-          compressedBuffer = Buffer.from(encode(image, { format: 'jpeg', encoderOptions: { quality } }))
-        }
-        else {
-          // PNG compression loop is mostly futile for quality param, but structure kept.
-          compressedBuffer = Buffer.from(encode(image, { format: 'png' }))
-          // Force break for PNG as reducing "quality" var doesn't help much if we don't change png params, and we want to avoid infinite loop if size doesn't ensure.
-          if (format === 'png')
-            break
+        while (compressedUint8Array.length > maxSize && quality > 20) {
+          quality -= 20
+          logger.debug(`Image still too large (${compressedUint8Array.length}), trying quality ${quality}`)
+          compressedUint8Array = await encode()
         }
       }
 
-      if (compressedBuffer.length > maxSize) {
-        logger.warn(`Failed to compress image below ${maxSize} bytes even at quality ${quality}. Current: ${compressedBuffer.length}`)
+      if (compressedUint8Array.length > maxSize) {
+        logger.warn(`Failed to compress image below ${maxSize} bytes even at quality ${quality}. Current: ${compressedUint8Array.length}`)
       }
 
-      logger.info(`Compression result: ${buffer.length} -> ${compressedBuffer.length} bytes (Quality: ${quality}, Format: ${format})`)
-      return compressedBuffer
+      logger.info(`Compression result: ${buffer.length} -> ${compressedUint8Array.length} bytes (Quality: ${quality}, Format: ${format})`)
+      return compressedUint8Array
     }
     catch (error) {
       logger.error('Image compression failed:', error)

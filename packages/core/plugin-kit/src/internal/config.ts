@@ -1,11 +1,9 @@
 import type { PluginSpec } from '../core/interfaces.js'
-import fs from 'node:fs/promises'
-import path from 'node:path'
-import process from 'node:process'
-import { fileURLToPath, pathToFileURL } from 'node:url'
 import YAML from 'yaml'
 import { env } from '@napgram/env-kit'
 import { getLogger } from '@napgram/logger-kit'
+import { runtimeFileIO, spawnFileWithBun } from '@napgram/runtime-kit'
+import { basename, bunRuntime, dirname, extname, fileURLToPath, isWithin, joinPath, pathToFileURL, resolvePath } from './path.js'
 import { readBoolEnv, readStringEnv } from './env.js'
 import { getManagedPluginsConfigPath } from './store.js'
 
@@ -28,36 +26,28 @@ export function resolveDebugSessions(): boolean {
 }
 
 function resolveDataDir(): string {
-  const dataDir = String(env.DATA_DIR || process.env.DATA_DIR || '/app/data')
-  return path.resolve(dataDir)
+  const dataDir = String(env.DATA_DIR || bunRuntime.env.DATA_DIR || '/app/data')
+  return resolvePath(dataDir)
 }
 
-async function realpathSafe(p: string): Promise<string> {
-  try {
-    return await fs.realpath(p)
-  }
-  catch {
-    return p
-  }
+async function resolveRealPath(p: string): Promise<string> {
+  const { stdout } = await spawnFileWithBun('realpath', ['-m', p])
+  return stdout.trim()
 }
 
 async function resolvePathUnderDataDir(inputPath: string): Promise<string> {
-  const abs = path.resolve(inputPath)
-  const real = await realpathSafe(abs)
-  const dataDir = resolveDataDir()
-  const dataReal = await realpathSafe(dataDir)
+  const abs = resolvePath(inputPath)
+  const real = await resolveRealPath(abs)
+  const dataReal = await resolveRealPath(resolveDataDir())
 
-  if (real === dataReal)
-    return real
-  if (!real.startsWith(dataReal + path.sep)) {
+  if (!isWithin(dataReal, real))
     throw new Error(`Path is outside DATA_DIR: ${inputPath}`)
-  }
   return real
 }
 
 async function loadConfigFile(filePath: string): Promise<any> {
-  const raw = await fs.readFile(filePath, 'utf8')
-  const ext = path.extname(filePath).toLowerCase()
+  const raw = await runtimeFileIO.readText(filePath)
+  const ext = extname(filePath).toLowerCase()
   if (ext === '.yaml' || ext === '.yml')
     return YAML.parse(raw)
   return JSON.parse(raw)
@@ -65,7 +55,7 @@ async function loadConfigFile(filePath: string): Promise<any> {
 
 async function exists(p: string): Promise<boolean> {
   try {
-    await fs.access(p)
+    await runtimeFileIO.access(p)
     return true
   }
   catch {
@@ -79,7 +69,7 @@ function resolveModuleSpecifier(spec: string, baseDir: string): string {
   if (spec.startsWith('file://'))
     return spec
   if (spec.startsWith('.') || spec.startsWith('/'))
-    return path.resolve(baseDir, spec)
+    return resolvePath(baseDir, spec)
   return ''
 }
 
@@ -88,21 +78,12 @@ function isTsFile(specifier: string): boolean {
   return /\.ts$/i.test(s)
 }
 
-function fileUrlToPathSafe(specifier: string): string {
-  try {
-    return fileURLToPath(specifier)
-  }
-  catch {
-    return specifier
-  }
-}
-
 function inferIdFromPath(modulePath: string): string {
-  const clean = modulePath.startsWith('file://') ? fileUrlToPathSafe(modulePath) : modulePath
-  const ext = path.extname(clean)
-  const base = path.basename(clean, ext)
+  const clean = modulePath.startsWith('file://') ? fileURLToPath(modulePath) : modulePath
+  const ext = extname(clean)
+  const base = basename(clean, ext)
   if (base.toLowerCase() === 'index') {
-    return path.basename(path.dirname(clean)) || 'plugin'
+    return basename(dirname(clean)) || 'plugin'
   }
   return base || 'plugin'
 }
@@ -127,7 +108,7 @@ async function loadModule(specifier: string): Promise<any> {
     return mod?.default ?? mod
   }
   if (specifier.startsWith('/') || specifier.startsWith('.')) {
-    const url = pathToFileURL(specifier).href
+    const url = pathToFileURL(specifier)
     const mod = await import(url)
     return mod?.default ?? mod
   }
@@ -211,7 +192,7 @@ export async function loadPluginSpecs(builtins: PluginSpec[] = []): Promise<Plug
   if (configPath && await exists(configPath)) {
     try {
       const abs = await resolvePathUnderDataDir(configPath)
-      const baseDir = path.dirname(abs)
+      const baseDir = dirname(abs)
       const config = await loadConfigFile(abs)
       const plugins = Array.isArray(config?.plugins) ? config.plugins : []
 
@@ -232,7 +213,7 @@ export async function loadPluginSpecs(builtins: PluginSpec[] = []): Promise<Plug
           continue
         }
         if (idFromRaw && builtinIds.has(idFromRaw) && legacyLocalBuiltinPathPattern.test(moduleRaw)) {
-          const modulePathForCheck = module.startsWith('file://') ? fileUrlToPathSafe(module) : module
+          const modulePathForCheck = module.startsWith('file://') ? fileURLToPath(module) : module
           if (!await exists(modulePathForCheck)) {
             rememberBuiltinOverride(idFromRaw, p, 'legacy-missing-local-module')
             continue
@@ -243,7 +224,7 @@ export async function loadPluginSpecs(builtins: PluginSpec[] = []): Promise<Plug
           continue
         }
         const resolved = module.startsWith('file://')
-          ? await resolvePathUnderDataDir(fileUrlToPathSafe(module))
+          ? await resolvePathUnderDataDir(fileURLToPath(module))
           : await resolvePathUnderDataDir(module)
         const enabled = p?.enabled !== false
         const id = sanitizeId(rawId || inferIdFromPath(resolved))
@@ -263,14 +244,14 @@ export async function loadPluginSpecs(builtins: PluginSpec[] = []): Promise<Plug
   }
 
   async function loadLocalPluginSpecs() {
-    const defaultDir = path.join(dataDir, 'plugins')
+    const defaultDir = joinPath(dataDir, 'plugins')
     const pluginsDir = readStringEnv(['PLUGINS_DIR']) || defaultDir
 
     if (!await exists(pluginsDir))
       return
 
     try {
-      const entries = await fs.readdir(pluginsDir, { withFileTypes: true })
+      const entries = await runtimeFileIO.readdirEntries(pluginsDir)
 
       // 1. 加载文件
       const files = entries
@@ -282,7 +263,7 @@ export async function loadPluginSpecs(builtins: PluginSpec[] = []): Promise<Plug
 
       for (const filename of files) {
         try {
-          const modulePath = path.join(pluginsDir, filename)
+          const modulePath = joinPath(pluginsDir, filename)
           const id = sanitizeId(inferIdFromPath(modulePath))
           if (specsById.has(id) || hasSpec(s => s.module === modulePath))
             continue
@@ -306,23 +287,23 @@ export async function loadPluginSpecs(builtins: PluginSpec[] = []): Promise<Plug
         .sort((a, b) => a.localeCompare(b))
 
       for (const dirname of dirs) {
-        const dirPath = path.join(pluginsDir, dirname)
-        const pkgPath = path.join(dirPath, 'package.json')
+        const dirPath = joinPath(pluginsDir, dirname)
+        const pkgPath = joinPath(dirPath, 'package.json')
 
         if (await exists(pkgPath)) {
           try {
-            const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf-8'))
+            const pkg = JSON.parse(await runtimeFileIO.readText(pkgPath))
             let mainFile = pkg.main
             if (!mainFile) {
-              if (await exists(path.join(dirPath, 'index.mjs')))
+              if (await exists(joinPath(dirPath, 'index.mjs')))
                 mainFile = 'index.mjs'
-              else if (await exists(path.join(dirPath, 'index.js')))
+              else if (await exists(joinPath(dirPath, 'index.js')))
                 mainFile = 'index.js'
             }
             if (!mainFile)
               continue
 
-            const modulePath = path.join(dirPath, mainFile)
+            const modulePath = joinPath(dirPath, mainFile)
             if (await exists(modulePath)) {
               const pkgName = typeof pkg.name === 'string' ? pkg.name : ''
               const rawId = pkgName.split('/').pop() || dirname

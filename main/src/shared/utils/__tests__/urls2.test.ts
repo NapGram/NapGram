@@ -1,6 +1,6 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { fetchFile, getAvatar, getAvatarUrl, getBigFaceUrl, getImageUrlByMd5, hasSupportedImageExt, isContainsUrl, isValidQQ, isValidRoomId, isValidUrl } from '../urls.js'
 
 describe('urls', () => {

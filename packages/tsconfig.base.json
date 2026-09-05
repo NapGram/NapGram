@@ -10,13 +10,18 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "moduleResolution": "bundler",
+        "paths": {
+            "bun:test": [
+                "../node_modules/bun-types/test.d.ts"
+            ]
+        },
         "jsx": "react",
         "jsxFactory": "Html.createElement",
         "jsxFragmentFactory": "Html.Fragment",
         "resolveJsonModule": true,
         "declaration": true,
         "types": [
-            "node"
+            "bun-types"
         ]
     }
 }

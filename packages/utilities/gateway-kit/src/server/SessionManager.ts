@@ -3,15 +3,27 @@
  * 管理 WebSocket 连接会话的生命周期
  */
 
-import type { WebSocket } from 'ws'
-import { randomUUID } from 'node:crypto'
+interface BunRandomRuntime {
+  randomUUIDv7?: () => string
+}
+
+function createSessionId(): string {
+  const runtime = (globalThis as typeof globalThis & { Bun?: BunRandomRuntime }).Bun
+  return runtime?.randomUUIDv7?.() ?? crypto.randomUUID()
+}
+
+export interface GatewaySocket {
+  readyState: number
+  send(data: string): unknown
+  close(code?: number, reason?: string): unknown
+}
 import { getLogger } from '../logger.js'
 
 const logger = getLogger('SessionManager')
 
 export interface Session {
   id: string
-  ws: WebSocket
+  ws: GatewaySocket
   authenticated: boolean
   userId?: string
   userName?: string
@@ -26,8 +38,8 @@ export class SessionManager {
   /**
    * 创建新会话
    */
-  create(ws: WebSocket): string {
-    const sessionId = randomUUID()
+  create(ws: GatewaySocket): string {
+    const sessionId = createSessionId()
     const session: Session = {
       id: sessionId,
       ws,

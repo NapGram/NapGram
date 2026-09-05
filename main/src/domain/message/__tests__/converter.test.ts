@@ -1,6 +1,6 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import { MessageConverter } from '@napgram/message-kit'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 
 describe('messageConverter', () => {
   const converter = new MessageConverter()

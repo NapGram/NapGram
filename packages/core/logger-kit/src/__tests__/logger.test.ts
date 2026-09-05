@@ -1,4 +1,5 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+/// <reference types="bun-types" />
+import { describe, expect, it, beforeEach, afterEach, mock, spyOn } from 'bun:test'
 
 describe('logger', () => {
   describe('getLogger', () => {
@@ -49,14 +50,14 @@ describe('logger', () => {
     })
 
     it('redacts credentials inside structured console arguments', async () => {
-      const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const stdout = spyOn(Bun.stdout, 'write').mockImplementation(async () => 0)
       const { default: getLogger, setConsoleLogLevel } = await import('../logger.js')
       setConsoleLogLevel('info')
 
       getLogger('test').info({ token: 'secret-value', status: 'ready' })
 
       const output = stdout.mock.calls.flat().join(' ')
-      expect(output).toContain("token: '[REDACTED]'")
+      expect(output).toContain('token: "[REDACTED]"')
       expect(output).not.toContain('secret-value')
       stdout.mockRestore()
     })

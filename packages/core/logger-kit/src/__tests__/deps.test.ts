@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, beforeEach, afterEach, mock, spyOn } from 'bun:test'
 
 describe('deps', () => {
   describe('getInfraLogger', () => {
@@ -14,11 +14,11 @@ describe('deps', () => {
     })
 
     it('should call console methods with prefix', async () => {
-      const traceSpy = vi.spyOn(console, 'trace').mockImplementation(() => {})
-      const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {})
-      const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const traceSpy = spyOn(console, 'trace').mockImplementation(() => {})
+      const debugSpy = spyOn(console, 'debug').mockImplementation(() => {})
+      const infoSpy = spyOn(console, 'info').mockImplementation(() => {})
+      const warnSpy = spyOn(console, 'warn').mockImplementation(() => {})
+      const errorSpy = spyOn(console, 'error').mockImplementation(() => {})
 
       const { getInfraLogger } = await import('../deps.js')
       const logger = getInfraLogger('MyModule')
@@ -35,18 +35,18 @@ describe('deps', () => {
       expect(warnSpy).toHaveBeenCalledWith('[MyModule]', 'warn message')
       expect(errorSpy).toHaveBeenCalledWith('[MyModule]', 'error message')
 
-      vi.restoreAllMocks()
+      mock.restore()
     })
   })
 
   describe('configureLoggerKit', () => {
     it('should replace default logger factory', async () => {
-      const customFactory = vi.fn().mockReturnValue({
-        trace: vi.fn(),
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
+      const customFactory = mock().mockReturnValue({
+        trace: mock(),
+        debug: mock(),
+        info: mock(),
+        warn: mock(),
+        error: mock(),
       })
 
       const { configureLoggerKit, getInfraLogger } = await import('../deps.js')
@@ -57,7 +57,7 @@ describe('deps', () => {
 
       expect(customFactory).toHaveBeenCalledWith('Test')
 
-      vi.restoreAllMocks()
+      mock.restore()
     })
   })
 })

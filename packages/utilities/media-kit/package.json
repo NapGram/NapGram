@@ -15,7 +15,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsc -p tsconfig.json --watch"
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "bun test --isolate --pass-with-no-tests src"
   },
   "keywords": [
     "napgram",
@@ -27,15 +28,14 @@
   "dependencies": {
     "@napgram/env-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
+    "@napgram/runtime-kit": "workspace:*",
+    "@napi-rs/image": "1.14.0",
     "file-type": "^22.0.0",
-    "image-js": "^1.3.0",
     "silk-wasm": "^3.7.1"
   },
   "devDependencies": {
-    "@types/node": "26.4.1",
     "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "vitest": "5.0.0"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
     "main": "./dist/index.js",

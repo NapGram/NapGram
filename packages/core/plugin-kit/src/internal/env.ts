@@ -1,8 +1,8 @@
-import process from 'node:process'
+import { bunRuntime } from './path.js'
 
 export function readBoolEnv(keys: string[]): boolean {
   for (const key of keys) {
-    const raw = String((process.env as any)[key] || '').trim()
+    const raw = String(bunRuntime.env[key] || '').trim()
     if (!raw)
       continue
     const v = raw.toLowerCase()
@@ -13,7 +13,7 @@ export function readBoolEnv(keys: string[]): boolean {
 
 export function readStringEnv(keys: string[]): string {
   for (const key of keys) {
-    const raw = String((process.env as any)[key] || '').trim()
+    const raw = String(bunRuntime.env[key] || '').trim()
     if (raw)
       return raw
   }

@@ -1,9 +1,9 @@
-import { vi } from 'vitest'
+import { mock } from 'bun:test'
 
 const defaultNapLinkInstance = {
-  on: vi.fn(),
-  connect: vi.fn(),
-  disconnect: vi.fn(),
+  on: mock(),
+  connect: mock(),
+  disconnect: mock(),
   api: {},
 }
 

@@ -1,28 +1,20 @@
-import fs from 'node:fs/promises'
-
-import path from 'node:path'
-import process from 'node:process'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import YAML from 'yaml'
 import * as store from '../plugin-store.js'
+import { bunRuntime, joinPath, resolvePath } from '../path-utils.js'
 
-// Mock modules before importing anything else
-vi.mock('node:process', () => ({
-  default: {
-    env: { DATA_DIR: '/test/data' },
-    exit: vi.fn(),
-    memoryUsage: vi.fn(() => ({
-      rss: 0,
-      heapTotal: 0,
-      heapUsed: 0,
-      external: 0,
-      arrayBuffers: 0,
-    })),
-    stdout: { write: vi.fn() },
-  },
-}))
 
-vi.mock('@napgram/env-kit', () => ({
+const fileIOMocks = {
+  access: mock(),
+  readText: mock(),
+  mkdir: mock(),
+  write: mock(),
+  rename: mock(),
+  copyFile: mock(),
+}
+const mockedFs = fileIOMocks
+
+mock.module('@napgram/env-kit', () => ({
   env: {
     DATA_DIR: '/test/data',
     LOG_FILE: '/test/data/logs/app.log',
@@ -31,37 +23,34 @@ vi.mock('@napgram/env-kit', () => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    debug: mock(),
   })),
 }))
 
-vi.mock('@napgram/media-kit', () => ({
-  convert: {},
-  default: {},
+mock.module('@napgram/runtime-kit', () => ({
+  runtimeFileIO: fileIOMocks,
 }))
-
-vi.mock('node:fs/promises')
 
 describe('plugin-store.ts', () => {
   const mockDataDir = '/test/data'
-  const mockPluginsDir = path.join(mockDataDir, 'plugins')
-  const mockConfigPath = path.join(mockPluginsDir, 'plugins.yaml')
+  const mockPluginsDir = joinPath(mockDataDir, 'plugins')
+  const mockConfigPath = joinPath(mockPluginsDir, 'plugins.yaml')
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     // Set default DATA_DIR
-    process.env.DATA_DIR = mockDataDir
-    delete process.env.PLUGINS_CONFIG_PATH
+    bunRuntime.env.DATA_DIR = mockDataDir
+    delete bunRuntime.env.PLUGINS_CONFIG_PATH
   })
 
   afterEach(() => {
-    delete process.env.DATA_DIR
-    delete process.env.PLUGINS_CONFIG_PATH
+    delete bunRuntime.env.DATA_DIR
+    delete bunRuntime.env.PLUGINS_CONFIG_PATH
   })
 
   describe('getManagedPluginsConfigPath', () => {
@@ -71,7 +60,7 @@ describe('plugin-store.ts', () => {
     })
 
     it('should use override from environment', async () => {
-      process.env.PLUGINS_CONFIG_PATH = '/custom/path/config.yaml'
+      bunRuntime.env.PLUGINS_CONFIG_PATH = '/custom/path/config.yaml'
 
       const configPath = await store.getManagedPluginsConfigPath()
       expect(configPath).toContain('config.yaml')
@@ -80,9 +69,7 @@ describe('plugin-store.ts', () => {
 
   describe('readPluginsConfig', () => {
     it('should return empty config when file does not exist', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('File not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockRejectedValue(new Error('File not found'))
       const result = await store.readPluginsConfig()
 
       expect(result.exists).toBe(false)
@@ -91,7 +78,7 @@ describe('plugin-store.ts', () => {
     })
 
     it('should migrate legacy config when default config is missing', async () => {
-      const legacyPath = path.join(mockPluginsDir, 'plugins.json')
+      const legacyPath = joinPath(mockPluginsDir, 'plugins.json')
       const jsonContent = JSON.stringify({
         plugins: [{
           id: 'legacy-plugin',
@@ -99,31 +86,30 @@ describe('plugin-store.ts', () => {
         }],
       })
 
-      vi.mocked(fs.access).mockImplementation(async (p) => {
+      mockedFs.access.mockImplementation(async (p: any) => {
         if (p === mockConfigPath)
           throw new Error('File not found')
         if (p === legacyPath)
           return undefined
         throw new Error('File not found')
       })
-      vi.mocked(fs.readFile).mockImplementation(async (p) => {
+      mockedFs.readText.mockImplementation(async (p: any) => {
         if (p === legacyPath)
           return jsonContent
         throw new Error('File not found')
       })
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.readPluginsConfig()
 
       expect(result.exists).toBe(true)
       expect(result.config.plugins).toHaveLength(1)
       expect(result.config.plugins[0].id).toBe('legacy-plugin')
-      expect(vi.mocked(fs.writeFile)).toHaveBeenCalledWith(
+      expect(mockedFs.write).toHaveBeenCalledWith(
         `${mockConfigPath}.tmp`,
         expect.stringContaining('legacy-plugin'),
-        'utf8',
       )
     })
 
@@ -135,10 +121,8 @@ describe('plugin-store.ts', () => {
     config:
       key: value`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(yamlContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(yamlContent)
       const result = await store.readPluginsConfig()
 
       expect(result.exists).toBe(true)
@@ -157,10 +141,8 @@ describe('plugin-store.ts', () => {
   - id: no-module
     module: ''`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(yamlContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(yamlContent)
       const result = await store.readPluginsConfig()
 
       expect(result.config.plugins).toHaveLength(2)
@@ -173,10 +155,8 @@ describe('plugin-store.ts', () => {
   - id: ping-pong
     enabled: false`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(yamlContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(yamlContent)
       const result = await store.readPluginsConfig()
 
       expect(result.config.plugins).toHaveLength(1)
@@ -193,12 +173,10 @@ describe('plugin-store.ts', () => {
         }],
       })
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(jsonContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(jsonContent)
       // Mock JSON config path inside DATA_DIR
-      process.env.PLUGINS_CONFIG_PATH = path.join(mockDataDir, 'plugins', 'config.json')
+      bunRuntime.env.PLUGINS_CONFIG_PATH = joinPath(mockDataDir, 'plugins', 'config.json')
 
       const result = await store.readPluginsConfig()
 
@@ -211,10 +189,8 @@ describe('plugin-store.ts', () => {
   - id: test-plugin
     module: ./test.js`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(yamlContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(yamlContent)
       const result = await store.readPluginsConfig()
 
       expect(result.config.plugins[0].enabled).toBe(true)
@@ -226,19 +202,17 @@ describe('plugin-store.ts', () => {
     module: ./test.js
     enabled: false`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(yamlContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(yamlContent)
       const result = await store.readPluginsConfig()
 
       expect(result.config.plugins[0].enabled).toBe(false)
     })
 
     it('should handle legacy migration errors gracefully', async () => {
-      const legacyPath = path.join(mockPluginsDir, 'plugins.yml')
+      const legacyPath = joinPath(mockPluginsDir, 'plugins.yml')
 
-      vi.mocked(fs.access).mockImplementation(async (p) => {
+      mockedFs.access.mockImplementation(async (p: any) => {
         if (p === mockConfigPath)
           throw new Error('File not found')
         if (p === legacyPath)
@@ -247,9 +221,7 @@ describe('plugin-store.ts', () => {
       })
 
       // Make legacy file read fail
-      vi.mocked(fs.readFile).mockRejectedValue(new Error('Permission denied'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.readText.mockRejectedValue(new Error('Permission denied'))
       const result = await store.readPluginsConfig()
 
       // Should fall back to empty config
@@ -260,24 +232,18 @@ describe('plugin-store.ts', () => {
 
   describe('normalizeModuleSpecifierForPluginsConfig', () => {
     it('should handle module spec without prefix', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
       const result = await store.normalizeModuleSpecifierForPluginsConfig('plugin.js')
 
       expect(result.stored).toBe('./plugin.js')
     })
 
-    it('should fall back when realpath fails', async () => {
-      vi.mocked(fs.realpath).mockRejectedValue(new Error('realpath failed'))
-
+    it('should normalize with Bun realpath', async () => {
       const result = await store.normalizeModuleSpecifierForPluginsConfig('./my-plugin/index.js')
 
       expect(result.absolute).toContain('my-plugin')
     })
 
     it('should normalize relative path', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
       const result = await store.normalizeModuleSpecifierForPluginsConfig('./my-plugin/index.js')
 
       expect(result.stored).toMatch(/^\.\//)
@@ -285,8 +251,6 @@ describe('plugin-store.ts', () => {
     })
 
     it('should handle file:// URLs', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
       const fileUrl = `file://${mockPluginsDir}/plugin.js`
       const result = await store.normalizeModuleSpecifierForPluginsConfig(fileUrl)
 
@@ -294,13 +258,6 @@ describe('plugin-store.ts', () => {
     })
 
     it('should throw error for paths outside DATA_DIR', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async (p) => {
-        if (((p as any).includes)('outside')) {
-          return '/completely/different/path'
-        }
-        return mockDataDir
-      })
-
       await expect(
         store.normalizeModuleSpecifierForPluginsConfig('/outside/data/dir/plugin.js'),
       ).rejects.toThrow('outside DATA_DIR')
@@ -313,38 +270,32 @@ describe('plugin-store.ts', () => {
     })
 
     it('should handle absolute paths within DATA_DIR', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
-      const absolutePath = path.join(mockPluginsDir, 'plugin.js')
+      const absolutePath = joinPath(mockPluginsDir, 'plugin.js')
       const result = await store.normalizeModuleSpecifierForPluginsConfig(absolutePath)
 
       expect(result.absolute).toContain('plugin.js')
     })
 
     it('should keep absolute path outside plugins dir but inside DATA_DIR', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
-      const absolutePath = path.join(mockDataDir, 'other', 'plugin.js')
+      const absolutePath = joinPath(mockDataDir, 'other', 'plugin.js')
       const result = await store.normalizeModuleSpecifierForPluginsConfig(absolutePath)
 
       expect(result.stored).toBe(absolutePath)
     })
 
     it('should keep absolute path when resolving to DATA_DIR root', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
       const result = await store.normalizeModuleSpecifierForPluginsConfig('..')
 
-      expect(result.stored).toBe(path.resolve(mockDataDir))
+      expect(result.stored).toBe(resolvePath(mockDataDir))
     })
   })
 
   describe('upsertPluginConfig', () => {
     it('should add new plugin to empty config', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.upsertPluginConfig({
         id: 'new-plugin',
@@ -353,7 +304,7 @@ describe('plugin-store.ts', () => {
       })
 
       expect(result.id).toBe('new-plugin')
-      expect(vi.mocked(fs.writeFile)).toHaveBeenCalled()
+      expect(mockedFs.write).toHaveBeenCalled()
     })
 
     it('should update existing plugin', async () => {
@@ -362,11 +313,11 @@ describe('plugin-store.ts', () => {
     module: ./old.js
     enabled: false`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
+
+      mockedFs.write.mockResolvedValue(undefined)
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       const result = await store.upsertPluginConfig({
         id: 'existing-plugin',
@@ -375,14 +326,14 @@ describe('plugin-store.ts', () => {
       })
 
       expect(result.id).toBe('existing-plugin')
-      expect(vi.mocked(fs.writeFile)).toHaveBeenCalled()
+      expect(mockedFs.write).toHaveBeenCalled()
     })
 
     it('should infer ID from module path if not provided', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.upsertPluginConfig({
         module: './my-awesome-plugin/index.js',
@@ -392,10 +343,10 @@ describe('plugin-store.ts', () => {
     })
 
     it('should infer ID from non-index module path', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.upsertPluginConfig({
         module: './simple-plugin.js',
@@ -405,10 +356,10 @@ describe('plugin-store.ts', () => {
     })
 
     it('should sanitize plugin ID', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.upsertPluginConfig({
         id: 'My Plugin@123!!!',
@@ -424,13 +375,13 @@ describe('plugin-store.ts', () => {
   - id: zebra-plugin
     module: ./zebra.js`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -446,12 +397,12 @@ describe('plugin-store.ts', () => {
     })
 
     it('should preserve config and source fields', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -476,13 +427,13 @@ describe('plugin-store.ts', () => {
     module: ./test.js
     enabled: true`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -499,13 +450,13 @@ describe('plugin-store.ts', () => {
     })
 
     it('should create plugin if not found', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -526,13 +477,13 @@ describe('plugin-store.ts', () => {
   - id: test-plugin
     module: ./old.js`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -551,13 +502,13 @@ describe('plugin-store.ts', () => {
     module: ./test.js
     enabled: true`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -571,10 +522,10 @@ describe('plugin-store.ts', () => {
     })
 
     it('should create plugin when missing with explicit module', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.patchPluginConfig('new-plugin', {
         module: './custom.js',
@@ -585,10 +536,10 @@ describe('plugin-store.ts', () => {
     })
 
     it('should sanitize plugin ID', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const result = await store.patchPluginConfig('Bad ID@@@', {
         enabled: true,
@@ -606,13 +557,13 @@ describe('plugin-store.ts', () => {
   - id: plugin2
     module: ./plugin2.js`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
 
       let writtenContent = ''
-      vi.mocked(fs.writeFile).mockImplementation(async (path, content) => {
+      mockedFs.write.mockImplementation(async (path: any, content: any) => {
         writtenContent = String(content)
         return undefined
       })
@@ -632,15 +583,13 @@ describe('plugin-store.ts', () => {
   - id: plugin1
     module: ./plugin1.js`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
       const result = await store.removePluginConfig('non-existent')
 
       expect(result.removed).toBe(false)
       expect(result.id).toBe('non-existent')
-      expect(vi.mocked(fs.writeFile)).not.toHaveBeenCalled()
+      expect(mockedFs.write).not.toHaveBeenCalled()
     })
 
     it('should sanitize plugin ID', async () => {
@@ -648,10 +597,8 @@ describe('plugin-store.ts', () => {
   - id: test-plugin
     module: ./test.js`
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(existingConfig)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(existingConfig)
       const result = await store.removePluginConfig('Test Plugin!!!')
 
       expect(result.id).toMatch(/^[a-z0-9-]+$/i)
@@ -662,10 +609,8 @@ describe('plugin-store.ts', () => {
     it('should handle empty plugin array', async () => {
       const yamlContent = 'plugins: []'
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(yamlContent)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(yamlContent)
       const result = await store.readPluginsConfig()
 
       expect(result.config.plugins).toEqual([])
@@ -674,10 +619,8 @@ describe('plugin-store.ts', () => {
     it('should handle malformed YAML gracefully', async () => {
       const badYaml = 'plugins:\n  - id: test\n    invalid syntax here'
 
-      vi.mocked(fs.access).mockResolvedValue(undefined)
-      vi.mocked(fs.readFile).mockResolvedValue(badYaml)
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
+      mockedFs.access.mockResolvedValue(undefined)
+      mockedFs.readText.mockResolvedValue(badYaml)
       const result = await store.readPluginsConfig()
 
       expect(result.exists).toBe(false)
@@ -685,10 +628,10 @@ describe('plugin-store.ts', () => {
     })
 
     it('should handle very long plugin IDs', async () => {
-      vi.mocked(fs.access).mockRejectedValue(new Error('Not found'))
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-      vi.mocked(fs.mkdir).mockResolvedValue(undefined)
-      vi.mocked(fs.writeFile).mockResolvedValue(undefined)
+      mockedFs.access.mockRejectedValue(new Error('Not found'))
+
+      mockedFs.mkdir.mockResolvedValue(undefined)
+      mockedFs.write.mockResolvedValue(undefined)
 
       const longId = 'a'.repeat(100)
       const result = await store.upsertPluginConfig({
@@ -701,8 +644,6 @@ describe('plugin-store.ts', () => {
     })
 
     it('should handle special characters in module paths', async () => {
-      vi.mocked(fs.realpath).mockImplementation(async p => String(p))
-
       const specialPath = './plugin with spaces/index.js'
       const result = await store.normalizeModuleSpecifierForPluginsConfig(specialPath)
 
@@ -711,15 +652,15 @@ describe('plugin-store.ts', () => {
   })
 
   describe('internal helpers', () => {
-    it('resolveDataDir should use process.env when env is empty', async () => {
+    it('resolveDataDir should use bunRuntime.env when env is empty', async () => {
       const envModule = await import('@napgram/env-kit')
 
       envModule.env.DATA_DIR = ''
-      process.env.DATA_DIR = '/env/data'
+      bunRuntime.env.DATA_DIR = '/env/data'
 
       const result = store.__testing.resolveDataDir()
 
-      expect(result).toBe(path.resolve('/env/data'))
+      expect(result).toBe(resolvePath('/env/data'))
       envModule.env.DATA_DIR = mockDataDir
     })
 
@@ -727,11 +668,11 @@ describe('plugin-store.ts', () => {
       const envModule = await import('@napgram/env-kit')
 
       envModule.env.DATA_DIR = ''
-      delete process.env.DATA_DIR
+      delete bunRuntime.env.DATA_DIR
 
       const result = store.__testing.resolveDataDir()
 
-      expect(result).toBe(path.resolve('/app/data'))
+      expect(result).toBe(resolvePath('/app/data'))
       envModule.env.DATA_DIR = mockDataDir
     })
 
@@ -756,8 +697,8 @@ describe('plugin-store.ts', () => {
     })
 
     it('parseConfig should use JSON parser for non-YAML extension', () => {
-      const yamlSpy = vi.spyOn(YAML, 'parse')
-      const jsonSpy = vi.spyOn(JSON, 'parse')
+      const yamlSpy = spyOn(YAML, 'parse')
+      const jsonSpy = spyOn(JSON, 'parse')
 
       store.__testing.parseConfig('{"plugins":[]}', '.json')
 

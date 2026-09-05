@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify'
-import fs from 'node:fs/promises'
-import path from 'node:path'
 import { z } from 'zod'
 import { requirePermission } from '@napgram/auth-kit'
+import { runtimeFileIO } from '@napgram/runtime-kit'
+import { joinPath } from './path-utils.js'
 import { env } from './web-deps.js'
 
 /**
@@ -24,7 +24,7 @@ export default async function (fastify: FastifyInstance) {
     enableOperationLog: z.boolean().optional(),
   })
 
-  const configFile = path.join(env.DATA_DIR || '.', 'config.json')
+  const configFile = joinPath(env.DATA_DIR || '.', 'config.json')
 
   /**
    * GET /api/admin/settings
@@ -34,7 +34,7 @@ export default async function (fastify: FastifyInstance) {
     preHandler: requirePermission('settings:read'),
   }, async () => {
     try {
-      const data = await fs.readFile(configFile, 'utf-8')
+      const data = await runtimeFileIO.readText(configFile)
       const config = JSON.parse(data)
       return {
         success: true,
@@ -78,7 +78,7 @@ export default async function (fastify: FastifyInstance) {
       // 读取现有配置
       let currentConfig = {}
       try {
-        const data = await fs.readFile(configFile, 'utf-8')
+        const data = await runtimeFileIO.readText(configFile)
         currentConfig = JSON.parse(data)
       }
       catch {
@@ -94,7 +94,7 @@ export default async function (fastify: FastifyInstance) {
       }
 
       // 保存配置
-      await fs.writeFile(configFile, JSON.stringify(newConfig, null, 2), 'utf-8')
+      await runtimeFileIO.write(configFile, JSON.stringify(newConfig, null, 2))
 
       // 审计日志
       const { AuthService } = await import('@napgram/auth-kit')

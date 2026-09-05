@@ -1,5 +1,5 @@
 export function debounce<TArgs extends any[], TRet, TThis>(fn: (this: TThis, ...originArgs: TArgs) => TRet, dur = 100) {
-  let timer: NodeJS.Timeout | undefined
+  let timer: ReturnType<typeof setTimeout> | undefined
   return function (this: TThis, ...args: TArgs) {
     clearTimeout(timer)
     timer = setTimeout(() => {
@@ -9,7 +9,7 @@ export function debounce<TArgs extends any[], TRet, TThis>(fn: (this: TThis, ...
 }
 
 export function throttle<TArgs extends any[], TRet, TThis>(fn: (this: TThis, ...originArgs: TArgs) => TRet, time = 500) {
-  let timer: NodeJS.Timeout | undefined
+  let timer: ReturnType<typeof setTimeout> | undefined
   return function (this: TThis, ...args: TArgs) {
     if (timer == null) {
       fn.apply(this, args)
@@ -22,7 +22,7 @@ export function throttle<TArgs extends any[], TRet, TThis>(fn: (this: TThis, ...
 
 export function consumer<TArgs extends any[], TRet, TThis>(fn: (this: TThis, ...originArgs: TArgs) => TRet, time = 100) {
   const tasks: Array<() => TRet> = []
-  let timer: NodeJS.Timeout | undefined
+  let timer: ReturnType<typeof setTimeout> | undefined
 
   const nextTask = () => {
     if (tasks.length === 0)

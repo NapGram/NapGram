@@ -1,7 +1,7 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 
-const publishMessageMock = vi.fn()
+const publishMessageMock = mock()
 
 let QQMessageHandler: typeof import('../QQMessageHandler.js').QQMessageHandler
 
@@ -16,11 +16,9 @@ function createMessage(): UnifiedMessage {
   }
 }
 
-vi.mock('@napgram/plugin-kit', async (importOriginal) => {
-  const actual = await importOriginal<any>()
+mock.module('@napgram/plugin-kit', async () => {
   return {
-    ...actual,
-    getEventPublisher: vi.fn(() => ({
+    getEventPublisher: mock(() => ({
       publishMessage: publishMessageMock,
     })),
   }
@@ -28,28 +26,28 @@ vi.mock('@napgram/plugin-kit', async (importOriginal) => {
 
 describe('qqMessageHandler', () => {
   const instance = {
-    tgBot: { getChat: vi.fn() },
-    qqClient: { uin: 123, nickname: 'Bot', sendMessage: vi.fn() },
+    tgBot: { getChat: mock() },
+    qqClient: { uin: 123, nickname: 'Bot', sendMessage: mock() },
   }
   const forwardMap = {
-    findByQQ: vi.fn(),
+    findByQQ: mock(),
   }
   const modeService = {
-    isQQToTGEnabled: vi.fn(),
+    isQQToTGEnabled: mock(),
     nicknameMode: '00',
   }
   const mapper = {
-    saveMessage: vi.fn(),
+    saveMessage: mock(),
   }
   const replyResolver = {
-    resolveQQReply: vi.fn(),
+    resolveQQReply: mock(),
   }
   const telegramSender = {
-    sendToTelegram: vi.fn(),
+    sendToTelegram: mock(),
   }
 
   beforeEach(async () => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     if (!QQMessageHandler) {
       ({ QQMessageHandler } = await import('../QQMessageHandler.js'))
     }

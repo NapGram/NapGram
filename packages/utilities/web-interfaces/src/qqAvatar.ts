@@ -1,5 +1,4 @@
 import type { FastifyInstance } from 'fastify'
-import { Buffer } from 'node:buffer'
 import { getLogger } from './web-deps.js'
 import { ErrorResponses, registerDualRoute } from './web-http.js'
 
@@ -23,7 +22,7 @@ export default async function (fastify: FastifyInstance) {
       reply.header('cache-control', 'public, max-age=86400')
 
       const arrayBuffer = await response.arrayBuffer()
-      return Buffer.from(arrayBuffer)
+      return new Uint8Array(arrayBuffer)
     }
     catch (e) {
       logger.error(`Failed to fetch avatar for ${userId}:`, e)

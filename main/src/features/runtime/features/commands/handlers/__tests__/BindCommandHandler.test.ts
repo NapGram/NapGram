@@ -1,16 +1,14 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { IQQClient } from '../../../../runtime-types.js'
 import type { CommandContext } from '../CommandContext.js'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 
 import { addForwardPairWithChatType } from '../../utils/ForwardPairChatType.js'
 import { BindCommandHandler } from '../BindCommandHandler.js'
 
-vi.mock('../../utils/ForwardPairChatType.js', async (importOriginal) => {
-  const actual = await importOriginal() as any
+mock.module('../../utils/ForwardPairChatType.js', async () => {
   return {
-    ...actual,
-    addForwardPairWithChatType: vi.fn().mockImplementation(async (_fm: any, _id: any, qqRoomId: any, _tgChatId: any, _threadId: any, qqChatType: any) => ({
+    addForwardPairWithChatType: mock().mockImplementation(async (_fm: any, _id: any, qqRoomId: any, _tgChatId: any, _threadId: any, qqChatType: any) => ({
       qqRoomId: BigInt(qqRoomId),
       qqChatType,
     })),
@@ -23,34 +21,34 @@ function createMockQQClient(): IQQClient {
     uin: 123456,
     nickname: 'TestBot',
     clientType: 'napcat',
-    isOnline: vi.fn().mockResolvedValue(true),
-    sendMessage: vi.fn().mockResolvedValue({ success: true }),
-    recallMessage: vi.fn(),
-    getMessage: vi.fn(),
-    getFriendList: vi.fn(),
-    getGroupList: vi.fn(),
-    getGroupMemberList: vi.fn(),
-    getGroupMemberInfo: vi.fn(),
-    getFriendInfo: vi.fn(),
-    getGroupInfo: vi.fn(),
-    on: vi.fn(),
-    once: vi.fn(),
-    off: vi.fn(),
-    removeListener: vi.fn(),
-    removeAllListeners: vi.fn(),
-    emit: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
-    destroy: vi.fn(),
+    isOnline: mock().mockResolvedValue(true),
+    sendMessage: mock().mockResolvedValue({ success: true }),
+    recallMessage: mock(),
+    getMessage: mock(),
+    getFriendList: mock(),
+    getGroupList: mock(),
+    getGroupMemberList: mock(),
+    getGroupMemberInfo: mock(),
+    getFriendInfo: mock(),
+    getGroupInfo: mock(),
+    on: mock(),
+    once: mock(),
+    off: mock(),
+    removeListener: mock(),
+    removeAllListeners: mock(),
+    emit: mock(),
+    login: mock(),
+    logout: mock(),
+    destroy: mock(),
   } as any
 }
 
 // Mock Telegram Bot
 function createMockTgBot() {
   return {
-    sendMessage: vi.fn().mockResolvedValue({}),
-    getChat: vi.fn().mockResolvedValue({
-      sendMessage: vi.fn().mockResolvedValue({}),
+    sendMessage: mock().mockResolvedValue({}),
+    getChat: mock().mockResolvedValue({
+      sendMessage: mock().mockResolvedValue({}),
     }),
   } as any
 }
@@ -63,25 +61,25 @@ function createMockContext(qqClient: IQQClient, tgBot: any): CommandContext {
     registry: {} as any,
     permissionChecker: {} as any,
     stateManager: {
-      setBindingState: vi.fn(),
+      setBindingState: mock(),
     } as any,
     instance: {
       id: 1,
       owner: '123456',
       forwardPairs: {
-        reload: vi.fn().mockResolvedValue(undefined),
-        findByTG: vi.fn().mockReturnValue(null),
-        findByQQ: vi.fn(),
-        find: vi.fn(),
-        add: vi.fn().mockImplementation(async (qqRoomId: string, tgChatId: string) => ({
+        reload: mock().mockResolvedValue(undefined),
+        findByTG: mock().mockReturnValue(null),
+        findByQQ: mock(),
+        find: mock(),
+        add: mock().mockImplementation(async (qqRoomId: string, tgChatId: string) => ({
           qqRoomId,
           tgChatId,
         })),
-        remove: vi.fn(),
+        remove: mock(),
       },
     } as any,
-    replyTG: vi.fn().mockResolvedValue(undefined),
-    extractThreadId: vi.fn().mockReturnValue(undefined),
+    replyTG: mock().mockResolvedValue(undefined),
+    extractThreadId: mock().mockReturnValue(undefined),
   } as any
 }
 
@@ -158,7 +156,7 @@ describe('bindCommandHandler', () => {
   describe('conflict Detection', () => {
     it('should reject binding when TG thread is already bound to different QQ group', async () => {
       // Mock existing binding
-      mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue({
+      mockContext.instance.forwardPairs.findByTG = mock().mockReturnValue({
         qqRoomId: '999999',
         tgChatId: '777777',
         tgThreadId: undefined,
@@ -208,7 +206,7 @@ describe('bindCommandHandler', () => {
 
   describe('thread Support', () => {
     it('should set binding state with correct thread ID in interactive mode', async () => {
-      vi.mocked(mockContext.extractThreadId).mockReturnValue(BigInt(99999))
+      mockContext.extractThreadId.mockReturnValue(BigInt(99999))
 
       const msg = createMessage('/bind', '999999', '777777')
       await handler.execute(msg, [])
@@ -224,7 +222,7 @@ describe('bindCommandHandler', () => {
 
   describe('successful binding', () => {
     it('binds QQ group to TG chat successfully', async () => {
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+      addForwardPairWithChatType.mockResolvedValueOnce({
         qqRoomId: BigInt(888888),
         qqChatType: 'group',
       } as any)
@@ -240,8 +238,8 @@ describe('bindCommandHandler', () => {
     })
 
     it('binds with thread ID info in success message', async () => {
-      vi.mocked(mockContext.extractThreadId).mockReturnValue(BigInt(12345))
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+      mockContext.extractThreadId.mockReturnValue(BigInt(12345))
+      addForwardPairWithChatType.mockResolvedValueOnce({
         qqRoomId: BigInt(888888),
         qqChatType: 'group',
       } as any)
@@ -257,7 +255,7 @@ describe('bindCommandHandler', () => {
     })
 
     it('handles addForwardPairWithChatType returning null', async () => {
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce(undefined as any)
+      addForwardPairWithChatType.mockResolvedValueOnce(undefined as any)
 
       const msg = createMessage('/bind 888888', '999999', '777777')
       await handler.execute(msg, ['888888'])
@@ -270,7 +268,7 @@ describe('bindCommandHandler', () => {
     })
 
     it('handles addForwardPairWithChatType returning conflicting record', async () => {
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+      addForwardPairWithChatType.mockResolvedValueOnce({
         qqRoomId: BigInt(999999),
         qqChatType: 'group',
       } as any)
@@ -286,7 +284,7 @@ describe('bindCommandHandler', () => {
     })
 
     it('binds private (friend) chat type', async () => {
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+      addForwardPairWithChatType.mockResolvedValueOnce({
         qqRoomId: BigInt(888888),
         qqChatType: 'private',
       } as any)
@@ -302,11 +300,11 @@ describe('bindCommandHandler', () => {
     })
 
     it('allows re-binding same QQ target to same TG thread', async () => {
-      mockContext.instance.forwardPairs.findByTG = vi.fn().mockReturnValue({
+      mockContext.instance.forwardPairs.findByTG = mock().mockReturnValue({
         qqRoomId: BigInt(888888),
         qqChatType: 'group',
       })
-      vi.mocked(addForwardPairWithChatType).mockResolvedValueOnce({
+      addForwardPairWithChatType.mockResolvedValueOnce({
         qqRoomId: BigInt(888888),
         qqChatType: 'group',
       } as any)

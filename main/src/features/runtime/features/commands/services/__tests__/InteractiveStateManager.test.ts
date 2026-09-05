@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, jest } from 'bun:test'
 import { InteractiveStateManager } from '../InteractiveStateManager.js'
 
 describe('interactiveStateManager', () => {
@@ -6,11 +6,11 @@ describe('interactiveStateManager', () => {
 
   beforeEach(() => {
     manager = new InteractiveStateManager()
-    vi.useFakeTimers()
+    jest.useFakeTimers()
   })
 
   afterEach(() => {
-    vi.useRealTimers()
+    jest.useRealTimers()
   })
 
   describe('setBindingState', () => {
@@ -94,7 +94,7 @@ describe('interactiveStateManager', () => {
       manager.setBindingState('chat-2', 'user-2', BigInt(200))
 
       // Advance time by 6 minutes
-      vi.advanceTimersByTime(6 * 60 * 1000)
+      jest.advanceTimersByTime(6 * 60 * 1000)
 
       manager.cleanupExpired()
 
@@ -106,7 +106,7 @@ describe('interactiveStateManager', () => {
       manager.setBindingState('chat-1', 'user-1', BigInt(100))
 
       // Advance time by 2 minutes
-      vi.advanceTimersByTime(2 * 60 * 1000)
+      jest.advanceTimersByTime(2 * 60 * 1000)
 
       manager.cleanupExpired()
 
@@ -117,7 +117,7 @@ describe('interactiveStateManager', () => {
       manager.setBindingState('chat-1', 'user-1', BigInt(100))
 
       // Advance time by 6 minutes
-      vi.advanceTimersByTime(6 * 60 * 1000)
+      jest.advanceTimersByTime(6 * 60 * 1000)
 
       manager.setBindingState('chat-2', 'user-2', BigInt(200))
 

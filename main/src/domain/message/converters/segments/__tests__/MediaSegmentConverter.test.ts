@@ -1,5 +1,5 @@
 import { MediaSegmentConverter } from '@napgram/message-kit'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 
 describe('mediaSegmentConverter', () => {
   const converter = new MediaSegmentConverter()

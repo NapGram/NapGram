@@ -1,26 +1,26 @@
-import { Buffer } from 'node:buffer'
-import { describe, expect, it, vi } from 'vitest'
+import { bytesFromUtf8 } from '../../../../shared/utils/binary.js'
+import { describe, expect, it, mock } from 'bun:test'
 import { enableQQMediaDownloadDiagnostics } from '../QQMediaDiagnostics'
 
 function createMockLog() {
   return {
-    warn: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-    fatal: vi.fn(),
-    trace: vi.fn(),
-    child: vi.fn(),
+    warn: mock(),
+    info: mock(),
+    error: mock(),
+    debug: mock(),
+    fatal: mock(),
+    trace: mock(),
+    child: mock(),
     level: 'info',
-    silent: vi.fn(),
+    silent: mock(),
   } as any
 }
 
 function createMockQQClient(overrides: Record<string, any> = {}) {
   return {
-    on: vi.fn(),
-    login: vi.fn(),
-    logout: vi.fn(),
+    on: mock(),
+    login: mock(),
+    logout: mock(),
     ...overrides,
   } as any
 }
@@ -28,7 +28,7 @@ function createMockQQClient(overrides: Record<string, any> = {}) {
 describe('enableQQMediaDownloadDiagnostics', () => {
   it('wraps downloadFile with error logging', async () => {
     const log = createMockLog()
-    const rawDownloadFile = vi.fn().mockRejectedValue(new Error('file not found'))
+    const rawDownloadFile = mock().mockRejectedValue(new Error('file not found'))
     const qq = createMockQQClient({ downloadFile: rawDownloadFile })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -39,7 +39,7 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('logs generic downloadFile errors', async () => {
     const log = createMockLog()
-    const rawDownloadFile = vi.fn().mockRejectedValue(new Error('network timeout'))
+    const rawDownloadFile = mock().mockRejectedValue(new Error('network timeout'))
     const qq = createMockQQClient({ downloadFile: rawDownloadFile })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -50,19 +50,19 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('passes through successful downloadFile calls', async () => {
     const log = createMockLog()
-    const rawDownloadFile = vi.fn().mockResolvedValue(Buffer.from('data'))
+    const rawDownloadFile = mock().mockResolvedValue(bytesFromUtf8('data'))
     const qq = createMockQQClient({ downloadFile: rawDownloadFile })
 
     enableQQMediaDownloadDiagnostics(qq, log)
 
     const result = await qq.downloadFile('http://example.com/file')
-    expect(result).toEqual(Buffer.from('data'))
+    expect(result).toEqual(bytesFromUtf8('data'))
     expect(log.warn).not.toHaveBeenCalled()
   })
 
   it('wraps downloadFileStreamToFile with error logging', async () => {
     const log = createMockLog()
-    const rawStream = vi.fn().mockRejectedValue(new Error('stream failed'))
+    const rawStream = mock().mockRejectedValue(new Error('stream failed'))
     const qq = createMockQQClient({ downloadFileStreamToFile: rawStream })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -73,7 +73,7 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('warns when downloadFileStreamToFile returns no path', async () => {
     const log = createMockLog()
-    const rawStream = vi.fn().mockResolvedValue({ info: {} })
+    const rawStream = mock().mockResolvedValue({ info: {} })
     const qq = createMockQQClient({ downloadFileStreamToFile: rawStream })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -85,8 +85,8 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('uses stream-first strategy in getFile', async () => {
     const log = createMockLog()
-    const rawGetFile = vi.fn()
-    const rawStream = vi.fn().mockResolvedValue({ path: '/tmp/file.jpg', info: { size: 100 } })
+    const rawGetFile = mock()
+    const rawStream = mock().mockResolvedValue({ path: '/tmp/file.jpg', info: { size: 100 } })
     const qq = createMockQQClient({ getFile: rawGetFile, downloadFileStreamToFile: rawStream })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -99,8 +99,8 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('falls back to rawGetFile when stream returns no local path', async () => {
     const log = createMockLog()
-    const rawGetFile = vi.fn().mockResolvedValue({ url: 'http://cdn/file' })
-    const rawStream = vi.fn().mockResolvedValue({ path: null })
+    const rawGetFile = mock().mockResolvedValue({ url: 'http://cdn/file' })
+    const rawStream = mock().mockResolvedValue({ path: null })
     const qq = createMockQQClient({ getFile: rawGetFile, downloadFileStreamToFile: rawStream })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -112,8 +112,8 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('falls back to rawGetFile when stream throws', async () => {
     const log = createMockLog()
-    const rawGetFile = vi.fn().mockResolvedValue({ url: 'http://cdn/file' })
-    const rawStream = vi.fn().mockRejectedValue(new Error('stream broken'))
+    const rawGetFile = mock().mockResolvedValue({ url: 'http://cdn/file' })
+    const rawStream = mock().mockRejectedValue(new Error('stream broken'))
     const qq = createMockQQClient({ getFile: rawGetFile, downloadFileStreamToFile: rawStream })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -125,7 +125,7 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('warns when rawGetFile returns empty', async () => {
     const log = createMockLog()
-    const rawGetFile = vi.fn().mockResolvedValue(null)
+    const rawGetFile = mock().mockResolvedValue(null)
     const qq = createMockQQClient({ getFile: rawGetFile })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -137,7 +137,7 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('skips wrapping if already wrapped', () => {
     const log = createMockLog()
-    const rawDownloadFile = vi.fn()
+    const rawDownloadFile = mock()
     const qq = createMockQQClient({ downloadFile: rawDownloadFile })
 
     enableQQMediaDownloadDiagnostics(qq, log)
@@ -149,7 +149,7 @@ describe('enableQQMediaDownloadDiagnostics', () => {
 
   it('strips leading slash from fileId', async () => {
     const log = createMockLog()
-    const rawStream = vi.fn().mockResolvedValue({ path: '/tmp/file.jpg' })
+    const rawStream = mock().mockResolvedValue({ path: '/tmp/file.jpg' })
     const qq = createMockQQClient({ downloadFileStreamToFile: rawStream })
 
     enableQQMediaDownloadDiagnostics(qq, log)

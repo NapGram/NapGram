@@ -1,29 +1,33 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { addForwardPairWithChatType, findPairByQQWithChatType } from '../../../commands/utils/ForwardPairChatType.js'
-import { PersonalPairProvisioner } from '../PersonalPairProvisioner.js'
+import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 
-const loggerMocks = vi.hoisted(() => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
+const loggerMocks = (() => ({
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
+
+const pairHelperMocks = (() => ({
+  findPairByQQWithChatType: mock(),
+  addForwardPairWithChatType: mock(),
+}))()
+
+mock.module('@napgram/logger-kit', async () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
-const pairHelperMocks = vi.hoisted(() => ({
-  findPairByQQWithChatType: vi.fn(),
-  addForwardPairWithChatType: vi.fn(),
+mock.module('../../../../capabilities/logging.js', () => ({
+  getLogger: mock(() => loggerMocks),
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => loggerMocks),
-}))
-
-vi.mock('../../../commands/utils/ForwardPairChatType.js', () => ({
+mock.module('../../../commands/utils/ForwardPairChatType.js', () => ({
   findPairByQQWithChatType: pairHelperMocks.findPairByQQWithChatType,
   addForwardPairWithChatType: pairHelperMocks.addForwardPairWithChatType,
 }))
+
+const { addForwardPairWithChatType, findPairByQQWithChatType } = await import('../../../commands/utils/ForwardPairChatType.js')
+const { PersonalPairProvisioner } = await import('../PersonalPairProvisioner.js')
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void
@@ -49,16 +53,16 @@ function createQQMessage(overrides: Partial<UnifiedMessage> = {}): UnifiedMessag
 
 function createRuntime(overrides: Record<string, unknown> = {}) {
   const tgUserClient = {
-    createSupergroup: vi.fn().mockResolvedValue({ id: -10020002 }),
-    addChatMembers: vi.fn().mockResolvedValue([]),
-    editAdminRights: vi.fn().mockResolvedValue(undefined),
-    resolvePeer: vi.fn().mockResolvedValue({ _: 'inputPeerChannel', channelId: 10020002, accessHash: 0 }),
-    call: vi.fn().mockResolvedValue({ filters: [] }),
+    createSupergroup: mock().mockResolvedValue({ id: -10020002 }),
+    addChatMembers: mock().mockResolvedValue([]),
+    editAdminRights: mock().mockResolvedValue(undefined),
+    resolvePeer: mock().mockResolvedValue({ _: 'inputPeerChannel', channelId: 10020002, accessHash: 0 }),
+    call: mock().mockResolvedValue({ filters: [] }),
   }
   const tgBot = {
     isOnline: true,
     me: { id: 90001, username: 'NapGramBot' },
-    getChat: vi.fn().mockResolvedValue({ id: -10020002 }),
+    getChat: mock().mockResolvedValue({ id: -10020002 }),
   }
   const instance = {
     id: 7,
@@ -69,7 +73,7 @@ function createRuntime(overrides: Record<string, unknown> = {}) {
       isOnline: true,
       client: tgUserClient,
     },
-    getPersonalModeDiagnostics: vi.fn(() => ({
+    getPersonalModeDiagnostics: mock(() => ({
       workMode: 'personal',
       userBotRequired: true,
       userSessionId: 66,
@@ -80,10 +84,10 @@ function createRuntime(overrides: Record<string, unknown> = {}) {
     })),
     ...overrides,
   } as any
-  const forwardMap = { reload: vi.fn() } as any
+  const forwardMap = { reload: mock() } as any
   const qqClient = {
-    getFriendInfo: vi.fn().mockResolvedValue({ id: '10001', name: 'Alice' }),
-    getGroupInfo: vi.fn().mockResolvedValue({ id: '20002', type: 'group', name: 'Group Name' }),
+    getFriendInfo: mock().mockResolvedValue({ id: '10001', name: 'Alice' }),
+    getGroupInfo: mock().mockResolvedValue({ id: '20002', type: 'group', name: 'Group Name' }),
   } as any
 
   return { instance, forwardMap, qqClient, tgBot, tgUserClient }
@@ -91,7 +95,7 @@ function createRuntime(overrides: Record<string, unknown> = {}) {
 
 describe('personalPairProvisioner', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     pairHelperMocks.findPairByQQWithChatType.mockResolvedValue(undefined)
     pairHelperMocks.addForwardPairWithChatType.mockResolvedValue({
       id: 10,
@@ -107,12 +111,12 @@ describe('personalPairProvisioner', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    mock.restore()
   })
 
   it('does nothing when personal auto provisioning is unavailable', async () => {
     const runtime = createRuntime({
-      getPersonalModeDiagnostics: vi.fn(() => ({
+      getPersonalModeDiagnostics: mock(() => ({
         workMode: 'personal',
         canAutoProvisionPairs: false,
       })),

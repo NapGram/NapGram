@@ -1,8 +1,8 @@
 import { getEventPublisher } from '@napgram/plugin-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import Instance from '../Instance'
 
-const envMock = vi.hoisted(() => ({
+const envMock = (() => ({
   DATA_DIR: '/tmp/napgram',
   CACHE_DIR: '/tmp/napgram/cache',
   TG_BOT_TOKEN: 'token',
@@ -11,33 +11,33 @@ const envMock = vi.hoisted(() => ({
   OFFLINE_NOTIFICATION_COOLDOWN: 60,
   ADMIN_QQ: 123,
   ADMIN_TG: 456,
-}))
+}))()
 
-const dbMocks = vi.hoisted(() => ({
+const dbMocks = (() => ({
   query: {
     instance: {
-      findFirst: vi.fn(),
+      findFirst: mock(),
     },
     session: {
-      findFirst: vi.fn(),
+      findFirst: mock(),
     },
   },
-  insert: vi.fn(() => ({
-    values: vi.fn(() => ({
-      returning: vi.fn().mockResolvedValue([]),
-      onConflictDoUpdate: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([]),
+  insert: mock(() => ({
+    values: mock(() => ({
+      returning: mock().mockResolvedValue([]),
+      onConflictDoUpdate: mock(() => ({
+        returning: mock().mockResolvedValue([]),
       })),
     })),
   })),
-  update: vi.fn(() => ({
-    set: vi.fn(() => ({
-      where: vi.fn().mockResolvedValue(undefined),
+  update: mock(() => ({
+    set: mock(() => ({
+      where: mock().mockResolvedValue(undefined),
     })),
   })),
-}))
+}))()
 
-const schemaMocks = vi.hoisted(() => ({
+const schemaMocks = (() => ({
   instance: {
     id: 'id',
     owner: 'owner',
@@ -54,70 +54,70 @@ const schemaMocks = vi.hoisted(() => ({
     serverAddress: 'serverAddress',
     authKey: 'authKey',
   },
-}))
+}))()
 
-const eqMock = vi.hoisted(() => vi.fn((left, right) => ({ left, right })))
+const eqMock = (() => mock((left, right) => ({ left, right })))()
 
-const loggerMocks = vi.hoisted(() => ({
-  trace: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-}))
+const loggerMocks = (() => ({
+  trace: mock(),
+  debug: mock(),
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+}))()
 
-const telemetryMocks = vi.hoisted(() => ({
-  captureException: vi.fn(),
-}))
+const telemetryMocks = (() => ({
+  captureException: mock(),
+}))()
 
-const eventPublisherMocks = vi.hoisted(() => ({
-  publishFriendRequest: vi.fn(),
-  publishGroupRequest: vi.fn(),
-  publishNotice: vi.fn(),
-  publishInstanceStatus: vi.fn(),
-}))
+const eventPublisherMocks = (() => ({
+  publishFriendRequest: mock(),
+  publishGroupRequest: mock(),
+  publishNotice: mock(),
+  publishInstanceStatus: mock(),
+}))()
 
-const forwardMapMocks = vi.hoisted(() => ({
-  load: vi.fn(),
-}))
+const forwardMapMocks = (() => ({
+  load: mock(),
+}))()
 
-const telegramMocks = vi.hoisted(() => ({
-  connect: vi.fn(),
-  create: vi.fn(),
-}))
+const telegramMocks = (() => ({
+  connect: mock(),
+  create: mock(),
+}))()
 
-const telegramBotMocks = vi.hoisted(() => ({
+const telegramBotMocks = (() => ({
   connected: {
     sessionId: 10,
     me: { id: 1 },
     isOnline: true,
-    disconnect: vi.fn().mockResolvedValue(undefined),
+    disconnect: mock().mockResolvedValue(undefined),
   },
   created: {
     sessionId: 20,
     me: { id: 2 },
     isOnline: true,
-    disconnect: vi.fn().mockResolvedValue(undefined),
+    disconnect: mock().mockResolvedValue(undefined),
   },
-}))
+}))()
 
-const qqMocks = vi.hoisted(() => {
+const qqMocks = (() => {
   const handlers = new Map<string, any>()
   const client = {
-    login: vi.fn().mockResolvedValue(undefined),
-    logout: vi.fn().mockResolvedValue(undefined),
-    on: vi.fn((event: string, handler: any) => {
+    login: mock().mockResolvedValue(undefined),
+    logout: mock().mockResolvedValue(undefined),
+    on: mock((event: string, handler: any) => {
       handlers.set(event, handler)
     }),
-    handleFriendRequest: vi.fn().mockResolvedValue(undefined),
-    handleGroupRequest: vi.fn().mockResolvedValue(undefined),
+    handleFriendRequest: mock().mockResolvedValue(undefined),
+    handleGroupRequest: mock().mockResolvedValue(undefined),
     uin: '123456',
   }
   const factory = {
-    create: vi.fn().mockResolvedValue(client),
+    create: mock().mockResolvedValue(client),
   }
   return { handlers, client, factory }
-})
+})()
 
 function configuredInstance(overrides: Record<string, unknown> = {}) {
   return {
@@ -126,58 +126,73 @@ function configuredInstance(overrides: Record<string, unknown> = {}) {
   }
 }
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: envMock,
 }))
 
-vi.mock('@napgram/db-kit', () => ({
+mock.module('@napgram/db-kit', () => ({
   db: dbMocks,
   schema: schemaMocks,
   eq: eqMock,
   ForwardMap: {
-    load: vi.fn().mockResolvedValue({ map: true }),
+    load: mock().mockResolvedValue({ map: true }),
   },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => loggerMocks),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => loggerMocks),
   telemetry: telemetryMocks,
 }))
 
-vi.mock('@napgram/plugin-kit', () => ({
-  getEventPublisher: vi.fn(() => eventPublisherMocks),
+mock.module('@napgram/plugin-kit', () => ({
+  getEventPublisher: mock(() => eventPublisherMocks),
 }))
 
-vi.mock('../ForwardMap', () => ({
+mock.module('../ForwardMap', () => ({
   default: {
     load: forwardMapMocks.load,
   },
 }))
 
-vi.mock('../../../infrastructure/clients/qq', () => ({
+mock.module('../../../infrastructure/clients/qq', () => ({
   qqClientFactory: qqMocks.factory,
 }))
 
-vi.mock('../../../infrastructure/clients/telegram', () => ({
+mock.module('../../../infrastructure/clients/telegram', () => ({
   telegramClientFactory: {
     connect: telegramMocks.connect,
     create: telegramMocks.create,
   },
 }))
 
-const instanceRegistryMocks = vi.hoisted(() => ({
-  add: vi.fn(),
-  remove: vi.fn(),
-  get: vi.fn(),
-}))
+const instanceRegistryMocks = (() => ({
+  add: mock(),
+  remove: mock(),
+  get: mock(),
+}))()
 
-vi.mock('../../../features/runtime/instance-registry', () => ({
+mock.module('../../../features/runtime/instance-registry', () => ({
   instanceRegistry: instanceRegistryMocks,
 }))
 
 describe('instance', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    // mocks cleared
+    telegramMocks.connect.mockClear()
+    telegramMocks.create.mockClear()
+    telegramMocks.connect.mockResolvedValue(telegramBotMocks.connected)
+    telegramMocks.create.mockResolvedValue(telegramBotMocks.created)
+    qqMocks.factory.create.mockClear()
+    qqMocks.client.logout.mockClear()
+    qqMocks.client.handleFriendRequest.mockClear()
+    qqMocks.client.handleGroupRequest.mockClear()
+    eventPublisherMocks.publishFriendRequest.mockClear()
+    eventPublisherMocks.publishGroupRequest.mockClear()
+    eventPublisherMocks.publishNotice.mockClear()
+    eventPublisherMocks.publishInstanceStatus.mockClear()
+    instanceRegistryMocks.add.mockClear()
+    instanceRegistryMocks.remove.mockClear()
+    ;(getEventPublisher as any).mockClear()
     qqMocks.handlers.clear()
     qqMocks.client.login.mockReset().mockResolvedValue(undefined)
     qqMocks.client.on.mockImplementation((event: string, handler: any) => {
@@ -196,8 +211,8 @@ describe('instance', () => {
     forwardMapMocks.load.mockResolvedValue({ map: true })
     dbMocks.query.instance.findFirst.mockResolvedValue(null)
     dbMocks.insert.mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        returning: vi.fn().mockResolvedValue([{ id: 0 }]),
+      values: mock().mockReturnValue({
+        returning: mock().mockResolvedValue([{ id: 0 }]),
       }),
     })
   })
@@ -245,7 +260,7 @@ describe('instance', () => {
       reconnect: { maxAttempts: 3, interval: 5000 },
     })
     expect(qqMocks.client.login).toHaveBeenCalled()
-    expect(instance.forwardPairs).toEqual({ map: true })
+    expect(instance.forwardPairs as any).toEqual({ map: true })
     expect(instance.isInit).toBe(true)
     expect(instance.isSetup).toBe(true)
     expect(instanceRegistryMocks.add).toHaveBeenCalledWith(instance)
@@ -339,7 +354,7 @@ describe('instance', () => {
       sessionId: 66,
       me: { id: 66 },
       isOnline: true,
-      disconnect: vi.fn().mockResolvedValue(undefined),
+      disconnect: mock().mockResolvedValue(undefined),
     }
     telegramMocks.connect
       .mockResolvedValueOnce(telegramBotMocks.connected)
@@ -369,7 +384,7 @@ describe('instance', () => {
       authMode: 'user',
       appName: 'NapGram User',
     })
-    expect(instance.tgUserBot).toBe(userBot)
+    expect(instance.tgUserBot as any).toBe(userBot)
     expect(instance.getPersonalModeDiagnostics()).toEqual(expect.objectContaining({
       workMode: 'personal',
       userBotRequired: true,
@@ -430,8 +445,8 @@ describe('instance', () => {
   it('updates instance fields via setters', () => {
     const instance = new (Instance as any)(3)
       ; (instance as any)._qq = {}
-    const whereMock = vi.fn().mockResolvedValue(undefined)
-    const setMock = vi.fn().mockReturnValue({ where: whereMock })
+    const whereMock = mock().mockResolvedValue(undefined)
+    const setMock = mock().mockReturnValue({ where: whereMock })
     dbMocks.update.mockReturnValue({ set: setMock })
 
     instance.owner = 10
@@ -466,7 +481,7 @@ describe('instance', () => {
 
     expect(instance.owner).toBe(99)
     expect(instance.qq).toEqual({ id: 10, wsUrl: 'ws://' })
-    expect(instance.qqUin).toBe('123456')
+    expect(instance.qqUin as any).toBe('123456')
     expect(instance.isSetup).toBe(true)
     expect(instance.workMode).toBe('personal')
     expect(instance.botMe).toEqual({ id: 1 }) // from mocks
@@ -499,8 +514,8 @@ describe('instance', () => {
   })
 
   it('creates new instance via createNew', async () => {
-    const returningMock = vi.fn().mockResolvedValue([{ id: 999 }])
-    const valuesMock = vi.fn().mockReturnValue({ returning: returningMock })
+    const returningMock = mock().mockResolvedValue([{ id: 999 }])
+    const valuesMock = mock().mockReturnValue({ returning: returningMock })
     dbMocks.insert.mockReturnValue({ values: valuesMock })
     dbMocks.query.instance.findFirst.mockResolvedValue({})
 
@@ -581,9 +596,9 @@ describe('instance', () => {
   })
 
   it('handles plugin bridge init failure', async () => {
-    const error = new Error('Bus Init Failed')
+    const error = new Error('Bus Init Failed');
     // Mock getEventPublisher to throw ONCE
-    vi.mocked(getEventPublisher).mockImplementationOnce(() => {
+    (getEventPublisher as any).mockImplementationOnce(() => {
       throw error
     })
 
@@ -747,8 +762,8 @@ describe('instance', () => {
   it('updates setters and logs trace (floating promises)', async () => {
     // Mock qqBot structure to ensure _qq property is set during load()
     dbMocks.query.instance.findFirst.mockResolvedValue({ qqBot: { id: 0 } })
-    const whereMock = vi.fn().mockResolvedValue(undefined)
-    const setMock = vi.fn().mockReturnValue({ where: whereMock })
+    const whereMock = mock().mockResolvedValue(undefined)
+    const setMock = mock().mockReturnValue({ where: whereMock })
     dbMocks.update.mockReturnValue({ set: setMock })
     const instance = await Instance.start(18, 'token')
     setMock.mockClear()
@@ -884,8 +899,8 @@ describe('instance', () => {
   it('handles setter when qq property is missing (Line 407)', async () => {
     // Return empty object so this._qq is undefined
     dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
-    const whereMock = vi.fn().mockResolvedValue(undefined)
-    const setMock = vi.fn().mockReturnValue({ where: whereMock })
+    const whereMock = mock().mockResolvedValue(undefined)
+    const setMock = mock().mockReturnValue({ where: whereMock })
     dbMocks.update.mockReturnValue({ set: setMock })
     const instance = await Instance.start(22, 'token')
     setMock.mockClear()
@@ -984,8 +999,8 @@ describe('instance', () => {
 
     loggerMocks.error.mockClear()
     dbMocks.update.mockReturnValueOnce({
-      set: vi.fn().mockReturnValueOnce({
-        where: vi.fn().mockRejectedValueOnce(new Error('db update failed')),
+      set: mock().mockReturnValueOnce({
+        where: mock().mockRejectedValueOnce(new Error('db update failed')),
       }),
     })
 
@@ -1005,11 +1020,11 @@ describe('instance', () => {
     dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance({ workMode: 'group' }))
     const instance = await Instance.start(101, 'token')
 
-    vi.spyOn(instance, 'startUserBot').mockResolvedValue(undefined)
-    vi.spyOn(instance, 'stopUserBot').mockResolvedValue(undefined)
+    spyOn(instance, 'startUserBot').mockResolvedValue(undefined)
+    spyOn(instance, 'stopUserBot').mockResolvedValue(undefined)
     dbMocks.update.mockReturnValue({
-      set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
+      set: mock().mockReturnValue({
+        where: mock().mockResolvedValue(undefined),
       }),
     })
 
@@ -1032,8 +1047,8 @@ describe('instance', () => {
     const instance = await Instance.start(102, 'token')
 
     dbMocks.update.mockReturnValue({
-      set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
+      set: mock().mockReturnValue({
+        where: mock().mockResolvedValue(undefined),
       }),
     })
 
@@ -1052,7 +1067,7 @@ describe('instance', () => {
   it('disconnects existing UserBot during start and stop with error handling', async () => {
     dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance({ workMode: 'personal', userSessionId: 123 }))
     const userBotMock = {
-      disconnect: vi.fn().mockRejectedValue(new Error('disconnect error')),
+      disconnect: mock().mockRejectedValue(new Error('disconnect error')),
       isOnline: true,
     }
 
@@ -1065,11 +1080,11 @@ describe('instance', () => {
     const instance = await Instance.start(103, 'token')
 
     // At this point, startUserBot is already called during start
-    expect(instance.tgUserBot).toBe(userBotMock)
+    expect(instance.tgUserBot as any).toBe(userBotMock)
 
     // Mock connect for the next start
     const userBotMock2 = {
-      disconnect: vi.fn().mockResolvedValue(undefined),
+      disconnect: mock().mockResolvedValue(undefined),
       isOnline: true,
     }
     telegramMocks.connect.mockImplementation(async (opts) => {
@@ -1084,7 +1099,7 @@ describe('instance', () => {
     await instance.startUserBot()
     expect(userBotMock.disconnect).toHaveBeenCalled()
     expect(loggerMocks.debug).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(Error) }), 'Error disconnecting existing UserBot')
-    expect(instance.tgUserBot).toBe(userBotMock2)
+    expect(instance.tgUserBot as any).toBe(userBotMock2)
 
     // Stop, which should disconnect userBotMock2
     await instance.stopUserBot()
@@ -1123,13 +1138,13 @@ describe('instance', () => {
 
     // Force qqClient logout to throw
     ;(instance as any).qqClient = {
-      logout: vi.fn().mockRejectedValue(new Error('qq logout err')),
-      on: vi.fn(),
+      logout: mock().mockRejectedValue(new Error('qq logout err')),
+      on: mock(),
     }
 
     // Force tgBot disconnect to throw
     ;(instance as any).tgBot = {
-      disconnect: vi.fn().mockRejectedValue(new Error('tg disconnect err')),
+      disconnect: mock().mockRejectedValue(new Error('tg disconnect err')),
     }
 
     loggerMocks.warn.mockClear()
@@ -1145,7 +1160,7 @@ describe('instance', () => {
     dbMocks.query.instance.findFirst.mockResolvedValue(configuredInstance())
     const instance = await Instance.start(106, 'token')
 
-    vi.spyOn(instance, 'hasConfiguredWorkMode').mockReturnValue(false)
+    spyOn(instance, 'hasConfiguredWorkMode').mockReturnValue(false)
 
     const handler = qqMocks.handlers.get('connection:restored')
     eventPublisherMocks.publishNotice.mockClear()

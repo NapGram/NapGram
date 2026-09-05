@@ -84,6 +84,19 @@ variables:
     - if: '$CI_COMMIT_TAG'
     - if: '$CI_COMMIT_BRANCH'
 
+.napgram_push_build_changes: &napgram_push_build_changes
+  - .gitlab-ci.yml
+  - Dockerfile
+  - "**/Dockerfile"
+  - docker/**/*
+  - main/**/*
+  - packages/**/*
+  - scripts/**/*
+  - package.json
+  - bun.lock
+  - bunfig.toml
+  - web/**/*
+
 .napgram_docker_rules:
   rules:
     - if: '$DEPENDENCY_OWNER == "gitlab" && $CI_PIPELINE_SOURCE == "web"'
@@ -95,6 +108,7 @@ variables:
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes: *napgram_push_build_changes
     - if: '$CI_COMMIT_TAG =~ /^v[0-9]+[.][0-9]+[.][0-9]+.*$/'
     - when: never
 
@@ -109,6 +123,7 @@ variables:
     - if: '$NAPGRAM_DOCKER_PUBLISH != "true"'
       when: never
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      changes: *napgram_push_build_changes
     - when: never
 
 .napgram_docker_release_rules:
@@ -356,8 +371,7 @@ app:lint:
   allow_failure: true
   script:
     - bun install --frozen-lockfile --cache-dir "$BUN_INSTALL_CACHE_DIR" --registry "$BUN_REGISTRY"
-    - cd main
-    - bun run lint
+    - bun lint
 
 security:gitleaks:
   extends: .napgram_ci_rules

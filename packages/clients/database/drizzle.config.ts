@@ -5,6 +5,6 @@ export default {
     out: './drizzle',
     dialect: 'postgresql',
     dbCredentials: {
-        url: process.env.DATABASE_URL!,
+        url: (globalThis as typeof globalThis & { Bun: { env: Record<string, string | undefined> } }).Bun.env.DATABASE_URL!,
     },
 } satisfies Config;

@@ -1,19 +1,19 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
-const fileManagerRoutes = vi.hoisted(() => vi.fn())
-const logger = vi.hoisted(() => ({
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  debug: vi.fn(),
-}))
-const webPluginRouteState = vi.hoisted(() => ({
+const fileManagerRoutes = (() => mock())()
+const logger = (() => ({
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+  debug: mock(),
+}))()
+const webPluginRouteState = (() => ({
   registered: new Set<string>(),
   active: new Set<string>(),
-}))
-const runtimeKitMocks = vi.hoisted(() => ({
-  hasPluginWebRoutes: vi.fn((pluginId: string) => webPluginRouteState.registered.has(String(pluginId || '').trim())),
-  markPluginWebRoutes: vi.fn((pluginId: string) => {
+}))()
+const runtimeKitMocks = (() => ({
+  hasPluginWebRoutes: mock((pluginId: string) => webPluginRouteState.registered.has(String(pluginId || '').trim())),
+  markPluginWebRoutes: mock((pluginId: string) => {
     const id = String(pluginId || '').trim()
     if (!id) {
       return false
@@ -23,54 +23,54 @@ const runtimeKitMocks = vi.hoisted(() => ({
     webPluginRouteState.active.add(id)
     return isNew
   }),
-  activatePluginWebRoutes: vi.fn((pluginId: string) => {
+  activatePluginWebRoutes: mock((pluginId: string) => {
     const id = String(pluginId || '').trim()
     if (id) {
       webPluginRouteState.active.add(id)
     }
   }),
-  deactivatePluginWebRoutes: vi.fn((pluginId: string) => {
+  deactivatePluginWebRoutes: mock((pluginId: string) => {
     const id = String(pluginId || '').trim()
     if (id) {
       webPluginRouteState.active.delete(id)
     }
   }),
-  isPluginWebRoutesActive: vi.fn((pluginId: string) => webPluginRouteState.active.has(String(pluginId || '').trim())),
-  resetPluginWebRoutesRegistry: vi.fn(() => {
+  isPluginWebRoutesActive: mock((pluginId: string) => webPluginRouteState.active.has(String(pluginId || '').trim())),
+  resetPluginWebRoutesRegistry: mock(() => {
     webPluginRouteState.registered.clear()
     webPluginRouteState.active.clear()
   }),
-  setWebRuntimeBridge: vi.fn((app: any, bridge: any) => {
+  setWebRuntimeBridge: mock((app: any, bridge: any) => {
     app.__runtimeBridge = bridge
   }),
-  getWebRuntimeBridge: vi.fn((app: any) => app.__runtimeBridge ?? null),
-  tryGetWebRuntimeBridge: vi.fn((app: any) => app.__runtimeBridge ?? null),
-  clearWebRuntimeBridge: vi.fn((app: any) => {
+  getWebRuntimeBridge: mock((app: any) => app.__runtimeBridge ?? null),
+  tryGetWebRuntimeBridge: mock((app: any) => app.__runtimeBridge ?? null),
+  clearWebRuntimeBridge: mock((app: any) => {
     app.__runtimeBridge = null
   }),
-}))
+}))()
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: {
     LISTEN_PORT: 8080,
   },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => logger),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => logger),
 }))
 
-vi.mock('@napgram/runtime-kit', () => runtimeKitMocks)
+mock.module('@napgram/runtime-kit', () => runtimeKitMocks)
 
-vi.mock('../routes/fileManager', () => ({
+mock.module('../routes/fileManager', () => ({
   default: fileManagerRoutes,
   fileManagerRoutes,
 }))
 
 describe('web interfaces', () => {
   beforeEach(() => {
-    vi.resetModules()
-    vi.clearAllMocks()
+    mock.restore()
+    mock.clearAllMocks()
   })
 
   afterEach(async () => {
@@ -95,7 +95,7 @@ describe('web interfaces', () => {
   it('deduplicates plugin route registration by pluginId', async () => {
     const { createServer, registerWebRoutes } = await import('../index')
     const app = createServer()
-    const register = vi.fn()
+    const register = mock()
 
     registerWebRoutes(register, 'plugin-a')
     registerWebRoutes(register, 'plugin-a')
@@ -141,9 +141,9 @@ describe('web interfaces', () => {
     const { configureRuntimeBridge, createServer, getRuntimeBridge, stopServer } = await import('../index')
     const app = createServer()
     const bridge = {
-      getInstance: vi.fn(),
-      listInstances: vi.fn(() => []),
-      getRuntimeReport: vi.fn(() => null),
+      getInstance: mock(),
+      listInstances: mock(() => []),
+      getRuntimeReport: mock(() => null),
     }
 
     configureRuntimeBridge(app, bridge)
@@ -183,7 +183,7 @@ describe('web interfaces', () => {
   it('startServer propagates listen errors', async () => {
     const { createServer, startServer, stopServer } = await import('../index')
     const app = createServer()
-    vi.spyOn(app, 'listen').mockRejectedValueOnce(new Error('Mock listen error'))
+    spyOn(app, 'listen').mockRejectedValueOnce(new Error('Mock listen error'))
 
     await expect(startServer(app)).rejects.toThrow('Mock listen error')
     expect(logger.error).toHaveBeenCalledWith('Failed to start web server:', expect.any(Error))
@@ -194,7 +194,7 @@ describe('web interfaces', () => {
     const { createServer, stopServer } = await import('../index')
     const app = createServer()
     // app is currently assigned to 'server' internally since createServer assigns it
-    vi.spyOn(app, 'close').mockRejectedValueOnce(Object.assign(new Error('Unknown close error'), { code: 'UNKNOWN_CODE' }))
+    spyOn(app, 'close').mockRejectedValueOnce(Object.assign(new Error('Unknown close error'), { code: 'UNKNOWN_CODE' }))
 
     await expect(stopServer()).rejects.toThrow('Unknown close error')
   })

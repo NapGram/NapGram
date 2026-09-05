@@ -125,7 +125,7 @@ export async function stopServer() {
     log.info('Web server stopped')
   }
   catch (error) {
-    const code = (error as NodeJS.ErrnoException)?.code
+    const code = (error as { code?: string })?.code
     if (code !== 'FST_ERR_REOPENED_CLOSE_SERVER') {
       throw error
     }

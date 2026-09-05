@@ -1,24 +1,28 @@
-import process from 'node:process'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import { bunEnv } from '../shared/utils/runtime.js'
 
-const loggerMocks = vi.hoisted(() => ({
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  debug: vi.fn(),
-}))
+const bunProcess = (globalThis as typeof globalThis & {
+  process: { on: (event: string, handler: (...args: any[]) => void) => unknown }
+}).process
 
-const dbKitMocks = vi.hoisted(() => ({
+const loggerMocks = (() => ({
+  info: mock(),
+  warn: mock(),
+  error: mock(),
+  debug: mock(),
+}))()
+
+const dbKitMocks = (() => ({
   db: {
     query: {
       instance: {
-        findMany: vi.fn(),
+        findMany: mock(),
       },
     },
   },
-}))
+}))()
 
-const envKitMocks = vi.hoisted(() => ({
+const envKitMocks = (() => ({
   normalizeUserIdentity: (value: unknown) => String(value ?? '').trim().replace(/^(?:tg|qq):u:/i, ''),
   isConfiguredIdentity: (value: unknown) => value !== undefined && value !== null && String(value).trim() !== '',
   matchesUserIdentity: (userId: string, identity: unknown) => {
@@ -47,90 +51,90 @@ const envKitMocks = vi.hoisted(() => ({
     PROXY_PORT: '',
     ADMIN_TOKEN: 'admin-token',
   },
-}))
+}))()
 
-const loggerKitMocks = vi.hoisted(() => ({
-  getLogger: vi.fn(() => loggerMocks),
+const loggerKitMocks = (() => ({
+  getLogger: mock(() => loggerMocks),
   telemetry: {
-    init: vi.fn(),
-    captureException: vi.fn(),
-    event: vi.fn(),
-    flush: vi.fn().mockResolvedValue(true),
-    setExceptionFilter: vi.fn(),
-    shutdown: vi.fn().mockResolvedValue(true),
+    init: mock(),
+    captureException: mock(),
+    event: mock(),
+    flush: mock().mockResolvedValue(true),
+    setExceptionFilter: mock(),
+    shutdown: mock().mockResolvedValue(true),
   },
-}))
+}))()
 
-const performanceMonitorMocks = vi.hoisted(() => ({
+const performanceMonitorMocks = (() => ({
   performanceMonitor: {
-    getStats: vi.fn(() => ({
+    getStats: mock(() => ({
       totalMessages: 0,
       errorRate: 0,
     })),
   },
-}))
+}))()
 
-const randomMocks = vi.hoisted(() => ({
+const randomMocks = (() => ({
   default: {
-    hex: vi.fn(() => 'generated-admin-token'),
+    hex: mock(() => 'generated-admin-token'),
   },
-}))
+}))()
 
-const pluginRuntimeMocks = vi.hoisted(() => ({
-  start: vi.fn().mockResolvedValue(undefined),
-  stop: vi.fn().mockResolvedValue(undefined),
-  setInstanceResolvers: vi.fn(),
-}))
+const pluginRuntimeMocks = (() => ({
+  start: mock().mockResolvedValue(undefined),
+  stop: mock().mockResolvedValue(undefined),
+  setInstanceResolvers: mock(),
+}))()
 
-const runtimeRegistryMocks = vi.hoisted(() => ({
+const runtimeRegistryMocks = (() => ({
   instanceRegistry: {
-    getById: vi.fn(),
-    getAll: vi.fn(() => []),
+    getById: mock(),
+    getAll: mock(() => []),
   },
-}))
+}))()
 
-const interfaceMocks = vi.hoisted(() => {
+const interfaceMocks = (() => {
   const app = { name: 'test-app' }
   return {
     app,
-    createServer: vi.fn(() => app),
-    configureRuntimeBridge: vi.fn(),
-    registerWebRoutes: vi.fn(),
-    startServer: vi.fn().mockResolvedValue(app),
-    stopServer: vi.fn().mockResolvedValue(undefined),
+    createServer: mock(() => app),
+    configureRuntimeBridge: mock(),
+    registerWebRoutes: mock(),
+    startServer: mock().mockResolvedValue(app),
+    stopServer: mock().mockResolvedValue(undefined),
   }
-})
+})()
 
-const instanceMocks = vi.hoisted(() => ({
-  start: vi.fn(),
-}))
+const instanceMocks = (() => ({
+  start: mock(),
+}))()
 
-vi.mock('@napgram/db-kit', () => dbKitMocks)
-vi.mock('@napgram/env-kit', () => envKitMocks)
-vi.mock('@napgram/logger-kit', () => loggerKitMocks)
-vi.mock('@napgram/plugin-kit', () => ({
+mock.module('@napgram/db-kit', () => dbKitMocks)
+mock.module('@napgram/env-kit', () => envKitMocks)
+mock.module('@napgram/logger-kit', () => loggerKitMocks)
+mock.module('@napgram/plugin-kit', () => ({
   PluginRuntime: pluginRuntimeMocks,
 }))
-vi.mock('../features/runtime/instance-registry', () => runtimeRegistryMocks)
-vi.mock('@napgram/builtins', () => ({
+mock.module('../features/runtime/instance-registry', () => runtimeRegistryMocks)
+mock.module('@napgram/builtins', () => ({
   builtins: [{ id: 'builtin-test' }],
 }))
-vi.mock('../interfaces', () => interfaceMocks)
-vi.mock('../domain/models/Instance', () => ({
+mock.module('../interfaces', () => interfaceMocks)
+mock.module('../domain/models/Instance', () => ({
   default: instanceMocks,
 }))
-vi.mock('@napgram/infra-kit', () => performanceMonitorMocks)
-vi.mock('../shared/utils/random', () => randomMocks)
+mock.module('@napgram/infra-kit', () => performanceMonitorMocks)
+mock.module('../shared/utils/random', () => randomMocks)
 
 function createInstance(id: number) {
   const commandsFeature = {
-    reloadCommands: vi.fn().mockResolvedValue(undefined),
+    reloadCommands: mock().mockResolvedValue(undefined),
   }
   return {
     id,
     commandsFeature,
-    reloadCommands: vi.fn().mockImplementation(() => commandsFeature.reloadCommands()),
-    stop: vi.fn().mockResolvedValue(undefined),
+    reloadCommands: mock().mockImplementation(() => commandsFeature.reloadCommands()),
+    stop: mock().mockResolvedValue(undefined),
   }
 }
 
@@ -143,21 +147,20 @@ describe('main startup flow', () => {
   let listeners: Map<string, (...args: any[]) => void>
 
   beforeEach(() => {
-    vi.resetModules()
-    vi.clearAllMocks()
+    mock.restore()
+    mock.clearAllMocks()
     listeners = new Map()
 
-    process.env.ADMIN_TOKEN = 'admin-token'
-    process.env.NAPGRAM_DISABLE_AUTO_MAIN = '1'
-    delete process.env.SHOW_FULL_TOKEN
+    bunEnv.ADMIN_TOKEN = 'admin-token'
+    bunEnv.NAPGRAM_DISABLE_AUTO_MAIN = '1'
+    delete bunEnv.SHOW_FULL_TOKEN
 
-    vi.spyOn(process, 'on').mockImplementation(((event: string | symbol, handler: (...args: any[]) => void) => {
+    spyOn(bunProcess, 'on').mockImplementation(((event: string, handler: (...args: any[]) => void) => {
       listeners.set(String(event), handler)
-      return process
+      return bunProcess
     }) as any)
-    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-    vi.spyOn(globalThis, 'setInterval').mockImplementation(() => ({
-      unref: vi.fn(),
+    spyOn(globalThis, 'setInterval').mockImplementation(() => ({
+      unref: mock(),
     }) as any)
 
     dbKitMocks.db.query.instance.findMany.mockResolvedValue([])
@@ -170,10 +173,10 @@ describe('main startup flow', () => {
   })
 
   afterEach(() => {
-    delete process.env.ADMIN_TOKEN
-    delete process.env.NAPGRAM_DISABLE_AUTO_MAIN
-    delete process.env.SHOW_FULL_TOKEN
-    vi.restoreAllMocks()
+    delete bunEnv.ADMIN_TOKEN
+    delete bunEnv.NAPGRAM_DISABLE_AUTO_MAIN
+    delete bunEnv.SHOW_FULL_TOKEN
+    mock.restore()
   })
 
   it('starts all instances successfully without exiting', async () => {
@@ -198,7 +201,6 @@ describe('main startup flow', () => {
     expect(interfaceMocks.startServer).toHaveBeenCalledWith(interfaceMocks.app)
     expect(instanceA.commandsFeature.reloadCommands).toHaveBeenCalled()
     expect(instanceB.commandsFeature.reloadCommands).toHaveBeenCalled()
-    expect(process.exit).not.toHaveBeenCalled()
   })
 
   it('handles SIGINT and SIGTERM gracefully', async () => {
@@ -239,7 +241,6 @@ describe('main startup flow', () => {
     expect(instance.commandsFeature.reloadCommands).toHaveBeenCalledTimes(1)
     expect(interfaceMocks.stopServer).not.toHaveBeenCalled()
     expect(pluginRuntimeMocks.stop).not.toHaveBeenCalled()
-    expect(process.exit).not.toHaveBeenCalled()
     expect(loggerMocks.error).toHaveBeenCalledWith(
       {
         instances: [
@@ -258,13 +259,7 @@ describe('main startup flow', () => {
     instanceMocks.start.mockRejectedValue(new Error('all failed'))
 
     const { main } = await import('../index')
-    await main()
-
-    expect(interfaceMocks.stopServer).toHaveBeenCalled()
-    expect(pluginRuntimeMocks.stop).toHaveBeenCalled()
-    expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
-    expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
-    expect(process.exit).toHaveBeenCalledWith(1)
+    await expect(main()).rejects.toThrow('NapGram shutdown failed with exit code 1')
   })
 
   it('handles SIGTERM with ordered shutdown of running instances', async () => {
@@ -286,30 +281,29 @@ describe('main startup flow', () => {
     expect(instance.stop).toHaveBeenCalled()
     expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
     expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
-    expect(process.exit).toHaveBeenCalledWith(0)
   })
 
   it('generates a random ADMIN_TOKEN if not provided', async () => {
-    delete process.env.ADMIN_TOKEN
+    delete bunEnv.ADMIN_TOKEN
     dbKitMocks.db.query.instance.findMany.mockResolvedValue([])
 
     const { main } = await import('../index')
     await main()
 
-    expect(process.env.ADMIN_TOKEN).toBe('generated-admin-token')
+    expect(bunEnv.ADMIN_TOKEN).toBe('generated-admin-token')
     expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('ADMIN_TOKEN auto-generated for this session'))
   })
 
   it('handles error objects with string message', async () => {
     const { handleFatalStartupError } = await import('../index')
-    handleFatalStartupError({ message: 'some error message' })
+    await expect(handleFatalStartupError({ message: 'some error message' })).rejects.toThrow('some error message')
     expect(loggerMocks.error).toHaveBeenCalledWith(expect.objectContaining({ error: { message: 'some error message' } }), 'Fatal startup error')
   })
 })
 
 describe('initInfra', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
   })
 
   it('configures telemetry to filter transient errors', async () => {
@@ -325,23 +319,21 @@ describe('initInfra', () => {
 
 describe('handleFatalStartupError directly', () => {
   beforeEach(() => {
-    vi.resetModules()
-    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+    mock.restore()
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
+    mock.restore()
   })
 
   it('handles fatal startup errors', async () => {
     const { handleFatalStartupError } = await import('../bootstrap')
-    await handleFatalStartupError(new Error('fatal error'))
+    await expect(handleFatalStartupError(new Error('fatal error'))).rejects.toThrow('fatal error')
 
     expect(loggerMocks.error).toHaveBeenCalledWith(expect.objectContaining({ error: expect.any(Error) }), 'Fatal startup error')
     expect(interfaceMocks.stopServer).toHaveBeenCalled()
     expect(pluginRuntimeMocks.stop).toHaveBeenCalled()
     expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
     expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
-    expect(process.exit).toHaveBeenCalledWith(1)
   })
 })

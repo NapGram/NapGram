@@ -1,58 +1,56 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
 import type { CommandContext } from '../CommandContext.js'
 import { db } from '@napgram/db-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { RecallCommandHandler } from '../RecallCommandHandler.js'
 
-vi.mock('@napgram/db-kit', async (importOriginal) => {
+mock.module('@napgram/db-kit', async () => {
   const mockDb = {
     query: {
-      message: { findFirst: vi.fn(), findMany: vi.fn() },
-      forwardPair: { findFirst: vi.fn(), findMany: vi.fn() },
-      forwardMultiple: { findFirst: vi.fn(), findMany: vi.fn() },
-      qqRequest: { findFirst: vi.fn(), findMany: vi.fn() },
+      message: { findFirst: mock(), findMany: mock() },
+      forwardPair: { findFirst: mock(), findMany: mock() },
+      forwardMultiple: { findFirst: mock(), findMany: mock() },
+      qqRequest: { findFirst: mock(), findMany: mock() },
     },
-    update: vi.fn(() => ({
-      set: vi.fn(() => ({
-        where: vi.fn().mockResolvedValue({}),
+    update: mock(() => ({
+      set: mock(() => ({
+        where: mock().mockResolvedValue({}),
       })),
     })),
-    insert: vi.fn(() => ({
-      values: vi.fn(() => ({
-        returning: vi.fn().mockResolvedValue([]),
+    insert: mock(() => ({
+      values: mock(() => ({
+        returning: mock().mockResolvedValue([]),
       })),
     })),
-    select: vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn(() => ({
-          groupBy: vi.fn().mockResolvedValue([]),
+    select: mock(() => ({
+      from: mock(() => ({
+        where: mock(() => ({
+          groupBy: mock().mockResolvedValue([]),
         })),
-        groupBy: vi.fn().mockResolvedValue([]),
+        groupBy: mock().mockResolvedValue([]),
       })),
     })),
-    execute: vi.fn().mockResolvedValue({ rows: [] }),
+    execute: mock().mockResolvedValue({ rows: [] }),
   }
 
   return {
-    ...(await importOriginal() as any),
     db: mockDb,
     schema: {
       message: { id: 'id', tgChatId: 'tgChatId', tgMsgId: 'tgMsgId', qqChatType: 'qqChatType', qqRoomId: 'qqRoomId', seq: 'seq', instanceId: 'instanceId' },
       forwardPair: { id: 'id' },
       qqRequest: { id: 'id' },
     },
-    eq: vi.fn(),
-    and: vi.fn(),
-    lt: vi.fn(),
-    desc: vi.fn(),
-    gte: vi.fn(),
-    sql: vi.fn(),
-    count: vi.fn(),
+    eq: mock(),
+    and: mock(),
+    lt: mock(),
+    desc: mock(),
+    gte: mock(),
+    sql: mock(),
+    count: mock(),
   }
 })
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
+mock.module('@napgram/env-kit', async () => ({
   env: {
     ENABLE_AUTO_RECALL: true,
     TG_MEDIA_TTL_SECONDS: undefined,
@@ -62,43 +60,42 @@ vi.mock('@napgram/env-kit', async importOriginal => ({
   },
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn(() => ({
-    debug: vi.fn(),
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    trace: vi.fn(),
+mock.module('@napgram/logger-kit', async () => ({
+  getLogger: mock(() => ({
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    trace: mock(),
   })),
 }))
 
 function createMockContext(): CommandContext {
   return {
     qqClient: {
-      recallMessage: vi.fn().mockResolvedValue(undefined),
+      recallMessage: mock().mockResolvedValue(undefined),
     } as any,
     tgBot: {
-      getChat: vi.fn().mockResolvedValue({
-        deleteMessages: vi.fn().mockResolvedValue(undefined),
+      getChat: mock().mockResolvedValue({
+        deleteMessages: mock().mockResolvedValue(undefined),
       }),
       client: {
-        call: vi.fn().mockResolvedValue([{ id: 1 }]),
+        call: mock().mockResolvedValue([{ id: 1 }]),
       },
     } as any,
     registry: {} as any,
     permissionChecker: {
-      isAdmin: vi.fn().mockReturnValue(false),
+      isAdmin: mock().mockReturnValue(false),
     } as any,
     stateManager: {} as any,
     instance: {
       id: 1,
       owner: '123456',
       forwardPairs: {} as any,
-      reload: vi.fn().mockResolvedValue(undefined),
+      reload: mock().mockResolvedValue(undefined),
     } as any,
-    replyTG: vi.fn().mockResolvedValue(undefined),
-    extractThreadId: vi.fn().mockReturnValue(undefined),
+    replyTG: mock().mockResolvedValue(undefined),
+    extractThreadId: mock().mockReturnValue(undefined),
   } as any
 }
 
@@ -130,7 +127,7 @@ describe('recallCommandHandler', () => {
   let mockContext: CommandContext
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mock.clearAllMocks()
     mockContext = createMockContext()
     handler = new RecallCommandHandler(mockContext)
   })
@@ -156,7 +153,7 @@ describe('recallCommandHandler', () => {
   })
 
   it('limits batch recall count', async () => {
-    vi.mocked(mockContext.permissionChecker.isAdmin).mockReturnValue(true)
+    mockContext.permissionChecker.isAdmin.mockReturnValue(true)
 
     const msg = createMessage('telegram')
     await handler.execute(msg, ['101'])
@@ -178,7 +175,7 @@ describe('recallCommandHandler', () => {
   })
 
   it('denies recall when sender lacks permission', async () => {
-    vi.mocked(db.query.message.findFirst).mockResolvedValueOnce({
+    db.query.message.findFirst.mockResolvedValueOnce({
       tgSenderId: '111111',
     } as any)
 
@@ -192,16 +189,16 @@ describe('recallCommandHandler', () => {
   })
 
   it('recalls a telegram message when authorized', async () => {
-    vi.mocked(mockContext.permissionChecker.isAdmin).mockReturnValue(true)
-    vi.mocked(db.query.message.findFirst).mockResolvedValueOnce({
+    mockContext.permissionChecker.isAdmin.mockReturnValue(true)
+    db.query.message.findFirst.mockResolvedValueOnce({
       tgSenderId: '999999',
       tgMsgId: 42,
       tgChatId: '777777',
       seq: 777,
     } as any)
 
-    const chat = { deleteMessages: vi.fn().mockResolvedValue(undefined) }
-    vi.mocked(mockContext.tgBot.getChat).mockResolvedValue(chat as any)
+    const chat = { deleteMessages: mock().mockResolvedValue(undefined) }
+    mockContext.tgBot.getChat.mockResolvedValue(chat as any)
 
     const msg = createMessage('telegram', { replyTo: { replyToMsgId: 42 } })
     await handler.execute(msg, [])
@@ -211,14 +208,14 @@ describe('recallCommandHandler', () => {
   })
 
   it('handles batch recall success path', async () => {
-    vi.mocked(mockContext.permissionChecker.isAdmin).mockReturnValue(true)
-    vi.mocked(db.query.message.findMany).mockResolvedValueOnce([
+    mockContext.permissionChecker.isAdmin.mockReturnValue(true)
+    db.query.message.findMany.mockResolvedValueOnce([
       { tgMsgId: 40, seq: '111', tgChatId: '777777' },
       { tgMsgId: 39, seq: '222', tgChatId: '777777' },
     ] as any)
 
-    const chat = { deleteMessages: vi.fn().mockResolvedValue(undefined) }
-    vi.mocked(mockContext.tgBot.getChat).mockResolvedValue(chat as any)
+    const chat = { deleteMessages: mock().mockResolvedValue(undefined) }
+    mockContext.tgBot.getChat.mockResolvedValue(chat as any)
 
     const msg = createMessage('telegram', { id: 50 })
     await handler.execute(msg, ['2'])
@@ -230,15 +227,15 @@ describe('recallCommandHandler', () => {
   })
 
   it('recalls from QQ platform and removes TG mapping', async () => {
-    vi.mocked(db.query.message.findFirst).mockResolvedValueOnce({
+    db.query.message.findFirst.mockResolvedValueOnce({
       tgSenderId: '999999',
       tgMsgId: 88,
       tgChatId: '777777',
       seq: 55,
     } as any)
 
-    const chat = { deleteMessages: vi.fn().mockResolvedValue(undefined) }
-    vi.mocked(mockContext.tgBot.getChat).mockResolvedValue(chat as any)
+    const chat = { deleteMessages: mock().mockResolvedValue(undefined) }
+    mockContext.tgBot.getChat.mockResolvedValue(chat as any)
 
     const msg = createMessage('qq')
     msg.content.push({ type: 'reply', data: { messageId: '55' } } as any)
@@ -252,15 +249,15 @@ describe('recallCommandHandler', () => {
   it('does not remove the TG mapping from QQ /rm when auto recall is disabled', async () => {
     const { env } = await import('@napgram/env-kit')
     env.ENABLE_AUTO_RECALL = false
-    vi.mocked(db.query.message.findFirst).mockResolvedValueOnce({
+    db.query.message.findFirst.mockResolvedValueOnce({
       tgSenderId: '999999',
       tgMsgId: 88,
       tgChatId: '777777',
       seq: 55,
     } as any)
 
-    const chat = { deleteMessages: vi.fn().mockResolvedValue(undefined) }
-    vi.mocked(mockContext.tgBot.getChat).mockResolvedValue(chat as any)
+    const chat = { deleteMessages: mock().mockResolvedValue(undefined) }
+    mockContext.tgBot.getChat.mockResolvedValue(chat as any)
 
     const msg = createMessage('qq')
     msg.content.push({ type: 'reply', data: { messageId: '55' } } as any)

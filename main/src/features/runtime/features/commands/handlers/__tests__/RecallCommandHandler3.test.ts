@@ -1,47 +1,44 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
 import { and, db, eq, schema } from '@napgram/db-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { RecallCommandHandler } from '../RecallCommandHandler.js'
 
-vi.mock('../../../../../../shared/utils/index.js', () => ({
+mock.module('../../../../../../shared/utils/index.js', () => ({
   telegramMessage: {
-    getTelegramReplyMessageId: vi.fn(),
+    getTelegramReplyMessageId: mock(),
   },
 }))
-vi.mock('@napgram/db-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  db: {
-    query: { message: { findFirst: vi.fn(), findMany: vi.fn() } },
+mock.module('@napgram/db-kit', async () => ({
+    db: {
+    query: { message: { findFirst: mock(), findMany: mock() } },
   },
   schema: { message: { tgChatId: 1, tgMsgId: 2, instanceId: 3, seq: 4, qqRoomId: 5 } },
-  eq: vi.fn(),
-  and: vi.fn(),
-  lt: vi.fn(),
-  desc: vi.fn(),
+  eq: mock(),
+  and: mock(),
+  lt: mock(),
+  desc: mock(),
 }))
 
-vi.mock('@napgram/logger-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  getLogger: vi.fn().mockReturnValue({ info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() }),
+mock.module('@napgram/logger-kit', async () => ({
+    getLogger: mock().mockReturnValue({ info: mock(), warn: mock(), error: mock(), debug: mock() }),
 }))
 
-vi.mock('@napgram/env-kit', async importOriginal => ({
-  ...(await importOriginal() as any),
-  env: { ENABLE_AUTO_RECALL: true },
+mock.module('@napgram/env-kit', async () => ({
+    env: { ENABLE_AUTO_RECALL: true },
 }))
 
 describe('recall cascade', () => {
   it('covers cascade delete', async () => {
     const mockContext = {
-      replyTG: vi.fn(),
-      permissionChecker: { isAdmin: vi.fn().mockReturnValue(true) },
+      replyTG: mock(),
+      permissionChecker: { isAdmin: mock().mockReturnValue(true) },
       instance: { id: 1 },
       tgBot: {
-        getChat: vi.fn().mockResolvedValue({ deleteMessages: vi.fn().mockResolvedValue(true) }),
-        client: { call: vi.fn().mockResolvedValue([{ id: 1000 }]) },
+        getChat: mock().mockResolvedValue({ deleteMessages: mock().mockResolvedValue(true) }),
+        client: { call: mock().mockResolvedValue([{ id: 1000 }]) },
       },
-      qqClient: { recallMessage: vi.fn().mockResolvedValue(true) },
+      qqClient: { recallMessage: mock().mockResolvedValue(true) },
     } as any
 
     const handler = new RecallCommandHandler(mockContext)
@@ -60,12 +57,12 @@ describe('recall cascade', () => {
       },
     } as any
 
-    vi.mocked(db.query.message.findFirst)
+    db.query.message.findFirst
       .mockResolvedValueOnce({ tgSenderId: 456, seq: 555 } as any)
       .mockResolvedValueOnce({ seq: 777 } as any)
 
     const utils = await import('../../../../../../shared/utils/index.js')
-    vi.mocked(utils.telegramMessage.getTelegramReplyMessageId).mockReturnValue(888n)
+    utils.telegramMessage.getTelegramReplyMessageId.mockReturnValue(888n)
 
     await handler.execute(msg, [])
 

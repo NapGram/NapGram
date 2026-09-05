@@ -1,14 +1,22 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import process from 'node:process'
 import z from 'zod'
 
-const detectDefaultUiPath = () => {
-  const devPath = path.resolve('../web/dist')
-  if (fs.existsSync(devPath) && fs.existsSync(path.join(devPath, 'index.html'))) {
-    return devPath
+const bunRuntime = (globalThis as typeof globalThis & {
+  Bun: {
+    cwd: string
+    env: Record<string, string | undefined>
+    file(path: string): { exists(): Promise<boolean> }
+    fileURLToPath(input: URL): string
+    pathToFileURL(input: string): URL
+    spawnSync(command: string[]): { exitCode: number }
   }
-  return undefined
+}).Bun
+
+const resolvePath = (input: string) => bunRuntime.fileURLToPath(new URL(input, bunRuntime.pathToFileURL(`${bunRuntime.cwd}/`)))
+const joinPath = (...parts: string[]) => parts.filter(Boolean).join('/').replaceAll(/\/+/g, '/')
+const detectDefaultUiPath = () => {
+  const devPath = resolvePath('../web/dist')
+  const result = bunRuntime.spawnSync(['test', '-f', joinPath(devPath, 'index.html')])
+  return result.exitCode === 0 ? devPath : undefined
 }
 
 const processUiPath = (value: unknown) => {
@@ -18,20 +26,20 @@ const processUiPath = (value: unknown) => {
 
 const emptyStringToUndefined = (value: unknown) => (value === '' ? undefined : value)
 
-if (process.env.NODE_ENV === 'test') {
-  process.env.TG_API_ID ??= '1'
-  process.env.TG_API_HASH ??= 'dummy-hash'
-  process.env.TG_BOT_TOKEN ??= 'dummy-token'
+if (bunRuntime.env.NODE_ENV === 'test') {
+  bunRuntime.env.TG_API_ID ??= '1'
+  bunRuntime.env.TG_API_HASH ??= 'dummy-hash'
+  bunRuntime.env.TG_BOT_TOKEN ??= 'dummy-token'
 }
 
 const configParsed = z.object({
-  DATA_DIR: z.string().default(path.resolve('./data')),
+  DATA_DIR: z.string().default(resolvePath('./data')),
   DATABASE_URL: z.string().default('postgresql://postgres:password@localhost:5432/napgram'),
-  CACHE_DIR: z.string().default(path.join(process.env.DATA_DIR || path.resolve('./data'), 'cache')),
+  CACHE_DIR: z.string().default(joinPath(bunRuntime.env.DATA_DIR || resolvePath('./data'), 'cache')),
 
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'mark', 'off']).default('info'),
   LOG_FILE_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'mark', 'off']).default('debug'),
-  LOG_FILE: z.string().default(path.join(process.env.DATA_DIR || path.resolve('./data'), 'logs', 'app.log')),
+  LOG_FILE: z.string().default(joinPath(bunRuntime.env.DATA_DIR || resolvePath('./data'), 'logs', 'app.log')),
   LOG_RETENTION_DAYS: z.string().regex(/^\d+$/).default('30').transform(Number),
   OICQ_LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'mark', 'off']).default('warn'),
   TG_LOG_LEVEL: z.enum(['none', 'error', 'warn', 'info', 'debug']).default('warn'),
@@ -89,11 +97,11 @@ const configParsed = z.object({
   REPO: z.string().default('Local Build'),
   REF: z.string().default('Local Build'),
   COMMIT: z.string().default('Local Build'),
-}).safeParse(process.env)
+}).safeParse(bunRuntime.env)
 
 if (!configParsed.success) {
   console.error('环境变量解析错误:', (configParsed as any).error)
-  process.exit(1)
+  throw new Error('Invalid environment configuration')
 }
 
 export default configParsed.data

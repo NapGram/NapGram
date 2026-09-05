@@ -1,5 +1,5 @@
 import type { UnifiedMessage } from '@napgram/message-kit'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import { CommandContext } from '../CommandContext.js'
 
 function createMessage(platform: 'telegram' | 'qq' = 'telegram'): UnifiedMessage {
@@ -30,13 +30,13 @@ describe('commandContext', () => {
   beforeEach(() => {
     qqClient = {
       uin: 123456,
-      sendMessage: vi.fn().mockResolvedValue({}),
+      sendMessage: mock().mockResolvedValue({}),
     }
-    replyTG = vi.fn().mockResolvedValue(undefined)
-    extractThreadId = vi.fn().mockReturnValue(undefined)
+    replyTG = mock().mockResolvedValue(undefined)
+    extractThreadId = mock().mockReturnValue(undefined)
     forwardPairs = {
-      findByTG: vi.fn(),
-      findByQQ: vi.fn(),
+      findByTG: mock(),
+      findByQQ: mock(),
     }
 
     context = new CommandContext(

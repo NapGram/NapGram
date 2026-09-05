@@ -1,20 +1,20 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, mock } from 'bun:test'
 import { NapCatConverter } from '../NapCatConverter.js'
 
-vi.mock('@napgram/infra-kit', () => ({
+mock.module('@napgram/infra-kit', () => ({
   env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
-  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
-  temp: { TEMP_PATH: '/tmp/napgram', file: vi.fn(), createTempFile: vi.fn() },
-  hashing: { md5Hex: vi.fn((s) => 'hashed-' + s) },
+  getLogger: mock(() => ({ debug: mock(), info: mock(), warn: mock() })),
+  temp: { TEMP_PATH: '/tmp/napgram', file: mock(), createTempFile: mock() },
+  hashing: { md5Hex: mock((s) => 'hashed-' + s) },
   qface: { 14: '/smile' },
 }))
 
-vi.mock('@napgram/env-kit', () => ({
+mock.module('@napgram/env-kit', () => ({
   env: { DATA_DIR: '/tmp', CACHE_DIR: '/tmp/cache' },
 }))
 
-vi.mock('@napgram/logger-kit', () => ({
-  getLogger: vi.fn(() => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn() })),
+mock.module('@napgram/logger-kit', () => ({
+  getLogger: mock(() => ({ debug: mock(), info: mock(), warn: mock() })),
 }))
 
 describe('napCatConverter', () => {
@@ -144,7 +144,7 @@ describe('napCatConverter', () => {
     }
     const result = converter.fromNapCat(napCatMsg)
     // Should return the converted object directly (line 128)
-    expect(result.content[0].type).toBe('json_card')
+    expect((result.content[0].type as string)).toBe('json_card')
   })
 
   it('handles segment converter returning array', () => {
