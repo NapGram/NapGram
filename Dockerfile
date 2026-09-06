@@ -1,7 +1,7 @@
 ARG INSTALL_PG_CLIENT=true
 ARG LOTTIE_IMAGE=edasriyan/lottie-to-gif@sha256:0eb24cf4f38c6c62b66f37bfba463fff4de4f64cb9a6127df0b9543fc4b9c649
 # renovate: datasource=github-tags depName=oven-sh/bun extractVersion=^bun-v(?<version>.+)$
-ARG BUN_VERSION=1.4.0
+ARG BUN_VERSION=1.4.2
 ARG BUN_IMAGE=oven/bun:${BUN_VERSION}-alpine
 ARG BUN_CONFIG_REGISTRY=https://registry.npmmirror.com
 
