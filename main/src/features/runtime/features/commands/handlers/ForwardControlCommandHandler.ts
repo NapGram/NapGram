@@ -40,15 +40,15 @@ export class ForwardControlCommandHandler {
 
     switch (commandName) {
       case 'forwardoff':
-        newMode = 'off'
+        newMode = '00'
         message = '✅ 已暂停双向转发'
         break
       case 'forwardon':
-        newMode = null // null 表示正常转发
+        newMode = null // null 表示回退到环境变量默认值
         message = '✅ 已恢复双向转发'
         break
       case 'disable_qq_forward':
-        newMode = 'tg_only' // 只转发 TG -> QQ
+        newMode = '01' // QQ->TG=0, TG->QQ=1
         message = '✅ 已停止 QQ → TG 的转发'
         break
       case 'enable_qq_forward':
@@ -56,7 +56,7 @@ export class ForwardControlCommandHandler {
         message = '✅ 已恢复 QQ → TG 的转发'
         break
       case 'disable_tg_forward':
-        newMode = 'qq_only' // 只转发 QQ -> TG
+        newMode = '10' // QQ->TG=1, TG->QQ=0
         message = '✅ 已停止 TG → QQ 的转发'
         break
       case 'enable_tg_forward':

@@ -187,7 +187,7 @@ describe('forwardControlCommandHandler', () => {
       const msg = createMessage('/forwardoff', '999999', '777777')
       await handler.execute(msg, [], 'forwardoff')
 
-      expect(mockPair.forwardMode).toBe('off')
+      expect(mockPair.forwardMode).toBe('00')
     })
 
     it('should send success message', async () => {
@@ -204,7 +204,7 @@ describe('forwardControlCommandHandler', () => {
 
   describe('/forwardon command', () => {
     it('should set forward mode to null (normal)', async () => {
-      mockPair.forwardMode = 'off'
+      mockPair.forwardMode = '00'
 
       const msg = createMessage('/forwardon', '999999', '777777')
       await handler.execute(msg, [], 'forwardon')
@@ -225,7 +225,7 @@ describe('forwardControlCommandHandler', () => {
   })
 
   describe('/disable_qq_forward command', () => {
-    it('should set forward mode to tg_only', async () => {
+    it('should set forward mode to 01', async () => {
       const msg = createMessage('/disable_qq_forward', '999999', '777777')
       await handler.execute(msg, [], 'disable_qq_forward')
 
@@ -246,7 +246,7 @@ describe('forwardControlCommandHandler', () => {
 
   describe('/enable_qq_forward command', () => {
     it('should set forward mode to null (normal)', async () => {
-      mockPair.forwardMode = 'tg_only'
+      mockPair.forwardMode = '01'
 
       const msg = createMessage('/enable_qq_forward', '999999', '777777')
       await handler.execute(msg, [], 'enable_qq_forward')
@@ -267,7 +267,7 @@ describe('forwardControlCommandHandler', () => {
   })
 
   describe('/disable_tg_forward command', () => {
-    it('should set forward mode to qq_only', async () => {
+    it('should set forward mode to 10', async () => {
       const msg = createMessage('/disable_tg_forward', '999999', '777777')
       await handler.execute(msg, [], 'disable_tg_forward')
 
@@ -288,7 +288,7 @@ describe('forwardControlCommandHandler', () => {
 
   describe('/enable_tg_forward command', () => {
     it('should set forward mode to null (normal)', async () => {
-      mockPair.forwardMode = 'qq_only'
+      mockPair.forwardMode = '10'
 
       const msg = createMessage('/enable_tg_forward', '999999', '777777')
       await handler.execute(msg, [], 'enable_tg_forward')

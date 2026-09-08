@@ -2,6 +2,7 @@ import type { UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap } from '../../../runtime-types.js'
 import type { CommandContext } from './CommandContext.js'
 import { md } from '@mtcute/markdown-parser'
+import { env } from '../../../capabilities/env.js'
 import { telegramMessage } from '../../../../../shared/utils/index.js'
 import { getLogger } from '../../../capabilities/logging.js'
 import { findPairByTGWithChatType, formatQqChatTypeLabel } from '../utils/ForwardPairChatType.js'
@@ -40,9 +41,22 @@ export class InfoCommandHandler {
     const tgThreadId = pair.tgThreadId?.toString()
 
     // 转发模式
-    const forwardMode = pair.forwardMode || 'normal'
+    const forwardMode = pair.forwardMode || env.FORWARD_MODE
     let modeText = ''
     switch (forwardMode) {
+      case '00':
+        modeText = '❌ 已暂停'
+        break
+      case '10':
+        modeText = '⬆️ 仅 QQ → TG'
+        break
+      case '01':
+        modeText = '⬇️ 仅 TG → QQ'
+        break
+      case '11':
+        modeText = '✅ 双向正常'
+        break
+      // 兼容旧的非标准格式
       case 'off':
         modeText = '❌ 已暂停'
         break
