@@ -65,6 +65,14 @@ export class ForwardFeature {
     if (!hasConfiguredWorkMode(this.instance))
       return
 
+    // Ignore bot's own messages to prevent QQ→TG→QQ echo loop
+    const myId = this.tgBot.me?.id
+    const senderPeer = tgMsg.sender as any
+    if (senderPeer?.isBot || (myId !== undefined && tgMsg.sender?.id === myId)) {
+      logger.debug(`[Forward][TG->QQ] Ignored self/bot TG message: ${tgMsg.id}`)
+      return
+    }
+
     const rawText = tgMsg.text || ''
     logger.debug(isEdit ? '[Forward][TG->QQ] edited incoming' : '[Forward][TG->QQ] incoming', {
       id: tgMsg.id,
