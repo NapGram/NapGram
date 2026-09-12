@@ -31,7 +31,7 @@
     "@napgram/plugin-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
-    "fastify": "5.12.3",
+    "fastify": "5.12.4",
     "zod": "4.6.2"
   },
   "keywords": [
