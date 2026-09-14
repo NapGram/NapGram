@@ -392,8 +392,11 @@ export class TelegramSender {
 
       if (baseUrl) {
         const webAppUrl = `${baseUrl}/chatRecord?tgWebAppStartParam=${entry.id}&uuid=${entry.id}`
-        // mtcute 期望 { type: 'inline', buttons: [[{_: 'keyboardButtonUrl', ...}]] }
-        const buttons = [[{ _: 'keyboardButtonUrl', text: '查看合并转发', url: webAppUrl }]]
+        // mtcute 0.32+: inline 键盘按钮必须用 keyboardInlineButton；
+        // 带 `_` 字段时 SDK 只接受它，传 keyboardButtonUrl 会抛
+        // "reply keyboard buttons cannot be used in inline keyboards"。
+        // 用高层语法 { text, url } 交给 SDK 自行转换。
+        const buttons = [[{ text: '查看合并转发', url: webAppUrl }]]
         return await chat.sendMessage(messageText, telegramSend.applyTelegramReplyTo({
           replyMarkup: { type: 'inline', buttons },
           linkPreview: { disable: true },
