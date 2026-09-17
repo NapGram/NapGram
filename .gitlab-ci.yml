@@ -1,12 +1,12 @@
 include:
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 65fb87e847e182bbf8e84b52abb2edd94da33511
+    ref: 269807205c7e55ee3bba36ae3519d32232296da7
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 65fb87e847e182bbf8e84b52abb2edd94da33511
+    ref: 269807205c7e55ee3bba36ae3519d32232296da7
     file: /.gitlab/ci/renovate.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: 65fb87e847e182bbf8e84b52abb2edd94da33511
+    ref: 269807205c7e55ee3bba36ae3519d32232296da7
     file: /.gitlab/ci/cancel-mr-pipelines.yml
 
 workflow:
@@ -47,7 +47,7 @@ variables:
   MAGISK_CANCEL_OLDER_MR_PIPELINES: "true"
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "65fb87e847e182bbf8e84b52abb2edd94da33511"
+  MAGISK_CI_TOOLKIT_REF: "269807205c7e55ee3bba36ae3519d32232296da7"
   MAGISK_TELEGRAM_PIN: "off"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
