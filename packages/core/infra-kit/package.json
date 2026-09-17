@@ -43,7 +43,7 @@
     "@napgram/qq-client": "workspace:^",
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:^",
-    "fastify": "5.12.4"
+    "fastify": "5.12.5"
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@^7.0.2",
