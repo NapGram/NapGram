@@ -377,7 +377,7 @@ app:lint:
 security:gitleaks:
   extends: .napgram_ci_rules
   image:
-    name: ghcr.io/gitleaks/gitleaks:v8.28.0
+    name: ghcr.io/gitleaks/gitleaks:v8.30.1
     entrypoint: [""]
   stage: quality
   needs: []
