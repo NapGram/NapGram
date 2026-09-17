@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@types/node": "25.9.4",
-    "vitest": "4.1.9",
+    "vitest": "5.0.0",
     "typescript": "6.0.3"
   },
   "publishConfig": {
