@@ -28,7 +28,7 @@
     "@napgram/db-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",
-    "fastify": "5.8.5"
+    "fastify": "5.12.2"
   },
   "devDependencies": {
     "vitest": "4.1.9",
