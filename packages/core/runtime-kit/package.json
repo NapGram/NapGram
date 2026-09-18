@@ -39,7 +39,7 @@
   "devDependencies": {
     "vitest": "5.0.0",
     "@types/node": "25.9.7",
-    "typescript": "6.0.3"
+    "typescript": "7.0.2"
   },
   "files": [
     "dist",
