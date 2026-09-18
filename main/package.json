@@ -51,7 +51,7 @@
     "@napgram/request-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
     "@napgram/telegram-client": "workspace:*",
-    "@napi-rs/image": "1.14.0",
+    "@napi-rs/image": "1.15.0",
     "@naplink/naplink": "^1.2.0",
     "drizzle-kit": "^0.31.10",
     "fastify": "^5.8.5",

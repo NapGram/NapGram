@@ -29,7 +29,7 @@
     "@napgram/env-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/runtime-kit": "workspace:*",
-    "@napi-rs/image": "1.14.0",
+    "@napi-rs/image": "1.15.0",
     "file-type": "^22.0.0",
     "silk-wasm": "^3.7.1"
   },
