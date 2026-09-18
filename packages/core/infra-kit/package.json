@@ -41,10 +41,10 @@
     "@napgram/logger-kit": "workspace:*",
     "@napgram/qq-client": "workspace:^",
     "@napgram/telegram-client": "workspace:^",
-    "fastify": "5.12.2"
+    "fastify": "5.12.5"
   },
   "devDependencies": {
-    "@types/node": "25.9.4",
+    "@types/node": "25.9.7",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8",
     "typescript": "6.0.3",
