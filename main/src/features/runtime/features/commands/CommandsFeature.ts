@@ -8,6 +8,7 @@ import type { QqChatType } from './utils/ForwardPairChatType.js'
 import { md } from '@mtcute/markdown-parser'
 import { messageConverter } from '@napgram/message-kit'
 import { telegramSend } from '../../../../shared/utils/index.js'
+import { env } from '../../capabilities/env.js'
 import { getEventPublisher } from '../../capabilities/events.js'
 import { getLogger } from '../../capabilities/logging.js'
 import { hasQ2tgSkipMarker } from '../../utils/QqLoopbackMarker.js'
@@ -25,7 +26,7 @@ import { CommandAccessChecker } from './services/CommandAccessChecker.js'
 import { CommandRegistry } from './services/CommandRegistry.js'
 import { InteractiveStateManager } from './services/InteractiveStateManager.js'
 import { ThreadIdExtractor } from './services/ThreadIdExtractor.js'
-import { addForwardPairWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage } from './utils/ForwardPairChatType.js'
+import { addForwardPairWithChatType, findPairByQQWithChatType, findPairByTGWithChatType, formatQqChatTypeLabel, qqChatTypeFromMessage } from './utils/ForwardPairChatType.js'
 
 const logger = getLogger('CommandsFeature')
 
@@ -46,6 +47,26 @@ const QQ_GROUP_ONLY_PLUGIN_COMMANDS = new Set([
   'refresh',
   'refresh_all',
 ])
+
+/**
+ * 命令策略下始终放行的命令：恢复通道，避免 off/mention 配置误锁后无法自救。
+ */
+export const COMMAND_POLICY_ALWAYS_ALLOWED = new Set(['start', 'workmode', 'cmdpolicy', 'help'])
+
+/**
+ * 命令策略纯判定：返回 true 表示拦截。
+ * slash: 全部放行；off: 仅放行恢复通道；mention: 需 @ 到本机器人。
+ */
+export function evaluateCommandGate(policy: string | null | undefined, commandName: string, isSelfMentioned: boolean): boolean {
+  const name = commandName.toLowerCase()
+  if (COMMAND_POLICY_ALWAYS_ALLOWED.has(name))
+    return false
+  if (policy === 'off')
+    return true
+  if (policy === 'mention')
+    return !isSelfMentioned
+  return false
+}
 
 /**
  * 命令类型
@@ -334,11 +355,147 @@ export class CommandsFeature {
   private async replyWorkModeMessage(msg: UnifiedMessage, text: string): Promise<void> {
     if (msg.platform === 'telegram') {
       const threadId = this.commandContext.extractThreadId(msg, [])
-      await this.replyTG(msg.chat.id, text, threadId)
+      const sentId = await this.replyTG(msg.chat.id, text, threadId)
+      this.scheduleSystemMessageRecall('telegram', msg.chat.id, sentId)
       return
     }
 
-    await this.commandContext.replyQQ(msg.chat.id, text, qqChatTypeFromMessage(msg))
+    const receipt = await this.commandContext.replyQQ(msg.chat.id, text, qqChatTypeFromMessage(msg))
+    this.scheduleSystemMessageRecall('qq', msg.chat.id, receipt?.messageId)
+  }
+
+  /**
+   * 命令策略门禁：多机器人群下控制斜线命令何时生效。
+   * 策略优先级：pair.commandPolicy > 环境变量 COMMAND_POLICY（默认 slash）。
+   */
+  private async blockCommandByPolicy(commandName: string, ctx: {
+    platform: 'qq' | 'tg'
+    chatId: string | number
+    msg?: UnifiedMessage
+    tgMsg?: Message
+    parts?: string[]
+    threadId?: bigint | number
+  }): Promise<boolean> {
+    try {
+      const policy = await this.resolveCommandPolicy(ctx)
+      return evaluateCommandGate(policy, commandName, this.isSelfMentioned(ctx))
+    }
+    catch (error) {
+      logger.debug(`[Commands] command policy check failed, falling back to slash: ${error}`)
+      return false
+    }
+  }
+
+  private async resolveCommandPolicy(ctx: {
+    platform: 'qq' | 'tg'
+    chatId: string | number
+    msg?: UnifiedMessage
+    threadId?: bigint | number
+  }): Promise<string> {
+    const fallback = env.COMMAND_POLICY
+    const forwardMap = this.instance.forwardPairs as ForwardMap | undefined
+    if (!forwardMap || typeof (forwardMap as any).findByQQ !== 'function')
+      return fallback
+    const pair = ctx.platform === 'tg'
+      ? await findPairByTGWithChatType(forwardMap, ctx.chatId, ctx.threadId as bigint | undefined, true)
+      : await findPairByQQWithChatType(forwardMap, this.instance.id, ctx.chatId, qqChatTypeFromMessage(ctx.msg!))
+    const raw = pair?.commandPolicy
+    return raw === 'slash' || raw === 'mention' || raw === 'off' ? raw : fallback
+  }
+
+  private isSelfMentioned(ctx: { platform: 'qq' | 'tg', msg?: UnifiedMessage, tgMsg?: Message, parts?: string[] }): boolean {
+    if (ctx.platform === 'tg') {
+      const myUsername = this.tgBot.me?.username?.toLowerCase()
+      if (!myUsername || !ctx.tgMsg)
+        return false
+      return this.extractMentionedBotUsernames(ctx.tgMsg, ctx.parts ?? []).has(myUsername)
+    }
+    const uin = String((this.qqClient as any)?.uin ?? '')
+    if (!uin || !ctx.msg)
+      return false
+    return (ctx.msg.content || []).some((c: any) => c?.type === 'at' && String(c?.data?.userId ?? '') === uin)
+  }
+
+  /**
+   * 切换本会话的命令触发策略（admin only）：写入 pair.commandPolicy 并热更新。
+   */
+  private async handleCommandPolicyCommand(msg: UnifiedMessage, args: string[]): Promise<void> {
+    const value = String(args[0] ?? '').trim().toLowerCase()
+    if (value !== 'slash' && value !== 'mention' && value !== 'off') {
+      await this.replyWorkModeMessage(msg, [
+        '用法: /cmdpolicy <slash|mention|off>',
+        '- slash: 默认，/ 命令即生效',
+        '- mention: 仅 @本机器人 时命令生效（多机器人群防误触）',
+        '- off: 本会话禁用斜线命令',
+      ].join('\n'))
+      return
+    }
+
+    const forwardMap = this.instance.forwardPairs as ForwardMap | undefined
+    if (!forwardMap || typeof (forwardMap as any).findByQQ !== 'function') {
+      await this.replyWorkModeMessage(msg, '当前实例没有可用的转发绑定，无法设置会话级命令策略（可用环境变量 COMMAND_POLICY 设全局默认）。')
+      return
+    }
+
+    let pair: any
+    if (msg.platform === 'telegram') {
+      const threadId = this.commandContext.extractThreadId(msg, [])
+      pair = await findPairByTGWithChatType(forwardMap, msg.chat.id, threadId, true)
+    }
+    else {
+      pair = await findPairByQQWithChatType(forwardMap, this.instance.id, msg.chat.id, qqChatTypeFromMessage(msg))
+    }
+    if (!pair) {
+      await this.replyWorkModeMessage(msg, '未找到本会话对应的转发绑定（请先绑定后再设置）。')
+      return
+    }
+
+    const updated = await forwardMap.add({
+      qqRoomId: String(pair.qqRoomId),
+      qqChatType: pair.qqChatType === 'private' ? 'private' : 'group',
+      tgChatId: pair.tgChatId,
+      tgThreadId: pair.tgThreadId ? BigInt(pair.tgThreadId) : undefined,
+      commandPolicy: value,
+    })
+    if ((updated as any)?.commandPolicy === value) {
+      await this.replyWorkModeMessage(msg, `✅ 本会话命令策略已设置为 ${value}`)
+    }
+    else {
+      logger.warn(`[Commands] commandPolicy not persisted: expected ${value}, got ${(updated as any)?.commandPolicy}`)
+      await this.replyWorkModeMessage(msg, '⚠️ 策略设置未生效，请重试或检查日志。')
+    }
+  }
+
+  /**
+   * 调度系统消息（工作模式提示等）的自动撤回，TG / QQ 均生效。
+   * 延迟由环境变量 SYSTEM_MESSAGE_RECALL_SECONDS 控制（秒，0 = 禁用）。
+   */
+  private scheduleSystemMessageRecall(platform: 'telegram' | 'qq', chatId: string | number, messageId?: number | string): void {
+    const ttlSeconds = env.SYSTEM_MESSAGE_RECALL_SECONDS
+    if (!ttlSeconds || ttlSeconds <= 0 || messageId === undefined || messageId === '')
+      return
+
+    const timer = setTimeout(() => {
+      void this.recallSystemMessage(platform, chatId, String(messageId))
+    }, ttlSeconds * 1000)
+    ;(timer as any)?.unref?.()
+  }
+
+  private async recallSystemMessage(platform: 'telegram' | 'qq', chatId: string | number, messageId: string): Promise<void> {
+    try {
+      if (platform === 'telegram') {
+        const chat = await this.tgBot.getChat(Number(chatId))
+        await chat.deleteMessages([Number(messageId)])
+      }
+      else {
+        await this.qqClient.recallMessage(messageId)
+      }
+      logger.debug(`[SystemMessage] recalled ${platform} message ${messageId} in chat ${chatId}`)
+    }
+    catch (error) {
+      // 撤回失败（消息已被手动删除 / 超过 48 小时 / 权限不足）不影响主流程
+      logger.debug(`[SystemMessage] failed to recall ${platform} message ${messageId} in chat ${chatId}: ${error}`)
+    }
   }
 
   private async handleWorkModeCommand(msg: UnifiedMessage, args: string[]): Promise<void> {
@@ -1100,6 +1257,11 @@ export class CommandsFeature {
       commandName = commandName.toLowerCase()
       const args = parts.slice(1 + shiftArgs)
 
+      if (await this.blockCommandByPolicy(commandName, { platform: 'tg', chatId, tgMsg, parts, threadId: undefined })) {
+        logger.debug(`Ignored TG command for command policy: ${commandName}`)
+        return false
+      }
+
       const command = this.registry.get(commandName)
       if (!command) {
         logger.debug(`Unknown command: ${commandName}`)
@@ -1285,6 +1447,11 @@ export class CommandsFeature {
       const commandName = parts[0].toLowerCase()
       const args = parts.slice(1)
 
+      if (await this.blockCommandByPolicy(commandName, { platform: 'qq', chatId, msg: qqMsg })) {
+        logger.debug(`[Commands] QQ command ${commandName} blocked by command policy`)
+        return
+      }
+
       const command = this.registry.get(commandName)
       if (!command) {
         logger.debug(`Unknown QQ command: ${commandName}`)
@@ -1367,7 +1534,7 @@ export class CommandsFeature {
     return undefined
   }
 
-  private async replyTG(chatId: string | number | bigint, text: any, threadId?: bigint | number) {
+  private async replyTG(chatId: string | number | bigint, text: any, threadId?: bigint | number): Promise<number | undefined> {
     try {
       const normalizedChatId = telegramSend.normalizeTelegramChatId(chatId)
 
@@ -1380,10 +1547,12 @@ export class CommandsFeature {
         msgContent = md(parts as TemplateStringsArray)
       }
 
-      await this.tgBot.sendText(normalizedChatId, msgContent, telegramSend.buildTelegramTextSendParams(threadId))
+      const sent = await this.tgBot.sendText(normalizedChatId, msgContent, telegramSend.buildTelegramTextSendParams(threadId))
+      return Number((sent as any)?.id) || undefined
     }
     catch (error) {
       logger.warn(`Failed to send reply to ${chatId}: ${error}`)
+      return undefined
     }
   }
 

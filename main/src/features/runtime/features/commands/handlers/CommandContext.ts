@@ -1,4 +1,4 @@
-import type { UnifiedMessage } from '@napgram/message-kit'
+import type { MessageReceipt, UnifiedMessage } from '@napgram/message-kit'
 import type { ForwardMap, Instance, IQQClient, Telegram } from '../../../runtime-types.js'
 import type { CommandAccessChecker } from '../services/CommandAccessChecker.js'
 import type { CommandRegistry } from '../services/CommandRegistry.js'
@@ -21,14 +21,14 @@ export class CommandContext {
     public readonly registry: CommandRegistry,
     public readonly permissionChecker: CommandAccessChecker,
     public readonly stateManager: InteractiveStateManager,
-    public readonly replyTG: (chatId: string | number, text: any, threadId?: bigint | number) => Promise<void>,
+    public readonly replyTG: (chatId: string | number, text: any, threadId?: bigint | number) => Promise<number | undefined>,
     public readonly extractThreadId: (msg: UnifiedMessage, args: string[]) => bigint | undefined,
   ) { }
 
   /**
    * 回复到QQ
    */
-  async replyQQ(roomId: string, text: string, qqChatType: QqChatType = 'group'): Promise<void> {
+  async replyQQ(roomId: string, text: string, qqChatType: QqChatType = 'group'): Promise<MessageReceipt | undefined> {
     try {
       const msg: UnifiedMessage = {
         id: `bot_reply_${Date.now()}`,
@@ -50,10 +50,11 @@ export class CommandContext {
         timestamp: Date.now(),
       }
 
-      await this.qqClient.sendMessage(roomId, msg)
+      return await this.qqClient.sendMessage(roomId, msg)
     }
     catch (error) {
       logger.error(`Failed to reply to ${formatQqChatTypeLabel(qqChatType)} ${roomId}:`, error)
+      return undefined
     }
   }
 

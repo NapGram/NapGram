@@ -149,6 +149,8 @@ services:
       FORWARD_MODE: "11"
       # 是否启用自动撤回（true/false）
       ENABLE_AUTO_RECALL: "true"
+      # 系统消息（如工作模式提示）自动撤回延迟（秒），0 = 禁用
+      SYSTEM_MESSAGE_RECALL_SECONDS: "60"
       # 是否启用离线通知（true/false）
       ENABLE_OFFLINE_NOTIFICATION: "true"
       # 离线通知冷却时间（毫秒）

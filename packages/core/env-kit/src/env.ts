@@ -90,7 +90,11 @@ const configParsed = z.object({
   SHOW_NICKNAME_MODE: z.string().regex(/^[01]{2}$/).default('11'),
   FORWARD_MODE: z.string().regex(/^[01]{2}$/).default('11'),
   COMMAND_REPLY_BOTH_SIDES: z.string().default('false').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
+  // QQ/TG 群命令触发策略（slash: / 命令即生效；mention: 仅 @本机器人 时生效；off: 禁用斜线命令）
+  COMMAND_POLICY: z.enum(['slash', 'mention', 'off']).default('slash'),
   ENABLE_AUTO_RECALL: z.string().default('true').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
+  // 系统消息（如工作模式提示）自动撤回延迟（秒），0 = 禁用自动撤回
+  SYSTEM_MESSAGE_RECALL_SECONDS: z.string().regex(/^\d+$/).default('60').transform(Number),
   ENABLE_OFFLINE_NOTIFICATION: z.string().default('true').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
   OFFLINE_NOTIFICATION_COOLDOWN: z.string().regex(/^\d+$/).default('3600000').transform(Number),
 
