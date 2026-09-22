@@ -26,6 +26,16 @@ export class CommandInitializer {
       adminOnly: true,
     })
 
+    this.feature.registerCommand({
+      name: 'cmdpolicy',
+      aliases: ['命令策略'],
+      description: '设置本会话斜线命令触发策略（slash/mention/off，多机器人群防误触）',
+      usage: '/cmdpolicy <slash|mention|off>',
+      permission: { level: 1 },
+      adminOnly: true,
+      handler: (msg, args) => (this.feature as any).handleCommandPolicyCommand(msg, args),
+    })
+
     // 帮助命令
     this.feature.registerCommand({
       name: 'help',

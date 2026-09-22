@@ -20,6 +20,7 @@ export interface AddForwardPairInput {
   autoCreated?: boolean
   forwardMode?: string | null
   nicknameMode?: string | null
+  commandPolicy?: string | null
 }
 
 export interface ForwardPairRecord {
@@ -41,6 +42,7 @@ export interface ForwardPairRecord {
   commandReplyMode?: string | null
   commandReplyFilter?: string | null
   commandReplyList?: string | null
+  commandPolicy?: string | null
 }
 
 export class ForwardMap {
@@ -123,6 +125,7 @@ export class ForwardMap {
         ...(input.autoCreated !== undefined ? { autoCreated: input.autoCreated } : {}),
         ...(input.forwardMode !== undefined ? { forwardMode: input.forwardMode } : {}),
         ...(input.nicknameMode !== undefined ? { nicknameMode: input.nicknameMode } : {}),
+        ...(input.commandPolicy !== undefined ? { commandPolicy: input.commandPolicy } : {}),
       }
       const onlyTargetUnchanged = Object.keys(updateData).length === 2
         && existingByQQ.tgChatId === BigInt(input.tgChatId)
@@ -152,6 +155,7 @@ export class ForwardMap {
         instanceId: this.instanceId,
         forwardMode: input.forwardMode ?? null,
         nicknameMode: input.nicknameMode ?? null,
+        commandPolicy: input.commandPolicy ?? null,
       })
       .returning()
     const rec = this.normalizePairRecord(rowArr[0] as ForwardPairRecord)
@@ -228,6 +232,7 @@ export class ForwardMap {
       qqRoomId: this.normalizeQqRoomId(type, pair.qqRoomId) as bigint,
       autoCreated: pair.autoCreated ?? false,
       tgProvisionedByUserSessionId: pair.tgProvisionedByUserSessionId ?? null,
+      commandPolicy: pair.commandPolicy ?? null,
     }
   }
 

@@ -87,6 +87,13 @@ export default async function (fastify: FastifyInstance) {
         return v
       return null
     }, z.enum(['0', '1']).nullable()).optional(),
+    commandPolicy: z.preprocess((v) => {
+      if (v === '' || v === undefined || v === null)
+        return null
+      if (typeof v === 'string' && (v === 'slash' || v === 'mention' || v === 'off'))
+        return v
+      return null
+    }, z.enum(['slash', 'mention', 'off']).nullable()).optional(),
     commandReplyFilter: z.preprocess((v) => {
       if (v === '' || v === undefined || v === null)
         return null
@@ -130,6 +137,13 @@ export default async function (fastify: FastifyInstance) {
         return v
       return null
     }, z.enum(['0', '1']).nullable()).optional(),
+    commandPolicy: z.preprocess((v) => {
+      if (v === '' || v === undefined || v === null)
+        return null
+      if (typeof v === 'string' && (v === 'slash' || v === 'mention' || v === 'off'))
+        return v
+      return null
+    }, z.enum(['slash', 'mention', 'off']).nullable()).optional(),
     commandReplyFilter: z.preprocess((v) => {
       if (v === '' || v === undefined || v === null)
         return null
@@ -368,6 +382,7 @@ export default async function (fastify: FastifyInstance) {
         commandReplyMode: body.commandReplyMode || null,
         commandReplyFilter: body.commandReplyFilter || null,
         commandReplyList: body.commandReplyList || null,
+        commandPolicy: body.commandPolicy || null,
         notifyTelegram: body.notifyTelegram,
         notifyQQ: body.notifyQQ,
         ignoreRegex: body.ignoreRegex || null,
@@ -470,6 +485,7 @@ export default async function (fastify: FastifyInstance) {
           commandReplyMode: body.commandReplyMode,
           commandReplyFilter: body.commandReplyFilter,
           commandReplyList: body.commandReplyList,
+          commandPolicy: body.commandPolicy,
           ...(body.notifyTelegram !== undefined ? { notifyTelegram: body.notifyTelegram } : {}),
           ...(body.notifyQQ !== undefined ? { notifyQQ: body.notifyQQ } : {}),
           ignoreRegex: body.ignoreRegex,

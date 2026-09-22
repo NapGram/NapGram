@@ -174,6 +174,7 @@ export const forwardPair = pgTable('ForwardPair', {
     commandReplyMode: text('commandReplyMode'),
     commandReplyFilter: text('commandReplyFilter'),
     commandReplyList: text('commandReplyList'),
+    commandPolicy: text('commandPolicy'),
     notifyTelegram: boolean('notifyTelegram').default(false).notNull(),
     notifyQQ: boolean('notifyQQ').default(false).notNull(),
     apiKey: text('apiKey').default('gen_random_uuid()').notNull(), // Should be UUID type ideally
