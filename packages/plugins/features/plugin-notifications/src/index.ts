@@ -12,6 +12,7 @@ type NotificationsConfig = {
     };
     adminQQ?: AdminIdentityValue;
     adminTG?: AdminIdentityValue;
+    alertTG?: AdminIdentityValue;
     cooldownMs?: number;
 };
 
@@ -53,6 +54,7 @@ const plugin = definePlugin({
         };
         const adminQQ = normalizeId(systemOwners.qq);
         const adminTG = normalizeId(systemOwners.tg);
+        const alertTG = normalizeId(config?.alertTG ?? systemOwners.tg);
         const cooldownMs = normalizeCooldownMs(config?.cooldownMs);
 
         const BACKOFF_INTERVALS = buildBackoffIntervals(cooldownMs);
@@ -109,7 +111,7 @@ const plugin = definePlugin({
                 ? `⚠️ NapCat 连接已断开\n时间: ${time}\n\n系统将自动尝试重连...`
                 : `✅ NapCat 连接已恢复\n时间: ${time}`;
 
-            await sendAdminNotifications(ctx, event.instanceId, adminQQ, adminTG, message);
+            await sendAdminNotifications(ctx, event.instanceId, adminQQ, alertTG, message);
         });
 
         ctx.logger.info('Notifications plugin installed');

@@ -67,6 +67,7 @@ const REGISTRY: PluginDef[] = [
   ['notifications', Boolean(env.ENABLE_OFFLINE_NOTIFICATION), {
     enabled: Boolean(env.ENABLE_OFFLINE_NOTIFICATION),
     systemOwners,
+    alertTG: env.ADMIN_ALERT_TG,
     cooldownMs: env.OFFLINE_NOTIFICATION_COOLDOWN,
   }],
 

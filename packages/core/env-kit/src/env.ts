@@ -64,6 +64,7 @@ const configParsed = z.object({
   IPV6: z.string().default('false').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
   ADMIN_QQ: z.preprocess(emptyStringToUndefined, z.string().regex(/^\d+$/).transform(Number).optional()).optional(),
   ADMIN_TG: z.preprocess(emptyStringToUndefined, z.string().regex(/^-?\d+$/).transform(Number).optional()).optional(),
+  ADMIN_ALERT_TG: z.preprocess(emptyStringToUndefined, z.string().regex(/^-?\d+$/).transform(Number).optional()).optional(),
 
   PROXY_IP: z.preprocess(emptyStringToUndefined, z.string().optional()).optional(),
   PROXY_PORT: z.preprocess(emptyStringToUndefined, z.string().regex(/^\d+$/).transform(Number).optional()).optional(),
