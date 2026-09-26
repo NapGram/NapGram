@@ -18,6 +18,7 @@ function makePair(overrides: Partial<any> = {}) {
     commandReplyMode: null,
     commandReplyFilter: null,
     commandReplyList: null,
+    commandPolicy: null,
     ...overrides,
   }
 }
