@@ -19,8 +19,8 @@
     "dev": "tsc -p tsconfig.json --watch"
   },
   "dependencies": {
-    "@mtcute/core": "^0.32.0",
-    "@mtcute/bun": "^0.32.0",
+    "@mtcute/core": "^0.32.3",
+    "@mtcute/bun": "^0.32.3",
     "@napgram/message-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",
     "@napgram/telegram-client": "workspace:*"
