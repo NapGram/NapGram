@@ -505,6 +505,11 @@ container:release:manifest:
     expire_in: 1 day
 
 telegram:images:dev:
+  # 与 XSC/MiPush/xinyi 的 telegram:ci 拉齐：只有 schedule 驱动的 Renovate
+  # 推送自动发 dev 镜像 TG 通知；人工 push 转 manual 需手点；其余一律 never。
+  # NAPGRAM_DOCKER_PUBLISH 与 napgram_push_build_changes 守卫与
+  # .napgram_docker_dev_rules 保持一致，确保 needs(container:dev:manifest)
+  # 不会指向被 rules 裁掉的作业。
   extends:
     - .magisk_telegram_images
     - .napgram_docker_dev_rules
@@ -512,6 +517,14 @@ telegram:images:dev:
   allow_failure: true
   tags:
     - magisk-arm64-linux
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_COMMIT_AUTHOR =~ /Renovate317@users.noreply/ && $NAPGRAM_DOCKER_PUBLISH == "true"'
+      changes: *napgram_push_build_changes
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $NAPGRAM_DOCKER_PUBLISH == "true"'
+      changes: *napgram_push_build_changes
+      when: manual
+    - when: never
   needs:
     - job: container:dev:manifest
       artifacts: true
