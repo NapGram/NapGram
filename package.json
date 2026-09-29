@@ -21,7 +21,7 @@
   "devDependencies": {
     "@typescript/native": "npm:typescript@^7.0.2",
     "bun-types": "1.4.2",
-    "oxlint": "1.85.0",
+    "oxlint": "1.86.0",
     "turbo": "^2.9.18",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
