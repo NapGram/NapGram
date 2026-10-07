@@ -13,6 +13,7 @@ import { getEventPublisher } from '@napgram/plugin-kit'
 import { qqClientFactory } from '../../infrastructure/clients/qq'
 import { telegramClientFactory } from '../../infrastructure/clients/telegram'
 import { bridgeQQEvents } from '../models/services/QQEventBridge.js'
+import { createQQClientRouter } from '../models/services/QQClientRouter.js'
 import { enableQQMediaDownloadDiagnostics } from '../models/services/QQMediaDiagnostics.js'
 
 export interface ConnectionSupervisorHost {
@@ -21,6 +22,8 @@ export interface ConnectionSupervisorHost {
   readonly qq?: {
     wsUrl?: string
     wsToken?: string
+    officialAppId?: string
+    officialAppSecret?: string
   } | null
   tgBot?: Telegram
   tgUserBot?: Telegram
@@ -83,25 +86,48 @@ export class ConnectionSupervisor {
 
       await this.personalUserBotService.initIfNeeded()
 
+      // 并存模式：群聊 / 私聊走 NapCat（个人号协议），频道走 QQ 官方机器人 API。
+      // 两者可同时存在，由 QQClientRouter 按聊天类型路由。
+      const officialAppId = this.host.qq?.officialAppId || (env as any).QQ_OFFICIAL_APP_ID
+      const officialSecret = this.host.qq?.officialAppSecret || (env as any).QQ_OFFICIAL_APP_SECRET
+
+      let napcatClient: IQQClient | undefined
       const wsUrl = this.host.qq?.wsUrl || env.NAPCAT_WS_URL
-      if (!wsUrl) {
-        throw new Error('NapCat WebSocket 地址未配置 (qqBot.wsUrl 或 NAPCAT_WS_URL)')
+      if (wsUrl) {
+        const wsToken = this.host.qq?.wsToken || (env as any).NAPCAT_WS_TOKEN
+        this.host.log.debug('NapCat 客户端 正在初始化')
+        napcatClient = await qqClientFactory.create({
+          type: 'napcat',
+          wsUrl,
+          ...(wsToken ? { token: wsToken } : {}),
+          reconnect: { maxAttempts: 3, interval: 5000 },
+        })
+        await napcatClient.login()
+        enableQQMediaDownloadDiagnostics(napcatClient, this.host.log)
+        this.host.log.info('NapCat 客户端 ✓ 初始化完成')
       }
-      const wsToken = this.host.qq?.wsToken || (env as any).NAPCAT_WS_TOKEN
 
-      this.host.log.debug('NapCat 客户端 正在初始化')
-      const qqClient = await qqClientFactory.create({
-        type: 'napcat',
-        wsUrl,
-        ...(wsToken ? { token: wsToken } : {}),
-        reconnect: { maxAttempts: 3, interval: 5000 },
-      })
+      let officialClient: IQQClient | undefined
+      if (officialAppId && officialSecret) {
+        this.host.log.debug('QQ 官方机器人客户端 正在初始化')
+        officialClient = await qqClientFactory.create({
+          type: 'qqofficial',
+          appId: officialAppId,
+          appSecret: officialSecret,
+          enableGuildDirectMessage: (env as any).QQ_OFFICIAL_ENABLE_GUILD_DM !== false,
+          sandbox: Boolean((env as any).QQ_OFFICIAL_SANDBOX),
+          reconnect: { maxAttempts: 10, interval: 5000 },
+        })
+        await officialClient.login()
+        this.host.log.info('QQ 官方机器人客户端 ✓ 初始化完成 (频道消息已启用)')
+      }
+
+      if (!napcatClient && !officialClient) {
+        throw new Error('NapCat WebSocket 地址未配置 (qqBot.wsUrl 或 NAPCAT_WS_URL)，且未配置 QQ 官方机器人凭据 (QQ_OFFICIAL_APP_ID / QQ_OFFICIAL_APP_SECRET)')
+      }
+
+      const qqClient = createQQClientRouter(napcatClient, officialClient)
       this.host.qqClient = qqClient
-
-      await qqClient.login()
-
-      enableQQMediaDownloadDiagnostics(qqClient, this.host.log)
-      this.host.log.info('NapCat 客户端 ✓ 初始化完成')
 
       this.host.forwardPairs = await ForwardMapModel.load(this.host.id)
       messageConverter.setInstance(this.host as any)
@@ -110,6 +136,10 @@ export class ConnectionSupervisor {
         const eventPublisher = getEventPublisher()
         await eventPublisher.publishInstanceStatus({ instanceId: this.host.id, status: 'starting' })
         bridgeQQEvents(this.host.id, qqClient, eventPublisher, this.host.log, this.host as any)
+        // 官方客户端是独立事件源，需单独桥接，否则频道消息不会上报给插件
+        if (officialClient) {
+          bridgeQQEvents(this.host.id, officialClient, eventPublisher, this.host.log, this.host as any)
+        }
       }
       catch (error) {
         this.host.log.warn('Plugin event bridge init failed:', error)
@@ -124,7 +154,7 @@ export class ConnectionSupervisor {
       }
 
       qqClient.on('offline', async () => {
-        this.host.log.warn('NapCat connection offline (disconnect)')
+        this.host.log.warn('QQ connection offline (disconnect)')
         this.host.isSetup = false
         if (!this.host.hasConfiguredWorkMode()) {
           return
@@ -143,7 +173,7 @@ export class ConnectionSupervisor {
       })
 
       qqClient.on('online', async () => {
-        this.host.log.info('NapCat connection online (connect)')
+        this.host.log.info('QQ connection online (connect)')
         this.host.isSetup = true
         if (!this.host.hasConfiguredWorkMode()) {
           return

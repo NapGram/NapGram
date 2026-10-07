@@ -932,7 +932,7 @@ describe('instance', () => {
     expect(offlineHandler).toBeDefined()
     await offlineHandler()
 
-    expect(loggerMocks.warn).toHaveBeenCalledWith('NapCat connection offline (disconnect)')
+    expect(loggerMocks.warn).toHaveBeenCalledWith('QQ connection offline (disconnect)')
     expect(instance.isSetup).toBe(false)
     expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
       noticeType: 'connection-lost',
@@ -945,7 +945,7 @@ describe('instance', () => {
     expect(onlineHandler).toBeDefined()
     await onlineHandler()
 
-    expect(loggerMocks.info).toHaveBeenCalledWith('NapCat connection online (connect)')
+    expect(loggerMocks.info).toHaveBeenCalledWith('QQ connection online (connect)')
     expect(instance.isSetup).toBe(true)
     expect(eventPublisherMocks.publishNotice).toHaveBeenCalledWith(expect.objectContaining({
       noticeType: 'connection-restored',

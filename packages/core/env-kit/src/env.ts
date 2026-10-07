@@ -50,6 +50,11 @@ const configParsed = z.object({
   NAPCAT_WS_URL: z.preprocess(emptyStringToUndefined, z.string().url().optional()).optional(),
   NAPCAT_WS_TOKEN: z.preprocess(emptyStringToUndefined, z.string().optional()).optional(),
 
+  QQ_OFFICIAL_APP_ID: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()).optional(),
+  QQ_OFFICIAL_APP_SECRET: z.preprocess(emptyStringToUndefined, z.string().min(1).optional()).optional(),
+  QQ_OFFICIAL_SANDBOX: z.string().default('false').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
+  QQ_OFFICIAL_ENABLE_GUILD_DM: z.string().default('true').transform(v => ['true', '1', 'yes'].includes(v.toLowerCase())),
+
   SIGN_API: z.preprocess(emptyStringToUndefined, z.string().url().optional()).optional(),
   SIGN_VER: z.preprocess(emptyStringToUndefined, z.string().optional()).optional(),
 
