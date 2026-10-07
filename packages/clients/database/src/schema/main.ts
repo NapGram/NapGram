@@ -49,7 +49,7 @@ const jsonWithBigInt = <TName extends string>(name: TName) => customType<{ data:
 })(name);
 
 // Enums
-export const qqBotType = pgEnum('QqBotType', ['napcat']);
+export const qqBotType = pgEnum('QqBotType', ['napcat', 'qqofficial']);
 
 // Tables
 
@@ -95,6 +95,9 @@ export const qqBot = pgTable('QqBot', {
     signDockerId: text('signDockerId'),
     type: qqBotType('type').default('napcat'),
     wsUrl: text('wsUrl'),
+    wsToken: text('wsToken'),
+    officialAppId: text('officialAppId'),
+    officialAppSecret: text('officialAppSecret'),
 });
 
 export const instance = pgTable('Instance', {

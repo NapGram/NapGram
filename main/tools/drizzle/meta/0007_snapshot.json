@@ -1,6 +1,6 @@
 {
-  "id": "c8ee556d-5f4c-4615-8508-f607f3dcd97e",
-  "prevId": "aeb545bf-4c49-4771-b23c-0d7d9738406c",
+  "id": "4c9aff5c-6f6f-4ae6-94fe-b78e7d54d109",
+  "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -406,6 +406,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'admin'"
         },
         "isActive": {
           "name": "isActive",
@@ -964,11 +971,24 @@
           "primaryKey": true,
           "notNull": true
         },
+        "qqChatType": {
+          "name": "qqChatType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'group'"
+        },
         "qqRoomId": {
           "name": "qqRoomId",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true
+        },
+        "qqDisplayName": {
+          "name": "qqDisplayName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "qqFromGroupId": {
           "name": "qqFromGroupId",
@@ -984,9 +1004,22 @@
         },
         "tgThreadId": {
           "name": "tgThreadId",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tgProvisionedByUserSessionId": {
+          "name": "tgProvisionedByUserSessionId",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
+        },
+        "autoCreated": {
+          "name": "autoCreated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "instanceId": {
           "name": "instanceId",
@@ -1044,6 +1077,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "commandPolicy": {
+          "name": "commandPolicy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "notifyTelegram": {
           "name": "notifyTelegram",
           "type": "boolean",
@@ -1067,9 +1106,15 @@
         }
       },
       "indexes": {
-        "ForwardPair_qqRoomId_instanceId_key": {
-          "name": "ForwardPair_qqRoomId_instanceId_key",
+        "ForwardPair_qqChatType_qqRoomId_instanceId_key": {
+          "name": "ForwardPair_qqChatType_qqRoomId_instanceId_key",
           "columns": [
+            {
+              "expression": "qqChatType",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "qqRoomId",
               "isExpression": false,
@@ -1115,6 +1160,28 @@
           "method": "btree",
           "with": {}
         },
+        "ForwardPair_tgChatId_instanceId_nullThread_key": {
+          "name": "ForwardPair_tgChatId_instanceId_nullThread_key",
+          "columns": [
+            {
+              "expression": "tgChatId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "instanceId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"ForwardPair\".\"tgThreadId\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "ForwardPair_apiKey_key": {
           "name": "ForwardPair_apiKey_key",
           "columns": [
@@ -1132,6 +1199,19 @@
         }
       },
       "foreignKeys": {
+        "ForwardPair_tgProvisionedByUserSessionId_Session_id_fk": {
+          "name": "ForwardPair_tgProvisionedByUserSessionId_Session_id_fk",
+          "tableFrom": "ForwardPair",
+          "tableTo": "Session",
+          "columnsFrom": [
+            "tgProvisionedByUserSessionId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
         "ForwardPair_instanceId_Instance_id_fk": {
           "name": "ForwardPair_instanceId_Instance_id_fk",
           "tableFrom": "ForwardPair",
@@ -1322,6 +1402,13 @@
           "primaryKey": true,
           "notNull": true
         },
+        "qqChatType": {
+          "name": "qqChatType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'group'"
+        },
         "qqRoomId": {
           "name": "qqRoomId",
           "type": "bigint",
@@ -1372,7 +1459,7 @@
         },
         "tgMsgId": {
           "name": "tgMsgId",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -1423,9 +1510,15 @@
         }
       },
       "indexes": {
-        "Message_qqRoomId_qqSenderId_seq_rand_pktnum_time_instanceId_idx": {
-          "name": "Message_qqRoomId_qqSenderId_seq_rand_pktnum_time_instanceId_idx",
+        "Message_qqChatType_qqRoomId_qqSenderId_seq_rand_pktnum_time_instanceId_idx": {
+          "name": "Message_qqChatType_qqRoomId_qqSenderId_seq_rand_pktnum_time_instanceId_idx",
           "columns": [
+            {
+              "expression": "qqChatType",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
             {
               "expression": "qqRoomId",
               "isExpression": false,
@@ -1588,6 +1681,24 @@
         },
         "wsUrl": {
           "name": "wsUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wsToken": {
+          "name": "wsToken",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "officialAppId": {
+          "name": "officialAppId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "officialAppSecret": {
+          "name": "officialAppSecret",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -1936,9 +2047,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "slave_market.slave_market_admins": {
-      "name": "slave_market_admins",
-      "schema": "slave_market",
+    "public.CommandPermissions": {
+      "name": "CommandPermissions",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
@@ -1946,536 +2057,49 @@
           "primaryKey": true,
           "notNull": true
         },
-        "userId": {
-          "name": "userId",
+        "commandName": {
+          "name": "commandName",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "nickname": {
-          "name": "nickname",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "addedBy": {
-          "name": "addedBy",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "addedAt": {
-          "name": "addedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "slave_market_admins_userId_key": {
-          "name": "slave_market_admins_userId_key",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_appearances": {
-      "name": "slave_market_appearances",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "itemName": {
-          "name": "itemName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slot": {
-          "name": "slot",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "equipped": {
-          "name": "equipped",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "acquiredAt": {
-          "name": "acquiredAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "slave_market_appearances_userId_itemName_key": {
-          "name": "slave_market_appearances_userId_itemName_key",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "itemName",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_appearances_userId_equipped_idx": {
-          "name": "slave_market_appearances_userId_equipped_idx",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "equipped",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_farm_lands": {
-      "name": "slave_market_farm_lands",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "plotIndex": {
-          "name": "plotIndex",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cropType": {
-          "name": "cropType",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "plantTime": {
-          "name": "plantTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "harvestTime": {
-          "name": "harvestTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "slave_market_farm_lands_userId_plotIndex_key": {
-          "name": "slave_market_farm_lands_userId_plotIndex_key",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "plotIndex",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_farm_lands_userId_idx": {
-          "name": "slave_market_farm_lands_userId_idx",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_players": {
-      "name": "slave_market_players",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "plainUserId": {
-          "name": "plainUserId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "nickname": {
-          "name": "nickname",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "balance": {
-          "name": "balance",
+        "instanceId": {
+          "name": "instanceId",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "deposit": {
-          "name": "deposit",
+        "requiredLevel": {
+          "name": "requiredLevel",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 3
+        },
+        "requireOwner": {
+          "name": "requireOwner",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
-        "worth": {
-          "name": "worth",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 100
-        },
-        "creditLevel": {
-          "name": "creditLevel",
+        "enabled": {
+          "name": "enabled",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 1
         },
-        "depositLimit": {
-          "name": "depositLimit",
-          "type": "integer",
+        "restrictions": {
+          "name": "restrictions",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
-          "default": 1000
+          "default": "'{}'::jsonb"
         },
-        "loanBalance": {
-          "name": "loanBalance",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "loanCreditLevel": {
-          "name": "loanCreditLevel",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "ownerId": {
-          "name": "ownerId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ownedTime": {
-          "name": "ownedTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "vipEndTime": {
-          "name": "vipEndTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "registerTime": {
-          "name": "registerTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "registerSource": {
-          "name": "registerSource",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastWorkTime": {
-          "name": "lastWorkTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastRobTime": {
-          "name": "lastRobTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastTransferTime": {
-          "name": "lastTransferTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastBuyTime": {
-          "name": "lastBuyTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastPlantTime": {
-          "name": "lastPlantTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastHarvestTime": {
-          "name": "lastHarvestTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastInterestTime": {
-          "name": "lastInterestTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastLoanInterestTime": {
-          "name": "lastLoanInterestTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isAdmin": {
-          "name": "isAdmin",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "commandBanned": {
-          "name": "commandBanned",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "bodyguardName": {
-          "name": "bodyguardName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bodyguardEndTime": {
-          "name": "bodyguardEndTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "jailEndTime": {
-          "name": "jailEndTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "jailWorkIncome": {
-          "name": "jailWorkIncome",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        }
-      },
-      "indexes": {
-        "slave_market_players_userId_key": {
-          "name": "slave_market_players_userId_key",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_players_userId_idx": {
-          "name": "slave_market_players_userId_idx",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_players_ownerId_idx": {
-          "name": "slave_market_players_ownerId_idx",
-          "columns": [
-            {
-              "expression": "ownerId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_players_registerSource_idx": {
-          "name": "slave_market_players_registerSource_idx",
-          "columns": [
-            {
-              "expression": "registerSource",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_red_packet_grabs": {
-      "name": "slave_market_red_packet_grabs",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "packetId": {
-          "name": "packetId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "userName": {
-          "name": "userName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "grabbedAt": {
-          "name": "grabbedAt",
+        "updatedAt": {
+          "name": "updatedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -2483,17 +2107,17 @@
         }
       },
       "indexes": {
-        "slave_market_red_packet_grabs_packetId_userId_key": {
-          "name": "slave_market_red_packet_grabs_packetId_userId_key",
+        "CommandPermissions_commandName_instanceId_key": {
+          "name": "CommandPermissions_commandName_instanceId_key",
           "columns": [
             {
-              "expression": "packetId",
+              "expression": "commandName",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "userId",
+              "expression": "instanceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2504,11 +2128,41 @@
           "method": "btree",
           "with": {}
         },
-        "slave_market_red_packet_grabs_userId_idx": {
-          "name": "slave_market_red_packet_grabs_userId_idx",
+        "CommandPermissions_commandName_idx": {
+          "name": "CommandPermissions_commandName_idx",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "commandName",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CommandPermissions_requiredLevel_idx": {
+          "name": "CommandPermissions_requiredLevel_idx",
+          "columns": [
+            {
+              "expression": "requiredLevel",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "CommandPermissions_enabled_idx": {
+          "name": "CommandPermissions_enabled_idx",
+          "columns": [
+            {
+              "expression": "enabled",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2527,9 +2181,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "slave_market.slave_market_red_packets": {
-      "name": "slave_market_red_packets",
-      "schema": "slave_market",
+    "public.PermissionAuditLogs": {
+      "name": "PermissionAuditLogs",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
@@ -2537,50 +2191,195 @@
           "primaryKey": true,
           "notNull": true
         },
-        "packetId": {
-          "name": "packetId",
+        "eventType": {
+          "name": "eventType",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "senderId": {
-          "name": "senderId",
+        "operatorId": {
+          "name": "operatorId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "senderName": {
-          "name": "senderName",
+        "targetUserId": {
+          "name": "targetUserId",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "totalAmount": {
-          "name": "totalAmount",
+        "instanceId": {
+          "name": "instanceId",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "totalCount": {
-          "name": "totalCount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "remaining": {
-          "name": "remaining",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scopeKey": {
-          "name": "scopeKey",
+        "commandName": {
+          "name": "commandName",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "details": {
+          "name": "details",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
         },
         "createdAt": {
           "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "PermissionAuditLogs_eventType_idx": {
+          "name": "PermissionAuditLogs_eventType_idx",
+          "columns": [
+            {
+              "expression": "eventType",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "PermissionAuditLogs_operatorId_idx": {
+          "name": "PermissionAuditLogs_operatorId_idx",
+          "columns": [
+            {
+              "expression": "operatorId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "PermissionAuditLogs_targetUserId_idx": {
+          "name": "PermissionAuditLogs_targetUserId_idx",
+          "columns": [
+            {
+              "expression": "targetUserId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "PermissionAuditLogs_instanceId_idx": {
+          "name": "PermissionAuditLogs_instanceId_idx",
+          "columns": [
+            {
+              "expression": "instanceId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "PermissionAuditLogs_commandName_idx": {
+          "name": "PermissionAuditLogs_commandName_idx",
+          "columns": [
+            {
+              "expression": "commandName",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "PermissionAuditLogs_createdAt_idx": {
+          "name": "PermissionAuditLogs_createdAt_idx",
+          "columns": [
+            {
+              "expression": "createdAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.UserPermissions": {
+      "name": "UserPermissions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instanceId": {
+          "name": "instanceId",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "permissionLevel": {
+          "name": "permissionLevel",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 3
+        },
+        "customPermissions": {
+          "name": "customPermissions",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "grantedBy": {
+          "name": "grantedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grantedAt": {
+          "name": "grantedAt",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -2590,15 +2389,27 @@
           "name": "expiresAt",
           "type": "timestamp",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
-        "slave_market_red_packets_packetId_key": {
-          "name": "slave_market_red_packets_packetId_key",
+        "UserPermissions_userId_instanceId_key": {
+          "name": "UserPermissions_userId_instanceId_key",
           "columns": [
             {
-              "expression": "packetId",
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "instanceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2609,475 +2420,26 @@
           "method": "btree",
           "with": {}
         },
-        "slave_market_red_packets_scopeKey_idx": {
-          "name": "slave_market_red_packets_scopeKey_idx",
-          "columns": [
-            {
-              "expression": "scopeKey",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_red_packets_createdAt_idx": {
-          "name": "slave_market_red_packets_createdAt_idx",
-          "columns": [
-            {
-              "expression": "createdAt",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_stock_orders": {
-      "name": "slave_market_stock_orders",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scopeId": {
-          "name": "scopeId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "symbol": {
-          "name": "symbol",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "market": {
-          "name": "market",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "side": {
-          "name": "side",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "quantity": {
-          "name": "quantity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "price": {
-          "name": "price",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "fee": {
-          "name": "fee",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "amount": {
-          "name": "amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'success'"
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "dateKey": {
-          "name": "dateKey",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "extra": {
-          "name": "extra",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "slave_market_stock_orders_userId_dateKey_idx": {
-          "name": "slave_market_stock_orders_userId_dateKey_idx",
+        "UserPermissions_userId_idx": {
+          "name": "UserPermissions_userId_idx",
           "columns": [
             {
               "expression": "userId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            },
-            {
-              "expression": "dateKey",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
             }
           ],
           "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_stocks": {
-      "name": "slave_market_stocks",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
         },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scopeId": {
-          "name": "scopeId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "symbol": {
-          "name": "symbol",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "market": {
-          "name": "market",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "quantity": {
-          "name": "quantity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "avgCost": {
-          "name": "avgCost",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "currency": {
-          "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'USD'"
-        },
-        "lastPrice": {
-          "name": "lastPrice",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "lastUpdate": {
-          "name": "lastUpdate",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "lastTradeTime": {
-          "name": "lastTradeTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "slave_market_stocks_userId_symbol_idx": {
-          "name": "slave_market_stocks_userId_symbol_idx",
+        "UserPermissions_instanceId_idx": {
+          "name": "UserPermissions_instanceId_idx",
           "columns": [
             {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "symbol",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_stock_quotes": {
-      "name": "slave_market_stock_quotes",
-      "schema": "slave_market",
-      "columns": {
-        "symbol": {
-          "name": "symbol",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "market": {
-          "name": "market",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "price": {
-          "name": "price",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "open": {
-          "name": "open",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "high": {
-          "name": "high",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "low": {
-          "name": "low",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "prevClose": {
-          "name": "prevClose",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ts": {
-          "name": "ts",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "scopeId": {
-          "name": "scopeId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payload": {
-          "name": "payload",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "slave_market_stock_quotes_ts_idx": {
-          "name": "slave_market_stock_quotes_ts_idx",
-          "columns": [
-            {
-              "expression": "ts",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_system": {
-      "name": "slave_market_system",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "isDisabled": {
-          "name": "isDisabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "lastAssetDecayTime": {
-          "name": "lastAssetDecayTime",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_transactions": {
-      "name": "slave_market_transactions",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "userId": {
-          "name": "userId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "balance": {
-          "name": "balance",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "targetId": {
-          "name": "targetId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "slave_market_transactions_userId_createdAt_idx": {
-          "name": "slave_market_transactions_userId_createdAt_idx",
-          "columns": [
-            {
-              "expression": "userId",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "createdAt",
+              "expression": "instanceId",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3088,111 +2450,11 @@
           "method": "btree",
           "with": {}
         },
-        "slave_market_transactions_type_idx": {
-          "name": "slave_market_transactions_type_idx",
+        "UserPermissions_permissionLevel_idx": {
+          "name": "UserPermissions_permissionLevel_idx",
           "columns": [
             {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "slave_market.slave_market_vip_cards": {
-      "name": "slave_market_vip_cards",
-      "schema": "slave_market",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "cardCode": {
-          "name": "cardCode",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cardType": {
-          "name": "cardType",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "duration": {
-          "name": "duration",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "used": {
-          "name": "used",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "usedBy": {
-          "name": "usedBy",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "usedAt": {
-          "name": "usedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "createdBy": {
-          "name": "createdBy",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "slave_market_vip_cards_cardCode_key": {
-          "name": "slave_market_vip_cards_cardCode_key",
-          "columns": [
-            {
-              "expression": "cardCode",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "slave_market_vip_cards_used_idx": {
-          "name": "slave_market_vip_cards_used_idx",
-          "columns": [
-            {
-              "expression": "used",
+              "expression": "permissionLevel",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3203,11 +2465,11 @@
           "method": "btree",
           "with": {}
         },
-        "slave_market_vip_cards_cardCode_idx": {
-          "name": "slave_market_vip_cards_cardCode_idx",
+        "UserPermissions_expiresAt_idx": {
+          "name": "UserPermissions_expiresAt_idx",
           "columns": [
             {
-              "expression": "cardCode",
+              "expression": "expiresAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3232,13 +2494,12 @@
       "name": "QqBotType",
       "schema": "public",
       "values": [
-        "napcat"
+        "napcat",
+        "qqofficial"
       ]
     }
   },
-  "schemas": {
-    "slave_market": "slave_market"
-  },
+  "schemas": {},
   "sequences": {},
   "roles": {},
   "policies": {},

@@ -50,6 +50,13 @@
       "when": 1790062577057,
       "tag": "0006_forward_pair_command_policy",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791389298157,
+      "tag": "0007_qq_official_bot",
+      "breakpoints": true
     }
   ]
 }
