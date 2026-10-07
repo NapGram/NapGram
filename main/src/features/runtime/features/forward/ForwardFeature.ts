@@ -647,7 +647,7 @@ export class ForwardFeature {
         return
       }
 
-      const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
+      const qqChatType = msg.chat.type === 'private' ? 'private' : msg.chat.type === 'channel' ? 'channel' : 'group'
       let pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
       if (!pair && this.isPersonalMode())
         pair = await this.personalPairProvisioner.ensurePairForQQMessage(msg, qqChatType)
@@ -720,7 +720,7 @@ export class ForwardFeature {
         msg,
         pair.instanceId,
         pair.qqRoomId,
-        pair.qqChatType === 'private' ? 'private' : 'group',
+        pair.qqChatType === 'private' ? 'private' : pair.qqChatType === 'channel' ? 'channel' : 'group',
       )
 
       const sentMsg = await this.enqueueTelegramSend(() =>
@@ -942,7 +942,7 @@ export class ForwardFeature {
     }
   }
 
-  private async removePersonalPair(pair: ForwardPairRecord, chatType: 'private' | 'group', qqRoomId: string, notice: string) {
+  private async removePersonalPair(pair: ForwardPairRecord, chatType: 'private' | 'group' | 'channel', qqRoomId: string, notice: string) {
     if (typeof (this.forwardMap as any).remove === 'function') {
       await (this.forwardMap as any).remove({ type: chatType, id: qqRoomId })
     }
@@ -997,12 +997,12 @@ export class ForwardFeature {
     }
   }
 
-  private handleInputStatus = async (event: { chatId: string, chatType?: 'private' | 'group', typing: boolean }) => {
+  private handleInputStatus = async (event: { chatId: string, chatType?: 'private' | 'group' | 'channel', typing: boolean }) => {
     try {
       if (!hasConfiguredWorkMode(this.instance))
         return
 
-      const qqChatType = event.chatType === 'private' ? 'private' : 'group'
+      const qqChatType = event.chatType === 'private' ? 'private' : event.chatType === 'channel' ? 'channel' : 'group'
       const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, event.chatId, qqChatType)
       if (!pair)
         return

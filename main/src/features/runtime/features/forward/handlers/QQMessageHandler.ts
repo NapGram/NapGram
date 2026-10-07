@@ -34,7 +34,7 @@ export class QQMessageHandler {
     }
 
     try {
-      const qqChatType = msg.chat.type === 'private' ? 'private' : 'group'
+      const qqChatType = msg.chat.type === 'private' ? 'private' : msg.chat.type === 'channel' ? 'channel' : 'group'
       const pair = await findPairByQQWithChatType(this.forwardMap, this.instance.id, msg.chat.id, qqChatType)
       if (!pair) {
         logger.debug(`No TG mapping for QQ chat ${msg.chat.id}`)
@@ -50,7 +50,7 @@ export class QQMessageHandler {
         msg,
         pair.instanceId,
         pair.qqRoomId,
-        pair.qqChatType === 'private' ? 'private' : 'group',
+        pair.qqChatType === 'private' ? 'private' : pair.qqChatType === 'channel' ? 'channel' : 'group',
       )
 
       const sentMsg = await this.telegramSender.sendToTelegram(chat, msg, pair, replyToMsgId ? Number(replyToMsgId) : undefined, this.modeService.nicknameMode)

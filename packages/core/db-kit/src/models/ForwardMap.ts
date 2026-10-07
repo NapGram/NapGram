@@ -3,7 +3,7 @@ import { getLogger } from '@napgram/logger-kit'
 
 const logger = getLogger('ForwardMap')
 
-export type QqChatType = 'private' | 'group'
+export type QqChatType = 'private' | 'group' | 'channel'
 
 export interface QqChatTarget {
   type?: QqChatType
@@ -84,7 +84,7 @@ export class ForwardMap {
     if (typeof target === 'object' && 'gid' in target) return this.findByQQ({ type: 'group', id: (target as any).gid })
     if (typeof target === 'object' && 'chat' in target && (target as any).chat?.id) {
       return this.findByQQ({
-        type: (target as any).chat.type === 'private' ? 'private' : 'group',
+        type: (target as any).chat.type === 'private' ? 'private' : (target as any).chat.type === 'channel' ? 'channel' : 'group',
         id: (target as any).chat.id,
       })
     }
@@ -207,7 +207,7 @@ export class ForwardMap {
 
   private normalizeQqTarget(target: string | number | bigint | QqChatTarget): Required<QqChatTarget> {
     if (typeof target === 'object') {
-      const type = target.type === 'private' ? 'private' : 'group'
+      const type = target.type === 'private' ? 'private' : target.type === 'channel' ? 'channel' : 'group'
       return {
         type,
         id: this.normalizeQqRoomId(type, target.id),
@@ -225,7 +225,7 @@ export class ForwardMap {
   }
 
   private normalizePairRecord(pair: ForwardPairRecord): ForwardPairRecord {
-    const type = pair.qqChatType === 'private' ? 'private' : 'group'
+    const type = pair.qqChatType === 'private' ? 'private' : pair.qqChatType === 'channel' ? 'channel' : 'group'
     return {
       ...pair,
       qqChatType: type,

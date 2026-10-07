@@ -27,8 +27,8 @@ export class MediaGroupHandler {
     private readonly mapper = new ForwardMapper(),
   ) { }
 
-  private getQqChatType(pair: any): 'private' | 'group' {
-    return pair?.qqChatType === 'private' ? 'private' : 'group'
+  private getQqChatType(pair: any): 'private' | 'group' | 'channel' {
+    return pair?.qqChatType === 'private' ? 'private' : pair?.qqChatType === 'channel' ? 'channel' : 'group'
   }
 
   /**

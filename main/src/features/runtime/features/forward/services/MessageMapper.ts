@@ -4,7 +4,7 @@ import { db, sql } from '../../../capabilities/db.js'
 import { getLogger } from '../../../capabilities/logging.js'
 import { renderContent } from '../utils/render.js'
 
-type QqChatType = 'private' | 'group'
+type QqChatType = 'private' | 'group' | 'channel'
 
 interface MessageInsertValues {
   qqChatType: QqChatType
@@ -35,11 +35,11 @@ export class ForwardMapper {
   }
 
   private getQqChatTypeFromPair(pair: any): QqChatType {
-    return pair?.qqChatType === 'private' ? 'private' : 'group'
+    return pair?.qqChatType === 'private' ? 'private' : pair?.qqChatType === 'channel' ? 'channel' : 'group'
   }
 
   private getQqChatTypeFromMessage(msg: UnifiedMessage): QqChatType {
-    return msg.chat?.type === 'private' ? 'private' : 'group'
+    return msg.chat?.type === 'private' ? 'private' : msg.chat?.type === 'channel' ? 'channel' : 'group'
   }
 
   private async executeRows<T = any>(query: any): Promise<T[]> {
@@ -286,7 +286,7 @@ export class ForwardMapper {
           ...msg,
           rand: msg.rand === undefined ? undefined : BigInt(msg.rand),
           qqRoomId: msg.qqRoomId === undefined ? undefined : BigInt(msg.qqRoomId),
-          qqChatType: msg.qqChatType === 'private' ? 'private' : 'group',
+          qqChatType: msg.qqChatType === 'private' ? 'private' : msg.qqChatType === 'channel' ? 'channel' : 'group',
           qqSenderId: msg.qqSenderId === undefined ? undefined : BigInt(msg.qqSenderId),
         }
       : undefined

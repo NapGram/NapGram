@@ -24,8 +24,8 @@ export class TelegramMessageHandler {
     private readonly mapper = new ForwardMapper(renderContent),
   ) { }
 
-  private getQqChatType(pair: any): 'private' | 'group' {
-    return pair?.qqChatType === 'private' ? 'private' : 'group'
+  private getQqChatType(pair: any): 'private' | 'group' | 'channel' {
+    return pair?.qqChatType === 'private' ? 'private' : pair?.qqChatType === 'channel' ? 'channel' : 'group'
   }
 
   private getReplyChatType(pair: any) {

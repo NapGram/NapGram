@@ -5,7 +5,7 @@ import { getLogger } from '../../../capabilities/logging.js'
 
 const logger = getLogger('ForwardPairChatType')
 
-export type QqChatType = 'group' | 'private'
+export type QqChatType = 'group' | 'private' | 'channel'
 
 export interface TypedForwardPair extends ForwardPairRecord {
   qqChatType: QqChatType
@@ -34,6 +34,10 @@ const CHAT_TYPE_ALIASES: Record<string, QqChatType> = {
   qqfriend: 'private',
   好友: 'private',
   私聊: 'private',
+  channel: 'channel',
+  channels: 'channel',
+  guild: 'channel',
+  频道: 'channel',
 }
 
 function isMissingPersonalModeColumn(error: unknown): boolean {
@@ -170,15 +174,15 @@ export function parseQqChatType(value: unknown): QqChatType | undefined {
 }
 
 export function qqChatTypeFromMessage(msg: UnifiedMessage): QqChatType {
-  return msg.chat.type === 'private' ? 'private' : 'group'
+  return msg.chat.type === 'private' ? 'private' : msg.chat.type === 'channel' ? 'channel' : 'group'
 }
 
-export function qqChatTypeToMessageChatType(chatType: QqChatType): 'private' | 'group' {
-  return chatType === 'private' ? 'private' : 'group'
+export function qqChatTypeToMessageChatType(chatType: QqChatType): 'private' | 'group' | 'channel' {
+  return chatType === 'private' ? 'private' : chatType === 'channel' ? 'channel' : 'group'
 }
 
 export function formatQqChatTypeLabel(chatType: QqChatType): string {
-  return chatType === 'private' ? 'QQ 好友' : 'QQ 群'
+  return chatType === 'private' ? 'QQ 好友' : chatType === 'channel' ? 'QQ 频道' : 'QQ 群'
 }
 
 export async function getForwardPairChatType(pair: ForwardPairRecord | undefined | null): Promise<QqChatType> {

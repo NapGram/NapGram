@@ -19,7 +19,7 @@ export class ReplyResolver {
     msg: UnifiedMessage,
     instanceId: number,
     qqRoomId: bigint,
-    qqChatType: 'private' | 'group' = 'group',
+    qqChatType: 'private' | 'group' | 'channel' = 'group',
   ): Promise<bigint | undefined> {
     const replyContent = msg.content.find(c => c.type === 'reply')
     if (!replyContent || replyContent.type !== 'reply') {
@@ -43,7 +43,7 @@ export class ReplyResolver {
     tgMsg: any,
     instanceId: number,
     tgChatId: bigint,
-  ): Promise<{ seq?: number, rand?: bigint, pktnum?: number, qqRoomId?: bigint, qqChatType?: 'private' | 'group', senderUin?: string, time?: number } | undefined> {
+  ): Promise<{ seq?: number, rand?: bigint, pktnum?: number, qqRoomId?: bigint, qqChatType?: 'private' | 'group' | 'channel', senderUin?: string, time?: number } | undefined> {
     const replyToMsgId = telegramMessage.getTelegramReplyMessageId(tgMsg)
     if (!replyToMsgId) {
       return undefined
@@ -57,7 +57,7 @@ export class ReplyResolver {
         rand: qqSource.rand,
         pktnum: qqSource.pktnum,
         qqRoomId: qqSource.qqRoomId,
-        qqChatType: qqSource.qqChatType === 'private' ? 'private' : 'group',
+        qqChatType: qqSource.qqChatType === 'private' ? 'private' : qqSource.qqChatType === 'channel' ? 'channel' : 'group',
         senderUin: qqSource.qqSenderId?.toString(),
         time: qqSource.time,
       }

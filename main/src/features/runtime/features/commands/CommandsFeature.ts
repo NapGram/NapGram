@@ -452,7 +452,7 @@ export class CommandsFeature {
 
     const updated = await forwardMap.add({
       qqRoomId: String(pair.qqRoomId),
-      qqChatType: pair.qqChatType === 'private' ? 'private' : 'group',
+      qqChatType: pair.qqChatType === 'private' ? 'private' : pair.qqChatType === 'channel' ? 'channel' : 'group',
       tgChatId: pair.tgChatId,
       tgThreadId: pair.tgThreadId ? BigInt(pair.tgThreadId) : undefined,
       commandPolicy: value,
@@ -1090,7 +1090,7 @@ export class CommandsFeature {
       platform: 'telegram',
       chat: {
         id: String(chatId),
-        type: (tgMsg.chat as any)?.type === 'private' ? 'private' : 'group',
+        type: (tgMsg.chat as any)?.type === 'private' ? 'private' : (tgMsg.chat as any)?.type === 'channel' ? 'channel' : 'group',
       },
       sender: {
         id: String(senderId),
@@ -1332,7 +1332,7 @@ export class CommandsFeature {
       try {
         const eventPublisher = getEventPublisher()
         const threadId = new ThreadIdExtractor().extractFromRaw((tgMsg as any).raw || tgMsg)
-        const channelType = (tgMsg.chat as any)?.type === 'private' ? 'private' : 'group'
+        const channelType = (tgMsg.chat as any)?.type === 'private' ? 'private' : (tgMsg.chat as any)?.type === 'channel' ? 'channel' : 'group'
         const contentToText = (content: string | any[]) => {
           if (typeof content === 'string')
             return content
