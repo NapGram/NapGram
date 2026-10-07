@@ -217,6 +217,15 @@ export class QQOfficialAdapter extends EventEmitter {
   async sendChannelMessage(channelId: string, payload: Record<string, any>): Promise<MessageReceipt> {
     try {
       const data = await this.apiRequest('POST', `/channels/${channelId}/messages`, payload)
+      // 缓存撤回上下文，使机器人自己的频道消息可被 recallMessage 撤回
+      if (data?.id) {
+        this.recallContexts.set(String(data.id), { channelId })
+        if (this.recallContexts.size > 500) {
+          const firstKey = this.recallContexts.keys().next().value
+          if (firstKey !== undefined)
+            this.recallContexts.delete(firstKey)
+        }
+      }
       return {
         messageId: String(data?.id ?? ''),
         timestamp: Date.now(),

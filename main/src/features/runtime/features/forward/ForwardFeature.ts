@@ -585,7 +585,7 @@ export class ForwardFeature {
             ? 'private'
             : msg.chat.type === 'group'
               ? 'group'
-              : 'group'
+              : 'channel'
 
         const segments = this.toPluginSegments(msg.content as any, 'qq')
 
