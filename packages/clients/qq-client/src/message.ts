@@ -140,7 +140,7 @@ export interface MarkdownContent extends MessageContent {
   }
 }
 
-export type ChatType = 'private' | 'group' | 'discuss'
+export type ChatType = 'private' | 'group' | 'discuss' | 'channel'
 
 export interface Sender {
   id: string

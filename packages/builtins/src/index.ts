@@ -5,6 +5,7 @@ type BuiltinModuleLoader = () => Promise<unknown>
 
 const IMPORT_MAP: Record<string, BuiltinModuleLoader> = {
   'adapter-qq-napcat': () => import('@napgram/plugin-adapter-qq-napcat'),
+  'adapter-qq-official': () => import('@napgram/plugin-adapter-qq-official'),
   'adapter-telegram-mtcute': () => import('@napgram/plugin-adapter-telegram-mtcute'),
   'admin-auth': () => import('@napgram/plugin-admin-auth'),
   'admin-database': () => import('@napgram/plugin-admin-database'),
@@ -48,6 +49,7 @@ const systemOwners = getSystemOwners()
 const REGISTRY: PluginDef[] = [
   // 适配器
   ['adapter-qq-napcat', true],
+  ['adapter-qq-official', true],
   ['adapter-telegram-mtcute', true],
 
   // 核心功能

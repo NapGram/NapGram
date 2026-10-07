@@ -32,7 +32,7 @@ export interface IQQClient extends EventEmitter {
 
   readonly nickname: string
 
-  readonly clientType: 'napcat'
+  readonly clientType: 'napcat' | 'qqofficial'
 
   isOnline: () => Promise<boolean>
 
@@ -226,7 +226,19 @@ export interface BaseQQClientCreateParams {
   type: string
 }
 
-export type QQClientCreateParams = NapCatCreateParams | BaseQQClientCreateParams
+export type QQClientCreateParams = NapCatCreateParams | QQOfficialCreateParams | BaseQQClientCreateParams
+
+export interface QQOfficialCreateParams {
+  type: 'qqofficial'
+  appId: string
+  appSecret: string
+  /** 是否开启频道私聊（私信）事件 */
+  enableGuildDirectMessage?: boolean
+  /** 是否使用沙箱环境 */
+  sandbox?: boolean
+  /** true = 默认重连策略, false = 禁用, 对象 = 自定义策略 */
+  reconnect?: boolean | ReconnectConfig
+}
 
 export interface ReconnectConfig {
   maxAttempts?: number

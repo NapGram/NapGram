@@ -16,17 +16,20 @@
   },
   "dependencies": {
     "@napgram/plugin-adapter-qq-napcat": "workspace:*",
-    "@napgram/sdk": "workspace:*"
+    "@napgram/sdk": "workspace:*",
+    "@napgram/plugin-adapter-qq-official": "workspace:*"
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@^7.0.2",
     "bun-types": "1.4.2",
     "oxlint": "1.85.0",
     "turbo": "^2.9.18",
-    "typescript": "npm:@typescript/typescript6@6.0.2"
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "@napgram/plugin-adapter-qq-official": "workspace:*"
   },
   "peerDependencies": {
-    "@napgram/plugin-adapter-qq-napcat": "workspace:*"
+    "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+    "@napgram/plugin-adapter-qq-official": "workspace:*"
   },
   "workspaces": [
     "main",

@@ -1,67 +1,68 @@
 {
-  "name": "@napgram/builtins",
-  "version": "2.0.0",
-  "description": "Built-in plugin registry for NapGram",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "sideEffects": false,
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
+    "name": "@napgram/builtins",
+    "version": "2.0.0",
+    "description": "Built-in plugin registry for NapGram",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "default": "./dist/index.js"
+        },
+        "./package.json": "./package.json"
     },
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist",
-    "prepublishOnly": "bun run build"
-  },
-  "keywords": [
-    "napgram",
-    "builtins",
-    "plugins"
-  ],
-  "author": "NapLink",
-  "license": "MIT",
-  "dependencies": {
-    "@napgram/env-kit": "workspace:*",
-    "@napgram/plugin-adapter-qq-napcat": "workspace:*",
-    "@napgram/plugin-adapter-telegram-mtcute": "workspace:*",
-    "@napgram/plugin-admin-auth": "workspace:*",
-    "@napgram/plugin-admin-database": "workspace:*",
-    "@napgram/plugin-admin-instances": "workspace:*",
-    "@napgram/plugin-admin-logs": "workspace:*",
-    "@napgram/plugin-admin-messages": "workspace:*",
-    "@napgram/plugin-admin-pairs": "workspace:*",
-    "@napgram/plugin-admin-plugins": "workspace:*",
-    "@napgram/plugin-admin-settings": "workspace:*",
-    "@napgram/plugin-admin-suite": "workspace:*",
-    "@napgram/plugin-flags": "workspace:*",
-    "@napgram/plugin-gateway": "workspace:*",
-    "@napgram/plugin-group-management": "workspace:*",
-    "@napgram/plugin-monitoring": "workspace:*",
-    "@napgram/plugin-notifications": "workspace:*",
-    "@napgram/plugin-permission-management": "workspace:*",
-    "@napgram/plugin-ping-pong": "workspace:*",
-    "@napgram/plugin-qq-interaction": "workspace:*",
-    "@napgram/plugin-recall": "workspace:*",
-    "@napgram/plugin-refresh": "workspace:*",
-    "@napgram/plugin-request-handler": "workspace:*",
-    "@napgram/plugin-request-management": "workspace:*",
-    "@napgram/plugin-statistics": "workspace:*",
-    "@napgram/plugin-web-assets": "workspace:*",
-    "@napgram/plugin-web-console": "workspace:*"
-  },
-  "devDependencies": {
-    "@typescript/native": "npm:typescript@^7.0.2",
-    "typescript": "npm:@typescript/typescript6@6.0.2"
-  }
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "clean": "rm -rf dist",
+        "prepublishOnly": "bun run build"
+    },
+    "keywords": [
+        "napgram",
+        "builtins",
+        "plugins"
+    ],
+    "author": "NapLink",
+    "license": "MIT",
+    "dependencies": {
+        "@napgram/env-kit": "workspace:*",
+        "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+        "@napgram/plugin-adapter-telegram-mtcute": "workspace:*",
+        "@napgram/plugin-admin-auth": "workspace:*",
+        "@napgram/plugin-admin-database": "workspace:*",
+        "@napgram/plugin-admin-instances": "workspace:*",
+        "@napgram/plugin-admin-logs": "workspace:*",
+        "@napgram/plugin-admin-messages": "workspace:*",
+        "@napgram/plugin-admin-pairs": "workspace:*",
+        "@napgram/plugin-admin-plugins": "workspace:*",
+        "@napgram/plugin-admin-settings": "workspace:*",
+        "@napgram/plugin-admin-suite": "workspace:*",
+        "@napgram/plugin-flags": "workspace:*",
+        "@napgram/plugin-gateway": "workspace:*",
+        "@napgram/plugin-group-management": "workspace:*",
+        "@napgram/plugin-monitoring": "workspace:*",
+        "@napgram/plugin-notifications": "workspace:*",
+        "@napgram/plugin-permission-management": "workspace:*",
+        "@napgram/plugin-ping-pong": "workspace:*",
+        "@napgram/plugin-qq-interaction": "workspace:*",
+        "@napgram/plugin-recall": "workspace:*",
+        "@napgram/plugin-refresh": "workspace:*",
+        "@napgram/plugin-request-handler": "workspace:*",
+        "@napgram/plugin-request-management": "workspace:*",
+        "@napgram/plugin-statistics": "workspace:*",
+        "@napgram/plugin-web-assets": "workspace:*",
+        "@napgram/plugin-web-console": "workspace:*",
+        "@napgram/plugin-adapter-qq-official": "workspace:*"
+    },
+    "devDependencies": {
+        "@typescript/native": "npm:typescript@^7.0.2",
+        "typescript": "npm:@typescript/typescript6@6.0.2"
+    }
 }

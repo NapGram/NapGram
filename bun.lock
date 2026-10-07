@@ -6,9 +6,11 @@
       "name": "napgram-root",
       "dependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+        "@napgram/plugin-adapter-qq-official": "workspace:*",
         "@napgram/sdk": "workspace:*",
       },
       "devDependencies": {
+        "@napgram/plugin-adapter-qq-official": "workspace:*",
         "@typescript/native": "npm:typescript@^7.0.2",
         "bun-types": "1.4.2",
         "oxlint": "1.85.0",
@@ -17,6 +19,7 @@
       },
       "peerDependencies": {
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+        "@napgram/plugin-adapter-qq-official": "workspace:*",
       },
     },
     "main": {
@@ -76,6 +79,7 @@
       "dependencies": {
         "@napgram/env-kit": "workspace:*",
         "@napgram/plugin-adapter-qq-napcat": "workspace:*",
+        "@napgram/plugin-adapter-qq-official": "workspace:*",
         "@napgram/plugin-adapter-telegram-mtcute": "workspace:*",
         "@napgram/plugin-admin-auth": "workspace:*",
         "@napgram/plugin-admin-database": "workspace:*",
@@ -237,6 +241,18 @@
     "packages/plugins/adapters/plugin-adapter-qq-napcat": {
       "name": "@napgram/plugin-adapter-qq-napcat",
       "version": "2.0.1",
+      "dependencies": {
+        "@napgram/qq-client": "workspace:*",
+      },
+      "devDependencies": {
+        "@napgram/sdk": "workspace:*",
+        "@typescript/native": "npm:typescript@^7.0.2",
+        "typescript": "npm:@typescript/typescript6@6.0.2",
+      },
+    },
+    "packages/plugins/adapters/plugin-adapter-qq-official": {
+      "name": "@napgram/plugin-adapter-qq-official",
+      "version": "1.0.0",
       "dependencies": {
         "@napgram/qq-client": "workspace:*",
       },
@@ -836,6 +852,8 @@
     "@napgram/message-kit": ["@napgram/message-kit@workspace:packages/utilities/message-kit"],
 
     "@napgram/plugin-adapter-qq-napcat": ["@napgram/plugin-adapter-qq-napcat@workspace:packages/plugins/adapters/plugin-adapter-qq-napcat"],
+
+    "@napgram/plugin-adapter-qq-official": ["@napgram/plugin-adapter-qq-official@workspace:packages/plugins/adapters/plugin-adapter-qq-official"],
 
     "@napgram/plugin-adapter-telegram-mtcute": ["@napgram/plugin-adapter-telegram-mtcute@workspace:packages/plugins/adapters/plugin-adapter-telegram-mtcute"],
 
