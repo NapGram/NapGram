@@ -30,6 +30,23 @@ export default async function (fastify: FastifyInstance) {
   }
 
   const createBootstrapQqBot = () => {
+    if (env.QQ_OFFICIAL_APP_ID) {
+      return {
+        type: 'qqofficial',
+        name: 'System Bootstrapped',
+        officialAppId: env.QQ_OFFICIAL_APP_ID,
+        officialAppSecret: env.QQ_OFFICIAL_APP_SECRET ?? null,
+        uin: null,
+        id: -1,
+        password: null,
+        platform: null,
+        signApi: null,
+        signVer: null,
+        signDockerId: null,
+        wsUrl: null,
+        wsToken: null,
+      }
+    }
     if (!env.NAPCAT_WS_URL) {
       return null
     }
@@ -95,10 +112,12 @@ export default async function (fastify: FastifyInstance) {
   }, z.number().int().nullable().optional())
 
   const qqBotSchema = z.object({
-    type: z.literal('napcat').default('napcat'),
+    type: z.enum(['napcat', 'qqofficial']).default('napcat'),
     name: optionalString,
     wsUrl: optionalString,
     uin: toOptionalBigInt,
+    officialAppId: optionalString,
+    officialAppSecret: optionalString,
   }).nullable()
 
   const createInstanceSchema = z.object({
@@ -119,10 +138,12 @@ export default async function (fastify: FastifyInstance) {
   })
 
   const createQqBotSchema = z.object({
-    type: z.literal('napcat').default('napcat'),
+    type: z.enum(['napcat', 'qqofficial']).default('napcat'),
     name: optionalString,
     wsUrl: optionalString,
     uin: toOptionalBigInt,
+    officialAppId: optionalString,
+    officialAppSecret: optionalString,
   })
 
   /**
@@ -229,6 +250,8 @@ export default async function (fastify: FastifyInstance) {
           name: body.qqBot.name || null,
           wsUrl: body.qqBot.wsUrl || null,
           uin: body.qqBot.uin ?? null,
+          officialAppId: body.qqBot.officialAppId || null,
+          officialAppSecret: body.qqBot.officialAppSecret || null,
         }).returning()
         qqBotId = botArr[0].id
       }
@@ -321,6 +344,8 @@ export default async function (fastify: FastifyInstance) {
             name: body.qqBot.name || null,
             wsUrl: body.qqBot.wsUrl || null,
             uin: body.qqBot.uin ?? null,
+            officialAppId: body.qqBot.officialAppId || null,
+            officialAppSecret: body.qqBot.officialAppSecret || null,
           }).returning()
           qqBotId = botArr[0].id
         }
@@ -462,6 +487,8 @@ export default async function (fastify: FastifyInstance) {
         name: body.name || null,
         wsUrl: body.wsUrl || null,
         uin: body.uin ?? null,
+        officialAppId: body.officialAppId || null,
+        officialAppSecret: body.officialAppSecret || null,
       }).returning()
 
       const bot = botArr[0]
