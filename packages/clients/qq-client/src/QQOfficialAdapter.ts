@@ -11,18 +11,8 @@ function getLogger(name: string) {
 
 type LoggerLike = ReturnType<typeof getLogger>
 
-/** 从 ARK 卡片数据中抽取全部 http(s) URL（分享链接卡片的 link 藏在 kv/obj 里，形态多变，暴力抽取最稳）。 */
-function extractUrlsFromArk(arkData: any): string {
-  let raw: string
-  try {
-    raw = typeof arkData === 'string' ? arkData : JSON.stringify(arkData)
-  }
-  catch {
-    return ''
-  }
-  const urls = raw.match(/https?:\/\/[^\s"'\\\])}]+/g) ?? []
-  return [...new Set(urls.map(u => u.replace(/[.,;:!?)\]}>]+$/, '')))].join('\n')
-}
+/** ARK 卡片中的资源类 URL（图标/封面/静态资源），对上层消息消费者无意义 */
+const ARK_ASSET_URL = /\.(?:png|jpe?g|gif|svg|webp|ico|css|js)(?:[?#]|$)/i
 
 /**
  * QQ 官方机器人（开放平台）适配器。
@@ -65,12 +55,21 @@ export class QQOfficialAdapter extends EventEmitter {
   private static readonly INTENT_DIRECT_MESSAGE = 1 << 12
   private static readonly INTENT_GROUP_AND_C2C = 1 << 25
 
+  /** 被动回复窗口：频道私信 5 分钟（官方文档） */
+  private static readonly DM_PASSIVE_WINDOW_MS = 5 * 60_000
+  /** 被动回复窗口：QQ 单聊 60 分钟（官方文档；主动消息配额约 4 条/用户/月，极省着用） */
+  private static readonly C2C_PASSIVE_WINDOW_MS = 60 * 60_000
+
   private static readonly API_BASE = 'https://api.sgroup.qq.com'
   private static readonly API_SANDBOX_BASE = 'https://sandbox.api.sgroup.qq.com'
   private static readonly TOKEN_URL = 'https://bots.qq.com/app/getAppAccessToken'
 
-  /** 频道主动消息每日限额极低，记录最近收到的被动消息用于 5 分钟窗口内回复 */
-  private passiveReplies = new Map<string, { msgId: string, ts: number }>()
+  /**
+   * 被动回复窗口记录：msgId + 时间戳 + 该会话类型的窗口长度。
+   * 频道私信（DM）5 分钟；QQ 单聊（C2C）60 分钟——窗口判定必须按类型，
+   * C2C 超窗会被上层当成主动消息，消耗约 4 条/用户/月的配额。
+   */
+  private passiveReplies = new Map<string, { msgId: string, ts: number, ttlMs: number }>()
 
   /** 消息 ID → 所在会话，用于撤回（isDm/isC2C 决定端点） */
   private recallContexts = new Map<string, { channelId: string, isDm?: boolean, isC2C?: boolean }>()
@@ -93,8 +92,28 @@ export class QQOfficialAdapter extends EventEmitter {
     this.dmLikeChats.set(chatId, kind)
     if (this.dmLikeChats.size > 500) {
       const firstKey = this.dmLikeChats.keys().next().value
-      if (firstKey !== undefined)
+      if (firstKey !== undefined) {
         this.dmLikeChats.delete(firstKey)
+        this.logger.debug({ evicted: firstKey, kind }, 'QQOfficial dmLikeChat evicted (capacity 500)')
+      }
+    }
+  }
+
+  /** 撤回上下文缓存容量上限，超出淘汰最早条目 */
+  private static readonly RECALL_CONTEXT_CAP = 500
+
+  /** 缓存消息撤回上下文；kind 决定撤回端点（缺省 = 普通子频道 /channels/） */
+  private cacheRecallContext(messageId: string, channelId: string, kind?: 'dms' | 'c2c'): void {
+    this.recallContexts.set(messageId, {
+      channelId,
+      ...(kind === 'dms' ? { isDm: true } : kind === 'c2c' ? { isC2C: true } : {}),
+    })
+    if (this.recallContexts.size > QQOfficialAdapter.RECALL_CONTEXT_CAP) {
+      const firstKey = this.recallContexts.keys().next().value
+      if (firstKey !== undefined) {
+        this.recallContexts.delete(firstKey)
+        this.logger.debug({ evicted: firstKey }, 'QQOfficial recallContext evicted (capacity 500)')
+      }
     }
   }
 
@@ -216,7 +235,7 @@ export class QQOfficialAdapter extends EventEmitter {
         content: text || undefined,
         ...(image?.data?.url ? { image: image.data.url } : {}),
       }
-      // 频道主动消息限额极低：若 5 分钟内收过该会话消息，附带 msgId 走被动回复
+      // 主动消息限额极低：若被动窗口内收过该会话消息，附带 msgId 走被动回复
       const msgId = message.metadata?.msgId ?? this.getPassiveReplyMsgId(String(chatId))
       if (msgId) {
         payload.msgId = msgId
@@ -264,14 +283,8 @@ export class QQOfficialAdapter extends EventEmitter {
     try {
       const data = await this.apiRequest('POST', `/channels/${channelId}/messages`, payload)
       // 缓存撤回上下文，使机器人自己的频道消息可被 recallMessage 撤回
-      if (data?.id) {
-        this.recallContexts.set(String(data.id), { channelId })
-        if (this.recallContexts.size > 500) {
-          const firstKey = this.recallContexts.keys().next().value
-          if (firstKey !== undefined)
-            this.recallContexts.delete(firstKey)
-        }
-      }
+      if (data?.id)
+        this.cacheRecallContext(String(data.id), channelId)
       return {
         messageId: String(data?.id ?? ''),
         timestamp: Date.now(),
@@ -296,14 +309,8 @@ export class QQOfficialAdapter extends EventEmitter {
         delete body.msgSeq
       }
       const data = await this.apiRequest('POST', `/dms/${guildId}/messages`, body)
-      if (data?.id) {
-        this.recallContexts.set(String(data.id), { channelId: guildId, isDm: true })
-        if (this.recallContexts.size > 500) {
-          const firstKey = this.recallContexts.keys().next().value
-          if (firstKey !== undefined)
-            this.recallContexts.delete(firstKey)
-        }
-      }
+      if (data?.id)
+        this.cacheRecallContext(String(data.id), guildId, 'dms')
       return {
         messageId: String(data?.id ?? ''),
         timestamp: Date.now(),
@@ -318,31 +325,25 @@ export class QQOfficialAdapter extends EventEmitter {
 
   /** 发送 QQ 单聊消息（openid = 用户 user_openid），被动回复带 msg_id + msg_seq */
   async sendC2CMessage(openid: string, payload: Record<string, any>): Promise<MessageReceipt> {
+    // C2C v2 接口：msg_type 必填（0=文本），被动回复用 msg_id/msg_seq（snake_case）
+    const body: Record<string, any> = { ...payload }
+    if (body.msgId !== undefined) {
+      body.msg_id = body.msgId
+      body.msg_seq = body.msgSeq ?? 1
+      delete body.msgId
+      delete body.msgSeq
+    }
+    if (body.msg_type === undefined && body.markdown === undefined && body.media === undefined && body.keyboard === undefined && body.ark === undefined)
+      body.msg_type = 0
+    if (body.image !== undefined) {
+      // C2C 不支持 image URL，富媒体需先上传获取 file_info（msg_type=7）
+      delete body.image
+      this.logger.warn('C2C message dropped unsupported image field')
+    }
     try {
-      // C2C v2 接口：msg_type 必填（0=文本），被动回复用 msg_id/msg_seq（snake_case）
-      const body: Record<string, any> = { ...payload }
-      if (body.msgId !== undefined) {
-        body.msg_id = body.msgId
-        body.msg_seq = body.msgSeq ?? 1
-        delete body.msgId
-        delete body.msgSeq
-      }
-      if (body.msg_type === undefined && body.markdown === undefined && body.media === undefined && body.keyboard === undefined)
-        body.msg_type = 0
-      if (body.image !== undefined) {
-        // C2C 不支持 image URL，富媒体需先上传获取 file_info（msg_type=7）
-        delete body.image
-        this.logger.warn('C2C message dropped unsupported image field')
-      }
       const data = await this.apiRequest('POST', `/v2/users/${openid}/messages`, body)
-      if (data?.id) {
-        this.recallContexts.set(String(data.id), { channelId: openid, isC2C: true })
-        if (this.recallContexts.size > 500) {
-          const firstKey = this.recallContexts.keys().next().value
-          if (firstKey !== undefined)
-            this.recallContexts.delete(firstKey)
-        }
-      }
+      if (data?.id)
+        this.cacheRecallContext(String(data.id), openid, 'c2c')
       return {
         messageId: String(data?.id ?? ''),
         timestamp: Date.now(),
@@ -351,6 +352,28 @@ export class QQOfficialAdapter extends EventEmitter {
       }
     }
     catch (error: any) {
+      // 被动窗口判定与官方实际窗口如有偏差，msg_id 会被拒；降级主动消息重发一次，
+      // 保证令牌不静默丢失（主动消息计入月度配额，warn 日志暴露消耗）
+      if (body.msg_id !== undefined) {
+        this.logger.warn(`C2C passive reply rejected (${error.message}), retrying as active message`)
+        const active: Record<string, any> = { ...body }
+        delete active.msg_id
+        delete active.msg_seq
+        try {
+          const data = await this.apiRequest('POST', `/v2/users/${openid}/messages`, active)
+          if (data?.id)
+            this.cacheRecallContext(String(data.id), openid, 'c2c')
+          return {
+            messageId: String(data?.id ?? ''),
+            timestamp: Date.now(),
+            success: Boolean(data?.id),
+            raw: data,
+          }
+        }
+        catch (retryError: any) {
+          return { messageId: '', timestamp: Date.now(), success: false, error: retryError.message }
+        }
+      }
       return { messageId: '', timestamp: Date.now(), success: false, error: error.message }
     }
   }
@@ -663,16 +686,11 @@ export class QQOfficialAdapter extends EventEmitter {
     if (isDirect)
       this.registerDmLikeChat(chatId, 'dms')
     if (d?.id) {
-      this.recallContexts.set(String(d.id), { channelId, ...(isDirect ? { isDm: true } : {}) })
-      if (this.recallContexts.size > 500) {
-        const firstKey = this.recallContexts.keys().next().value
-        if (firstKey !== undefined)
-          this.recallContexts.delete(firstKey)
-      }
+      this.cacheRecallContext(String(d.id), channelId, isDirect ? 'dms' : undefined)
       // 记录被动回复窗口（官方 API 主动消息限制极严，优先 msgId 被动回复）
-      this.passiveReplies.set(chatId, { msgId: String(d.id), ts: Date.now() })
+      this.passiveReplies.set(chatId, { msgId: String(d.id), ts: Date.now(), ttlMs: QQOfficialAdapter.DM_PASSIVE_WINDOW_MS })
       for (const [key, val] of this.passiveReplies) {
-        if (Date.now() - val.ts > 6 * 60_000)
+        if (Date.now() - val.ts > val.ttlMs)
           this.passiveReplies.delete(key)
       }
     }
@@ -711,14 +729,20 @@ export class QQOfficialAdapter extends EventEmitter {
    */
   private emitC2CMessage(d: any): void {
     const openid = String(d?.author?.user_openid ?? d?.author?.id ?? '')
-    const chatId = openid || String(d?.id ?? '')
+    if (!openid) {
+      // 没有 openid 无法路由到 /v2/users/ 端点；丢弃并记日志，
+      // 避免旧实现那样把消息 ID 误注册成 c2c 会话（后续回复会打到错误端点）
+      this.logger.warn({ id: String(d?.id ?? '') }, 'QQOfficial C2C message without author openid, dropped')
+      return
+    }
+    const chatId = openid
     this.registerDmLikeChat(chatId, 'c2c')
     if (d?.id) {
-      this.recallContexts.set(String(d.id), { channelId: chatId, isC2C: true })
-      // 记录被动回复窗口（C2C 主动消息受限，优先 msg_id 被动回复）
-      this.passiveReplies.set(chatId, { msgId: String(d.id), ts: Date.now() })
+      this.cacheRecallContext(String(d.id), chatId, 'c2c')
+      // 记录被动回复窗口（C2C 主动消息配额约 4 条/用户/月，优先 msg_id 被动回复）
+      this.passiveReplies.set(chatId, { msgId: String(d.id), ts: Date.now(), ttlMs: QQOfficialAdapter.C2C_PASSIVE_WINDOW_MS })
       for (const [key, val] of this.passiveReplies) {
-        if (Date.now() - val.ts > 6 * 60_000)
+        if (Date.now() - val.ts > val.ttlMs)
           this.passiveReplies.delete(key)
       }
     }
@@ -748,6 +772,32 @@ export class QQOfficialAdapter extends EventEmitter {
     this.emit('message', unified)
   }
 
+  /**
+   * 从 ARK 卡片数据中抽取 http(s) URL（分享链接卡片的 link 藏在 kv/obj 里，形态多变，暴力抽取最稳）。
+   * 资源类 URL（图标/封面/静态资源）对上层无意义，过滤掉并记 debug 日志。
+   */
+  private extractUrlsFromArk(arkData: any): string {
+    let raw: string
+    try {
+      raw = typeof arkData === 'string' ? arkData : JSON.stringify(arkData)
+    }
+    catch {
+      return ''
+    }
+    const urls = raw.match(/https?:\/\/[^\s"'\\\])}]+/g) ?? []
+    const kept: string[] = []
+    const dropped: string[] = []
+    for (const u of urls) {
+      const clean = u.replace(/[.,;:!?)\]}>]+$/, '')
+      if (ARK_ASSET_URL.test(clean))
+        dropped.push(clean)
+      else kept.push(clean)
+    }
+    if (dropped.length > 0)
+      this.logger.debug({ dropped }, 'QQOfficial ARK asset URLs filtered out')
+    return [...new Set(kept)].join('\n')
+  }
+
   private parseContent(content: string, attachments?: any[], arkData?: any): any[] {
     const segments: any[] = []
     const text = String(content ?? '')
@@ -762,7 +812,7 @@ export class QQOfficialAdapter extends EventEmitter {
     // ARK 卡片（message_type=3，用户分享的链接卡片）：URL 藏在 ark_data 里，content 往往为空。
     // 抽取其中全部 http(s) URL 拼为文本，供上层（如鉴权插件）解析激活链接。
     if (arkData) {
-      const arkText = extractUrlsFromArk(arkData)
+      const arkText = this.extractUrlsFromArk(arkData)
       if (arkText)
         segments.push({ type: 'text', data: { text: arkText } })
     }
@@ -851,10 +901,10 @@ export class QQOfficialAdapter extends EventEmitter {
     this.identified = false
   }
 
-  /** 取指定会话的被动回复 msgId（5 分钟窗口内），供发送逻辑使用 */
+  /** 取指定会话的被动回复 msgId（各会话类型的被动窗口内），供发送逻辑使用 */
   getPassiveReplyMsgId(chatId: string): string | undefined {
     const cached = this.passiveReplies.get(chatId)
-    if (cached && Date.now() - cached.ts < 5 * 60_000) {
+    if (cached && Date.now() - cached.ts < cached.ttlMs) {
       return cached.msgId
     }
     return undefined
