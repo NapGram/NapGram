@@ -115,6 +115,7 @@ export class ConnectionSupervisor {
           appId: officialAppId,
           appSecret: officialSecret,
           enableGuildDirectMessage: (env as any).QQ_OFFICIAL_ENABLE_GUILD_DM !== false,
+          enableC2C: (env as any).QQ_OFFICIAL_ENABLE_C2C !== false,
           sandbox: Boolean((env as any).QQ_OFFICIAL_SANDBOX),
           reconnect: { maxAttempts: 10, interval: 5000 },
         })

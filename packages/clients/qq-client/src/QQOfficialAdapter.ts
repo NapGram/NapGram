@@ -11,6 +11,19 @@ function getLogger(name: string) {
 
 type LoggerLike = ReturnType<typeof getLogger>
 
+/** 从 ARK 卡片数据中抽取全部 http(s) URL（分享链接卡片的 link 藏在 kv/obj 里，形态多变，暴力抽取最稳）。 */
+function extractUrlsFromArk(arkData: any): string {
+  let raw: string
+  try {
+    raw = typeof arkData === 'string' ? arkData : JSON.stringify(arkData)
+  }
+  catch {
+    return ''
+  }
+  const urls = raw.match(/https?:\/\/[^\s"'\\\])}]+/g) ?? []
+  return [...new Set(urls.map(u => u.replace(/[.,;:!?)\]}>]+$/, '')))].join('\n')
+}
+
 /**
  * QQ 官方机器人（开放平台）适配器。
  *
@@ -50,6 +63,7 @@ export class QQOfficialAdapter extends EventEmitter {
   private static readonly INTENT_GUILDS = 1 << 0
   private static readonly INTENT_PUBLIC_GUILD_MESSAGES = 1 << 30
   private static readonly INTENT_DIRECT_MESSAGE = 1 << 12
+  private static readonly INTENT_GROUP_AND_C2C = 1 << 25
 
   private static readonly API_BASE = 'https://api.sgroup.qq.com'
   private static readonly API_SANDBOX_BASE = 'https://sandbox.api.sgroup.qq.com'
@@ -58,8 +72,31 @@ export class QQOfficialAdapter extends EventEmitter {
   /** 频道主动消息每日限额极低，记录最近收到的被动消息用于 5 分钟窗口内回复 */
   private passiveReplies = new Map<string, { msgId: string, ts: number }>()
 
-  /** 消息 ID → 所在子频道，用于撤回 */
-  private recallContexts = new Map<string, { channelId: string }>()
+  /** 消息 ID → 所在会话，用于撤回（isDm/isC2C 决定端点） */
+  private recallContexts = new Map<string, { channelId: string, isDm?: boolean, isC2C?: boolean }>()
+
+  /**
+   * 私信类会话注册表：chatId → 投递端点类型。
+   * - 'dms'：频道私信会话（guild_id 形态），收发走 /dms/{guild_id}/messages
+   * - 'c2c'：QQ 单聊（user_openid 形态），收发走 /v2/users/{openid}/messages
+   * 普通子频道消息不登记，默认走 /channels/{channel_id}/messages。
+   */
+  private dmLikeChats = new Map<string, 'dms' | 'c2c'>()
+
+  /** C2C intent 被网关拒绝（4014）后禁用，重连时不再订阅（进程生命周期内有效） */
+  private c2cIntentDropped = false
+
+  /** 登记私信类会话（DM/C2C），超出容量时淘汰最早条目 */
+  private registerDmLikeChat(chatId: string, kind: 'dms' | 'c2c'): void {
+    if (!chatId)
+      return
+    this.dmLikeChats.set(chatId, kind)
+    if (this.dmLikeChats.size > 500) {
+      const firstKey = this.dmLikeChats.keys().next().value
+      if (firstKey !== undefined)
+        this.dmLikeChats.delete(firstKey)
+    }
+  }
 
   constructor(params: QQOfficialCreateParams) {
     super()
@@ -89,6 +126,9 @@ export class QQOfficialAdapter extends EventEmitter {
       | QQOfficialAdapter.INTENT_PUBLIC_GUILD_MESSAGES
     if (this.params.enableGuildDirectMessage !== false) {
       intents |= QQOfficialAdapter.INTENT_DIRECT_MESSAGE
+    }
+    if (this.params.enableC2C !== false && !this.c2cIntentDropped) {
+      intents |= QQOfficialAdapter.INTENT_GROUP_AND_C2C
     }
     return intents
   }
@@ -182,6 +222,12 @@ export class QQOfficialAdapter extends EventEmitter {
         payload.msgId = msgId
         payload.msgSeq = message.metadata?.msgSeq ?? 1
       }
+      // 私信类会话必须走对应端点：/channels/ 对 DM/C2C 会 4xx，旧实现还把错误吞成空 messageId
+      const dmKind = this.dmLikeChats.get(String(chatId))
+      if (dmKind === 'dms')
+        return await this.sendDmsMessage(String(chatId), payload)
+      if (dmKind === 'c2c')
+        return await this.sendC2CMessage(String(chatId), payload)
       return await this.sendChannelMessage(String(chatId), payload)
     }
     catch (error: any) {
@@ -241,7 +287,62 @@ export class QQOfficialAdapter extends EventEmitter {
   /** 发送频道私信（guildId 为 create_dms 返回的私信会话 ID） */
   async sendDmsMessage(guildId: string, payload: Record<string, any>): Promise<MessageReceipt> {
     try {
-      const data = await this.apiRequest('POST', `/dms/${guildId}/messages`, payload)
+      // QQ 被动回复字段为 snake_case（msg_id/msg_seq），上层统一用驼峰 msgId 透传，此处转换
+      const body: Record<string, any> = { ...payload }
+      if (body.msgId !== undefined) {
+        body.msg_id = body.msgId
+        body.msg_seq = body.msgSeq ?? 1
+        delete body.msgId
+        delete body.msgSeq
+      }
+      const data = await this.apiRequest('POST', `/dms/${guildId}/messages`, body)
+      if (data?.id) {
+        this.recallContexts.set(String(data.id), { channelId: guildId, isDm: true })
+        if (this.recallContexts.size > 500) {
+          const firstKey = this.recallContexts.keys().next().value
+          if (firstKey !== undefined)
+            this.recallContexts.delete(firstKey)
+        }
+      }
+      return {
+        messageId: String(data?.id ?? ''),
+        timestamp: Date.now(),
+        success: Boolean(data?.id),
+        raw: data,
+      }
+    }
+    catch (error: any) {
+      return { messageId: '', timestamp: Date.now(), success: false, error: error.message }
+    }
+  }
+
+  /** 发送 QQ 单聊消息（openid = 用户 user_openid），被动回复带 msg_id + msg_seq */
+  async sendC2CMessage(openid: string, payload: Record<string, any>): Promise<MessageReceipt> {
+    try {
+      // C2C v2 接口：msg_type 必填（0=文本），被动回复用 msg_id/msg_seq（snake_case）
+      const body: Record<string, any> = { ...payload }
+      if (body.msgId !== undefined) {
+        body.msg_id = body.msgId
+        body.msg_seq = body.msgSeq ?? 1
+        delete body.msgId
+        delete body.msgSeq
+      }
+      if (body.msg_type === undefined && body.markdown === undefined && body.media === undefined && body.keyboard === undefined)
+        body.msg_type = 0
+      if (body.image !== undefined) {
+        // C2C 不支持 image URL，富媒体需先上传获取 file_info（msg_type=7）
+        delete body.image
+        this.logger.warn('C2C message dropped unsupported image field')
+      }
+      const data = await this.apiRequest('POST', `/v2/users/${openid}/messages`, body)
+      if (data?.id) {
+        this.recallContexts.set(String(data.id), { channelId: openid, isC2C: true })
+        if (this.recallContexts.size > 500) {
+          const firstKey = this.recallContexts.keys().next().value
+          if (firstKey !== undefined)
+            this.recallContexts.delete(firstKey)
+        }
+      }
       return {
         messageId: String(data?.id ?? ''),
         timestamp: Date.now(),
@@ -268,8 +369,16 @@ export class QQOfficialAdapter extends EventEmitter {
   }
 
   async recallMessage(messageId: string): Promise<void> {
-    // 频道撤回需要 channel_id，从消息上下文缓存中取
+    // 撤回端点随会话类型变化，从消息上下文缓存中取
     const cached = this.recallContexts.get(messageId)
+    if (cached?.isDm) {
+      await this.apiRequest('DELETE', `/dms/${cached.channelId}/messages/${messageId}`)
+      return
+    }
+    if (cached?.isC2C) {
+      await this.apiRequest('DELETE', `/v2/users/${cached.channelId}/messages/${messageId}`)
+      return
+    }
     if (cached) {
       await this.apiRequest('DELETE', `/channels/${cached.channelId}/messages/${messageId}`)
       return
@@ -426,6 +535,12 @@ export class QQOfficialAdapter extends EventEmitter {
         if (event.code === 4004) {
           void this.getAccessToken(true).catch(() => {})
         }
+        // 4014 = intent 无权限：C2C 事件 intent 未过审，去掉后重连，保住频道私信等其它事件
+        if (event.code === 4014 && !this.c2cIntentDropped) {
+          this.c2cIntentDropped = true
+          this.reconnectAttempts = 0
+          this.logger.warn('QQOfficial C2C intent not authorized (4014), reconnecting without GROUP_AND_C2C_EVENT')
+        }
         this.scheduleReconnect()
       }
     }
@@ -520,6 +635,9 @@ export class QQOfficialAdapter extends EventEmitter {
       case 'DIRECT_MESSAGE_CREATE':
         this.emitChannelMessage(d, type)
         break
+      case 'C2C_MESSAGE_CREATE':
+        this.emitC2CMessage(d)
+        break
       case 'MESSAGE_DELETE':
       case 'PUBLIC_MESSAGE_DELETE':
       case 'DIRECT_MESSAGE_DELETE':
@@ -532,6 +650,7 @@ export class QQOfficialAdapter extends EventEmitter {
         this.emit('group.decrease', String(d?.guild_id ?? ''), String(d?.user?.id ?? ''))
         break
       default:
+        this.logger.debug({ type, id: String(d?.id ?? '') }, 'QQOfficial unhandled event type')
         break
     }
   }
@@ -541,8 +660,10 @@ export class QQOfficialAdapter extends EventEmitter {
     const channelId = String(d?.channel_id ?? '')
     const guildId = String(d?.guild_id ?? '')
     const chatId = channelId || String(d?.id ?? '')
+    if (isDirect)
+      this.registerDmLikeChat(chatId, 'dms')
     if (d?.id) {
-      this.recallContexts.set(String(d.id), { channelId })
+      this.recallContexts.set(String(d.id), { channelId, ...(isDirect ? { isDm: true } : {}) })
       if (this.recallContexts.size > 500) {
         const firstKey = this.recallContexts.keys().next().value
         if (firstKey !== undefined)
@@ -569,7 +690,7 @@ export class QQOfficialAdapter extends EventEmitter {
         type: 'channel',
         name: d?.channel?.name,
       },
-      content: this.parseContent(String(d?.content ?? ''), d?.attachments),
+      content: this.parseContent(String(d?.content ?? ''), d?.attachments, d?.ark_data),
       timestamp: Number(d?.timestamp ? Date.parse(String(d.timestamp)) : Date.now()),
       metadata: {
         raw: d,
@@ -583,7 +704,51 @@ export class QQOfficialAdapter extends EventEmitter {
     this.emit('message', unified)
   }
 
-  private parseContent(content: string, attachments?: any[]): any[] {
+  /**
+   * QQ 单聊（C2C）消息：chatId = user_openid，收发走 /v2/users/{openid}/messages。
+   * chat.type 映射为 'channel' + metadata.isDirect，让上层（转发/插件）按私信处理；
+   * 实际端点由 dmLikeChats 注册表区分。
+   */
+  private emitC2CMessage(d: any): void {
+    const openid = String(d?.author?.user_openid ?? d?.author?.id ?? '')
+    const chatId = openid || String(d?.id ?? '')
+    this.registerDmLikeChat(chatId, 'c2c')
+    if (d?.id) {
+      this.recallContexts.set(String(d.id), { channelId: chatId, isC2C: true })
+      // 记录被动回复窗口（C2C 主动消息受限，优先 msg_id 被动回复）
+      this.passiveReplies.set(chatId, { msgId: String(d.id), ts: Date.now() })
+      for (const [key, val] of this.passiveReplies) {
+        if (Date.now() - val.ts > 6 * 60_000)
+          this.passiveReplies.delete(key)
+      }
+    }
+    const unified: UnifiedMessage = {
+      id: String(d?.id ?? `${Date.now()}`),
+      platform: 'qq',
+      sender: {
+        id: openid,
+        name: String(d?.author?.username ?? ''),
+        avatar: d?.author?.avatar,
+      },
+      chat: {
+        id: chatId,
+        type: 'channel',
+      },
+      content: this.parseContent(String(d?.content ?? ''), d?.attachments, d?.ark_data),
+      timestamp: Number(d?.timestamp ? Date.parse(String(d.timestamp)) : Date.now()),
+      metadata: {
+        raw: d,
+        guildId: '',
+        channelId: chatId,
+        eventType: 'C2C_MESSAGE_CREATE',
+        isDirect: true,
+        msgId: d?.id ? String(d.id) : undefined,
+      },
+    }
+    this.emit('message', unified)
+  }
+
+  private parseContent(content: string, attachments?: any[], arkData?: any): any[] {
     const segments: any[] = []
     const text = String(content ?? '')
     // 官方内容为纯文本（可含 <@openid> 提及），不做复杂分段
@@ -593,6 +758,13 @@ export class QQOfficialAdapter extends EventEmitter {
       if (att?.content_type === 'image' && att?.url) {
         segments.push({ type: 'image', data: { url: att.url } })
       }
+    }
+    // ARK 卡片（message_type=3，用户分享的链接卡片）：URL 藏在 ark_data 里，content 往往为空。
+    // 抽取其中全部 http(s) URL 拼为文本，供上层（如鉴权插件）解析激活链接。
+    if (arkData) {
+      const arkText = extractUrlsFromArk(arkData)
+      if (arkText)
+        segments.push({ type: 'text', data: { text: arkText } })
     }
     if (segments.length === 0)
       segments.push({ type: 'text', data: { text: '' } })

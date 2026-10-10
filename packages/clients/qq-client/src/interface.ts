@@ -234,6 +234,8 @@ export interface QQOfficialCreateParams {
   appSecret: string
   /** 是否开启频道私聊（私信）事件 */
   enableGuildDirectMessage?: boolean
+  /** 是否开启 QQ 单聊（C2C）事件（intent GROUP_AND_C2C_EVENT，特殊事件需平台审核） */
+  enableC2C?: boolean
   /** 是否使用沙箱环境 */
   sandbox?: boolean
   /** true = 默认重连策略, false = 禁用, 对象 = 自定义策略 */
