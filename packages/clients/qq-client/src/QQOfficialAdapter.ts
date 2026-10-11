@@ -82,6 +82,9 @@ export class QQOfficialAdapter extends EventEmitter {
    */
   private dmLikeChats = new Map<string, 'dms' | 'c2c'>()
 
+  /** DM 会话 chatId(channel_id) -> guild_id：/dms/{guild_id}/messages 要求 guild_id，channel_id 拼 URL 会 4xx */
+  private dmGuildIds = new Map<string, string>()
+
   /** C2C intent 被网关拒绝（4014）后禁用，重连时不再订阅（进程生命周期内有效） */
   private c2cIntentDropped = false
 
@@ -244,7 +247,7 @@ export class QQOfficialAdapter extends EventEmitter {
       // 私信类会话必须走对应端点：/channels/ 对 DM/C2C 会 4xx，旧实现还把错误吞成空 messageId
       const dmKind = this.dmLikeChats.get(String(chatId))
       if (dmKind === 'dms')
-        return await this.sendDmsMessage(String(chatId), payload)
+        return await this.sendDmsMessage(this.dmGuildIds.get(String(chatId)) ?? String(chatId), payload)
       if (dmKind === 'c2c')
         return await this.sendC2CMessage(String(chatId), payload)
       return await this.sendChannelMessage(String(chatId), payload)
@@ -683,8 +686,18 @@ export class QQOfficialAdapter extends EventEmitter {
     const channelId = String(d?.channel_id ?? '')
     const guildId = String(d?.guild_id ?? '')
     const chatId = channelId || String(d?.id ?? '')
-    if (isDirect)
+    if (isDirect) {
       this.registerDmLikeChat(chatId, 'dms')
+      // DIRECT_MESSAGE_CREATE 携带的 guild_id 即 DM 会话 guild_id（与 create_dms 返回一致），记下供发送端点使用
+      if (guildId) {
+        this.dmGuildIds.set(chatId, guildId)
+        if (this.dmGuildIds.size > 500) {
+          const firstKey = this.dmGuildIds.keys().next().value
+          if (firstKey !== undefined)
+            this.dmGuildIds.delete(firstKey)
+        }
+      }
+    }
     if (d?.id) {
       this.cacheRecallContext(String(d.id), channelId, isDirect ? 'dms' : undefined)
       // 记录被动回复窗口（官方 API 主动消息限制极严，优先 msgId 被动回复）
