@@ -322,6 +322,8 @@ export class QQOfficialAdapter extends EventEmitter {
       }
     }
     catch (error: any) {
+      // 失败回执会被上层吞掉（SendMessageResult 只有 messageId），此处必须留痕
+      this.logger.warn({ error: error.message, guildId }, 'QQOfficial sendDmsMessage failed')
       return { messageId: '', timestamp: Date.now(), success: false, error: error.message }
     }
   }
