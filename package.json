@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "check": "bun check",
     "type-check": "turbo run type-check",
     "test": "turbo run test",
     "lint": "turbo run lint && bun run check:bun-only",
