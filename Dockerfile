@@ -59,7 +59,7 @@ WORKDIR /app
 FROM base AS pruner
 WORKDIR /app
 COPY . .
-RUN bunx turbo@2.10.11 prune @napgram/app --docker
+RUN bun --bun x turbo@2.10.11 prune @napgram/app --docker
 
 # Workspace build image
 FROM base AS workspace
