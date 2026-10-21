@@ -45,8 +45,8 @@ mock.module('@opentelemetry/exporter-trace-otlp-http', () => ({
 mock.module('@opentelemetry/resources', () => ({
   resourceFromAttributes: mocks.resourceFromAttributes,
 }))
-mock.module('@opentelemetry/sdk-trace-base/build/src/index-shim.js', () => ({
-  BasicTracerProvider: mocks.providerConstructor,
+mock.module('@opentelemetry/sdk-trace', () => ({
+  TracerProvider: mocks.providerConstructor,
   BatchSpanProcessor: mock(),
 }))
 mock.module('@opentelemetry/api', () => ({

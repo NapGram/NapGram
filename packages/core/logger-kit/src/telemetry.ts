@@ -1,7 +1,7 @@
 import { SpanStatusCode, trace, type Attributes } from '@opentelemetry/api'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import { resourceFromAttributes } from '@opentelemetry/resources'
-import { BasicTracerProvider, BatchSpanProcessor } from '@opentelemetry/sdk-trace-base/build/src/index-shim.js'
+import { BatchSpanProcessor, TracerProvider } from '@opentelemetry/sdk-trace'
 import {
   ATTR_DEPLOYMENT_ENVIRONMENT_NAME,
   ATTR_SERVICE_INSTANCE_ID,
@@ -75,7 +75,7 @@ type Scalar = string | number | boolean
 type ExceptionFilter = (error: unknown) => boolean
 type ActiveWindow = { window: 'daily' | 'weekly' | 'monthly', bucket: string }
 
-let provider: BasicTracerProvider | undefined
+let provider: TracerProvider | undefined
 let initialized = false
 let instanceId = ''
 let exceptionFilter: ExceptionFilter = () => true
@@ -234,7 +234,7 @@ export function initTelemetry(): void {
   const exporter = new OTLPTraceExporter({
     url: bunRuntime.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || DEFAULT_ENDPOINT,
   })
-  provider = new BasicTracerProvider({
+  provider = new TracerProvider({
     resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: SERVICE_NAME,
       [ATTR_SERVICE_INSTANCE_ID]: instanceId,
@@ -246,7 +246,7 @@ export function initTelemetry(): void {
       'git.ref': String((env as any).REF || ''),
       'git.commit': String((env as any).COMMIT || ''),
     }),
-    spanProcessors: [new BatchSpanProcessor(exporter)],
+    spanProcessors: [new BatchSpanProcessor({ exporter })],
   })
   trace.setGlobalTracerProvider(provider)
   initialized = true
