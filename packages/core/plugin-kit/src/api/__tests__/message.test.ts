@@ -640,6 +640,52 @@ describe('messageAPIImpl', () => {
 
       expect(sendMessage).toHaveBeenCalled()
     })
+
+    it('should map qq:channel:<id> and qq:guild:<id> to chat type channel', async () => {
+      const sendMessage = mock().mockResolvedValue({ messageId: 'qqc1' })
+      messageAPI = new MessageAPIImpl(() => ({
+        qqClient: { uin: '1', nickname: 'Bot', sendMessage },
+      }))
+
+      await messageAPI.send({
+        instanceId: 1,
+        channelId: 'qq:channel:555',
+        content: 'test',
+      })
+      expect(sendMessage.mock.calls[0][1].chat).toEqual({ id: '555', type: 'channel' })
+
+      await messageAPI.send({
+        instanceId: 1,
+        channelId: 'qq:guild:666',
+        content: 'test',
+      })
+      expect(sendMessage.mock.calls[1][1].chat).toEqual({ id: '666', type: 'channel' })
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: 'qq:channel:',
+        content: 'test',
+      })).rejects.toThrow('Invalid channelId')
+    })
+
+    it('should reject forward segments for channel targets instead of falling back to group', async () => {
+      const sendGroupForwardMsg = mock()
+      messageAPI = new MessageAPIImpl(() => ({
+        qqClient: { uin: '1', sendMessage: mock(), sendGroupForwardMsg },
+      }))
+
+      await expect(messageAPI.send({
+        instanceId: 1,
+        channelId: 'qq:channel:555',
+        content: [{
+          type: 'forward',
+          data: {
+            messages: [{ userId: 'qq:u:0', userName: 'GitLab Notifier', segments: [{ type: 'text', data: { text: 't' } }] }],
+          },
+        }] as any,
+      })).rejects.toThrow('QQ channel does not support forward messages')
+      expect(sendGroupForwardMsg).not.toHaveBeenCalled()
+    })
   })
 
   describe('parseMessageId edge cases', () => {

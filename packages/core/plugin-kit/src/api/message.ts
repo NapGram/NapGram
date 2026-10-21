@@ -28,7 +28,7 @@ import { getLogger } from '@napgram/logger-kit'
 const logger = getLogger('MessageAPI')
 
 type TargetPlatform = 'qq' | 'tg'
-type QqChannelType = 'group' | 'private'
+type QqChannelType = 'group' | 'private' | 'channel'
 
 export function parseChannelId(raw: string): { platform: TargetPlatform, channelId: string, qqType?: QqChannelType } {
   const input = String(raw || '').trim()
@@ -45,6 +45,13 @@ export function parseChannelId(raw: string): { platform: TargetPlatform, channel
         if (!id)
           throw new Error(`Invalid channelId: ${input}`)
         return { platform, channelId: id, qqType: maybeType }
+      }
+      // channel/guild 走 QQ 官方机器人（频道子频道），由 QQClientRouter 路由到官方客户端
+      if (maybeType === 'channel' || maybeType === 'guild') {
+        const id = parts.slice(2).join(':')
+        if (!id)
+          throw new Error(`Invalid channelId: ${input}`)
+        return { platform, channelId: id, qqType: 'channel' }
       }
       const id = parts.slice(1).join(':')
       return { platform, channelId: id } // Let consumer default to 'group'
@@ -384,6 +391,12 @@ export class MessageAPIImpl implements MessageAPI {
         }
         const forwardMessageId = result?.message_id ?? result?.data?.message_id ?? ''
         return { messageId: forwardMessageId ? `qq:${String(forwardMessageId)}` : `qq:forward:${timestamp}`, timestamp }
+      }
+
+      // 官方频道不支持合并转发；QQClientRouter.sendGroupForwardMsg 固定优先 NapCat，
+      // 若继续降级会把消息发到同 id 的 NapCat 群，这里显式报错要求改用纯文本
+      if (target.qqType === 'channel') {
+        throw new Error('QQ channel does not support forward messages; send text segments instead')
       }
 
       if (typeof qqClient.sendGroupForwardMsg !== 'function')
