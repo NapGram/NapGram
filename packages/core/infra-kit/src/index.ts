@@ -78,7 +78,16 @@ export {
 export type { AppLogger }
 
 // Default export for compatibility with tests
-const kit = {
+const kit: {
+  env: typeof env
+  getLogger: typeof getLogger
+  db: typeof db
+  drizzleDb: typeof drizzleDb
+  temp: typeof temp
+  performanceMonitor: typeof performanceMonitor
+  MessageQueue: typeof MessageQueue
+  qface: typeof qface
+} = {
   env,
   getLogger,
   db,
