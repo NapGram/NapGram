@@ -21,7 +21,7 @@
     "@napgram/plugin-adapter-qq-official": "workspace:*"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261020.3",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261021.1",
     "bun-types": "1.4.3",
     "oxlint": "1.89.0",
     "turbo": "^2.9.18",
