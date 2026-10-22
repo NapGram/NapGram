@@ -2,7 +2,7 @@
   "name": "napgram-root",
   "version": "0.1.5",
   "private": true,
-  "packageManager": "bun@1.4.3",
+  "packageManager": "bun@1.4.4",
   "engines": {
     "bun": ">=1.4.0"
   },
@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@7.1.0-dev.20261021.1",
-    "bun-types": "1.4.3",
+    "bun-types": "1.4.4",
     "oxlint": "1.89.0",
     "turbo": "^2.9.18",
     "typescript": "npm:@typescript/typescript6@6.0.2",
