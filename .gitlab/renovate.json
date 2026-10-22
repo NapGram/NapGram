@@ -3,6 +3,10 @@
   "extends": [
     "gitlab>magisk3171/shared/magisk-ci-toolkit"
   ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**"
+  ],
   "customManagers": [
     {
       "description": "Keep the Dockerfile Bun version in sync with package.json's packageManager.",
