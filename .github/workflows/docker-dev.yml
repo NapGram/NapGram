@@ -164,7 +164,7 @@ jobs:
 
   build_arm64_native:
     name: Build dev image (arm64)
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     permissions:
       contents: read
       packages: write
