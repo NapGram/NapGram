@@ -31,7 +31,7 @@
     "@napgram/runtime-kit": "workspace:*"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261022.1",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261023.1",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {

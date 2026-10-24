@@ -47,7 +47,7 @@
     "drizzle-orm": "^0.45.1"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261022.1",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261023.1",
     "drizzle-kit": "^0.31.8",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
