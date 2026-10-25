@@ -37,7 +37,7 @@
   "author": "NapGram Team",
   "license": "MIT",
   "devDependencies": {
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261023.1",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261024.1",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "files": [
