@@ -15,7 +15,7 @@ mock.module('@napgram/message-kit', async () => {
 mock.module('../../../../../shared/utils/index.js', async () => {
   return {
     ...actualSharedUtils,
-    getLogger: mock().mockReturnValue({ info: mock(), warn: mock(), error: console.error, debug: mock() }),
+    getLogger: mock().mockReturnValue({ info: mock(), warn: mock(), error: mock(), debug: mock() }),
   }
 })
 

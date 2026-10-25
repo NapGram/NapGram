@@ -20,5 +20,15 @@
     "data",
     "coverage",
     "**/*.md"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "**/tools/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    }
   ]
 }
