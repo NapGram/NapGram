@@ -139,3 +139,11 @@ describe('random property-based tests', () => {
     )
   })
 })
+
+describe('random fallback coverage', () => {
+  it('hex() returns the requested amount of hex characters', () => {
+    for (const length of [1, 2, 8, 32, 64]) {
+      expect(random.hex(length)).toMatch(new RegExp(`^[0-9a-f]{${length}}$`))
+    }
+  })
+})
