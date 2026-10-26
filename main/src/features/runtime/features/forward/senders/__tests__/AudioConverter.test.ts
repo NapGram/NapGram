@@ -27,6 +27,14 @@ mock.module('@napgram/env-kit', () => ({
   },
 }))
 
+const silkMocks = {
+  decode: mock().mockResolvedValue(undefined),
+}
+
+mock.module('../../../../capabilities/media.js', () => ({
+  silk: silkMocks,
+}))
+
 mock.module('@napgram/logger-kit', () => ({
   getLogger: mock(() => ({
     debug: mock(),
@@ -104,4 +112,40 @@ describe('audioConverter', () => {
     const result = await converter.transcodeToOgg(bytesFromUtf8('data'), 'test.mp3')
     expect(result).toEqual(bytesFromUtf8('ogg-result'))
   })
+
+describe('audioConverter real transcode paths', () => {
+  const converter = new AudioConverter(fileIOMocks as any)
+
+  beforeEach(() => {
+    silkMocks.decode.mockReset().mockResolvedValue(undefined)
+  })
+
+  it('uses silk decode output when preferSilk succeeds', async () => {
+    const result = await converter.transcodeToOgg(bytesFromUtf8('#!SILK_V3'), 'voice.amr', true)
+    expect(silkMocks.decode).toHaveBeenCalledTimes(1)
+    expect(result).toEqual(bytesFromUtf8('converted-ogg'))
+  })
+
+  it('falls back to ffmpeg when silk decode fails', async () => {
+    silkMocks.decode.mockRejectedValueOnce(new Error('silk boom'))
+    const result = await converter.transcodeToOgg(bytesFromUtf8('#!SILK_V3'), 'voice.amr', true)
+    expect(silkMocks.decode).toHaveBeenCalledTimes(1)
+    expect(result).toEqual(bytesFromUtf8('converted-ogg'))
+  })
+
+  it('runs the ffmpeg branch for non-silk audio', async () => {
+    const result = await converter.transcodeToOgg(bytesFromUtf8('mp3-bytes'), 'song.mp3', false)
+    expect(silkMocks.decode).not.toHaveBeenCalled()
+    expect(result).toEqual(bytesFromUtf8('converted-ogg'))
+  })
+
+  it('returns undefined when both silk and ffmpeg fail', async () => {
+    silkMocks.decode.mockRejectedValueOnce(new Error('silk boom'))
+    const runtime = await import('@napgram/runtime-kit')
+    ;(runtime.spawnFileWithBun as any).mockRejectedValueOnce(new Error('ffmpeg boom'))
+    const result = await converter.transcodeToOgg(bytesFromUtf8('#!SILK_V3'), 'voice.amr', true)
+    expect(result).toBeUndefined()
+  })
+})
+
 })

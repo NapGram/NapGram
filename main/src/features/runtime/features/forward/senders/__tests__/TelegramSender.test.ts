@@ -587,4 +587,152 @@ describe('telegramSender', () => {
     expect(mockChat.sendMessage).toHaveBeenCalledWith('[文件不可用] report.txt', expect.any(Object))
     expect(result).toBeNull()
   })
+
+  it('keeps reply content as text when there is no reply target', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'reply', data: { messageId: '1' } },
+        { type: 'text', data: { text: 'body' } },
+      ],
+    }
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+    const sent = mockChat.sendMessage.mock.calls[0][0]
+    expect(String(sent)).toContain('body')
+  })
+
+  it('drops reply content when replying to a message', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'reply', data: { messageId: '1' } },
+        { type: 'text', data: { text: 'body' } },
+      ],
+    }
+    await sender.sendToTelegram(mockChat, msg, {}, 42, '00')
+    const sent = mockChat.sendMessage.mock.calls[0][0]
+    expect(String(sent)).not.toContain('reply')
+  })
+
+  it('suppresses media placeholder texts', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'text', data: { text: '[图片]' } }],
+    }
+    const result = await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+    expect(mockChat.sendMessage).not.toHaveBeenCalled()
+    expect(result).toBeNull()
+  })
+
+  it('collects text after media as the batch caption', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'image', data: { file: bytesFromUtf8('img') } },
+        { type: 'text', data: { text: 'caption text' } },
+      ],
+    }
+    const calls: any[][] = []
+    spyOn((sender as any).mediaSender, 'sendMediaGroup').mockImplementation((...args: any[]) => {
+      calls.push([args[0], [...(args[1] as any[])], ...args.slice(2)])
+      return Promise.resolve({ id: 7 }) as any
+    })
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+    expect(calls).toHaveLength(1)
+    expect(calls[0][1]).toEqual([msg.content[0]])
+    expect(calls[0][2]).toBe('caption text')
+    expect(calls[0][3]).toBe(undefined)
+    expect(calls[0][4]).toEqual({})
+    expect(calls[0][5]).toBe('')
+    expect(calls[0][6]).toBe(false)
+    expect(calls[0][7]).toBe(undefined)
+    expect(calls[0][8]).toBe(msg.id)
+    expect(typeof calls[0][9]).toBe('function')
+  })
+
+  it('flushes pending text before audio, location and dice content', async () => {
+    const sender = new TelegramSender(mockInstance)
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue('/tmp/a.mp3')
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('a'), fileName: 'a.mp3' })
+    spyOn((sender as any).audioConverter, 'prepareVoiceMedia').mockResolvedValue({ type: 'voice', file: bytesFromUtf8('v') })
+
+    const audioMsg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'text', data: { text: 'before audio' } },
+        { type: 'audio', data: { file: '/tmp/a.mp3' } },
+      ],
+    }
+    await sender.sendToTelegram(mockChat, audioMsg, {}, undefined, '00')
+    expect(mockChat.sendMessage).toHaveBeenCalledWith(expect.stringContaining('before audio'), expect.any(Object))
+
+    mockChat.sendMessage.mockClear()
+    const locationMsg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'text', data: { text: 'before location' } },
+        { type: 'location', data: { latitude: 1, longitude: 2 } },
+      ],
+    }
+    await sender.sendToTelegram(mockChat, locationMsg, {}, undefined, '00')
+    expect(mockChat.sendMessage).toHaveBeenCalledWith(expect.stringContaining('before location'), expect.any(Object))
+
+    mockChat.sendMessage.mockClear()
+    const diceMsg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [
+        { type: 'text', data: { text: 'before dice' } },
+        { type: 'dice', data: { emoji: '🎲' } },
+      ],
+    }
+    await sender.sendToTelegram(mockChat, diceMsg, {}, undefined, '00')
+    expect(mockChat.sendMessage).toHaveBeenCalledWith(expect.stringContaining('before dice'), expect.any(Object))
+  })
+
+  it('sends the rich header file action text before the document', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'file', data: { file: bytesFromUtf8('doc'), filename: 'doc.pdf' } }],
+    }
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('doc'), fileName: 'doc.pdf' })
+    spyOn((sender as any).richHeaderBuilder, 'generateRichHeaderUrl').mockReturnValue('http://header.url')
+    const applySpy = spyOn((sender as any).richHeaderBuilder, 'applyRichHeader').mockReturnValue({ text: 'Rich', params: {} })
+
+    await sender.sendToTelegram(mockChat, msg, { apiKey: 'key', flags: 0 }, undefined, '10')
+
+    expect(applySpy).toHaveBeenCalledWith('发来一个文件', 'http://header.url')
+    expect(mockChat.sendMessage).toHaveBeenCalledWith('Rich', expect.any(Object))
+    expect(mockChat.client.sendMedia).toHaveBeenCalledWith(100, expect.objectContaining({ type: 'document' }), expect.any(Object))
+  })
+
+  it('falls back to the raw file/url when resolving media input throws', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'video', data: { file: bytesFromUtf8('vid'), url: 'https://example.invalid/v.mp4' } }],
+    }
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockRejectedValue(new Error('resolve boom'))
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('vid'), fileName: 'v.mp4' })
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+    expect(mockChat.client.sendMedia).toHaveBeenCalledWith(100, expect.objectContaining({ type: 'video' }), expect.any(Object))
+  })
+
+  it('sends video content through the media path', async () => {
+    const sender = new TelegramSender(mockInstance)
+    const msg: any = {
+      sender: { id: 'q1', name: 'QQUser' },
+      content: [{ type: 'video', data: { file: bytesFromUtf8('vid') } }],
+    }
+    spyOn((sender as any).fileNormalizer, 'resolveMediaInput').mockResolvedValue(bytesFromUtf8('vid'))
+    spyOn((sender as any).fileNormalizer, 'normalizeInputFile').mockResolvedValue({ data: bytesFromUtf8('vid'), fileName: 'v.mp4' })
+
+    await sender.sendToTelegram(mockChat, msg, {}, undefined, '00')
+    expect(mockChat.client.sendMedia).toHaveBeenCalledWith(100, expect.objectContaining({ type: 'video', fileName: 'v.mp4' }), expect.any(Object))
+  })
 })

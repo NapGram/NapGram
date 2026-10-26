@@ -223,4 +223,111 @@ describe('fileNormalizer', () => {
       expect(res).toBe(file)
     }, 15_000)
   })
+
+  describe('handleLocalOrMtcuteMedia variants', () => {
+    it('wraps a bare async iterable with the default extension', async () => {
+      const stream = (async function* () { yield bytesFromUtf8('chunk') })()
+      const res = await normalizer.handleLocalOrMtcuteMedia(stream, 'amr')
+      expect(res).toMatchObject({ fileName: 'media.amr' })
+      const chunks: Uint8Array[] = []
+      for await (const chunk of (res as any).data)
+        chunks.push(chunk as Uint8Array)
+      expect(bytesToUtf8(chunks[0])).toBe('chunk')
+    })
+
+    it('returns undefined when an mtcute Media object has no downloader', async () => {
+      const media = { type: 'photo', id: 'x' }
+      expect(await normalizer.handleLocalOrMtcuteMedia(media, 'jpg')).toBeUndefined()
+    })
+
+    it('downloads an mtcute Media object through the provided downloader', async () => {
+      const media = { type: 'photo', id: 'x' }
+      const downloader = mock().mockResolvedValue(bytesFromUtf8('photo-bytes'))
+      const res = await normalizer.handleLocalOrMtcuteMedia(media, 'jpg', downloader)
+      expect(downloader).toHaveBeenCalledWith(media)
+      expect((res as any).data).toEqual(bytesFromUtf8('photo-bytes'))
+    })
+
+    it('reads a local path into bytes', async () => {
+      const res = await normalizer.handleLocalOrMtcuteMedia('/tmp/local.jpg', 'jpg')
+      expect((res as any).data).toEqual(bytesFromUtf8('dummy'))
+      expect((res as any).fileName).toBe('media.jpg')
+    })
+  })
+
+  describe('resolveMediaInput additional branches', () => {
+    it('runs the image branch through processImage and local read', async () => {
+      mediaFeature.processImage.mockResolvedValue('/tmp/pic.jpg')
+      const res = await normalizer.resolveMediaInput({ type: 'image', data: {} } as any, undefined)
+      expect(res).toMatchObject({ fileName: 'media.jpg' })
+    })
+
+    it('prefers a non-http url for file content', async () => {
+      mediaFeature.processImage.mockReset()
+      const res = await normalizer.resolveMediaInput({
+        type: 'file',
+        data: { url: '/tmp/napcat-file.doc' },
+      } as any, undefined)
+      expect(res).toBe('/tmp/napcat-file.doc')
+    })
+
+    it('falls back to the raw file field when url and fileId are absent', async () => {
+      const res = await normalizer.resolveMediaInput({
+        type: 'file',
+        data: { file: '/tmp/fallback.doc' },
+      } as any, undefined)
+      expect(res).toBe('/tmp/fallback.doc')
+    })
+
+    it('uses fetchFileById after url download failure', async () => {
+      mediaFeature.downloadMedia.mockRejectedValue(new Error('download boom'))
+      mediaFeature.fetchFileById.mockResolvedValue({ path: '/tmp/by-id.doc' })
+      const res = await normalizer.resolveMediaInput({
+        type: 'file',
+        data: { url: 'https://example.invalid/a.doc', fileId: 'F1' },
+      } as any, undefined)
+      expect(res).toBe('/tmp/by-id.doc')
+    })
+
+    it('wraps a stream file field', async () => {
+      const stream = (async function* () { yield bytesFromUtf8('part') })()
+      const res = await normalizer.resolveMediaInput({
+        type: 'file',
+        data: { file: stream, filename: 'notes.txt' },
+      } as any, undefined)
+      expect(res).toMatchObject({ fileName: 'notes.txt' })
+    })
+
+    it('returns data.file or data.url without a media feature', async () => {
+      const bare = new FileNormalizer(undefined, fileIOMocks as any)
+      expect(await bare.resolveMediaInput({ type: 'sticker', data: { file: 'f1' } } as any)).toBe('f1')
+      expect(await bare.resolveMediaInput({ type: 'sticker', data: { url: 'u1' } } as any)).toBe('u1')
+    })
+  })
+
+  describe('tryReadLocalWithFallback candidates', () => {
+    it('reads the count-stripped candidate when the original is missing', async () => {
+      fileIOMocks.readBytes.mockRejectedValueOnce(new Error('gone'))
+      fileIOMocks.readBytes.mockResolvedValueOnce(bytesFromUtf8('candidate'))
+      const res = await normalizer.normalizeInputFile('/tmp/photo (1).jpg', 'photo.jpg')
+      expect(res).toMatchObject({ fileName: 'photo.jpg' })
+    })
+
+    it('reads the dot-stripped candidate', async () => {
+      fileIOMocks.readBytes.mockRejectedValueOnce(new Error('gone'))
+      fileIOMocks.readBytes.mockResolvedValueOnce(bytesFromUtf8('dot'))
+      const res = await normalizer.normalizeInputFile('/tmp/clip.1.mp4', 'clip.mp4')
+      expect(res).toMatchObject({ fileName: 'clip.jpg' })
+      expect(bytesToUtf8((res as any).data)).toBe('dot')
+    })
+
+    it('fuzzy-matches by prefix inside the same directory', async () => {
+      fileIOMocks.readBytes.mockRejectedValue(new Error('gone'))
+      fileIOMocks.readdir.mockResolvedValue(['photo-final.jpg', 'other.txt'])
+      fileIOMocks.readBytes.mockResolvedValueOnce(bytesFromUtf8('fuzzy'))
+      const res = await normalizer.normalizeInputFile('/tmp/photo.jpg', 'photo.jpg')
+      expect(res).toMatchObject({ fileName: 'photo.jpg' })
+      expect(bytesToUtf8((res as any).data)).toBe('fuzzy')
+    })
+  })
 })

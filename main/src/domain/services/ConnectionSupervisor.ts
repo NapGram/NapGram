@@ -161,7 +161,7 @@ export class ConnectionSupervisor {
           return
         }
         try {
-          getEventPublisher().publishNotice({
+          await getEventPublisher().publishNotice({
             instanceId: this.host.id,
             platform: 'qq',
             noticeType: 'connection-lost',
@@ -180,7 +180,7 @@ export class ConnectionSupervisor {
           return
         }
         try {
-          getEventPublisher().publishNotice({
+          await getEventPublisher().publishNotice({
             instanceId: this.host.id,
             platform: 'qq',
             noticeType: 'connection-restored',
@@ -199,7 +199,7 @@ export class ConnectionSupervisor {
           return
         }
         try {
-          getEventPublisher().publishNotice({
+          await getEventPublisher().publishNotice({
             instanceId: this.host.id,
             platform: 'qq',
             noticeType: 'connection-lost',
@@ -219,7 +219,7 @@ export class ConnectionSupervisor {
           return
         }
         try {
-          getEventPublisher().publishNotice({
+          await getEventPublisher().publishNotice({
             instanceId: this.host.id,
             platform: 'qq',
             noticeType: 'connection-restored',
