@@ -430,4 +430,35 @@ describe('infoCommandHandler', () => {
       })
     })
   })
+
+  describe('numeric forward modes and reply metadata', () => {
+    function withPair(forwardMode?: string) {
+      const mockPair = {
+        id: 1,
+        qqRoomId: '888888',
+        tgChatId: '777777',
+        qqChatType: 'group',
+        ...(forwardMode !== undefined ? { forwardMode } : {}),
+      }
+      ;(mockContext.instance.forwardPairs as any).findByTG = mock().mockReturnValue(mockPair)
+    }
+
+    it.each(['00', '10', '01'])('displays numeric forward mode %s', async (mode) => {
+      withPair(mode)
+      await handler.execute(createMessage('/info'), [])
+
+      const expected = mode === '00' ? '已暂停' : mode === '10' ? '仅 QQ → TG' : '仅 TG → QQ'
+      expectLastReplyContains(mockContext.replyTG, { chatId: '777777', contains: expected })
+    })
+
+    it('appends replied-message info when the command replies to a message', async () => {
+      withPair('11')
+      const msg = createMessage('/info', '999999', '777777', 'telegram', { id: 88 })
+
+      await handler.execute(msg, [])
+
+      expectLastReplyContains(mockContext.replyTG, { chatId: '777777', contains: '回复的消息信息' })
+      expectLastReplyContains(mockContext.replyTG, { chatId: '777777', contains: '88' })
+    })
+  })
 })

@@ -330,4 +330,105 @@ describe('personalSyncService', () => {
     // Should not throw
     await service.syncAll()
   })
+
+  describe('remaining failure paths', () => {
+    it('runs the initial sync shortly after start()', async () => {
+      const instance = {
+        id: 7,
+        workMode: 'personal',
+        tgUserBot: { isOnline: true },
+        tgBot: {
+          getChat: mock().mockResolvedValue({
+            chat: { title: 'old' },
+            editTitle: mock().mockResolvedValue(undefined),
+            setProfilePhoto: mock().mockResolvedValue(undefined),
+          }),
+        },
+      } as any
+      const forwardMap = {
+        getAll: mock().mockReturnValue([{
+          id: 1,
+          instanceId: 7,
+          qqChatType: 'private',
+          qqRoomId: '30003',
+          tgChatId: '100',
+          qqDisplayName: '',
+        }]),
+      } as any
+      const qqClient = {
+        getFriendInfo: mock().mockRejectedValue(new Error('offline')),
+      } as any
+
+      const service = new PersonalSyncService(instance, forwardMap, qqClient)
+      const originalSetTimeout = globalThis.setTimeout
+      ;(globalThis as any).setTimeout = ((fn: any, _ms?: any, ...rest: any[]) =>
+        originalSetTimeout(fn, 20, ...rest)) as any
+      try {
+        service.start(60 * 60 * 1000)
+        await new Promise(resolve => originalSetTimeout(resolve, 150))
+        expect(qqClient.getFriendInfo).toHaveBeenCalledWith('30003')
+      }
+      finally {
+        ;(globalThis as any).setTimeout = originalSetTimeout
+        service.stop()
+      }
+    })
+
+    it('falls back to the room id when friend info fails', async () => {
+      const editTitle = mock().mockResolvedValue(undefined)
+      const instance = {
+        id: 7,
+        workMode: 'personal',
+        tgUserBot: { isOnline: true },
+        tgBot: {
+          getChat: mock().mockResolvedValue({
+            chat: { title: 'old' },
+            editTitle,
+            setProfilePhoto: mock().mockResolvedValue(undefined),
+          }),
+        },
+      } as any
+      const forwardMap = {
+        getAll: mock().mockReturnValue([{
+          id: 2,
+          instanceId: 7,
+          qqChatType: 'private',
+          qqRoomId: '30004',
+          tgChatId: '100',
+          qqDisplayName: '',
+        }]),
+      } as any
+      const qqClient = {
+        getFriendInfo: mock().mockRejectedValue(new Error('offline')),
+      } as any
+
+      const service = new PersonalSyncService(instance, forwardMap, qqClient)
+      await service.syncAll()
+
+      expect(editTitle).toHaveBeenCalledWith('QQ 好友 30004')
+    })
+
+    it('logs and continues when the chat lookup throws', async () => {
+      const instance = {
+        id: 7,
+        workMode: 'personal',
+        tgUserBot: { isOnline: true },
+        tgBot: {
+          getChat: mock().mockRejectedValue(new Error('chat gone')),
+        },
+      } as any
+      const forwardMap = {
+        getAll: mock().mockReturnValue([{
+          id: 3,
+          instanceId: 7,
+          qqChatType: 'private',
+          qqRoomId: '30005',
+          tgChatId: '100',
+        }]),
+      } as any
+
+      const service = new PersonalSyncService(instance, forwardMap, {} as any)
+      await expect(service.syncAll()).resolves.toBeUndefined()
+    })
+  })
 })

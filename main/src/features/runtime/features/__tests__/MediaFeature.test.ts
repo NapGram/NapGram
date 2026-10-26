@@ -441,4 +441,98 @@ describe('mediaFeature', () => {
       })
     })
   })
+
+  describe('media edge paths', () => {
+    it('falls back to reading the amr itself when its wav cache stat fails', async () => {
+      const buf = new TextEncoder().encode('amr-data')
+      fileIOMocks.stat.mockResolvedValueOnce({ size: 0 })
+      fileIOMocks.stat.mockRejectedValueOnce(new Error('no wav stat'))
+      fileIOMocks.readBytes.mockResolvedValue(buf)
+
+      const result = await mediaFeature.downloadMedia('/tmp/audio.amr')
+      expect(result).toEqual(buf)
+    })
+
+    it('rethrows when the local file cannot be read', async () => {
+      fileIOMocks.stat.mockRejectedValue(new Error('stat boom'))
+
+      await expect(mediaFeature.downloadMedia('/tmp/missing.bin')).rejects.toThrow('stat boom')
+    })
+
+    it('recovers via callApi download_file when direct download and downloadFile are unavailable', async () => {
+      const buf = new TextEncoder().encode('callapi-data')
+      mockQqClient.getFile.mockResolvedValue({ url: 'http://example.com/f.bin' })
+      ;(globalThis.fetch as any).mockRejectedValue(new Error('Network error'))
+      delete mockQqClient.downloadFile
+      mockQqClient.callApi.mockResolvedValue({ file: '/tmp/callapi.bin' })
+      fileIOMocks.readBytes.mockResolvedValue(buf)
+
+      const result = await mediaFeature.fetchFileById('f1')
+      expect(mockQqClient.callApi).toHaveBeenCalledWith('download_file', expect.objectContaining({ url: 'http://example.com/f.bin' }))
+      expect(result.buffer).toEqual(buf)
+      expect(result.path).toBe('/tmp/callapi.bin')
+    })
+
+    it('rethrows the original error when every download_file fallback fails', async () => {
+      mockQqClient.getFile.mockResolvedValue({ url: 'http://example.com/f.bin' })
+      ;(globalThis.fetch as any).mockRejectedValue(new Error('Network error'))
+      delete mockQqClient.downloadFile
+      mockQqClient.callApi.mockImplementation(async (cmd: string) => {
+        if (cmd === 'get_file')
+          return { url: 'http://example.com/f.bin' }
+        if (cmd === 'download_file')
+          return { file: '/tmp/missing.bin' }
+        return null
+      })
+      fileIOMocks.readBytes.mockRejectedValue(new Error('local gone'))
+
+      // the rethrown error is swallowed by fetchFileById's own catch
+      expect(await mediaFeature.fetchFileById('f1')).toEqual({})
+    })
+
+    it('reads a local-path file url from get_file', async () => {
+      const buf = new TextEncoder().encode('local-url-data')
+      mockQqClient.getFile.mockResolvedValue({ url: '/tmp/direct.bin' })
+      fileIOMocks.readBytes.mockResolvedValue(buf)
+
+      const result = await mediaFeature.fetchFileById('f1')
+      expect(result.buffer).toEqual(buf)
+      expect(result.path).toBe('/tmp/direct.bin')
+    })
+
+    it('keeps going when the streamed local file cannot be read', async () => {
+      mockQqClient.getFile.mockResolvedValue(null)
+      mockQqClient.downloadFileStreamToFile.mockResolvedValue({ path: '/tmp/streamed' })
+      fileIOMocks.readBytes.mockRejectedValue(new Error('read boom'))
+
+      const result = await mediaFeature.fetchFileById('f1')
+      expect(result).toEqual({})
+    })
+
+    it('returns the image local path when it is accessible', async () => {
+      fileIOMocks.access.mockResolvedValue(undefined)
+
+      const result = await mediaFeature.processImage({ type: 'image', data: { file: '/tmp/pic.jpg' } } as any)
+      expect(result).toBe('/tmp/pic.jpg')
+    })
+
+    it('falls back to the url when the video local path is inaccessible', async () => {
+      const buf = new TextEncoder().encode('video-data')
+      fileIOMocks.access.mockRejectedValue(new Error('gone'))
+      ;(globalThis.fetch as any).mockResolvedValue({
+        ok: true,
+        arrayBuffer: async () => buf.buffer.slice(0),
+      })
+
+      const result = await mediaFeature.processVideo({ type: 'video', data: { file: '/tmp/v.mp4', url: 'http://example.com/v.mp4' } } as any)
+      expect(result).toEqual(buf)
+    })
+
+    it('prefers the amr.wav sibling for audio when it exists', async () => {
+      fileIOMocks.access.mockResolvedValue(undefined)
+
+      const result = await mediaFeature.processAudio({ type: 'audio', data: { file: '/tmp/a.amr' } } as any)
+      expect(result).toBe('/tmp/a.amr.wav')
+    })
+  })
 })

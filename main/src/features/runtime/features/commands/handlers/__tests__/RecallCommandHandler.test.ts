@@ -267,4 +267,131 @@ describe('recallCommandHandler', () => {
     expect(mockContext.qqClient.recallMessage).toHaveBeenCalledWith('55')
     expect(chat.deleteMessages).not.toHaveBeenCalledWith([88])
   })
+
+  describe('recall error paths', () => {
+    function adminContext(): CommandContext {
+      const ctx = createMockContext()
+      ;(ctx.permissionChecker.isAdmin as any).mockReturnValue(true)
+      return ctx
+    }
+
+    beforeEach(async () => {
+      // an earlier test in this file disables auto recall on the shared env
+      // object and never restores it
+      const { env } = await import('@napgram/env-kit')
+      env.ENABLE_AUTO_RECALL = true
+    })
+
+    it('reports when the batch query finds no messages', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findMany as any).mockResolvedValue([])
+
+      await handler.execute(createMessage('telegram', { id: 1234 }), ['3'])
+
+      expect(ctx.replyTG).toHaveBeenCalledWith('777777', '没有找到可撤回的消息')
+    })
+
+    it('keeps going when individual QQ recalls or TG deletions fail', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findMany as any).mockResolvedValue([
+        { tgMsgId: 11n, seq: 's1' },
+        { tgMsgId: 12n, seq: 's2' },
+      ])
+      ;(ctx.qqClient.recallMessage as any).mockRejectedValueOnce(new Error('qq boom'))
+      const chat = await ctx.tgBot.getChat(777777)
+      let deleteCalls = 0
+      ;(chat as any).deleteMessages = async () => {
+        deleteCalls++
+        // 第一条 TG 删除失败，第二条成功，命令消息删除再失败
+        if (deleteCalls === 1 || deleteCalls === 3)
+          throw new Error('tg boom')
+        return undefined
+      }
+
+      await expect(handler.execute(createMessage('telegram', { id: 1234 }), ['2'])).resolves.toBeUndefined()
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledTimes(2)
+      expect(deleteCalls).toBe(3)
+    })
+
+    it('replies failure hint when the batch query throws', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findMany as any).mockRejectedValue(new Error('db down'))
+
+      await handler.execute(createMessage('telegram', { id: 1234 }), ['3'])
+
+      expect(ctx.replyTG).toHaveBeenCalledWith('777777', '❌ 批量撤回失败，请查看日志')
+    })
+
+    it('single recall tolerates TG deletion and QQ recall failures', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findFirst as any).mockResolvedValue({ seq: 's5', tgSenderId: '999999' })
+      ;(ctx.qqClient.recallMessage as any).mockRejectedValue(new Error('qq recall boom'))
+      ;(ctx.tgBot.getChat as any).mockRejectedValue(new Error('tg boom'))
+
+      await expect(handler.execute(createMessage('telegram', { id: 1234, replyTo: { id: 55 } }), [])).resolves.toBeUndefined()
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledWith('s5')
+    })
+
+    it('single recall from QQ tolerates both side failures', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findFirst as any).mockResolvedValue({ seq: '77', tgMsgId: 88n, tgChatId: '777777' })
+      ;(ctx.qqClient.recallMessage as any).mockRejectedValue(new Error('qq boom'))
+      ;(ctx.tgBot.getChat as any).mockRejectedValue(new Error('tg boom'))
+      const msg = createMessage('qq')
+      msg.content = [{ type: 'reply', data: { seq: '77' } }] as any
+
+      await expect(handler.execute(msg, [])).resolves.toBeUndefined()
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledWith('77')
+    })
+
+    it('cascade swallows trigger-command deletion failure and skips its QQ recall', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findFirst as any)
+        .mockResolvedValueOnce({ seq: 's5', tgSenderId: '999999' })
+        .mockResolvedValueOnce({ seq: 's6' })
+      ;(ctx.tgBot.getChat as any).mockImplementation(async () => ({
+        deleteMessages: async (ids: number[]) => {
+          if (ids[0] === 500)
+            throw new Error('cascade delete boom')
+          return undefined
+        },
+      }))
+      const raw = {
+        id: 1234,
+        replyTo: { id: 55 },
+        replyToMessage: { senderId: 1, replyTo: { replyToMsgId: 500 } },
+      }
+
+      await expect(handler.execute(createMessage('telegram', raw), [])).resolves.toBeUndefined()
+      // 级联删除失败后，同一 try 内的 QQ 级联撤回被跳过
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledTimes(1)
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledWith('s5')
+    })
+
+    it('cascade tolerates the trigger QQ recall failure', async () => {
+      const ctx = adminContext()
+      const handler = new RecallCommandHandler(ctx)
+      ;(db.query.message.findFirst as any)
+        .mockResolvedValueOnce({ seq: 's5', tgSenderId: '999999' })
+        .mockResolvedValueOnce({ seq: 's6' })
+      ;(ctx.qqClient.recallMessage as any)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('cascade qq boom'))
+      const raw = {
+        id: 1234,
+        replyTo: { id: 55 },
+        replyToMessage: { senderId: 1, replyTo: { replyToMsgId: 500 } },
+      }
+
+      await expect(handler.execute(createMessage('telegram', raw), [])).resolves.toBeUndefined()
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledWith('s5')
+      expect(ctx.qqClient.recallMessage).toHaveBeenCalledWith('s6')
+    })
+  })
 })
