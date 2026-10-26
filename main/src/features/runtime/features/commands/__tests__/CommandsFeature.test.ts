@@ -1,7 +1,7 @@
 /* eslint-disable eslint-comments/no-unlimited-disable */
 /* eslint-disable */
 /* eslint-disable prefer-arrow-callback -- class mocks must use function expressions to be constructable via `new` */
-import { beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import { beforeAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
 import * as actualForwardPairChatType from '../utils/ForwardPairChatType.js'
 
 // Mock dependencies
@@ -1404,5 +1404,206 @@ describe('commandsFeature', () => {
         await (commandsFeature as any).replyTG(123, 'test')
       })
     })
+  })
+
+})
+
+describe('commandsFeature remaining paths', () => {
+  let CommandsFeature: any
+  const provisionerInstances: any[] = []
+
+  beforeAll(async () => {
+    ;({ CommandsFeature } = await import('../CommandsFeature.js'))
+  })
+
+  beforeEach(async () => {
+    provisionerInstances.length = 0
+    mock.module('../services/PersonalPairProvisioner.js', () => ({
+      PersonalPairProvisioner: mock(function ProvisionerMock() {
+        provisionerInstances.push(this)
+      }),
+    }))
+  })
+
+  function makeFeature(instanceOverrides: Record<string, any> = {}) {
+    const instance: any = {
+      id: 1,
+      workMode: 'group',
+      forwardPairs: {
+        reload: mock().mockResolvedValue(undefined),
+        getPairs: mock().mockReturnValue([]),
+        findByTG: mock(),
+        findByQQ: mock(),
+        add: mock(),
+      },
+      config: { adminUsers: ['123'] },
+      ...instanceOverrides,
+    }
+    const tgBot: any = {
+      addNewMessageEventHandler: mock(),
+      removeNewMessageEventHandler: mock(),
+      me: { id: 999, username: 'bot' },
+      client: { getMessages: mock() },
+      getChat: mock(),
+      sendText: mock().mockResolvedValue({ id: 321 }),
+    }
+    const qqClient: any = { on: mock(), off: mock(), recallMessage: mock() }
+    const feature = new CommandsFeature(instance, tgBot, qqClient)
+    return { feature, instance, tgBot, qqClient }
+  }
+
+  function tgMsg(id: string): any {
+    return {
+      id,
+      platform: 'telegram',
+      sender: { id: 'u1', name: 'User' },
+      chat: { id: '777777', type: 'group' },
+      content: [{ type: 'text', data: { text: '/cmdpolicy mention' } }],
+      timestamp: Date.now(),
+      metadata: {},
+    }
+  }
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+  it('returns quietly when the plugin runtime is absent', async () => {
+    mock.module('@napgram/runtime-kit', () => ({
+      getGlobalRuntime: mock(() => undefined),
+    }))
+    const { feature } = makeFeature()
+    await sleep(30)
+    expect((feature as any).permissionPlugin).toBeNull()
+  })
+
+  it('integrates the permission plugin when it exposes a permission service', async () => {
+    const service = { checkCommandPermission: mock(), logAudit: mock() }
+    const pluginEntry = { id: 'permission-management', plugin: { exports: { permissionService: service } } }
+    mock.module('@napgram/runtime-kit', () => ({
+      getGlobalRuntime: mock(() => ({
+        getLastReport: mock(() => ({ loadedPlugins: [pluginEntry] })),
+        getPlugin: mock(() => pluginEntry),
+      })),
+    }))
+    const { feature } = makeFeature()
+    await sleep(30)
+    expect((feature as any).permissionPlugin).toBeDefined()
+    expect((feature as any).permissionPlugin.permissionService.checkCommandPermission).toBe(service.checkCommandPermission)
+  })
+
+  it('ignores permission plugin exports without a usable permission service', async () => {
+    const pluginEntry = { id: 'permission-management', plugin: { exports: { permissionService: {} } } }
+    mock.module('@napgram/runtime-kit', () => ({
+      getGlobalRuntime: mock(() => ({
+        getLastReport: mock(() => ({ loadedPlugins: [pluginEntry] })),
+        getPlugin: mock(() => undefined),
+      })),
+    }))
+    const { feature } = makeFeature()
+    await sleep(30)
+    expect((feature as any).permissionPlugin).toBeNull()
+  })
+
+  it('logs an error when default command registration fails', async () => {
+    mock.module('@napgram/runtime-kit', () => ({
+      getGlobalRuntime: mock(() => undefined),
+    }))
+    const spy = spyOn((CommandsFeature as any).prototype, 'registerDefaultCommands')
+      .mockRejectedValue(new Error('registry boom'))
+    try {
+      makeFeature()
+      await sleep(30)
+      const logger = (await import('@napgram/logger-kit')).getLogger('CommandsFeature')
+      expect(logger.error).toHaveBeenCalledWith('Failed to register default commands:', expect.anything())
+    }
+    finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('falls back to slash commands when the policy resolution fails', async () => {
+    const { feature } = makeFeature()
+    const fpct = await import('../utils/ForwardPairChatType.js')
+    ;(fpct.findPairByTGWithChatType as any).mockRejectedValueOnce(new Error('lookup boom'))
+
+    const blocked = await (feature as any).blockCommandByPolicy('help', { platform: 'tg', chatId: '777777' })
+
+    expect(blocked).toBe(false)
+  })
+
+  it('cmdpolicy replies the no-binding hint when the instance has no forward map', async () => {
+    const { feature } = makeFeature({ forwardPairs: undefined })
+    await (feature as any).handleCommandPolicyCommand(tgMsg('cp-1'), ['mention'])
+    const sent = (feature as any).tgBot.sendText.mock.calls.at(-1)
+    expect(JSON.stringify(sent?.[1])).toContain('当前实例没有可用的转发绑定')
+  })
+
+  it('cmdpolicy replies the unbound hint when no pair matches the session', async () => {
+    const { feature } = makeFeature()
+    await (feature as any).handleCommandPolicyCommand(tgMsg('cp-2'), ['mention'])
+    const sent = (feature as any).tgBot.sendText.mock.calls.at(-1)
+    expect(JSON.stringify(sent?.[1])).toContain('未找到本会话对应的转发绑定')
+  })
+
+  it('cmdpolicy warns when the policy fails to persist', async () => {
+    const { feature, instance } = makeFeature()
+    ;(instance.forwardPairs.add as any).mockResolvedValue({})
+    const fpct = await import('../utils/ForwardPairChatType.js')
+    ;(fpct.findPairByTGWithChatType as any).mockResolvedValueOnce({
+      id: 10,
+      qqRoomId: '20002',
+      qqChatType: 'group',
+      tgChatId: '-100400',
+      tgThreadId: null,
+    })
+
+    await (feature as any).handleCommandPolicyCommand(tgMsg('cp-3'), ['mention'])
+
+    const logger = (await import('@napgram/logger-kit')).getLogger('CommandsFeature')
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('commandPolicy not persisted'))
+    const sent = (feature as any).tgBot.sendText.mock.calls.at(-1)
+    expect(JSON.stringify(sent?.[1])).toContain('策略设置未生效')
+  })
+
+  it('workmode rejects non-admin qq senders under the qq user id', async () => {
+    const { feature } = makeFeature()
+    ;(feature as any).permissionChecker.isAdmin.mockReturnValueOnce(false)
+    const msg: any = {
+      id: 'wm-1',
+      platform: 'qq',
+      sender: { id: '10001', name: 'User' },
+      chat: { id: '20002', type: 'group' },
+      content: [],
+      timestamp: Date.now(),
+      metadata: {},
+    }
+
+    await (feature as any).handleWorkModeCommand(msg, ['group'])
+
+    expect((feature as any).permissionChecker.isAdmin).toHaveBeenCalledWith('qq:u:10001')
+    const ctxReply = (feature as any).commandContext.replyQQ
+    expect(ctxReply.mock.calls.at(-1)?.[1]).toBe('您没有权限设置工作模式')
+  })
+
+  it('detects personal mode through instance diagnostics', async () => {
+    const { feature, instance } = makeFeature()
+    delete instance.workMode
+    instance.getPersonalModeDiagnostics = mock().mockReturnValue({ workMode: 'personal' })
+
+    expect((feature as any).isPersonalMode()).toBe(true)
+  })
+
+  it('provisioner helper returns undefined without a usable map and caches otherwise', async () => {
+    const { feature, instance } = makeFeature({ forwardPairs: {} })
+    expect((feature as any).getPersonalPairProvisioner()).toBeUndefined()
+
+    instance.forwardPairs = {
+      findByTG: mock(),
+      findByQQ: mock(),
+      reload: mock().mockResolvedValue(undefined),
+    }
+    const first = (feature as any).getPersonalPairProvisioner()
+    const second = (feature as any).getPersonalPairProvisioner()
+    expect(first).toBeDefined()
+    expect(second).toBe(first)
   })
 })

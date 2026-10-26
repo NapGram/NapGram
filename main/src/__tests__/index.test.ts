@@ -336,4 +336,192 @@ describe('handleFatalStartupError directly', () => {
     expect(loggerKitMocks.telemetry.flush).toHaveBeenCalledWith(3_000)
     expect(loggerKitMocks.telemetry.shutdown).toHaveBeenCalledWith(3_000)
   })
+
+})
+
+describe('bootstrap remaining paths', () => {
+  let listeners: Map<string, (...args: any[]) => void>
+
+  const createInstance = (id: number) => {
+    const commandsFeature = {
+      reloadCommands: mock().mockResolvedValue(undefined),
+    }
+    return {
+      id,
+      commandsFeature,
+      reloadCommands: mock().mockImplementation(() => commandsFeature.reloadCommands()),
+      stop: mock().mockResolvedValue(undefined),
+    }
+  }
+
+  async function flushTasks() {
+    await Promise.resolve()
+    await new Promise(resolve => setTimeout(resolve, 0))
+  }
+
+  const runMain = async () => { const mod = await import('../index'); return await mod.main() }
+
+  beforeEach(() => {
+    mock.restore()
+    mock.clearAllMocks()
+    listeners = new Map()
+
+    bunEnv.ADMIN_TOKEN = 'admin-token'
+    bunEnv.NAPGRAM_DISABLE_AUTO_MAIN = '1'
+    delete bunEnv.SHOW_FULL_TOKEN
+
+    spyOn(bunProcess, 'on').mockImplementation(((event: string, handler: (...args: any[]) => void) => {
+      listeners.set(String(event), handler)
+      return bunProcess
+    }) as any)
+    spyOn(globalThis, 'setInterval').mockImplementation(() => ({
+      unref: mock(),
+    }) as any)
+
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([])
+    pluginRuntimeMocks.start.mockResolvedValue(undefined)
+    pluginRuntimeMocks.stop.mockResolvedValue(undefined)
+    interfaceMocks.startServer.mockResolvedValue(interfaceMocks.app)
+    interfaceMocks.stopServer.mockResolvedValue(undefined)
+    loggerKitMocks.telemetry.flush.mockResolvedValue(true)
+    loggerKitMocks.telemetry.shutdown.mockResolvedValue(true)
+  })
+
+  afterEach(() => {
+    delete bunEnv.ADMIN_TOKEN
+    delete bunEnv.NAPGRAM_DISABLE_AUTO_MAIN
+    delete bunEnv.SHOW_FULL_TOKEN
+    mock.restore()
+  })
+
+  it('logs and reports unhandled rejections and uncaught exceptions', async () => {
+    await runMain()
+
+    const rejection = new Event('unhandledrejection') as any
+    rejection.reason = new Error('async boom')
+    globalThis.dispatchEvent(rejection)
+
+    const errorEvent = new Event('error') as any
+    errorEvent.message = 'sync boom text'
+    globalThis.dispatchEvent(errorEvent)
+
+    expect(loggerMocks.error).toHaveBeenCalledWith(expect.anything(), 'UnhandledRejection: ')
+    expect(loggerKitMocks.telemetry.captureException).toHaveBeenCalledWith(
+      expect.anything(),
+      { type: 'unhandledRejection' },
+    )
+    expect(loggerMocks.error).toHaveBeenCalledWith('sync boom text', 'UncaughtException: ')
+    expect(loggerKitMocks.telemetry.captureException).toHaveBeenCalledWith(
+      'sync boom text',
+      { type: 'uncaughtException' },
+    )
+  })
+
+  it('wires plugin runtime instance resolvers that resolve live instances', async () => {
+    const instanceA = createInstance(1)
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }])
+    instanceMocks.start.mockResolvedValueOnce(instanceA)
+    runtimeRegistryMocks.instanceRegistry.getById.mockReturnValue(instanceA)
+
+    await runMain()
+
+    expect(pluginRuntimeMocks.setInstanceResolvers).toHaveBeenCalled()
+    const [getById, getAll] = pluginRuntimeMocks.setInstanceResolvers.mock.calls[0]
+    expect(getById(1)).toBe(instanceA)
+    expect(getAll()).toEqual([])
+  })
+
+  it('warns when post-startup command reload fails', async () => {
+    const instanceA = createInstance(1)
+    instanceA.commandsFeature.reloadCommands.mockRejectedValue(new Error('reload boom'))
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }])
+    instanceMocks.start.mockResolvedValueOnce(instanceA)
+
+    await runMain()
+    await flushTasks()
+
+    expect(loggerMocks.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ instanceId: 1 }),
+      'Failed to reload commands after startup',
+    )
+  })
+
+  it('exposes the runtime report bridge with a fallback to null', async () => {
+    await runMain()
+
+    expect(interfaceMocks.configureRuntimeBridge).toHaveBeenCalled()
+    const options = interfaceMocks.configureRuntimeBridge.mock.calls[0][1]
+
+    ;(pluginRuntimeMocks as any).getLastReport = mock(() => ({ plugins: ['p1'] }))
+    expect(options.getRuntimeReport()).toEqual({ plugins: ['p1'] })
+
+    delete (pluginRuntimeMocks as any).getLastReport
+    expect(options.getRuntimeReport()).toBeNull()
+  })
+
+  it('shutdown tolerates every stage failing', async () => {
+    const instanceA = createInstance(1)
+    instanceA.stop.mockRejectedValue(new Error('stop boom'))
+    dbKitMocks.db.query.instance.findMany.mockResolvedValue([{ id: 1 }])
+    instanceMocks.start.mockResolvedValueOnce(instanceA)
+    interfaceMocks.stopServer.mockRejectedValueOnce(new Error('server boom'))
+    pluginRuntimeMocks.stop.mockRejectedValueOnce(new Error('runtime boom'))
+    loggerKitMocks.telemetry.flush.mockRejectedValueOnce(new Error('telemetry boom'))
+
+    await runMain()
+
+    listeners.get('SIGTERM')()
+    await flushTasks()
+
+    expect(loggerMocks.error).toHaveBeenCalledWith({ error: expect.anything() }, 'Failed to stop web server')
+    expect(loggerMocks.error).toHaveBeenCalledWith({ error: expect.anything() }, 'Failed to stop plugin runtime')
+    expect(loggerMocks.error).toHaveBeenCalledWith(
+      { error: expect.anything(), instanceId: 1 },
+      'Failed to stop instance',
+    )
+    expect(loggerMocks.error).toHaveBeenCalledWith({ error: expect.anything() }, 'Failed to shut down telemetry')
+  })
+
+  it('logs the masked proxy and admin token variants', async () => {
+    bunEnv.PROXY_URL = 'http://user:secret@proxy.internal:7890'
+    const originalToken = envKitMocks.env.ADMIN_TOKEN
+    envKitMocks.env.ADMIN_TOKEN = 'a'.repeat(40)
+    instanceMocks.start.mockRejectedValue(new Error('start boom'))
+    try {
+      // no instances are configured in this test, so main shuts down(1) after logging
+      await expect(runMain()).rejects.toThrow('exit code 1')
+      expect(loggerMocks.info).toHaveBeenCalledWith(expect.stringContaining('PROXY: '))
+      const tokenLine = loggerMocks.info.mock.calls.map((c: any[]) => String(c[0])).find(t => t.startsWith('ADMIN_TOKEN:'))
+      expect(tokenLine).toContain('*'.repeat(32))
+      expect(tokenLine?.endsWith('aaaaaaaa (use this to login to /login)')).toBe(true)
+    }
+    finally {
+      delete bunEnv.PROXY_URL
+      envKitMocks.env.ADMIN_TOKEN = originalToken
+    }
+  })
+
+  it('logs the full token and proxy parts when explicitly asked to', async () => {
+    envKitMocks.env.PROXY_IP = '10.0.0.9'
+    envKitMocks.env.PROXY_PORT = '7890'
+    bunEnv.PROXY_TYPE = 'http'
+    bunEnv.SHOW_FULL_TOKEN = 'true'
+    instanceMocks.start.mockRejectedValue(new Error('start boom'))
+    // earlier tests may have auto-generated a token into the shared env mock
+    const originalFullToken = envKitMocks.env.ADMIN_TOKEN
+    envKitMocks.env.ADMIN_TOKEN = 'admin-token'
+    try {
+      // environment logging happens before instance startup; no instances -> shutdown(1)
+      await expect(runMain()).rejects.toThrow('exit code 1')
+      expect(loggerMocks.info).toHaveBeenCalledWith('PROXY: http://10.0.0.9:7890')
+      expect(loggerMocks.info).toHaveBeenCalledWith('ADMIN_TOKEN (FULL): admin-token')
+      expect(loggerMocks.info).toHaveBeenCalledWith('Login URL: http://localhost:8080/login')
+    }
+    finally {
+      envKitMocks.env.PROXY_IP = ''
+      envKitMocks.env.PROXY_PORT = ''
+      envKitMocks.env.ADMIN_TOKEN = originalFullToken
+      delete bunEnv.PROXY_TYPE
+    }
+  })
 })

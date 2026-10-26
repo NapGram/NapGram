@@ -1384,4 +1384,311 @@ describe('forwardFeature', () => {
       )
     })
   })
+
+  /* ---- remaining paths ---- */
+  describe('remaining paths', () => {
+    function getTgHandler(bot: any): Function {
+      return bot.addNewMessageEventHandler.mock.calls[0][0]
+    }
+    function getEditedTgHandler(bot: any): Function {
+      return bot.addEditedMessageEventHandler.mock.calls[0][0]
+    }
+
+    it('registers the mode command when a commands feature is provided', () => {
+      const commands = { registerCommand: mock() }
+      new ForwardFeature(createInstance(), createTgBot(), createQqClient(), undefined, commands)
+      expect(commands.registerCommand).toHaveBeenCalledWith(expect.objectContaining({
+        name: 'mode',
+        aliases: ['模式'],
+        adminOnly: true,
+      }))
+    })
+
+    it('ignores bot-authored TG messages before any mapping work', async () => {
+      const { tgBot } = buildFeature()
+      const handler = getTgHandler(tgBot)
+      const msg = createTgMessage({ sender: { id: 55, isBot: true, displayName: 'Bot' } })
+      await handler(msg)
+      expect(loggerMocks.debug).toHaveBeenCalledWith(expect.stringContaining('Ignored self/bot TG message'))
+    })
+
+    it('edited /rm with no QQ mapping only deletes the command message', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot } = buildFeature()
+      const handler = getEditedTgHandler(tgBot)
+
+      await handler(createTgMessage({ text: '/rm' }))
+
+      const chat = await tgBot.getChat(-100400)
+      expect(chat.deleteMessages).toHaveBeenCalledWith([1001])
+      expect(loggerMocks.debug).toHaveBeenCalledWith(expect.stringContaining('has no QQ mapping to recall'))
+    })
+
+    it('edited /rm tolerates a failing QQ recall', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot, qqClient } = buildFeature()
+      mapperMocks.instances[0].findQqSource.mockResolvedValue({ seq: '55' })
+      qqClient.recallMessage.mockRejectedValue(new Error('recall boom'))
+      const handler = getEditedTgHandler(tgBot)
+
+      await handler(createTgMessage({ text: '/rm' }))
+
+      expect(loggerMocks.warn).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('failed to recall old QQ message'))
+    })
+
+    it('edited /rm tolerates a failing command-message deletion', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot } = buildFeature()
+      tgBot.getChat.mockRejectedValue(new Error('chat boom'))
+      const handler = getEditedTgHandler(tgBot)
+
+      await handler(createTgMessage({ text: '/rm' }))
+
+      expect(loggerMocks.debug).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('failed to delete edited /rm command'))
+    })
+
+    it('skips command-message deletion when the message id is not normalizable', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot } = buildFeature()
+      const handler = getEditedTgHandler(tgBot)
+
+      await handler(createTgMessage({ text: '/rm', id: 0 }))
+
+      const chat = await tgBot.getChat(-100400)
+      expect(chat.deleteMessages).not.toHaveBeenCalled()
+    })
+
+    it('sends plugin messages through the telegram sender with a synthetic pair', async () => {
+      const { feature } = buildFeature()
+      const chat = { sendMessage: mock() }
+      const msg = createQqMessage({ id: 'plugin-send-1' })
+
+      const result = await (feature as any).sendPluginMessageToTelegram(chat, msg, { threadId: 7, replyToMsgId: 9 })
+
+      expect(result).toEqual({ id: 999 })
+    })
+
+    it('exposes working reply/send/recall callbacks on published TG events', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot } = buildFeature()
+      const handler = getTgHandler(tgBot)
+
+      await handler(createTgMessage({ id: 1001, text: 'hello tg' }))
+      await waitFor(() => {
+        expect(eventPublisherMocks.publishMessage).toHaveBeenCalledWith(expect.objectContaining({ platform: 'tg' }))
+      })
+      const event = eventPublisherMocks.publishMessage.mock.calls.find((c: any[]) => c[0].platform === 'tg')[0]
+
+      const stringReply = await event.reply('plain text')
+      expect(stringReply.messageId).toContain('tg:')
+
+      const arrayReply = await event.reply([{ type: 'text', data: { text: 'segment text' } }])
+      expect(arrayReply.messageId).toContain('tg:')
+
+      const sent = await event.send('broadcast')
+      expect(sent.messageId).toContain('tg:')
+
+      await event.recall()
+      const chat = await tgBot.getChat(-100400)
+      expect(chat.deleteMessages).toHaveBeenCalledWith([1001])
+    })
+
+    it('skips the TG recall callback when the message id is not normalizable', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot } = buildFeature()
+      await getTgHandler(tgBot)(createTgMessage({ id: 0, text: 'no id' }))
+      await waitFor(() => {
+        expect(eventPublisherMocks.publishMessage).toHaveBeenCalledWith(expect.objectContaining({ eventId: 'tg:0' }))
+      })
+      const event = eventPublisherMocks.publishMessage.mock.calls.find((c: any[]) => c[0].eventId === 'tg:0')[0]
+
+      await event.recall()
+      const chat = await tgBot.getChat(-100400)
+      expect(chat.deleteMessages).not.toHaveBeenCalled()
+    })
+
+    it('keeps forwarding working when the TG plugin event publish throws', async () => {
+      const pair = createPair()
+      findPairByTGWithChatType.mockResolvedValue(pair)
+      const { tgBot } = buildFeature()
+      eventPublisherMocks.publishMessage.mockImplementationOnce(() => {
+        throw new Error('publish boom')
+      })
+
+      await getTgHandler(tgBot)(createTgMessage({ id: 2001, text: 'boom' }))
+
+      expect(loggerMocks.debug).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('publishMessage (TG) failed'))
+    })
+
+    it('expires processed QQ message keys from the dedup cache', async () => {
+      const originalSetTimeout = globalThis.setTimeout
+      ;(globalThis as any).setTimeout = ((fn: any, _ms?: any, ...rest: any[]) =>
+        originalSetTimeout(fn, 5, ...rest)) as any
+      const { feature, qqClient } = buildFeature()
+      try {
+        qqClient.emit('message', createQqMessage({ id: 'dedup-exp-1' }))
+        await new Promise(resolve => originalSetTimeout(resolve, 40))
+        const key = ['1', 'qq', 'group', '20002', 'dedup-exp-1'].join(':')
+        expect((feature as any).processedMsgIds.has(key)).toBe(false)
+      }
+      finally {
+        ;(globalThis as any).setTimeout = originalSetTimeout
+      }
+    })
+
+    it('maps private and other QQ chat types onto plugin channel types', async () => {
+      findPairByQQWithChatType.mockResolvedValue(createPair())
+      const { qqClient } = buildFeature()
+
+      qqClient.emit('message', createQqMessage({ id: 'chan-priv-1', chat: { id: '20002', type: 'private', name: 'p' } as any }))
+      await waitFor(() => {
+        expect(eventPublisherMocks.publishMessage).toHaveBeenCalledWith(expect.objectContaining({ eventId: 'qq:chan-priv-1', channelType: 'private' }))
+      })
+
+      qqClient.emit('message', createQqMessage({ id: 'chan-other-1', chat: { id: '20002', type: 'discuss', name: 'd' } as any }))
+      await waitFor(() => {
+        expect(eventPublisherMocks.publishMessage).toHaveBeenCalledWith(expect.objectContaining({ eventId: 'qq:chan-other-1', channelType: 'channel' }))
+      })
+    })
+
+    it('exposes working reply/send/recall callbacks on published QQ events', async () => {
+      findPairByQQWithChatType.mockResolvedValue(createPair())
+      const { qqClient } = buildFeature()
+
+      qqClient.emit('message', createQqMessage({ id: 'cb-1' }))
+      await waitFor(() => {
+        expect(eventPublisherMocks.publishMessage).toHaveBeenCalledWith(expect.objectContaining({ eventId: 'qq:cb-1' }))
+      })
+      const event = eventPublisherMocks.publishMessage.mock.calls.find((c: any[]) => c[0].eventId === 'qq:cb-1')[0]
+
+      const stringReply = await event.reply('plain')
+      expect(stringReply.messageId).toBe('qq:qq-sent-1')
+
+      const arrayReply = await event.reply([
+        { type: 'text', data: { text: 'hi ' } },
+        { type: 'at', data: { userName: 'you' } },
+      ])
+      expect(arrayReply.messageId).toBe('qq:qq-sent-1')
+
+      const sent = await event.send([{ type: 'text', data: { text: 'broadcast' } }])
+      expect(sent.messageId).toBe('qq:qq-sent-1')
+
+      await event.recall()
+      expect(qqClient.recallMessage).toHaveBeenCalledWith('cb-1')
+    })
+
+    it('keeps forwarding working when the QQ plugin event publish throws', async () => {
+      findPairByQQWithChatType.mockResolvedValue(createPair())
+      const { qqClient } = buildFeature()
+      eventPublisherMocks.publishMessage.mockImplementationOnce(() => {
+        throw new Error('publish boom')
+      })
+
+      qqClient.emit('message', createQqMessage({ id: 'cb-boom-1' }))
+
+      await waitFor(() => {
+        expect(loggerMocks.debug).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('publishMessage (QQ) failed'))
+      })
+    })
+
+    it('keeps forwarding working when the gateway event publish fails', async () => {
+      findPairByQQWithChatType.mockResolvedValue(createPair())
+      const { qqClient } = buildFeature()
+      eventPublisherMocks.publishMessageCreated.mockRejectedValueOnce(new Error('gateway boom'))
+
+      qqClient.emit('message', createQqMessage({ id: 'gw-boom-1' }))
+
+      await waitFor(() => {
+        expect(loggerMocks.debug).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('publishMessageCreated (QQ) failed'))
+      })
+    })
+
+    it('falls back to raw ids and survives poke lookup failures', async () => {
+      const pair = createPair()
+      findPairByQQWithChatType.mockResolvedValue(pair)
+      const { qqClient } = buildFeature()
+      qqClient.getGroupMemberInfo.mockRejectedValue(new Error('member lookup boom'))
+
+      qqClient.emit('poke', '20002', '10001', '10002')
+      await waitFor(() => {
+        expect(MessageUtils.replyTG).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          expect.stringContaining('👉 User 10001 poked 10002'),
+          undefined,
+        )
+      })
+
+      MessageUtils.replyTG.mockRejectedValueOnce(new Error('tg boom'))
+      qqClient.emit('poke', '20002', '10003', '10004')
+      await waitFor(() => {
+        expect(loggerMocks.error).toHaveBeenCalledWith('Failed to handle poke event:', expect.anything())
+      })
+    })
+
+    it('ignores friend and group membership events outside personal mode', async () => {
+      const { qqClient } = buildFeature()
+      qqClient.emit('friend.increase', { id: 'u1', name: 'n' })
+      await waitFor(() => {
+        expect(findPairByQQWithChatType).not.toHaveBeenCalled()
+      })
+
+      const personal = createInstance({ workMode: 'personal' })
+      const { qqClient: qq2 } = buildFeature(personal)
+      // friend decrease consults the pair map first; no pair -> early return
+      qq2.emit('friend.decrease', 'ghost-uin')
+      await waitFor(() => {
+        expect(findPairByQQWithChatType).toHaveBeenCalledTimes(1)
+      })
+
+      // group decrease with a foreign uin returns before any lookup
+      qq2.emit('group.decrease', '20002', '99999')
+      await waitFor(() => {
+        expect(findPairByQQWithChatType).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    it('removes the personal pair through the db when the map lacks remove()', async () => {
+      const inst = createInstance({ workMode: 'personal' })
+      delete (inst.forwardPairs as any).remove
+      const { qqClient } = buildFeature(inst)
+      findPairByQQWithChatType.mockResolvedValue(createPair())
+
+      qqClient.emit('friend.decrease', 'ghost-uin')
+
+      await waitFor(() => {
+        expect(inst.forwardPairs.reload).toHaveBeenCalled()
+        expect(MessageUtils.replyTG).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.anything(),
+          expect.stringContaining('已删除'),
+        )
+      })
+    })
+
+    it('paces TG sends through the queue and honors the configured interval', async () => {
+      const pair = createPair()
+      findPairByQQWithChatType.mockResolvedValue(pair)
+      const { feature, qqClient } = buildFeature()
+      ;(feature as any).telegramSendQueue.nextAvailableAt = Date.now() + 25
+      const originalNodeEnv = process.env.NODE_ENV
+      process.env.NODE_ENV = 'development'
+      try {
+        qqClient.emit('message', createQqMessage({ id: 'paced-1' }))
+        await waitFor(() => {
+          expect((feature as any).telegramSender.sendToTelegram).toHaveBeenCalled()
+        })
+        expect((feature as any).telegramSendQueue.nextAvailableAt).toBeGreaterThan(Date.now() + 100)
+      }
+      finally {
+        process.env.NODE_ENV = originalNodeEnv
+      }
+    }, 5000)
+  })
 })
