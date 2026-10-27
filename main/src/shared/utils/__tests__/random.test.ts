@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, spyOn } from 'bun:test'
 import fc from 'fast-check'
 import random from '../random'
 
@@ -146,4 +146,23 @@ describe('random fallback coverage', () => {
       expect(random.hex(length)).toMatch(new RegExp(`^[0-9a-f]{${length}}$`))
     }
   })
+
+describe('random fallback coverage (spied runtime)', () => {
+  it('falls back to a self-built uuid when randomUUIDv7 yields nothing', () => {
+    const spy = spyOn(Bun as any, 'randomUUIDv7').mockImplementation(() => undefined)
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+    try {
+      for (let i = 0; i < 20; i++)
+        expect(random.fakeUuid()).toMatch(uuidRegex)
+    }
+    finally {
+      spy.mockRestore()
+    }
+  })
+
+  it('produces valid imeis across many draws (covers short-prefix branch)', () => {
+    for (let i = 0; i < 2000; i++)
+      expect(random.imei()).toMatch(/^\d{15}$/)
+  })
+})
 })

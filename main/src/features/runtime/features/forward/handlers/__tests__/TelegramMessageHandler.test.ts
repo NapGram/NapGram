@@ -1,209 +1,264 @@
-import { db } from '@napgram/db-kit'
-import { messageConverter } from '@napgram/message-kit'
-import { beforeEach, describe, expect, it, mock } from 'bun:test'
-import { TelegramMessageHandler } from '../TelegramMessageHandler.js'
+import { beforeAll, beforeEach, describe, expect, it, mock } from 'bun:test'
+
+let TelegramMessageHandler: any
 
 mock.module('@napgram/message-kit', () => ({
-  messageConverter: { fromTelegram: mock(), toNapCat: mock() },
-}))
-
-mock.module('@napgram/db-kit', () => ({
-  db: {
-    insert: mock(() => ({
-      values: mock(() => ({ returning: mock().mockResolvedValue([{ id: 1 }]) })),
-    })),
+  messageConverter: {
+    fromTelegram: mock().mockReturnValue({
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'text', data: { text: 'hello' } }],
+    }),
+    toNapCat: mock().mockResolvedValue([{ type: 'text', data: { text: 'napcat' } }]),
   },
-  schema: { message: { id: 'id' } },
 }))
 
-mock.module('@napgram/logger-kit', () => ({
-  getLogger: mock(() => ({ debug: mock(), info: mock(), warn: mock(), error: mock(), trace: mock() })),
+mock.module('../../../../capabilities/logging.js', () => ({
+  getLogger: mock(() => ({
+    debug: mock(),
+    info: mock(),
+    warn: mock(),
+    error: mock(),
+    trace: mock(),
+  })),
 }))
 
-mock.module('@napgram/infra-kit', () => ({
-  performanceMonitor: { recordCall: mock(), recordError: mock(), recordMessage: mock() },
+const performanceMocks = {
+  recordMessage: mock(),
+  recordError: mock(),
+}
+
+mock.module('../../../../capabilities/observability.js', () => ({
+  performanceMonitor: performanceMocks,
 }))
+
+const mapperInstance: any = { saveTgToQqMapping: mock().mockResolvedValue(undefined) }
+
+mock.module('../../services/MessageMapper.js', () => ({
+  ForwardMapper: mock(function MapperMock() {
+    return mapperInstance
+  }),
+}))
+
+function makeDeps(overrides: Record<string, any> = {}) {
+  return {
+    qqClient: {
+      uin: '88888',
+      sendMessage: mock().mockResolvedValue({ success: true, messageId: '900' }),
+      sendGroupForwardMsg: mock().mockResolvedValue({ success: true, messageId: '901' }),
+      ...overrides,
+    } as any,
+    mediaGroupHandler: { handleMediaGroup: mock().mockResolvedValue(false) },
+    replyResolver: { resolveTGReply: mock().mockResolvedValue(undefined) },
+    prepareMediaForQQ: mock().mockResolvedValue(undefined),
+    renderContent: (content: any) => `rendered:${JSON.stringify(content)}`,
+    getNicknameMode: mock(() => '00'),
+  }
+}
+
+function makePair(overrides: Record<string, any> = {}) {
+  return {
+    instanceId: 1,
+    qqRoomId: '20002',
+    tgChatId: '-100400',
+    qqChatType: 'group',
+    ...overrides,
+  }
+}
+
+function makeTgMsg(overrides: Record<string, any> = {}) {
+  return {
+    id: 1001,
+    chat: { id: -100400 },
+    sender: { id: 100 },
+    ...overrides,
+  } as any
+}
 
 describe('telegramMessageHandler', () => {
-  const qqClient = {
-    sendMessage: mock().mockResolvedValue({ success: true, messageId: 'qq-123' }),
-    sendGroupForwardMsg: mock().mockResolvedValue({ success: true, messageId: 'qq-456' }),
-    uin: '123456',
-  }
-  const mediaGroupHandler = { handleMediaGroup: mock().mockResolvedValue(false) }
-  const replyResolver = { resolveTGReply: mock().mockResolvedValue(null) }
-  const prepareMediaForQQ = mock().mockResolvedValue(undefined)
-  const renderContent = mock().mockReturnValue('rendered')
-  const getNicknameMode = mock().mockReturnValue('00')
+  let deps: ReturnType<typeof makeDeps>
+  let handler: any
 
-  let handler: TelegramMessageHandler
+  beforeAll(async () => {
+    ;({ TelegramMessageHandler } = await import('../TelegramMessageHandler.js'))
+  })
 
   beforeEach(() => {
-    qqClient.sendMessage.mockClear()
-    qqClient.sendMessage.mockResolvedValue({ success: true, messageId: 'qq-123' })
-    qqClient.sendGroupForwardMsg.mockClear()
-    qqClient.sendGroupForwardMsg.mockResolvedValue({ success: true, messageId: 'qq-456' })
-    mediaGroupHandler.handleMediaGroup.mockClear()
-    mediaGroupHandler.handleMediaGroup.mockResolvedValue(false)
-    replyResolver.resolveTGReply.mockClear()
-    replyResolver.resolveTGReply.mockResolvedValue(null)
-    prepareMediaForQQ.mockClear()
-    prepareMediaForQQ.mockResolvedValue(undefined)
-    renderContent.mockClear()
-    renderContent.mockReturnValue('rendered')
-    getNicknameMode.mockClear()
-    getNicknameMode.mockReturnValue('00')
-    ;(messageConverter as any).fromTelegram.mockClear()
-    ;(messageConverter as any).toNapCat.mockClear()
-    ;(db as any).insert.mockClear()
-
+    deps = makeDeps()
     handler = new TelegramMessageHandler(
-      qqClient as any,
-      mediaGroupHandler as any,
-      replyResolver as any,
-      prepareMediaForQQ,
-      renderContent,
-      getNicknameMode,
+      deps.qqClient,
+      deps.mediaGroupHandler as any,
+      deps.replyResolver as any,
+      deps.prepareMediaForQQ,
+      deps.renderContent,
+      deps.getNicknameMode,
     )
+    performanceMocks.recordMessage.mockClear()
+    performanceMocks.recordError.mockClear()
+    mapperInstance.saveTgToQqMapping.mockClear()
   })
 
-  it('handles media group messages by skipping further processing', async () => {
-    mediaGroupHandler.handleMediaGroup.mockResolvedValueOnce(true)
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date() } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(mediaGroupHandler.handleMediaGroup).toHaveBeenCalled()
-    expect((messageConverter as any).fromTelegram).not.toHaveBeenCalled()
+  it('buffers media group messages without normal forwarding', async () => {
+    deps.mediaGroupHandler.handleMediaGroup.mockResolvedValue(true)
+    await handler.handleTGMessage(makeTgMsg(), makePair())
+    expect(deps.qqClient.sendMessage).not.toHaveBeenCalled()
+    expect(deps.prepareMediaForQQ).not.toHaveBeenCalled()
   })
 
-  it('handles messages with nickname mode 01 (show nickname)', async () => {
-    getNicknameMode.mockReturnValueOnce('01')
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'text' as const, data: { text: 'Hello' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
-    await handler.handleTGMessage({ id: 1, text: 'Hello', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    const sentMsg = qqClient.sendMessage.mock.calls[0][1]
-    expect(sentMsg.content).toContainEqual({ type: 'text', data: { text: 'Alice:\n' } })
+  it('forwards plain text with nickname disabled', async () => {
+    await handler.handleTGMessage(makeTgMsg(), makePair())
+    expect(deps.qqClient.sendMessage).toHaveBeenCalledTimes(1)
+    const sent = deps.qqClient.sendMessage.mock.calls[0][1]
+    expect(sent.platform).toBe('qq')
+    expect(sent.chat).toMatchObject({ id: '20002', type: 'group' })
+    expect(mapperInstance.saveTgToQqMapping).toHaveBeenCalled()
+    expect(performanceMocks.recordMessage).toHaveBeenCalled()
   })
 
-  it('handles video/file as forward message nodes', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'video' as const, data: { file: 'vid' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendGroupForwardMsg).toHaveBeenCalled()
-    const nodes = qqClient.sendGroupForwardMsg.mock.calls[0][1]
-    expect(nodes[0].data.content).toContainEqual({ type: 'video', data: { file: 'vid' } })
-  })
-
-  it('handles audio/image with split send', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'image' as const, data: { file: 'img' } }, { type: 'text' as const, data: { text: 'caption' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'image', data: { file: 'img' } }, { type: 'text', data: { text: 'caption' } }])
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendMessage).toHaveBeenCalledTimes(2)
-  })
-
-  it('handles reply resolution', async () => {
-    replyResolver.resolveTGReply.mockResolvedValueOnce({ seq: 555, rand: BigInt(777), pktnum: 1, time: 12345, senderUin: '999', qqRoomId: '888' })
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'text' as const, data: { text: 'Reply' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Reply' } }])
-    await handler.handleTGMessage({ id: 1, text: 'Reply', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    const sentMsg = qqClient.sendMessage.mock.calls[0][1]
-    const reply = sentMsg.content.find((c: any) => c.type === 'reply')
-    expect(reply).toBeTruthy()
-    expect(reply.data).toEqual(expect.objectContaining({ seq: 555, rand: '777', pktnum: 1, time: 12345, senderUin: '999' }))
-  })
-
-  it('handles receipt with error', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'text' as const, data: { text: 'Hello' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
-    qqClient.sendMessage.mockResolvedValueOnce({ success: false, error: 'Send failed' })
-    await handler.handleTGMessage({ id: 1, text: 'Hello', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendMessage).toHaveBeenCalled()
-    expect((db as any).insert).not.toHaveBeenCalled()
-  })
-
-  it('handles receipt without messageId', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'text' as const, data: { text: 'Hello' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'text', data: { text: 'Hello' } }])
-    qqClient.sendMessage.mockResolvedValueOnce({ success: true })
-    await handler.handleTGMessage({ id: 1, text: 'Hello', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendMessage).toHaveBeenCalled()
-    expect((db as any).insert).not.toHaveBeenCalled()
-  })
-
-  it('handles hint message sending failure gracefully', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'video' as const, data: { file: 'vid' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
-    getNicknameMode.mockReturnValueOnce('01')
-    qqClient.sendMessage.mockRejectedValueOnce(new Error('Hint failed'))
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendGroupForwardMsg).toHaveBeenCalled()
-  })
-
-  it('handles general error in handleTGMessage', async () => {
-    ;(messageConverter as any).fromTelegram.mockImplementationOnce(() => {
-      throw new Error('Converter Logic Error')
+  it('prepends a QQ reply segment when the resolver finds the source', async () => {
+    deps.replyResolver.resolveTGReply.mockResolvedValue({
+      seq: '55',
+      rand: 7,
+      pktnum: 1,
+      time: 123,
+      senderUin: '10001',
+      qqChatType: 'group',
+      qqRoomId: '20002',
     })
-    await handler.handleTGMessage({ id: 1, text: 'Hello', chat: { id: 100 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendMessage).not.toHaveBeenCalled()
+    await handler.handleTGMessage(makeTgMsg(), makePair())
+    const sent = deps.qqClient.sendMessage.mock.calls[0][1]
+    const replySegment = sent.content.find((s: any) => s.type === 'reply')
+    expect(replySegment).toBeDefined()
+    expect(replySegment.data.peer.chatType).toBe(2)
   })
 
-  it('handles private forward messages (sendPrivateForwardMessage present)', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'video' as const, data: { file: 'vid' } }], chat: { id: '888', type: 'private' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
-    const sendPrivateForwardMessage = mock().mockResolvedValue({ message_id: 'priv-123' })
-    Object.assign(qqClient, { sendPrivateForwardMessage })
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' })
-    expect(sendPrivateForwardMessage).toHaveBeenCalled()
-    const args = sendPrivateForwardMessage.mock.calls[0][0]
-    expect(args.user_id).toBe('888')
-    expect(args.messages[0].data.content).toContainEqual({ type: 'video', data: { file: 'vid' } })
-    delete (qqClient as any).sendPrivateForwardMessage
+  it('maps private pairs to chatType 1 in the reply segment', async () => {
+    deps.replyResolver.resolveTGReply.mockResolvedValue({
+      seq: '55',
+      qqChatType: 'private',
+      qqRoomId: '20002',
+    })
+    await handler.handleTGMessage(makeTgMsg(), makePair({ qqChatType: 'private' }))
+    const sent = deps.qqClient.sendMessage.mock.calls[0][1]
+    expect(sent.content.find((s: any) => s.type === 'reply').data.peer.chatType).toBe(1)
   })
 
-  it('handles private forward messages fallback (sendPrivateForwardMessage absent)', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'video' as const, data: { file: 'vid' } }], chat: { id: '888', type: 'private' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
-    delete (qqClient as any).sendPrivateForwardMessage
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' })
-    expect(qqClient.sendMessage).toHaveBeenCalled()
-    expect(qqClient.sendGroupForwardMsg).not.toHaveBeenCalled()
+  it('sends a video hint and uses the group forward API for media', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    await handler.handleTGMessage(makeTgMsg(), makePair(), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'video', data: { file: 'v.mp4' } }],
+    } as any)
+
+    expect(deps.qqClient.sendMessage).toHaveBeenCalledWith('20002', expect.objectContaining({
+      content: [expect.objectContaining({ type: 'text' })],
+    }))
+    expect(String(deps.qqClient.sendMessage.mock.calls[0][1].content[0].data.text)).toContain('发来一个视频')
+    expect(deps.qqClient.sendGroupForwardMsg).toHaveBeenCalledWith('20002', [expect.objectContaining({ type: 'node' })])
   })
 
-  it('handles normalizeReceipt boolean result', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'video' as const, data: { file: 'vid' } }], chat: { id: '888', type: 'private' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
-    const sendPrivateForwardMessage = mock().mockResolvedValue({ success: true, messageId: 'bool-success' })
-    Object.assign(qqClient, { sendPrivateForwardMessage })
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' })
-    expect(sendPrivateForwardMessage).toHaveBeenCalled()
-    delete (qqClient as any).sendPrivateForwardMessage
+  it('uses the file action text for file media', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    await handler.handleTGMessage(makeTgMsg(), makePair(), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'file', data: { file: 'f.pdf' } }],
+    } as any)
+
+    expect(String(deps.qqClient.sendMessage.mock.calls[0][1].content[0].data.text)).toContain('发来一个文件')
   })
 
-  it('handles normalizeReceipt empty result', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'video' as const, data: { file: 'vid' } }], chat: { id: '888', type: 'private' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'video', data: { file: 'vid' } }])
-    const sendPrivateForwardMessage = mock().mockResolvedValue(null)
-    Object.assign(qqClient, { sendPrivateForwardMessage })
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100', qqChatType: 'private' })
-    expect(sendPrivateForwardMessage).toHaveBeenCalled()
-    delete (qqClient as any).sendPrivateForwardMessage
+  it('splits image messages into header and media sends', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    await handler.handleTGMessage(makeTgMsg(), makePair(), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'image', data: { file: 'i.jpg' } }],
+    } as any)
+
+    const firstCall = deps.qqClient.sendMessage.mock.calls[0][1]
+    expect(String(firstCall.content[0].data.text)).toContain('发来一张图片')
+    const mediaCall = deps.qqClient.sendMessage.mock.calls.at(-1)[1]
+    expect(mediaCall.content).toEqual([{ type: 'image', data: { file: 'i.jpg' } }])
   })
 
-  it('handles empty actionText in hasSplitMedia', async () => {
-    const unified = { platform: 'telegram' as const, id: '1', sender: { id: 'Alice', name: 'Alice' }, content: [{ type: 'audio' as const, data: { file: 'aud' } }], chat: { id: '888', type: 'group' as const }, timestamp: Date.now() }
-    ;(messageConverter as any).fromTelegram.mockReturnValueOnce(unified)
-    ;(messageConverter as any).toNapCat.mockResolvedValueOnce([{ type: 'audio', data: { file: 'aud' } }])
-    getNicknameMode.mockReturnValueOnce('00')
-    await handler.handleTGMessage({ id: 1, text: '', chat: { id: 100 }, date: new Date(), sender: { id: 10 } } as any, { instanceId: 1, qqRoomId: '888', tgChatId: '100' })
-    expect(qqClient.sendMessage).toHaveBeenCalledTimes(1)
+  it('splits audio messages with the voice action text', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    await handler.handleTGMessage(makeTgMsg(), makePair(), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'audio', data: { file: 'a.mp3' } }],
+    } as any)
+
+    expect(String(deps.qqClient.sendMessage.mock.calls[0][1].content[0].data.text)).toContain('发来一条语音')
+  })
+
+  it('routes private forwards through sendPrivateForwardMessage when available', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    const sendPrivateForwardMessage = mock().mockResolvedValue({ message_id: 77 })
+    deps.qqClient.sendPrivateForwardMessage = sendPrivateForwardMessage
+    await handler.handleTGMessage(makeTgMsg(), makePair({ qqChatType: 'private' }), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'video', data: { file: 'v.mp4' } }],
+    } as any)
+
+    expect(sendPrivateForwardMessage).toHaveBeenCalledWith(expect.objectContaining({ user_id: '20002' }))
+  })
+
+  it('falls back to sendMessage for private forwards without the private API', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    await handler.handleTGMessage(makeTgMsg(), makePair({ qqChatType: 'private' }), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'video', data: { file: 'v.mp4' } }],
+    } as any)
+
+    expect(deps.qqClient.sendGroupForwardMsg).not.toHaveBeenCalled()
+    expect(deps.qqClient.sendMessage).toHaveBeenCalledTimes(2) // hint + fallback message
+  })
+
+  it('warns on failure receipts', async () => {
+    deps.qqClient.sendMessage.mockResolvedValue({ success: false, error: 'boom' })
+    await handler.handleTGMessage(makeTgMsg(), makePair())
+    expect(performanceMocks.recordMessage).not.toHaveBeenCalled()
+  })
+
+  it('skips success bookkeeping when a raw group-forward result lacks a success flag', async () => {
+    deps.getNicknameMode.mockReturnValue('11')
+    deps.qqClient.sendGroupForwardMsg = mock().mockResolvedValue({ message_id: 42 })
+    await handler.handleTGMessage(makeTgMsg(), makePair(), {
+      id: 'u1',
+      platform: 'telegram',
+      sender: { id: '100', name: 'TgUser' },
+      chat: { id: '-100400', type: 'group' },
+      content: [{ type: 'video', data: { file: 'v.mp4' } }],
+    } as any)
+
+    // the group path returns the raw NapCat receipt; without a success flag
+    // neither the success bookkeeping nor the failure warn fires
+    expect(performanceMocks.recordMessage).not.toHaveBeenCalled()
+    expect(performanceMocks.recordError).not.toHaveBeenCalled()
+  })
+
+  it('records the error when the QQ side throws', async () => {
+    deps.qqClient.sendMessage.mockRejectedValue(new Error('send boom'))
+    await handler.handleTGMessage(makeTgMsg(), makePair())
+    expect(performanceMocks.recordError).toHaveBeenCalled()
   })
 })

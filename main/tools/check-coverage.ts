@@ -84,8 +84,8 @@ const total = included.reduce((result, record) => ({
 })
 
 const metrics = [
-  { name: 'lines', found: total.linesFound, hit: total.linesHit, threshold: 90 },
-  { name: 'functions', found: total.functionsFound, hit: total.functionsHit, threshold: 88 },
+  { name: 'lines', found: total.linesFound, hit: total.linesHit, threshold: 97 },
+  { name: 'functions', found: total.functionsFound, hit: total.functionsHit, threshold: 93 },
   { name: 'branches', found: total.branchesFound, hit: total.branchesHit, threshold: 78 },
 ]
 

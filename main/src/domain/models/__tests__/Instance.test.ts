@@ -1190,4 +1190,39 @@ describe('instance', () => {
     expect(loggerMocks.warn).toHaveBeenCalledWith('Failed to publish instance error status:', expect.any(Error))
     expect(qqMocks.client.login).toHaveBeenCalledTimes(1)
   })
+
+describe('instance remaining paths', () => {
+  it('delegates personal user bot init and command reload', async () => {
+    const inst: any = Object.create(Instance.prototype)
+    inst.personalUserBotService = { initIfNeeded: mock().mockResolvedValue(undefined) }
+    inst.commandsFeature = { reloadCommands: mock().mockResolvedValue(undefined) }
+
+    await (inst as any).initPersonalUserBotIfNeeded()
+    await inst.reloadCommands()
+
+    expect(inst.personalUserBotService.initIfNeeded).toHaveBeenCalled()
+    expect(inst.commandsFeature.reloadCommands).toHaveBeenCalled()
+  })
+
+  it('tolerates event publisher failures during stop', async () => {
+    const registryAny = instanceRegistryMocks as any
+    if (typeof registryAny.remove !== 'function')
+      registryAny.remove = mock()
+    const { getEventPublisher } = await import('@napgram/plugin-kit')
+    const publisher = (getEventPublisher as any).mock.results[0]?.value ?? getEventPublisher()
+    publisher.publishInstanceStatus.mockRejectedValue(new Error('publish boom'))
+
+    const inst: any = Object.create(Instance.prototype)
+    inst.id = 9
+    let logCalls = 0
+    inst.log = { warn: mock(() => logCalls++), info: mock(), error: mock() }
+    inst.status = ''
+    inst.connectionSupervisor = { disposeRuntimeResources: mock().mockResolvedValue(undefined) }
+
+    await inst.stop()
+
+    expect(logCalls).toBeGreaterThanOrEqual(2)
+    expect(inst.status).toBe('stopped')
+  })
+})
 })
