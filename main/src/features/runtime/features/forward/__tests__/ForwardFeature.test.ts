@@ -2,6 +2,7 @@
 /* eslint-disable */
 import type { UnifiedMessage } from '@napgram/message-kit'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import { bunEnv } from '../../../../../shared/utils/runtime.js'
 
 
 
@@ -1677,8 +1678,8 @@ describe('forwardFeature', () => {
       findPairByQQWithChatType.mockResolvedValue(pair)
       const { feature, qqClient } = buildFeature()
       ;(feature as any).telegramSendQueue.nextAvailableAt = Date.now() + 25
-      const originalNodeEnv = process.env.NODE_ENV
-      process.env.NODE_ENV = 'development'
+      const originalNodeEnv = bunEnv.NODE_ENV
+      bunEnv.NODE_ENV = 'development'
       try {
         qqClient.emit('message', createQqMessage({ id: 'paced-1' }))
         await waitFor(() => {
@@ -1687,7 +1688,7 @@ describe('forwardFeature', () => {
         expect((feature as any).telegramSendQueue.nextAvailableAt).toBeGreaterThan(Date.now() + 100)
       }
       finally {
-        process.env.NODE_ENV = originalNodeEnv
+        bunEnv.NODE_ENV = originalNodeEnv
       }
     }, 5000)
   })
