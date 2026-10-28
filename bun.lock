@@ -29,7 +29,7 @@
         "@fastify/cookie": "^11.0.2",
         "@fastify/cors": "^11.2.0",
         "@fastify/multipart": "^10.0.0",
-        "@fastify/static": "10.1.7",
+        "@fastify/static": "10.1.8",
         "@kitajs/html": "^4.2.13",
         "@mtcute/bun": "^0.32.6",
         "@mtcute/core": "^0.32.6",
@@ -791,9 +791,9 @@
 
     "@fastify/proxy-addr": ["@fastify/proxy-addr@5.1.0", "", { "dependencies": { "@fastify/forwarded": "3.0.2", "ipaddr.js": "2.5.0" } }, "sha512-INS+6gh91cLUjB+PVHfu1UqcB76Sqtpyp7bnL+FYojhjygvOPA9ctiD/JDKsyD9Xgu4hUhCSJBPig/w7duNajw=="],
 
-    "@fastify/send": ["@fastify/send@4.1.0", "", { "dependencies": { "@lukeed/ms": "2.0.2", "escape-html": "1.0.3", "fast-decode-uri-component": "1.0.1", "http-errors": "2.0.1", "mime": "3.0.0" } }, "sha512-TMYeQLCBSy2TOFmV95hQWkiTYgC/SEx7vMdV+wnZVX4tt8VBLKzmH8vV9OzJehV0+XBfg+WxPMt5wp+JBUKsVw=="],
+    "@fastify/send": ["@fastify/send@4.2.0", "", { "dependencies": { "@lukeed/ms": "^2.0.2", "escape-html": "~1.0.3", "fast-decode-uri-component": "^1.0.1", "http-errors": "^2.0.0", "mime": "^3" } }, "sha512-B5Hr+IFsPbqJJQu6FHE2MFpnHfbPlCOVQUPTdm6PxCcilYGrEQsulbO0z9blgbjndIyLJwa2NWFIIjXpPhbwUg=="],
 
-    "@fastify/static": ["@fastify/static@10.1.7", "", { "dependencies": { "@fastify/accept-negotiator": "^2.0.0", "@fastify/error": "^4.0.0", "@fastify/send": "^4.0.0", "content-disposition": "^3.0.0", "fastify-plugin": "^6.0.0", "fastq": "^1.17.1", "glob": "^13.0.0" } }, "sha512-7+lUiPRraENCiULgjhcqZyWSW6qnwIT87Is0u3c2Z3iGEEEGB45wJhYxzrSdzu12gHM4qcviEYcPEiCe4J6MCQ=="],
+    "@fastify/static": ["@fastify/static@10.1.8", "", { "dependencies": { "@fastify/accept-negotiator": "^2.0.0", "@fastify/error": "^4.0.0", "@fastify/send": "^4.2.0", "content-disposition": "^3.0.0", "fastify-plugin": "^6.0.0", "fastq": "^1.17.1", "glob": "^13.0.0" } }, "sha512-3CbgWOXJX8f46xxsuOgQl9h0lyQQiABMG40kxRF5PWJk4LyBW5m3mLZoW5glnm2TUTC1gVFCBnqOt5S6zIIIrg=="],
 
     "@fuman/bun": ["@fuman/bun@0.0.23", "", { "dependencies": { "@fuman/io": "^0.0.23", "@fuman/net": "^0.0.23", "@fuman/utils": "^0.0.23" } }, "sha512-M33uaVxss2hh33SL+lECfEUPXKWcRyjIFCX0v1pxLKN3tjqqXFuUa5GYkj7OJ5QlzafI6OPoB+u6oUZ42kJaBA=="],
 
