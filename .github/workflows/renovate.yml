@@ -75,7 +75,7 @@ jobs:
           fetch-depth: 0
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v46.1.16
+        uses: renovatebot/github-action@v46.3.10
         with:
           configurationFile: .github/renovate-config.json
           token: ${{ secrets.GH_PAT }}
