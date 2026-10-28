@@ -1,17 +1,17 @@
 include:
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "e54962c6c19144e136dc6a563c549ecaa575e31e"
+    ref: "f2ad0313cbf0bb12e551c94a80bdd0063dcc0411"
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "e54962c6c19144e136dc6a563c549ecaa575e31e"
+    ref: "f2ad0313cbf0bb12e551c94a80bdd0063dcc0411"
     file: /.gitlab/ci/renovate.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "e54962c6c19144e136dc6a563c549ecaa575e31e"
+    ref: "f2ad0313cbf0bb12e551c94a80bdd0063dcc0411"
     file: /.gitlab/ci/cancel-mr-pipelines.yml
   # Utility-job anchor (alpine, pinned): sync:github extends it instead of
   # pinning an image of its own.
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "e54962c6c19144e136dc6a563c549ecaa575e31e"
+    ref: "f2ad0313cbf0bb12e551c94a80bdd0063dcc0411"
     file: /.gitlab/ci/utility.yml
 
 workflow:
@@ -60,7 +60,7 @@ variables:
   MAGISK_CANCEL_MERGED_MR_PIPELINES: "true"
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "e54962c6c19144e136dc6a563c549ecaa575e31e"
+  MAGISK_CI_TOOLKIT_REF: "f2ad0313cbf0bb12e551c94a80bdd0063dcc0411"
   MAGISK_TELEGRAM_PIN: "off"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
@@ -652,10 +652,6 @@ renovate:gitlab:
     MAGISK_RENOVATE_REPOSITORY: "magisk3171/napgram-ecosystem/NapGram"
     MAGISK_RENOVATE_PLATFORM_AUTOMERGE: "false"
     MAGISK_RENOVATE_IGNORE_TESTS: "true"
-    # Renovate skips github-tags/github-releases deps when no GitHub token is
-    # present. GITHUB_PAT is a protected group variable; this job runs on the
-    # protected default branch, so it is available here.
-    GITHUB_TOKEN: "$GITHUB_PAT"
 
 dependency-force:gitlab:
   extends:
