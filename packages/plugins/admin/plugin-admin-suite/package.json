@@ -26,7 +26,7 @@
   "license": "MIT",
   "devDependencies": {
     "@napgram/sdk": "workspace:*",
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261027.1",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261028.1",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
