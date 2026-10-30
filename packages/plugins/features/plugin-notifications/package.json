@@ -29,7 +29,7 @@
     "@napgram/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261028.1",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261029.1",
     "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
