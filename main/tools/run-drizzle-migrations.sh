@@ -23,7 +23,7 @@ run_drizzle_migrate() {
   for candidate in "${candidates[@]}"; do
     if [ -x "${candidate}" ]; then
       bun "${candidate}" migrate --config "${config_path}"
-      return 0
+      return $?
     fi
   done
 
