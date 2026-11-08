@@ -202,8 +202,13 @@ variables:
     http_proxy: "$CI_HTTP_PROXY"
     https_proxy: "$CI_HTTPS_PROXY"
     # Dependency Proxy redirects blobs to object storage; those hosts must use the proxy.
-    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
-    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
+    # Docker Hub is NOT in the dependency-proxy path (NAPGRAM_DOCKER_USE_DEPENDENCY_PROXY
+    # is false), and the runner proxy egresses via the US relay at ~14 KB/s to
+    # production.cloudflare.docker.com — docker.io blob hosts must bypass it and go
+    # direct (2026-11-08 container:dev:amd64 1h-timeout: lottie base layers crawled
+    # at 14 KB/s through the proxy while direct egress measured 344 KB/s+).
+    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,docker.io,registry-1.docker.io,auth.docker.io,.docker.io,production.cloudflare.docker.com,.cloudflare.docker.com"
+    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,docker.io,registry-1.docker.io,auth.docker.io,.docker.io,production.cloudflare.docker.com,.cloudflare.docker.com"
   before_script:
     - |
       use_mirror="${MAGISK_LINUX_USE_MIRROR:-true}"
