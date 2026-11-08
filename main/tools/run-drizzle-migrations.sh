@@ -3,9 +3,8 @@ set -euo pipefail
 
 echo "Running database migrations with Drizzle..."
 
-# Resolve repo root from this script location to avoid cwd issues.
+# Resolve the tools directory from this script location to avoid cwd issues.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Check if database is accessible
 if [ -z "${DATABASE_URL:-}" ]; then
@@ -13,29 +12,9 @@ if [ -z "${DATABASE_URL:-}" ]; then
   exit 1
 fi
 
-run_drizzle_migrate() {
-  local config_path="${SCRIPT_DIR}/drizzle.config.ts"
-  local candidates=(
-    "${ROOT_DIR}/main/node_modules/.bin/drizzle-kit"
-    "${ROOT_DIR}/node_modules/.bin/drizzle-kit"
-  )
-  local candidate
-  for candidate in "${candidates[@]}"; do
-    if [ -x "${candidate}" ]; then
-      bun "${candidate}" migrate --config "${config_path}"
-      return $?
-    fi
-  done
-
-  echo "ERROR: drizzle-kit not found under ${ROOT_DIR}"
-  return 1
-}
-
-# Run Drizzle migrations (from installed package)
+# Run Drizzle migrations on a locked database connection.
 echo "Applying Drizzle migrations..."
-if ! run_drizzle_migrate; then
-  exit 1
-fi
+bun "${SCRIPT_DIR}/migrate.ts"
 
 echo "✅ Database migrations completed successfully"
 exit 0

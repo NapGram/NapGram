@@ -54,6 +54,7 @@
         "@napi-rs/image": "1.16.0",
         "@naplink/naplink": "^1.2.0",
         "drizzle-kit": "^0.31.10",
+        "drizzle-orm": "^0.45.1",
         "fastify": "^5.8.5",
         "fflate": "^0.8.2",
         "file-type": "^22.0.1",

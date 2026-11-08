@@ -57,27 +57,22 @@ describe('Drizzle migration configuration', () => {
 })
 
 describe('Migration command exit status', () => {
-  for (const binDir of ['main/node_modules/.bin', 'node_modules/.bin']) {
-    test.each([
-      { outcome: 'success', fails: false },
-      { outcome: 'failure', fails: true },
-    ])(`propagates $outcome from ${binDir}`, async ({ fails }) => {
-      const root = await createFixture()
-      const script = `${root}/main/tools/run-drizzle-migrations.sh`
-      const cli = `${root}/${binDir}/drizzle-kit`
-      await Bun.write(script, Bun.file(`${toolsDir}/run-drizzle-migrations.sh`))
-      await Bun.write(cli, fails ? 'throw new Error("migration failed")' : '// successful migration')
-      await $`chmod +x ${cli}`.env(Bun.env).quiet()
+  test.each([
+    { outcome: 'success', fails: false },
+    { outcome: 'failure', fails: true },
+  ])('propagates migration $outcome', async ({ fails }) => {
+    const root = await createFixture()
+    const script = `${root}/main/tools/run-drizzle-migrations.sh`
+    await Bun.write(script, Bun.file(`${toolsDir}/run-drizzle-migrations.sh`))
+    await Bun.write(`${root}/main/tools/migrate.ts`, fails ? 'throw new Error("migration failed")' : '// successful migration')
 
-      const result = await $`bash ${script}`.cwd('/tmp').env({
-        ...Bun.env,
-        DATABASE_URL: 'postgresql://postgres@localhost/napgram_test',
-      }).nothrow().quiet()
+    const result = await $`bash ${script}`.cwd('/tmp').env({
+      ...Bun.env,
+      DATABASE_URL: 'postgresql://postgres@localhost/napgram_test',
+    }).nothrow().quiet()
 
-      expect(result.exitCode).toBe(fails ? 1 : 0)
-      if (fails) {
-        expect(result.stdout.toString()).not.toContain('completed successfully')
-      }
-    })
-  }
+    expect(result.exitCode).toBe(fails ? 1 : 0)
+    if (fails)
+      expect(result.stdout.toString()).not.toContain('completed successfully')
+  })
 })

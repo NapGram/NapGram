@@ -128,6 +128,7 @@ COPY --from=workspace --chown=bun:bun /app/main/build /app/main/build
 COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle.config.ts /app/main/tools/drizzle.config.ts
 COPY --from=workspace --chown=bun:bun /app/main/tools/drizzle /app/main/tools/drizzle
 COPY --from=workspace --chown=bun:bun /app/main/tools/run-drizzle-migrations.sh /app/main/tools/run-drizzle-migrations.sh
+COPY --from=workspace --chown=bun:bun /app/main/tools/migrate.ts /app/main/tools/migrate.ts
 COPY --from=workspace --chown=bun:bun /app/packages/clients/database/dist/schema /app/main/tools/runtime-schemas/database
 COPY --from=workspace --chown=bun:bun /app/packages/plugins/admin/permission-management/dist/database /app/main/tools/runtime-schemas/permission-management
 # Hand the prebuilt UI bundle into the runtime image.
