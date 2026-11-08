@@ -29,7 +29,7 @@
     "@napgram/db-kit": "workspace:*",
     "@napgram/logger-kit": "workspace:*",
     "@napgram/qq-client": "workspace:*",
-    "drizzle-orm": "^0.45.1"
+    "drizzle-orm": "^0.45.4"
   },
   "devDependencies": {
     "@typescript/native": "npm:typescript@7.1.0-dev.20261106.1",
