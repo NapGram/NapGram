@@ -202,13 +202,15 @@ variables:
     http_proxy: "$CI_HTTP_PROXY"
     https_proxy: "$CI_HTTPS_PROXY"
     # Dependency Proxy redirects blobs to object storage; those hosts must use the proxy.
-    # Docker Hub is NOT in the dependency-proxy path (NAPGRAM_DOCKER_USE_DEPENDENCY_PROXY
-    # is false), and the runner proxy egresses via the US relay at ~14 KB/s to
-    # production.cloudflare.docker.com — docker.io blob hosts must bypass it and go
-    # direct (2026-11-08 container:dev:amd64 1h-timeout: lottie base layers crawled
-    # at 14 KB/s through the proxy while direct egress measured 344 KB/s+).
-    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,docker.io,registry-1.docker.io,auth.docker.io,.docker.io,production.cloudflare.docker.com,.cloudflare.docker.com"
-    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,docker.io,registry-1.docker.io,auth.docker.io,.docker.io,production.cloudflare.docker.com,.cloudflare.docker.com"
+    # Docker Hub split-path (2026-11-08 container:dev:amd64 1h-timeout postmortem):
+    # registry-1.docker.io/auth.docker.io resolve poisoned on the runner host
+    # (Meta IP ranges) and must stay ON the proxy, where they are fine (1.6s).
+    # The blob GETs redirect to production.cloudfront.docker.com, which resolves
+    # clean and pulls at 2.15 MB/s direct — while the same blob through the proxy
+    # crawled at 9-14 KB/s for the whole 1h job. So bypass the proxy ONLY for the
+    # blob CDN hosts; keep the registry API and auth proxied.
+    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,production.cloudfront.docker.com,.cloudfront.docker.com"
+    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,production.cloudfront.docker.com,.cloudfront.docker.com"
   before_script:
     - |
       use_mirror="${MAGISK_LINUX_USE_MIRROR:-true}"
