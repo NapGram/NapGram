@@ -21,12 +21,11 @@
     "@napgram/plugin-adapter-qq-official": "workspace:*"
   },
   "devDependencies": {
-    "@typescript/native": "npm:typescript@7.1.0-dev.20261105.1",
+    "@typescript/native": "npm:typescript@7.1.0-dev.20261107.1",
     "bun-types": "1.4.4",
-    "oxlint": "1.91.0",
-    "turbo": "^2.9.18",
-    "typescript": "npm:@typescript/typescript6@6.0.2",
-    "@napgram/plugin-adapter-qq-official": "workspace:*"
+    "oxlint": "1.92.0",
+    "turbo": "^2.11.10",
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "peerDependencies": {
     "@napgram/plugin-adapter-qq-napcat": "workspace:*",

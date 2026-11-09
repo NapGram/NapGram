@@ -1,17 +1,17 @@
 include:
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "85171f0a9dc19ae177c8ecbe5fd0c9d5b7b8bb34"
+    ref: "0eee90fb422c5501fc2797770729582faf334a09"
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "85171f0a9dc19ae177c8ecbe5fd0c9d5b7b8bb34"
+    ref: "0eee90fb422c5501fc2797770729582faf334a09"
     file: /.gitlab/ci/renovate.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "85171f0a9dc19ae177c8ecbe5fd0c9d5b7b8bb34"
+    ref: "0eee90fb422c5501fc2797770729582faf334a09"
     file: /.gitlab/ci/cancel-mr-pipelines.yml
   # Utility-job anchor (alpine, pinned): sync:github extends it instead of
   # pinning an image of its own.
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "85171f0a9dc19ae177c8ecbe5fd0c9d5b7b8bb34"
+    ref: "0eee90fb422c5501fc2797770729582faf334a09"
     file: /.gitlab/ci/utility.yml
 
 workflow:
@@ -60,7 +60,7 @@ variables:
   MAGISK_CANCEL_MERGED_MR_PIPELINES: "true"
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "85171f0a9dc19ae177c8ecbe5fd0c9d5b7b8bb34"
+  MAGISK_CI_TOOLKIT_REF: "0eee90fb422c5501fc2797770729582faf334a09"
   MAGISK_TELEGRAM_PIN: "off"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
@@ -202,8 +202,15 @@ variables:
     http_proxy: "$CI_HTTP_PROXY"
     https_proxy: "$CI_HTTPS_PROXY"
     # Dependency Proxy redirects blobs to object storage; those hosts must use the proxy.
-    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
-    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1"
+    # Docker Hub split-path (2026-11-08 container:dev:amd64 1h-timeout postmortem):
+    # registry-1.docker.io/auth.docker.io resolve poisoned on the runner host
+    # (Meta IP ranges) and must stay ON the proxy, where they are fine (1.6s).
+    # The blob GETs redirect to production.cloudfront.docker.com, which resolves
+    # clean and pulls at 2.15 MB/s direct — while the same blob through the proxy
+    # crawled at 9-14 KB/s for the whole 1h job. So bypass the proxy ONLY for the
+    # blob CDN hosts; keep the registry API and auth proxied.
+    NO_PROXY: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,production.cloudfront.docker.com,.cloudfront.docker.com"
+    no_proxy: "docker,docker:2375,docker:2376,gitlab.com,.gitlab.com,localhost,127.0.0.1,production.cloudfront.docker.com,.cloudfront.docker.com"
   before_script:
     - |
       use_mirror="${MAGISK_LINUX_USE_MIRROR:-true}"
