@@ -10,7 +10,7 @@
         "@napgram/sdk": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "bun-types": "1.4.4",
         "oxlint": "1.92.0",
         "turbo": "^2.11.10",
@@ -69,7 +69,7 @@
         "@types/ejs": "^3.1.5",
         "@types/markdown-escape": "^1.1.3",
         "@types/tmp": "^0.2.6",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "bun-types": "1.4.4",
         "fast-check": "^4.10.2",
         "typescript": "npm:@typescript/typescript6@6.0.2",
@@ -109,7 +109,7 @@
         "@napgram/plugin-web-console": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -120,7 +120,7 @@
         "drizzle-orm": "^0.45.4",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "drizzle-kit": "^0.31.11",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
@@ -132,7 +132,7 @@
         "@naplink/naplink": "^1.2.0",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -146,7 +146,7 @@
         "@napgram/runtime-kit": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -161,7 +161,7 @@
         "drizzle-orm": "^0.45.4",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -172,7 +172,7 @@
         "zod": "^4.3.5",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -189,7 +189,7 @@
         "fastify": "5.12.8",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "drizzle-kit": "^0.31.11",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
@@ -206,7 +206,7 @@
         "@opentelemetry/semantic-conventions": "1.45.0",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -228,7 +228,7 @@
       },
       "devDependencies": {
         "@types/semver": "^7.7.1",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -236,7 +236,7 @@
       "name": "@napgram/runtime-kit",
       "version": "2.0.1",
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -248,7 +248,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -260,7 +260,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -272,7 +272,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -286,7 +286,7 @@
         "drizzle-orm": "^0.45.4",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -298,7 +298,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -310,7 +310,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -322,7 +322,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -334,7 +334,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -346,7 +346,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -358,7 +358,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -370,7 +370,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -382,7 +382,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -394,7 +394,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -403,7 +403,7 @@
       "version": "2.0.0",
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -415,7 +415,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -424,7 +424,7 @@
       "version": "2.0.0",
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -436,7 +436,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -448,7 +448,7 @@
         "@napgram/sdk": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -457,7 +457,7 @@
       "version": "2.0.0",
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -466,7 +466,7 @@
       "version": "2.0.0",
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -480,7 +480,7 @@
         "@napgram/plugin-kit": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -489,7 +489,7 @@
       "version": "2.0.0",
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -501,7 +501,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -513,7 +513,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -525,7 +525,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -537,7 +537,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -549,7 +549,7 @@
       },
       "devDependencies": {
         "@napgram/sdk": "workspace:*",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -561,7 +561,7 @@
         "@napgram/sdk-utils": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -569,7 +569,7 @@
       "name": "@napgram/sdk-core",
       "version": "2.0.0",
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -581,7 +581,7 @@
         "@napgram/sdk-core": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -596,7 +596,7 @@
       },
       "devDependencies": {
         "@fastify/cookie": "^11.1.5",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -611,7 +611,7 @@
         "@napgram/telegram-client": "workspace:*",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -627,7 +627,7 @@
         "yaml": "^2.9.1",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -643,7 +643,7 @@
         "silk-wasm": "^3.7.1",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -662,7 +662,7 @@
         "file-type": "^22.3.0",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -676,7 +676,7 @@
         "drizzle-orm": "^0.45.4",
       },
       "devDependencies": {
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -703,7 +703,7 @@
       "devDependencies": {
         "@fastify/cookie": "^11.1.5",
         "@kitajs/ts-html-plugin": "^4.1.3",
-        "@typescript/native": "npm:typescript@7.1.0-dev.20261108.1",
+        "@typescript/native": "npm:typescript@7.1.0-dev.20261109.1",
         "typescript": "npm:@typescript/typescript6@6.0.2",
       },
     },
@@ -1045,23 +1045,23 @@
 
     "@types/tmp": ["@types/tmp@0.2.6", "", {}, "sha512-chhaNf2oKHlRkDGt+tiKE2Z5aJ6qalm7Z9rlLdBwmOiAAf09YQvvoLXjWK4HWPF1xU/fqvMgfNfpVoBscA/tKA=="],
 
-    "@typescript/native": ["typescript@7.1.0-dev.20261108.1", "", { "optionalDependencies": { "@typescript/typescript-darwin-arm64": "7.1.0-dev.20261108.1", "@typescript/typescript-darwin-x64": "7.1.0-dev.20261108.1", "@typescript/typescript-linux-arm": "7.1.0-dev.20261108.1", "@typescript/typescript-linux-arm64": "7.1.0-dev.20261108.1", "@typescript/typescript-linux-x64": "7.1.0-dev.20261108.1", "@typescript/typescript-win32-arm64": "7.1.0-dev.20261108.1", "@typescript/typescript-win32-x64": "7.1.0-dev.20261108.1" }, "bin": { "tsc": "bin/tsc" } }, "sha512-AeosmVVqQg0Hyn/UmAu9RmKTE28xmi124lful0Be7lufu7H0cSRar1W3gUj+wIUEVoJ6Tu/PHNbT6HvXYMwhHA=="],
+    "@typescript/native": ["typescript@7.1.0-dev.20261109.1", "", { "optionalDependencies": { "@typescript/typescript-darwin-arm64": "7.1.0-dev.20261109.1", "@typescript/typescript-darwin-x64": "7.1.0-dev.20261109.1", "@typescript/typescript-linux-arm": "7.1.0-dev.20261109.1", "@typescript/typescript-linux-arm64": "7.1.0-dev.20261109.1", "@typescript/typescript-linux-x64": "7.1.0-dev.20261109.1", "@typescript/typescript-win32-arm64": "7.1.0-dev.20261109.1", "@typescript/typescript-win32-x64": "7.1.0-dev.20261109.1" }, "bin": { "tsc": "bin/tsc" } }, "sha512-gWvPmRpUJ1SzahmGN6138gT0aLLK4bMUCC8MoTKJtVdRIJc65f/UuvpZpHGctvD0y/Nu3w3b5gLY9e/7+GSeJw=="],
 
     "@typescript/old": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
-    "@typescript/typescript-darwin-arm64": ["@typescript/typescript-darwin-arm64@7.1.0-dev.20261108.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-JwAKQ4zgIFCJgxOCdpcCFI32ZjMefFadg49nskmmP5OwJXTU/p6GWU3MImCnx9Ym4lWU+PEBkzSymn1itWhx1A=="],
+    "@typescript/typescript-darwin-arm64": ["@typescript/typescript-darwin-arm64@7.1.0-dev.20261109.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-k5X3MB7j6U7c1Xs+rSscULDKX+KQzEzJny+mTN92vWgWE8ampF8RRS6uT2BbzlugySYif6FAQbpT7XoLUSKuLg=="],
 
-    "@typescript/typescript-darwin-x64": ["@typescript/typescript-darwin-x64@7.1.0-dev.20261108.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-90XVBdVae2CsPPeTXYk/BGbxXy7X9iGYAzz5u4ZPLxXA4U6oXg4Wyd8YOwJAR5SAG1BZs6qA5bBgB3T4w8g9yw=="],
+    "@typescript/typescript-darwin-x64": ["@typescript/typescript-darwin-x64@7.1.0-dev.20261109.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-8NvwXDDZHunOkNNw96hoQ0ev2LIVSsZdGTUI9W5S5HD6Iwvm4aSqs9V4w1zCtNqCwtZaEiOjURip6PVMLRsF6A=="],
 
-    "@typescript/typescript-linux-arm": ["@typescript/typescript-linux-arm@7.1.0-dev.20261108.1", "", { "os": "linux", "cpu": "arm" }, "sha512-jQjAZlaxG0KWKh8+cYvpgoBXlg/9nj1XjcJNpih8tbCDCPrzvFkoXjAfs+By9lLJm9OeHT5iD8ITuIdgjn/PLw=="],
+    "@typescript/typescript-linux-arm": ["@typescript/typescript-linux-arm@7.1.0-dev.20261109.1", "", { "os": "linux", "cpu": "arm" }, "sha512-NLakeoS9l5pSHrfTIAipq3hrUGRCxfBaGC7kMvgwuwvgGT8jmlLmfCdR+koxlnVIQxlJZXQOIWXKJ/EP4PeaFw=="],
 
-    "@typescript/typescript-linux-arm64": ["@typescript/typescript-linux-arm64@7.1.0-dev.20261108.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-1h6sqGqeuagdgQfBKAbTrdX6FD0hKmF5W7XyZG6Om8osLTEXRIyY3pp7Y0vhhk4u2phwYJpGGP7lSJ8g1YhaAg=="],
+    "@typescript/typescript-linux-arm64": ["@typescript/typescript-linux-arm64@7.1.0-dev.20261109.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-UVHu4IKa2xc8ggnJdzFwrJCAMj8bcNKG2Ygp69fAuqLWQaORu2PbGsyuBMn0OgNMr00P8FKRL2eRSceTb4HAKw=="],
 
-    "@typescript/typescript-linux-x64": ["@typescript/typescript-linux-x64@7.1.0-dev.20261108.1", "", { "os": "linux", "cpu": "x64" }, "sha512-cDO4IXh1H1pyNQF6D+YdgoR9lM+0rmgN7TaX8q+2M4reityriC33eYQ+pOBj5J7LBPMmjFI0iXbCOpn8025hNQ=="],
+    "@typescript/typescript-linux-x64": ["@typescript/typescript-linux-x64@7.1.0-dev.20261109.1", "", { "os": "linux", "cpu": "x64" }, "sha512-ds2dWbkP603iCvpW3vLuurYJFCKRZBc/swX4w6GYV1irzZrgCZOSfnhifQIQNDZmWAJTmOyXdSP3zoIpHsSK0g=="],
 
-    "@typescript/typescript-win32-arm64": ["@typescript/typescript-win32-arm64@7.1.0-dev.20261108.1", "", { "os": "win32", "cpu": "arm64" }, "sha512-/fOEEd3/C44J6UNR6UEgaLUUbj6wUR1/KyWVATrkzVj+ueTo821KbLMFC3P525HyGK1xelYrtppjXczTpthd4w=="],
+    "@typescript/typescript-win32-arm64": ["@typescript/typescript-win32-arm64@7.1.0-dev.20261109.1", "", { "os": "win32", "cpu": "arm64" }, "sha512-QlGuYPxAySkNsOWyriI0HficVfAvY53vaCKsvGOBmXnzqB6Cf+vfABRikRJdOHKQ3Fo92U0lg2TtUcB5INiG4g=="],
 
-    "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.1.0-dev.20261108.1", "", { "os": "win32", "cpu": "x64" }, "sha512-/KwlIseOmDtie6BbiqIPHP3HJhdW/twO6jZnE3+fjxukW/psJdeJUvAjj2y9wzHScGrRUHLVaHVL5XY6RVi/fA=="],
+    "@typescript/typescript-win32-x64": ["@typescript/typescript-win32-x64@7.1.0-dev.20261109.1", "", { "os": "win32", "cpu": "x64" }, "sha512-DwVTepbRmBpsPPzEqGn3GBVwtL81M0fIL6RiUSjYRduHWSBNOyErjccMHvXrpeSotlQ3Ik5yYq2R9hVt6HmhGw=="],
 
     "abstract-logging": ["abstract-logging@2.0.1", "", {}, "sha512-2BjRTZxTPvheOvGbBslFSYOUkr+SjPtOnrLP33f+VIWLzezQpZcqVg7ja3L4dBXmzzgwT+a029jRx5PCi3JuiA=="],
 
