@@ -129,7 +129,7 @@
       "name": "@napgram/qq-client",
       "version": "2.0.1",
       "dependencies": {
-        "@naplink/naplink": "^1.2.0",
+        "@naplink/naplink": "^1.3.0",
       },
       "devDependencies": {
         "@typescript/native": "npm:typescript@7.1.0-dev.20261112.1",
@@ -955,7 +955,7 @@
 
     "@napi-rs/image-win32-x64-msvc": ["@napi-rs/image-win32-x64-msvc@1.16.0", "", { "os": "win32", "cpu": "x64" }, "sha512-jdmbjZhvR1T++hTZpi5CYASA+2Js9tuUQGtQ0fVtrtbGt82sGkYrrax8gAVNsgyvEu9/B2yxbB/4mlJcXkwt0Q=="],
 
-    "@naplink/naplink": ["@naplink/naplink@1.2.0", "", {}, "sha512-mOS+23XL8StTiMpBpCW+nP78NS6dKs8C/Y/fo+sZoxmo0GCcuW7+vQa+m3CxABinU/kcE7eO7yce126tin/Kfw=="],
+    "@naplink/naplink": ["@naplink/naplink@1.3.0", "", {}, "sha512-UDBvooWIOvwrDAuI2fuRlGQoa+LaENnRkGJzYe5dhLlCUq/iHpHFeCE5spGX3ZhUDYYFh6GpvqDEEvrRYHTDLA=="],
 
     "@opentelemetry/api": ["@opentelemetry/api@1.10.0", "", {}, "sha512-lMkyes8iHrG+mk6WH7X70MdCLI2RS0FwNBY1PyQ8UemaijE2m5mv5A0Niy3HtbYTFrgkUEQjFMXmSAk2hQDuPQ=="],
 
