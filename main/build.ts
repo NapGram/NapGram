@@ -1,8 +1,15 @@
 import packageJson from './package.json'
 
+// drizzle-orm must stay out of the externals: Bun.build generates a broken
+// chunk for db-kit's `export * from 'drizzle-orm'` when the module is
+// external under splitting (references drizzle_orm without importing it,
+// -> ReferenceError on import). Inlining it keeps the bundle shape
+// production ran on before 990605e2. The dependency stays in
+// package.json because tools/migrate.ts resolves it from node_modules
+// at runtime.
 const externalDeps = [
   ...Object.keys(packageJson.dependencies ?? {})
-    .filter(dep => !dep.startsWith('@napgram/')),
+    .filter(dep => !dep.startsWith('@napgram/') && dep !== 'drizzle-orm'),
   '@napi-rs/image',
 ]
 
