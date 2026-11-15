@@ -1,17 +1,17 @@
 include:
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "0eee90fb422c5501fc2797770729582faf334a09"
+    ref: "5627468f8a642c3295b8779942a935b176e8a789"
     file: /.gitlab/ci/telegram.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "0eee90fb422c5501fc2797770729582faf334a09"
+    ref: "5627468f8a642c3295b8779942a935b176e8a789"
     file: /.gitlab/ci/renovate.yml
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "0eee90fb422c5501fc2797770729582faf334a09"
+    ref: "5627468f8a642c3295b8779942a935b176e8a789"
     file: /.gitlab/ci/cancel-mr-pipelines.yml
   # Utility-job anchor (alpine, pinned): sync:github extends it instead of
   # pinning an image of its own.
   - project: magisk3171/shared/magisk-ci-toolkit
-    ref: "0eee90fb422c5501fc2797770729582faf334a09"
+    ref: "5627468f8a642c3295b8779942a935b176e8a789"
     file: /.gitlab/ci/utility.yml
 
 workflow:
@@ -60,7 +60,7 @@ variables:
   MAGISK_CANCEL_MERGED_MR_PIPELINES: "true"
   FF_USE_FASTZIP: "true"
   CACHE_COMPRESSION_LEVEL: fast
-  MAGISK_CI_TOOLKIT_REF: "0eee90fb422c5501fc2797770729582faf334a09"
+  MAGISK_CI_TOOLKIT_REF: "5627468f8a642c3295b8779942a935b176e8a789"
   MAGISK_TELEGRAM_PIN: "off"
 
   # Default runner for non-container node jobs (build/test/typecheck/sdk:publish/
