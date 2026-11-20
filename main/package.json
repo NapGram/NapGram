@@ -30,7 +30,7 @@
     "@fastify/cookie": "^11.1.5",
     "@fastify/cors": "^11.4.1",
     "@fastify/multipart": "^10.1.8",
-    "@fastify/static": "10.1.11",
+    "@fastify/static": "10.1.12",
     "@kitajs/html": "^4.2.13",
     "@mtcute/bun": "^0.32.7",
     "@mtcute/core": "^0.32.7",
