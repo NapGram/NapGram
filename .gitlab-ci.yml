@@ -361,7 +361,7 @@ app:test:coverage:
     - job: app:dependencies
       artifacts: false
   services:
-    - name: postgres:18-alpine
+    - name: postgres:19-alpine
   variables:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
